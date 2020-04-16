@@ -30,3 +30,6 @@
 *.exe
 *.out
 *.app
+
+cef.tar.bz2
+cef_unverified.tar.bz2
