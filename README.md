@@ -15,4 +15,8 @@ Obtain a release build of CEF (Chromium Embedded Framework):
 ./download_cef.sh
 ```
 
-TODO
+Extract CEF and build its DLL wrapper library that we will use
+
+```
+./setup_cef.sh
+```
