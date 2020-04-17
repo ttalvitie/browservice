@@ -1,31 +1,33 @@
-#include "common.hpp"
+#include "server.hpp"
 
 #include <csignal>
 #include <cstdlib>
 
 #include "include/wrapper/cef_closure_task.h"
-#include "include/wrapper/cef_helpers.h"
 #include "include/cef_app.h"
 
-class Server {
-SHARED_ONLY_CLASS(Server);
-public:
-    Server(CKey) {}
+namespace {
 
-    void shutdown() {
+class AppServerEventHandler : public ServerEventHandler {
+SHARED_ONLY_CLASS(AppServerEventHandler);
+public:
+    AppServerEventHandler(CKey) {}
+
+    virtual void onServerShutdownComplete() override {
+        LOG(INFO) << "Server shutdown complete, quitting CEF message loop";
         CefQuitMessageLoop();
-        LOG(INFO) << "Server shutdown complete";
     }
 };
-
-namespace {
 
 class App :
     public CefApp,
     public CefBrowserProcessHandler
 {
 public:
-    App() : shutdown_(false) {}
+    App() {
+        serverEventHandler_ = AppServerEventHandler::create();
+        shutdown_ = false;
+    }
 
     void shutdown() {
         CEF_REQUIRE_UI_THREAD();
@@ -54,14 +56,15 @@ public:
         CEF_REQUIRE_UI_THREAD();
         CHECK(!server_);
 
-        server_ = Server::create();
+        server_ = Server::create(serverEventHandler_);
         if(shutdown_) {
             server_->shutdown();
         }
     }
 
 private:
-    std::shared_ptr<Server> server_;
+    shared_ptr<Server> server_;
+    shared_ptr<AppServerEventHandler> serverEventHandler_;
     bool shutdown_;
 
     IMPLEMENT_REFCOUNTING(App);
