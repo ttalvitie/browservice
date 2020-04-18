@@ -2,7 +2,10 @@
 
 #include <atomic>
 #include <functional>
+#include <future>
+#include <iostream>
 #include <memory>
+#include <thread>
 #include <utility>
 
 #include "include/base/cef_logging.h"
@@ -11,9 +14,18 @@
 using std::atomic;
 using std::enable_shared_from_this;
 using std::forward;
+using std::function;
+using std::future;
 using std::make_shared;
+using std::make_unique;
 using std::memory_order_relaxed;
+using std::move;
+using std::ostream;
+using std::promise;
 using std::shared_ptr;
+using std::string;
+using std::thread;
+using std::unique_ptr;
 using std::weak_ptr;
 
 #ifdef NDEBUG
@@ -63,24 +75,36 @@ public:
     private: \
         SHARED_ONLY_CLASS_LEAK_CHECK(ClassName) \
         struct CKey {}; \
+        template <typename T> \
+        void afterConstruct_(T) {} \
     public: \
         template <typename... T> \
         static shared_ptr<ClassName> create(T&&... args) { \
-            return make_shared<ClassName>(CKey(), forward<T>(args)...); \
+            shared_ptr<ClassName> ret = make_shared<ClassName>(CKey(), forward<T>(args)...); \
+            ret->afterConstruct_(ret); \
+            return ret; \
         } \
         ClassName(const ClassName&) = delete; \
         ClassName(ClassName&&) = delete; \
         ClassName& operator=(const ClassName&) = delete; \
         ClassName& operator=(ClassName&&) = delete
 
-// Convenience functions for posting tasks to be run from the CEF UI thread loop
+// Convenience functions for posting tasks to be run from the CEF UI thread
+// loop. May be called from any thread.
 void postTask(std::function<void()> func);
+
+template <typename T, typename... Args>
+void postTask(shared_ptr<T> ptr, void (T::*func)(Args...), Args... args) {
+    postTask([ptr, func, args...]() {
+        (ptr.get()->*func)(args...);
+    });
+}
 
 template <typename T, typename... Args>
 void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
     postTask([weakPtr, func, args...]() {
         if(shared_ptr<T> ptr = weakPtr.lock()) {
-            (ptr.get()->*func)();
+            (ptr.get()->*func)(args...);
         }
     });
 }
