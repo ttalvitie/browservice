@@ -45,6 +45,9 @@ public:
     virtual void onHTTPServerShutdownComplete() = 0;
 };
 
+// HTTP server that delegates requests to be handled by given event handler
+// through onHTTPServerRequest. Before quitting CEF message loop, call shutdown
+// and wait for onHTTPServerShutdownComplete event.
 class HTTPServer {
 SHARED_ONLY_CLASS(HTTPServer);
 public:

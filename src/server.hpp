@@ -7,6 +7,9 @@ public:
     virtual void onServerShutdownComplete() = 0;
 };
 
+// The root object for the whole browser proxy server, handling multiple
+// clients. Before quitting CEF message loop, call shutdown and wait for
+// onServerShutdownComplete event.
 class Server : public HTTPServerEventHandler {
 SHARED_ONLY_CLASS(Server);
 public:

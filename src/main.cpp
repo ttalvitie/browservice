@@ -1,3 +1,4 @@
+#include "globals.hpp"
 #include "server.hpp"
 
 #include <csignal>
@@ -87,12 +88,18 @@ int main(int argc, char* argv[]) {
         return exitCode;
     }
 
+    shared_ptr<Config> config = Config::read(argc, argv);
+    if(!config) {
+        return 1;
+    }
+    globals = Globals::create(config);
+
     CefSettings settings;
     settings.windowless_rendering_enabled = true;
     settings.command_line_args_disabled = true;
-    CefString(&settings.user_agent).FromASCII(
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/74.0"
-    );
+    if(!globals->config->userAgent.empty()) {
+        CefString(&settings.user_agent).FromString(globals->config->userAgent);
+    }
 
     app = new App;
 
@@ -109,6 +116,7 @@ int main(int argc, char* argv[]) {
     CefShutdown();
 
     app = nullptr;
+    globals.reset();
 
     return 0;
 }

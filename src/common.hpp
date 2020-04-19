@@ -1,31 +1,49 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <functional>
 #include <future>
 #include <iostream>
+#include <map>
 #include <memory>
+#include <optional>
+#include <set>
+#include <sstream>
 #include <thread>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "include/base/cef_logging.h"
 #include "include/wrapper/cef_helpers.h"
 
 using std::atomic;
+using std::cerr;
+using std::cout;
+using std::declval;
 using std::enable_shared_from_this;
 using std::forward;
 using std::function;
 using std::future;
 using std::make_shared;
 using std::make_unique;
+using std::map;
 using std::memory_order_relaxed;
 using std::move;
+using std::optional;
 using std::ostream;
 using std::promise;
+using std::remove_const;
+using std::remove_reference;
+using std::set;
 using std::shared_ptr;
+using std::sort;
 using std::string;
+using std::stringstream;
 using std::thread;
 using std::unique_ptr;
+using std::vector;
 using std::weak_ptr;
 
 #ifdef NDEBUG
@@ -107,4 +125,23 @@ void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
             (ptr.get()->*func)(args...);
         }
     });
+}
+
+template <typename T>
+optional<T> parseString(const string& str) {
+    T ret;
+    stringstream ss(str);
+    ss >> ret;
+    if(ss.fail()) {
+        return {};
+    } else {
+        return ret;
+    }
+}
+
+template <typename T>
+string toString(const T& obj) {
+    stringstream ss;
+    ss << obj;
+    return ss.str();
 }

@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+#include "globals.hpp"
+
 Server::Server(CKey, weak_ptr<ServerEventHandler> eventHandler) {
     CEF_REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
@@ -24,5 +26,5 @@ void Server::onHTTPServerShutdownComplete() {
 
 void Server::afterConstruct_(shared_ptr<Server> self) {
     CEF_REQUIRE_UI_THREAD();
-    httpServer_ = HTTPServer::create(self, "0.0.0.0:8080");
+    httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);
 }

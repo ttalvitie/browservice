@@ -187,6 +187,7 @@ public:
           shutdownStarted_(false),
           shutdownComplete_(false)
     {
+        LOG(INFO) << "HTTP server listening to " << listenSockAddr;
         httpServer_.start();
     }
     ~Impl() {
