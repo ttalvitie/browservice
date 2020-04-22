@@ -31,7 +31,7 @@ public:
         CHECK(!responseSent_);
         return request_.getMethod();
     }
-    string url() const {
+    string path() const {
         CHECK(!responseSent_);
         return request_.getURI();
     }
@@ -147,9 +147,9 @@ string HTTPRequest::method() const {
     return impl_->method();
 }
 
-string HTTPRequest::url() const {
+string HTTPRequest::path() const {
     CEF_REQUIRE_UI_THREAD();
-    return impl_->url();
+    return impl_->path();
 }
 
 void HTTPRequest::sendResponse(

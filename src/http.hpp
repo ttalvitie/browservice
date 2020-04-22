@@ -19,7 +19,7 @@ public:
     HTTPRequest(CKey, unique_ptr<Impl> impl);
 
     string method() const;
-    string url() const;
+    string path() const;
 
     // The body function may be called from a different thread. The given
     // content length should match the number of bytes written by body.
@@ -32,6 +32,30 @@ public:
     );
 
     void sendTextResponse(int status, string text, bool noCache = true);
+
+    template <typename Data>
+    void sendHTMLResponse(
+        int status,
+        void (*writer)(ostream&, const Data&),
+        const Data& data,
+        bool noCache = true
+    ) {
+        stringstream htmlSS;
+        writer(htmlSS, data);
+
+        string html = htmlSS.str();
+        uint64_t contentLength = html.size();
+
+        sendResponse(
+            status,
+            "text/html; charset=UTF-8",
+            contentLength,
+            [html{move(html)}](ostream& out) {
+                out << html;
+            },
+            noCache
+        );
+    }
 
 private:
     unique_ptr<Impl> impl_;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "http.hpp"
+#include "session.hpp"
 
 class ServerEventHandler {
 public:
@@ -26,4 +27,5 @@ private:
 
     weak_ptr<ServerEventHandler> eventHandler_;
     shared_ptr<HTTPServer> httpServer_;
+    map<uint64_t, shared_ptr<Session>> sessions_;
 };
