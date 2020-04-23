@@ -1,6 +1,7 @@
 #include "session.hpp"
 
 #include "html.hpp"
+#include "timeout.hpp"
 
 #include "include/cef_client.h"
 
@@ -57,6 +58,7 @@ public:
         LOG(INFO) << "Session " << session_->id_ << " closed";
 
         postTask(session_->eventHandler_, &SessionEventHandler::onSessionClosed, session_->id_);
+        session_->updateInactivityTimeout_();
     }
 
     // CefRenderHandler:
@@ -116,6 +118,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
 
     closeOnOpen_ = false;
 
+    inactivityTimeout_ = Timeout::create(60000);
+
     // Browser is created in afterConstruct_
 }
 
@@ -134,6 +138,10 @@ void Session::close() {
         state_ = Closing;
         browser_->GetHost()->CloseBrowser(true);
     } else if(state_ == Pending) {
+        LOG(INFO)
+            << "Closing session " << id_ << " requested "
+            << "while session is still opening, deferring request";
+
         // Close the browser as soon as it opens
         closeOnOpen_ = true;
     }
@@ -141,6 +149,8 @@ void Session::close() {
 
 void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     CEF_REQUIRE_UI_THREAD();
+
+    updateInactivityTimeout_();
 
     string method = request->method();
     string path = request->path();
@@ -196,5 +206,26 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
         LOG(INFO) << "Opening browser for session " << id_ << " failed, closing session";
         state_ = Closed;
         postTask(eventHandler_, &SessionEventHandler::onSessionClosed, id_);
+    }
+
+    updateInactivityTimeout_();
+}
+
+void Session::updateInactivityTimeout_() {
+    CEF_REQUIRE_UI_THREAD();
+
+    inactivityTimeout_->clear(false);
+
+    if(state_ == Pending || state_ == Open) {
+        weak_ptr<Session> self = shared_from_this();
+        inactivityTimeout_->set([self]() {
+            CEF_REQUIRE_UI_THREAD();
+            if(shared_ptr<Session> session = self.lock()) {
+                if(session->state_ == Pending || session->state_ == Open) {
+                    LOG(INFO) << "Inactivity timeout for session " << session->id_ << " reached";
+                    session->close();
+                }
+            }
+        });
     }
 }

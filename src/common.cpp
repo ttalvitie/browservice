@@ -4,12 +4,12 @@
 
 namespace {
 
-void callFunction(std::function<void()> func) {
+void callFunction(function<void()> func) {
     func();
 };
 
 }
 
-void postTask(std::function<void()> func) {
+void postTask(function<void()> func) {
     CefPostTask(TID_UI, base::Bind(callFunction, func));
 }

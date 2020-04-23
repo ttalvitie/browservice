@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -31,7 +32,9 @@ using std::future;
 using std::make_shared;
 using std::make_unique;
 using std::map;
+using std::max;
 using std::memory_order_relaxed;
+using std::min;
 using std::move;
 using std::mt19937;
 using std::optional;
@@ -49,11 +52,16 @@ using std::smatch;
 using std::sort;
 using std::string;
 using std::stringstream;
+using std::swap;
 using std::thread;
 using std::uniform_int_distribution;
 using std::unique_ptr;
 using std::vector;
 using std::weak_ptr;
+
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 
 #ifdef NDEBUG
 #define SHARED_ONLY_CLASS_LEAK_CHECK(ClassName)
@@ -118,7 +126,7 @@ public:
 
 // Convenience functions for posting tasks to be run from the CEF UI thread
 // loop. May be called from any thread.
-void postTask(std::function<void()> func);
+void postTask(function<void()> func);
 
 template <typename T, typename... Args>
 void postTask(shared_ptr<T> ptr, void (T::*func)(Args...), Args... args) {

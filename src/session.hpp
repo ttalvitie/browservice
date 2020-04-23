@@ -8,10 +8,11 @@ public:
 };
 
 class CefBrowser;
+class Timeout;
 
 // Single browser session. Before quitting CEF message loop, call close and wait
 // for onSessionClosed event. 
-class Session {
+class Session : public enable_shared_from_this<Session> {
 SHARED_ONLY_CLASS(Session);
 public:
     Session(CKey, weak_ptr<SessionEventHandler> eventHandler);
@@ -31,6 +32,8 @@ private:
 
     void afterConstruct_(shared_ptr<Session> self);
 
+    void updateInactivityTimeout_();
+
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
@@ -42,6 +45,8 @@ private:
 
     // If true, browser should close as soon as it is opened
     bool closeOnOpen_;
+
+    shared_ptr<Timeout> inactivityTimeout_;
 
     // Only available in Open state
     CefRefPtr<CefBrowser> browser_;
