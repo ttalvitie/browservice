@@ -12,11 +12,22 @@ regex sessionPathRegex("/([0-9]+)/.*");
 Server::Server(CKey, weak_ptr<ServerEventHandler> eventHandler) {
     CEF_REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
+    state_ = Running;
+    // Setup is finished in afterConstruct_
 }
 
 void Server::shutdown() {
     CEF_REQUIRE_UI_THREAD();
-    httpServer_->shutdown();
+
+    if(state_ == Running) {
+        state_ = ShutdownPending;
+
+        httpServer_->shutdown();
+
+        for(pair<uint64_t, shared_ptr<Session>> p : sessions_) {
+            p.second->close();
+        }
+    }
 }
 
 void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
@@ -26,7 +37,7 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        shared_ptr<Session> session = Session::create();
+        shared_ptr<Session> session = Session::create(shared_from_this());
         sessions_[session->id()] = session;
 
         request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
@@ -53,11 +64,31 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
 
 void Server::onHTTPServerShutdownComplete() {
     CEF_REQUIRE_UI_THREAD();
-    CHECK(httpServer_->isShutdownComplete());
-    postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
+    checkShutdownStatus_();
+}
+
+void Server::onSessionClosed(uint64_t id) {
+    CEF_REQUIRE_UI_THREAD();
+
+    auto it = sessions_.find(id);
+    CHECK(it != sessions_.end());
+    sessions_.erase(it);
+
+    checkShutdownStatus_();
 }
 
 void Server::afterConstruct_(shared_ptr<Server> self) {
-    CEF_REQUIRE_UI_THREAD();
     httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);
+}
+
+void Server::checkShutdownStatus_() {
+    if(
+        state_ == ShutdownPending &&
+        httpServer_->isShutdownComplete() &&
+        sessions_.empty()
+    ) {
+        state_ = ShutdownComplete;
+        LOG(INFO) << "Server shutdown complete";
+        postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
+    }
 }

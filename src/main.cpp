@@ -15,7 +15,7 @@ public:
     AppServerEventHandler(CKey) {}
 
     virtual void onServerShutdownComplete() override {
-        LOG(INFO) << "Server shutdown complete, quitting CEF message loop";
+        LOG(INFO) << "Quitting CEF message loop";
         CefQuitMessageLoop();
     }
 };

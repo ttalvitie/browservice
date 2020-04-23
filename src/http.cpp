@@ -176,6 +176,7 @@ public:
         const std::string& listenSockAddr
     )
         : eventHandler_(eventHandler),
+          state_(Running),
           socketAddress_(listenSockAddr),
           serverSocket_(socketAddress_),
           httpServer_(
@@ -183,28 +184,31 @@ public:
               threadPool_,
               serverSocket_,
               new Poco::Net::HTTPServerParams()
-          ),
-          shutdownStarted_(false),
-          shutdownComplete_(false)
+          )
     {
         LOG(INFO) << "HTTP server listening to " << listenSockAddr;
         httpServer_.start();
     }
     ~Impl() {
-        CHECK(shutdownComplete_);
+        CHECK(state_ == ShutdownComplete);
     }
 
     void shutdown() {
         CEF_REQUIRE_UI_THREAD();
-        if(shutdownStarted_) {
+        
+        if(state_ != Running) {
             return;
         }
-        shutdownStarted_ = true;
+        LOG(INFO) << "Starting HTTP server shutdown";
+        state_ = ShutdownPending;
+        
         shared_ptr<Impl> self = shared_from_this();
         thread stopThread([self{move(self)}]() {
             self->httpServer_.stopAll(false);
             postTask([self{move(self)}]() {
-                self->shutdownComplete_ = true;
+                CHECK(self->state_ == ShutdownPending);
+                self->state_ = ShutdownComplete;
+                LOG(INFO) << "HTTP server shutdown complete";
                 if(auto eventHandler = self->eventHandler_.lock()) {
                     eventHandler->onHTTPServerShutdownComplete();
                 }
@@ -215,17 +219,18 @@ public:
 
     bool isShutdownComplete() {
         CEF_REQUIRE_UI_THREAD();
-        return shutdownComplete_;
+        return state_ == ShutdownComplete;
     }
 
 private:
     weak_ptr<HTTPServerEventHandler> eventHandler_;
+
+    enum {Running, ShutdownPending, ShutdownComplete} state_;
+
     Poco::ThreadPool threadPool_;
     Poco::Net::SocketAddress socketAddress_;
     Poco::Net::ServerSocket serverSocket_;
     Poco::Net::HTTPServer httpServer_;
-    bool shutdownStarted_;
-    bool shutdownComplete_;
 };
 
 HTTPServer::HTTPServer(CKey,
