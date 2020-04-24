@@ -14,6 +14,7 @@
 #include <set>
 #include <sstream>
 #include <thread>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -26,6 +27,7 @@ using std::cerr;
 using std::cout;
 using std::declval;
 using std::enable_shared_from_this;
+using std::fill;
 using std::forward;
 using std::function;
 using std::future;
@@ -54,6 +56,8 @@ using std::string;
 using std::stringstream;
 using std::swap;
 using std::thread;
+using std::tie;
+using std::tuple;
 using std::uniform_int_distribution;
 using std::unique_ptr;
 using std::vector;

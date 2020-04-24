@@ -199,7 +199,7 @@ public:
         if(state_ != Running) {
             return;
         }
-        LOG(INFO) << "Starting HTTP server shutdown";
+        LOG(INFO) << "Shutting down HTTP server";
         state_ = ShutdownPending;
         
         shared_ptr<Impl> self = shared_from_this();

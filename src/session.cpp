@@ -1,7 +1,9 @@
 #include "session.hpp"
 
 #include "html.hpp"
+#include "image_compressor.hpp"
 #include "timeout.hpp"
+#include "root_widget.hpp"
 
 #include "include/cef_client.h"
 
@@ -13,6 +15,7 @@ mt19937 sessionIDRNG(random_device{}());
 regex mainPathRegex("/[0-9]+/");
 regex prevPathRegex("/[0-9]+/prev/");
 regex nextPathRegex("/[0-9]+/next/");
+regex imagePathRegex("/[0-9]+/image/");
 
 }
 
@@ -120,7 +123,9 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
 
     inactivityTimeout_ = Timeout::create(60000);
 
-    // Browser is created in afterConstruct_
+    imageCompressor_ = ImageCompressor::create(3000);
+
+    // Initialization is finalized in afterConstruct_
 }
 
 Session::~Session() {
@@ -156,6 +161,11 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
     smatch match;
 
+    if(method == "GET" && regex_match(path, match, imagePathRegex)) {
+        imageCompressor_->sendCompressedImageNow(request);
+        return;
+    }
+
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
         if(preMainVisited_) {
             request->sendHTMLResponse(200, writeMainHTML, {id_});
@@ -165,6 +175,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         }
         return;
     }
+
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
         if(prePrevVisited_) {
             request->sendHTMLResponse(200, writePrevHTML, {id_});
@@ -174,6 +185,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         }
         return;
     }
+
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
         request->sendHTMLResponse(200, writeNextHTML, {id_});
         return;
@@ -183,10 +195,21 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
 }
 
 uint64_t Session::id() {
+    CEF_REQUIRE_UI_THREAD();
     return id_;
 }
 
+void Session::onWidgetViewDirty() {
+    CEF_REQUIRE_UI_THREAD();
+
+    rootWidget_->render();
+    LOG(INFO) << "Root widget rendered";
+}
+
 void Session::afterConstruct_(shared_ptr<Session> self) {
+    rootWidget_ = RootWidget::create(self);
+    rootWidget_->setViewport(ImageSlice::createImage(800, 600));
+
     CefRefPtr<CefClient> client = new Client(self);
 
     CefWindowInfo windowInfo;

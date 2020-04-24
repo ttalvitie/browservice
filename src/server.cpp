@@ -21,6 +21,7 @@ void Server::shutdown() {
 
     if(state_ == Running) {
         state_ = ShutdownPending;
+        LOG(INFO) << "Shutting down server";
 
         httpServer_->shutdown();
 
