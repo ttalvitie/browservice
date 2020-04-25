@@ -1,8 +1,63 @@
 <html>
 <head>
 <title>BaaS</title>
+<style>
+body {
+    overflow: hidden;
+}
+img {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+
+    image-rendering: optimizeSpeed;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
+    image-rendering: optimize-contrast;
+    -ms-interpolation-mode: nearest-neighbor;
+}
+</style>
+<script type="text/javascript">
+window.onload = function() {
+
+var imgIdx = 0;
+
+var img1 = {};
+var img2 = {};
+function setupImg(img, nextImg, elem) {
+    img.elem = elem;
+
+    img.load = function() {
+        var done = false;
+        img.elem.onload = function() {
+            if(done) return;
+            done = true;
+            img.elem.style.zIndex = 3;
+            nextImg.elem.style.zIndex = 2;
+            nextImg.load();
+        };
+        img.elem.src =
+            "/%-sessionID-%/image/" +
+            "%-mainIdx-%/" +
+            (++imgIdx) + "/" +
+            "0/" +
+            document.body.clientWidth + "/" +
+            document.body.clientHeight + "/";
+    };
+}
+
+setupImg(img1, img2, document.images[0]);
+setupImg(img2, img1, document.images[1]);
+
+img1.load();
+
+};
+</script>
 </head>
 <body>
-%-sessionID-%
+<img>
+<img>
 </body>
 </html>

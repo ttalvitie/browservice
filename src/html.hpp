@@ -9,6 +9,7 @@ void writeNewSessionHTML(ostream& out, const NewSessionHTMLData& data);
 
 struct MainHTMLData {
     uint64_t sessionID;
+    uint64_t mainIdx;
 };
 void writeMainHTML(ostream& out, const MainHTMLData& data);
 

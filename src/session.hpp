@@ -55,6 +55,15 @@ private:
     bool prePrevVisited_;
     bool preMainVisited_;
 
+    // How many times the main page has been requested. The main page mentions
+    // its index to all the requests it makes, and we discard all the requests
+    // that are not from the newest main page.
+    uint64_t curMainIdx_;
+
+    // Latest image index. We discard image requests that do not have a higher
+    // image index to avoid request reordering.
+    uint64_t curImgIdx_;
+
     enum {Pending, Open, Closing, Closed} state_;
 
     // If true, browser should close as soon as it is opened

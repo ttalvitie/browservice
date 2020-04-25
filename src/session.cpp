@@ -16,7 +16,7 @@ mt19937 sessionIDRNG(random_device{}());
 regex mainPathRegex("/[0-9]+/");
 regex prevPathRegex("/[0-9]+/prev/");
 regex nextPathRegex("/[0-9]+/next/");
-regex imagePathRegex("/[0-9]+/image/([0-9]+)/([0-9]+)/");
+regex imagePathRegex("/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/");
 
 }
 
@@ -95,6 +95,9 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
     prePrevVisited_ = false;
     preMainVisited_ = false;
 
+    curMainIdx_ = 0;
+    curImgIdx_ = 0;
+
     state_ = Pending;
 
     closeOnOpen_ = false;
@@ -148,20 +151,34 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        CHECK(match.size() == 3);
-        optional<int> width = parseString<int>(match[1]);
-        optional<int> height = parseString<int>(match[2]);
+        CHECK(match.size() == 6);
+        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
+        optional<uint64_t> imgIdx = parseString<uint64_t>(match[2]);
+        optional<int> immediate = parseString<int>(match[3]);
+        optional<int> width = parseString<int>(match[4]);
+        optional<int> height = parseString<int>(match[5]);
 
-        if(width && height) {
-            updateRootViewportSize_(*width, *height);
-            imageCompressor_->sendCompressedImageWait(request);
+        if(mainIdx && imgIdx && immediate && width && height) {
+            if(*mainIdx != curMainIdx_ || *imgIdx <= curImgIdx_) {
+                request->sendTextResponse(400, "ERROR: Outdated request");
+            } else {
+                curImgIdx_ = *imgIdx;
+                updateRootViewportSize_(*width, *height);
+                if(*immediate) {
+                    imageCompressor_->sendCompressedImageNow(request);
+                } else {
+                    imageCompressor_->sendCompressedImageWait(request);
+                }
+            }
             return;
         }
     }
 
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
         if(preMainVisited_) {
-            request->sendHTMLResponse(200, writeMainHTML, {id_});
+            ++curMainIdx_;
+            curImgIdx_ = 0;
+            request->sendHTMLResponse(200, writeMainHTML, {id_, curMainIdx_});
         } else {
             request->sendHTMLResponse(200, writePreMainHTML, {id_});
             preMainVisited_ = true;
@@ -215,6 +232,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
         windowInfo,
         client,
         "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+//        "https://animejs.com",
         browserSettings,
         nullptr,
         nullptr
