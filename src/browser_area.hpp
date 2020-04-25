@@ -19,7 +19,7 @@ public:
     CefRefPtr<CefRenderHandler> createCefRenderHandler();
 
     // Sets the browser that will be kept up to date about size changes of
-    // this widget
+    // this widget. The browser can be unset by passing a null pointer.
     void setBrowser(CefRefPtr<CefBrowser> browser);
 
 private:

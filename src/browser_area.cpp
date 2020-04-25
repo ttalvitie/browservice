@@ -2,16 +2,6 @@
 
 #include "include/cef_render_handler.h"
 
-namespace {
-
-const int MinWidth = 64;
-const int MinHeight = 64;
-
-const int MaxWidth = 4096;
-const int MaxHeight = 4096;
-
-}
-
 class BrowserArea::RenderHandler : public CefRenderHandler {
 public:
     RenderHandler(shared_ptr<BrowserArea> browserArea)
@@ -23,8 +13,8 @@ public:
         CEF_REQUIRE_UI_THREAD();
 
         ImageSlice viewport = browserArea_->getViewport();
-        int width = max(min(viewport.width(), MaxWidth), MinWidth);
-        int height = max(min(viewport.height(), MaxHeight), MinHeight);
+        int width = max(min(viewport.width(), 4096), 64);
+        int height = max(min(viewport.height(), 4096), 64);
 
         rect.Set(0, 0, width, height);
     }

@@ -16,7 +16,7 @@ mt19937 sessionIDRNG(random_device{}());
 regex mainPathRegex("/[0-9]+/");
 regex prevPathRegex("/[0-9]+/prev/");
 regex nextPathRegex("/[0-9]+/next/");
-regex imagePathRegex("/[0-9]+/image/");
+regex imagePathRegex("/[0-9]+/image/([0-9]+)/([0-9]+)/");
 
 }
 
@@ -48,6 +48,7 @@ public:
 
         session_->browser_ = browser;
         session_->state_ = Open;
+        session_->rootWidget_->browserArea()->setBrowser(browser);
 
         if(session_->closeOnOpen_) {
             session_->close();
@@ -59,6 +60,7 @@ public:
 
         session_->state_ = Closed;
         session_->browser_ = nullptr;
+        session_->rootWidget_->browserArea()->setBrowser(nullptr);
         session_->imageCompressor_->flush();
 
         LOG(INFO) << "Session " << session_->id_ << " closed";
@@ -100,6 +102,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
     inactivityTimeout_ = Timeout::create(60000);
 
     imageCompressor_ = ImageCompressor::create(3000);
+
+    rootViewport_ = ImageSlice::createImage(800, 600);
 
     // Initialization is finalized in afterConstruct_
 }
@@ -144,8 +148,15 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        imageCompressor_->sendCompressedImageWait(request);
-        return;
+        CHECK(match.size() == 3);
+        optional<int> width = parseString<int>(match[1]);
+        optional<int> height = parseString<int>(match[2]);
+
+        if(width && height) {
+            updateRootViewportSize_(*width, *height);
+            imageCompressor_->sendCompressedImageWait(request);
+            return;
+        }
     }
 
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
@@ -185,12 +196,12 @@ void Session::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
 
     rootWidget_->render();
-    imageCompressor_->updateImage(rootWidget_->getViewport());
+    imageCompressor_->updateImage(rootViewport_);
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {
     rootWidget_ = RootWidget::create(self);
-    rootWidget_->setViewport(ImageSlice::createImage(800, 600));
+    rootWidget_->setViewport(rootViewport_);
 
     CefRefPtr<CefClient> client = new Client(self);
 
@@ -232,5 +243,17 @@ void Session::updateInactivityTimeout_() {
                 }
             }
         });
+    }
+}
+
+void Session::updateRootViewportSize_(int width, int height) {
+    CEF_REQUIRE_UI_THREAD();
+
+    width = max(min(width, 4096), 64);
+    height = max(min(height, 4096), 64);
+
+    if(rootViewport_.width() != width || rootViewport_.height() != height) {
+        rootViewport_ = ImageSlice::createImage(width, height);
+        rootWidget_->setViewport(rootViewport_);
     }
 }

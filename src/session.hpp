@@ -1,6 +1,7 @@
 #pragma once
 
 #include "http.hpp"
+#include "image_slice.hpp"
 #include "widget.hpp"
 
 class SessionEventHandler {
@@ -43,6 +44,10 @@ private:
 
     void updateInactivityTimeout_();
 
+    // Change root viewport size if it is different than currently. Clamps
+    // dimensions to sane interval.
+    void updateRootViewportSize_(int width, int height);
+
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
@@ -59,6 +64,7 @@ private:
 
     shared_ptr<ImageCompressor> imageCompressor_;
 
+    ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
 
     // Only available in Open state
