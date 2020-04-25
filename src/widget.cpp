@@ -11,9 +11,8 @@ void Widget::setViewport(ImageSlice viewport) {
     CEF_REQUIRE_UI_THREAD();
 
     viewport_ = viewport;
-    signalViewDirty_();
-
     widgetViewportUpdated_();
+    signalViewDirty_();
 }
 
 ImageSlice Widget::getViewport() {

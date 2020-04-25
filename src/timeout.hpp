@@ -16,7 +16,7 @@ public:
     void set(Func func);
 
     // If the timeout is active, stop it. If runFunc is true, the associated
-    // function is called.
+    // function is called immediately.
     void clear(bool runFunc);
 
     // Returns true if the timeout is active, i.e. a function has been scheduled

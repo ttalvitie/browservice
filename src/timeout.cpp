@@ -2,14 +2,6 @@
 
 #include "include/wrapper/cef_closure_task.h"
 
-namespace {
-
-void callFunction(function<void()> func) {
-    func();
-};
-
-}
-
 Timeout::Timeout(CKey, int64_t delayMs) {
     CEF_REQUIRE_UI_THREAD();
 
@@ -34,7 +26,11 @@ void Timeout::set(Func func) {
         function<void()> task = [self]() {
             self->delayedTask_();
         };
-        CefPostDelayedTask(TID_UI, base::Bind(callFunction, task), delayMs_);
+
+        void (*call)(function<void()>) = [](function<void()> func) {
+            func();
+        };
+        CefPostDelayedTask(TID_UI, base::Bind(call, task), delayMs_);
     }
 }
 
@@ -88,6 +84,10 @@ void Timeout::delayedTask_() {
         function<void()> task = [self]() {
             self->delayedTask_();
         };
-        CefPostDelayedTask(TID_UI, base::Bind(callFunction, task), addDelayMs);
+
+        void (*call)(function<void()>) = [](function<void()> func) {
+            func();
+        };
+        CefPostDelayedTask(TID_UI, base::Bind(call, task), addDelayMs);
     }
 }

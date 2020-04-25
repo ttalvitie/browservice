@@ -33,5 +33,7 @@ void RootWidget::widgetViewportUpdated_() {
 
 void RootWidget::widgetRender_() {
     CEF_REQUIRE_UI_THREAD();
-    LOG(INFO) << "Rendering root widget";
+
+    controlBar_->render();
+    browserArea_->render();
 }

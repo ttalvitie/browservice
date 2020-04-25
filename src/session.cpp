@@ -57,6 +57,7 @@ public:
 
         session_->state_ = Closed;
         session_->browser_ = nullptr;
+        session_->imageCompressor_->flush();
 
         LOG(INFO) << "Session " << session_->id_ << " closed";
 
@@ -142,6 +143,7 @@ void Session::close() {
         LOG(INFO) << "Closing session " << id_ << " requested";
         state_ = Closing;
         browser_->GetHost()->CloseBrowser(true);
+        imageCompressor_->flush();
     } else if(state_ == Pending) {
         LOG(INFO)
             << "Closing session " << id_ << " requested "
@@ -155,6 +157,11 @@ void Session::close() {
 void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     CEF_REQUIRE_UI_THREAD();
 
+    if(state_ == Closing || state_ == Closed) {
+        request->sendTextResponse(503, "ERROR: Browser session has been closed");
+        return;
+    }
+
     updateInactivityTimeout_();
 
     string method = request->method();
@@ -162,7 +169,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        imageCompressor_->sendCompressedImageNow(request);
+        imageCompressor_->sendCompressedImageWait(request);
         return;
     }
 
@@ -202,8 +209,10 @@ uint64_t Session::id() {
 void Session::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
 
+    LOG(INFO) << "Session GOT SIGNAL";
+
     rootWidget_->render();
-    LOG(INFO) << "Root widget rendered";
+    imageCompressor_->updateImage(rootWidget_->getViewport());
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {

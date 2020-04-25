@@ -30,7 +30,9 @@ protected:
     // Called when widget should immediately ensure that it has been rendered
     // to the viewport (available through getViewport(), changes notified
     // through widgetViewportUpdated_ prior to this call). The widget is also
-    // allowed to render to the viewport outside this function.
+    // allowed to render to the viewport outside this function; however, it
+    // is possible that some other widget (such as the parent) is drawing to
+    // the same viewport.
     virtual void widgetRender_() {};
 
 private:
