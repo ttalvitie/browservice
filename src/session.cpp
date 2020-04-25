@@ -1,5 +1,6 @@
 #include "session.hpp"
 
+#include "browser_area.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
 #include "timeout.hpp"
@@ -21,12 +22,13 @@ regex imagePathRegex("/[0-9]+/image/");
 
 class Session::Client :
     public CefClient,
-    public CefLifeSpanHandler,
-    public CefRenderHandler
+    public CefLifeSpanHandler
 {
 public:
     Client(shared_ptr<Session> session) {
         session_ = session;
+        renderHandler_ =
+            session->rootWidget_->browserArea()->createCefRenderHandler();
     }
 
     // CefClient:
@@ -34,7 +36,7 @@ public:
         return this;
     }
     virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override {
-        return this;
+        return renderHandler_;
     }
 
     // CefLifeSpanHandler:
@@ -51,7 +53,7 @@ public:
             session_->close();
         }
     }
-    virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override {
+    virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
         CEF_REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Open || session_->state_ == Closing);
 
@@ -65,37 +67,10 @@ public:
         session_->updateInactivityTimeout_();
     }
 
-    // CefRenderHandler:
-    virtual void GetViewRect(CefRefPtr<CefBrowser> browser, CefRect& rect) override {
-        CEF_REQUIRE_UI_THREAD();
-
-        rect.Set(0, 0, 800, 600);
-    }
-    virtual bool GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo& info) override {
-        CEF_REQUIRE_UI_THREAD();
-
-        CefRect rect;
-        GetViewRect(browser, rect);
-
-        info.device_scale_factor = 1.0;
-        info.rect = rect;
-        info.available_rect = rect;
-
-        return true;
-    }
-    virtual void OnPaint(
-        CefRefPtr<CefBrowser> browser,
-        PaintElementType type,
-        const RectList& dirtyRects,
-        const void* buffer,
-        int bufWidth,
-        int bufHeight
-    ) override {
-        CEF_REQUIRE_UI_THREAD();
-    }
-
 private:
     shared_ptr<Session> session_;
+
+    CefRefPtr<CefRenderHandler> renderHandler_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };
@@ -208,8 +183,6 @@ uint64_t Session::id() {
 
 void Session::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
-
-    LOG(INFO) << "Session GOT SIGNAL";
 
     rootWidget_->render();
     imageCompressor_->updateImage(rootWidget_->getViewport());

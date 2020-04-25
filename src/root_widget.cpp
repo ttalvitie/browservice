@@ -10,6 +10,16 @@ RootWidget::RootWidget(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler)
     // Initialization is finalized in afterConstruct_
 }
 
+shared_ptr<ControlBar> RootWidget::controlBar() {
+    CEF_REQUIRE_UI_THREAD();
+    return controlBar_;
+}
+
+shared_ptr<BrowserArea> RootWidget::browserArea() {
+    CEF_REQUIRE_UI_THREAD();
+    return browserArea_;
+}
+
 void RootWidget::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     signalViewDirty_();

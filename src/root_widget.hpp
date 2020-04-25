@@ -13,6 +13,9 @@ SHARED_ONLY_CLASS(RootWidget);
 public:
     RootWidget(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler);
 
+    shared_ptr<ControlBar> controlBar();
+    shared_ptr<BrowserArea> browserArea();
+
     // WidgetEventHandler:
     virtual void onWidgetViewDirty() override;
 

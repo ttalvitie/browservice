@@ -59,7 +59,7 @@ private:
 
     shared_ptr<ImageCompressor> imageCompressor_;
 
-    shared_ptr<Widget> rootWidget_;
+    shared_ptr<RootWidget> rootWidget_;
 
     // Only available in Open state
     CefRefPtr<CefBrowser> browser_;
