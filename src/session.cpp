@@ -102,9 +102,9 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
 
     closeOnOpen_ = false;
 
-    inactivityTimeout_ = Timeout::create(60000);
+    inactivityTimeout_ = Timeout::create(30000);
 
-    imageCompressor_ = ImageCompressor::create(3000);
+    imageCompressor_ = ImageCompressor::create(2000);
 
     rootViewport_ = ImageSlice::createImage(800, 600);
 

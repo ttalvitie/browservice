@@ -120,5 +120,7 @@ void BrowserArea::widgetViewportUpdated_() {
 
     if(browser_) {
         browser_->GetHost()->WasResized();
+        browser_->GetHost()->Invalidate(PET_VIEW);
+        browser_->GetHost()->Invalidate(PET_POPUP);
     }
 }

@@ -60,6 +60,7 @@ public:
                     response.add("Pragma", "no-cache");
                     response.add("Expires", "0");
                 }
+                response.setStatus((Poco::Net::HTTPResponse::HTTPStatus)status);
                 body(response.send());
             }
         );

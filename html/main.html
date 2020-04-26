@@ -22,6 +22,9 @@ img {
 <script type="text/javascript">
 window.onload = function() {
 
+var retryInterval = 3000;
+var maxRetries = 10;
+
 var imgIdx = 0;
 
 var img1 = {};
@@ -29,29 +32,95 @@ var img2 = {};
 function setupImg(img, nextImg, elem) {
     img.elem = elem;
 
-    img.load = function() {
-        var done = false;
-        img.elem.onload = function() {
-            if(done) return;
-            done = true;
-            img.elem.style.zIndex = 3;
-            nextImg.elem.style.zIndex = 2;
-            nextImg.load();
-        };
+    var imgLoaded;
+    var attempts;
+    var denyNewEventNotify = true;
+    var active = false;
+
+    var reloadIdx = 0;
+    var reloadTimeout = null;
+    function clearReloadTimeout() {
+        ++reloadIdx;
+        if(reloadTimeout) {
+            clearTimeout(reloadTimeout);
+        }
+    };
+
+    img.elem.onload = function() {
+        if(!active) return;
+        active = false;
+        clearReloadTimeout();
+
+        img.elem.style.zIndex = 3;
+        nextImg.elem.style.zIndex = 2;
+
+        nextImg.load();
+    };
+
+    function reload() {
+        if(!active) return;
+
+        if(attempts > maxRetries) {
+            clearReloadTimeout();
+            document.title = "BaaS: Connection lost";
+            window.status = "BaaS: Connection lost";
+            active = false;
+            return;
+        }
+        ++attempts;
+
+        var immediate = ((imgLoaded || imgIdx == 0) ? 1 : 0);
+        imgLoaded = true;
         img.elem.src =
             "/%-sessionID-%/image/" +
             "%-mainIdx-%/" +
             (++imgIdx) + "/" +
-            "0/" +
+            immediate + "/" +
             document.body.clientWidth + "/" +
             document.body.clientHeight + "/";
+
+        var myReloadIdx = ++reloadIdx;
+        reloadTimeout = setTimeout(function() {
+            if(reloadIdx == myReloadIdx) {
+                reload();
+            }
+        }, retryInterval);
+    }
+
+    img.newEventNotify = function() {
+        if(!active) return;
+        if(denyNewEventNotify) return;
+        denyNewEventNotify = true;
+        --attempts;
+        clearReloadTimeout();
+        reload();
+    };
+
+    img.load = function() {
+        if(active) return;
+
+        imgLoaded = false;
+        attempts = 0;
+        denyNewEventNotify = false;
+        active = true;
+
+        reload();
     };
 }
 
 setupImg(img1, img2, document.images[0]);
 setupImg(img2, img1, document.images[1]);
 
+function newEventNotify() {
+    img1.newEventNotify();
+    img2.newEventNotify();
+};
+
 img1.load();
+
+window.onresize = function() {
+    newEventNotify();
+};
 
 };
 </script>
