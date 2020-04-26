@@ -25,7 +25,28 @@ window.onload = function() {
 var retryInterval = 3000;
 var maxRetries = 10;
 
+var useOnMouseWheel = false;
+var fixMousePosition = false;
+var bodyOverflowHiddenNotSupported = false;
+(function() {
+    var ua = window.navigator.userAgent;
+    var msie = ua.indexOf('MSIE ');
+    if(msie > 0) {
+        var ver = parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        if(ver <= 8) {
+            useOnMouseWheel = true;
+            fixMousePosition = true;
+        }
+        if(ver <= 5) {
+            bodyOverflowHiddenNotSupported = true;
+        }
+    }
+})();
+
 var imgIdx = 0;
+
+var eventQueue = [];
+var eventQueueStartIdx = 0;
 
 var img1 = {};
 var img2 = {};
@@ -34,6 +55,7 @@ function setupImg(img, nextImg, elem) {
 
     var imgLoaded;
     var attempts;
+    var eventIdxIncrement;
     var denyNewEventNotify = true;
     var active = false;
 
@@ -50,6 +72,13 @@ function setupImg(img, nextImg, elem) {
         if(!active) return;
         active = false;
         clearReloadTimeout();
+
+        eventQueueStartIdx += eventIdxIncrement;
+        var oldEventQueue = eventQueue;
+        eventQueue = [];
+        for(var i = eventIdxIncrement; i < oldEventQueue.length; ++i) {
+            eventQueue[eventQueue.length] = oldEventQueue[i];
+        }
 
         img.elem.style.zIndex = 3;
         nextImg.elem.style.zIndex = 2;
@@ -71,13 +100,18 @@ function setupImg(img, nextImg, elem) {
 
         var immediate = ((imgLoaded || imgIdx == 0) ? 1 : 0);
         imgLoaded = true;
-        img.elem.src =
+        imgPath =
             "/%-sessionID-%/image/" +
             "%-mainIdx-%/" +
             (++imgIdx) + "/" +
             immediate + "/" +
             document.body.clientWidth + "/" +
-            document.body.clientHeight + "/";
+            document.body.clientHeight + "/" +
+            eventQueueStartIdx + "/";
+        for(var i = 0; i < eventQueue.length; ++i) {
+            imgPath += eventQueue[i] + "/";
+        }
+        img.elem.src = imgPath;
 
         var myReloadIdx = ++reloadIdx;
         reloadTimeout = setTimeout(function() {
@@ -101,6 +135,7 @@ function setupImg(img, nextImg, elem) {
 
         imgLoaded = false;
         attempts = 0;
+        eventIdxIncrement = eventQueue.length;
         denyNewEventNotify = false;
         active = true;
 
@@ -110,16 +145,53 @@ function setupImg(img, nextImg, elem) {
 
 setupImg(img1, img2, document.images[0]);
 setupImg(img2, img1, document.images[1]);
+img1.load();
 
 function newEventNotify() {
     img1.newEventNotify();
     img2.newEventNotify();
-};
+}
 
-img1.load();
+function putEvent(event) {
+    eventQueue[eventQueue.length] = event;
+    newEventNotify();
+}
 
 window.onresize = function() {
     newEventNotify();
+};
+
+var mouseX = 0;
+var mouseY = 0;
+function updateMousePos(event) {
+    mouseX = event.clientX | 0;
+    mouseY = event.clientY | 0;
+    if(fixMousePosition) {
+        mouseX -= 2;
+        mouseY -= 2;
+    }
+}
+
+document.onmousedown = function(event) {
+    if(!event) event = window.event;
+    updateMousePos(event);
+    putEvent('MOUSEDOWN_' + mouseX + '_' + mouseY);
+};
+
+document.onmouseup = function(event) {
+    if(!event) event = window.event;
+    updateMousePos(event);
+    putEvent('MOUSEUP_' + mouseX + '_' + mouseY);
+};
+
+document.ondblclick = function(event) {
+    if(!event) event = window.event;
+    updateMousePos(event);
+    putEvent('MOUSEDBLCLICK_' + mouseX + '_' + mouseY);
+};
+
+document.ondragstart = function() {
+    return false;
 };
 
 };

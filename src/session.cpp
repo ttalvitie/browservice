@@ -16,7 +16,9 @@ mt19937 sessionIDRNG(random_device{}());
 regex mainPathRegex("/[0-9]+/");
 regex prevPathRegex("/[0-9]+/prev/");
 regex nextPathRegex("/[0-9]+/next/");
-regex imagePathRegex("/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/");
+regex imagePathRegex(
+    "/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
+);
 
 }
 
@@ -97,6 +99,7 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
 
     curMainIdx_ = 0;
     curImgIdx_ = 0;
+    curEventIdx_ = 0;
 
     state_ = Pending;
 
@@ -151,17 +154,19 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        CHECK(match.size() == 6);
+        CHECK(match.size() >= 8);
         optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
         optional<uint64_t> imgIdx = parseString<uint64_t>(match[2]);
         optional<int> immediate = parseString<int>(match[3]);
         optional<int> width = parseString<int>(match[4]);
         optional<int> height = parseString<int>(match[5]);
+        optional<uint64_t> startEventIdx = parseString<uint64_t>(match[6]);
 
-        if(mainIdx && imgIdx && immediate && width && height) {
+        if(mainIdx && imgIdx && immediate && width && height && startEventIdx) {
             if(*mainIdx != curMainIdx_ || *imgIdx <= curImgIdx_) {
                 request->sendTextResponse(400, "ERROR: Outdated request");
             } else {
+                handleEvents_(*startEventIdx, match[7].first, match[7].second);
                 curImgIdx_ = *imgIdx;
                 updateRootViewportSize_(*width, *height);
                 if(*immediate) {
@@ -178,6 +183,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         if(preMainVisited_) {
             ++curMainIdx_;
             curImgIdx_ = 0;
+            curEventIdx_ = 0;
             request->sendHTMLResponse(200, writeMainHTML, {id_, curMainIdx_});
         } else {
             request->sendHTMLResponse(200, writePreMainHTML, {id_});
@@ -274,4 +280,101 @@ void Session::updateRootViewportSize_(int width, int height) {
         rootViewport_ = ImageSlice::createImage(width, height);
         rootWidget_->setViewport(rootViewport_);
     }
+}
+
+void Session::handleEvents_(
+    uint64_t startIdx,
+    string::const_iterator begin,
+    string::const_iterator end
+) {
+    uint64_t eventIdx = startIdx;
+    if(eventIdx > curEventIdx_) {
+        LOG(WARNING) << eventIdx - curEventIdx_ << " events skipped in session " << id_;
+        curEventIdx_ = eventIdx;
+    }
+
+    string::const_iterator eventEnd = begin;
+    while(true) {
+        string::const_iterator eventBegin = eventEnd;
+        while(true) {
+            if(eventEnd >= end) {
+                return;
+            }
+            if(*eventEnd == '/') {
+                ++eventEnd;
+                break;
+            }
+            ++eventEnd;
+        }
+
+        if(eventIdx == curEventIdx_) {
+            handleEvent_(eventBegin, eventEnd);
+            ++eventIdx;
+            curEventIdx_ = eventIdx;
+        } else {
+            ++eventIdx;
+        }
+    }
+}
+
+void Session::handleEvent_(string::const_iterator begin, string::const_iterator end) {
+    CHECK(begin < end && *(end - 1) == '/');
+
+    string name;
+
+    const int MaxArgCount = 2;
+    int args[MaxArgCount];
+    int argCount = 0;
+
+    string::const_iterator pos = begin;
+    while(*pos != '/' && *pos != '_') {
+        ++pos;
+    }
+    name = string(begin, pos);
+
+    bool ok = true;
+    if(*pos == '_') {
+        ++pos;
+        while(true) {
+            if(argCount == MaxArgCount) {
+                ok = false;
+                break;
+            }
+            string::const_iterator argStart = pos;
+            while(*pos != '/' && *pos != '_') {
+                ++pos;
+            }
+            optional<int> arg = parseString<int>(argStart, pos);
+            if(!arg) {
+                ok = false;
+                break;
+            }
+            args[argCount++] = *arg;
+            if(*pos == '/') {
+                break;
+            }
+            ++pos;
+        }
+    }
+
+    if(!ok || !handleEvent_(name, argCount, args)) {
+        LOG(WARNING) << "Could not parse event '" << string(begin, end) << "' in session " << id_;
+    }
+}
+
+bool Session::handleEvent_(const string& name, int argCount, int* args) {
+    if(name == "MOUSEDOWN" && argCount == 2) {
+        LOG(INFO) << "Mouse down at (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+    if(name == "MOUSEUP" && argCount == 2) {
+        LOG(INFO) << "Mouse up at (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+    if(name == "MOUSEDBLCLICK" && argCount == 2) {
+        LOG(INFO) << "Mouse doubleclick at (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+
+    return false;
 }

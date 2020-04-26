@@ -48,6 +48,14 @@ private:
     // dimensions to sane interval.
     void updateRootViewportSize_(int width, int height);
 
+    void handleEvents_(
+        uint64_t startIdx,
+        string::const_iterator begin,
+        string::const_iterator end
+    );
+    void handleEvent_(string::const_iterator begin, string::const_iterator end);
+    bool handleEvent_(const string& name, int argCount, int* args);
+
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
@@ -63,6 +71,11 @@ private:
     // Latest image index. We discard image requests that do not have a higher
     // image index to avoid request reordering.
     uint64_t curImgIdx_;
+
+    // How many events we have handled for the current main index. We keep track
+    // of this to avoid replaying events; the client may send the same events
+    // twice as it cannot know for sure which requests make it through.
+    uint64_t curEventIdx_;
 
     enum {Pending, Open, Closing, Closed} state_;
 

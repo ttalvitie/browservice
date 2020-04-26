@@ -162,9 +162,17 @@ optional<T> parseString(const string& str) {
 
 template <typename T>
 optional<T> parseString(
+    string::const_iterator begin,
+    string::const_iterator end
+) {
+    return parseString<T>(string(begin, end));
+}
+
+template <typename T>
+optional<T> parseString(
     const pair<string::const_iterator, string::const_iterator>& str
 ) {
-    return parseString<T>(string(str.first, str.second));
+    return parseString<T>(str.first, str.second);
 }
 
 template <typename T>
