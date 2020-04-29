@@ -242,8 +242,8 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
     if(!CefBrowserHost::CreateBrowser(
         windowInfo,
         client,
-        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
-//        "https://animejs.com",
+//        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+        "https://animejs.com",
         browserSettings,
         nullptr,
         nullptr
@@ -327,7 +327,7 @@ void Session::handleEvent_(string::const_iterator begin, string::const_iterator 
 
     string name;
 
-    const int MaxArgCount = 2;
+    const int MaxArgCount = 3;
     int args[MaxArgCount];
     int argCount = 0;
 
@@ -368,16 +368,24 @@ void Session::handleEvent_(string::const_iterator begin, string::const_iterator 
 }
 
 bool Session::handleEvent_(const string& name, int argCount, int* args) {
-    if(name == "MOUSEDOWN" && argCount == 2) {
-        LOG(INFO) << "Mouse down at (" << args[0] << ", " << args[1] << ")";
+    if(name == "MDN" && argCount == 3) {
+        LOG(INFO) << "Mouse button " << args[2] << " down at (" << args[0] << ", " << args[1] << ")";
         return true;
     }
-    if(name == "MOUSEUP" && argCount == 2) {
-        LOG(INFO) << "Mouse up at (" << args[0] << ", " << args[1] << ")";
+    if(name == "MUP" && argCount == 3) {
+        LOG(INFO) << "Mouse button " << args[2] << " up at (" << args[0] << ", " << args[1] << ")";
         return true;
     }
-    if(name == "MOUSEDBLCLICK" && argCount == 2) {
+    if(name == "MDBL" && argCount == 2) {
         LOG(INFO) << "Mouse doubleclick at (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+    if(name == "MWH" && argCount == 3) {
+        LOG(INFO) << "Mouse wheel " << args[2] << " at (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+    if(name == "MMO" && argCount == 2) {
+        LOG(INFO) << "Mouse moved to (" << args[0] << ", " << args[1] << ")";
         return true;
     }
 

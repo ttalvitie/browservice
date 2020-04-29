@@ -48,6 +48,18 @@ var imgIdx = 0;
 var eventQueue = [];
 var eventQueueStartIdx = 0;
 
+var mouseMoved = false;
+var mouseX = 0;
+var mouseY = 0;
+function updateMousePos(event) {
+    mouseX = event.clientX | 0;
+    mouseY = event.clientY | 0;
+    if(fixMousePosition) {
+        mouseX -= 2;
+        mouseY -= 2;
+    }
+}
+
 var img1 = {};
 var img2 = {};
 function setupImg(img, nextImg, elem) {
@@ -56,6 +68,7 @@ function setupImg(img, nextImg, elem) {
     var imgLoaded;
     var attempts;
     var eventIdxIncrement;
+    var mouseMoveEventAdded;
     var denyNewEventNotify = true;
     var active = false;
 
@@ -98,6 +111,12 @@ function setupImg(img, nextImg, elem) {
         }
         ++attempts;
 
+        if(mouseMoved && !mouseMoveEventAdded) {
+            eventQueue[eventQueue.length] = 'MMO_' + mouseX + '_' + mouseY;
+            mouseMoved = false;
+            mouseMoveEventAdded = true;
+        }
+
         var immediate = ((imgLoaded || imgIdx == 0) ? 1 : 0);
         imgLoaded = true;
         imgPath =
@@ -136,6 +155,7 @@ function setupImg(img, nextImg, elem) {
         imgLoaded = false;
         attempts = 0;
         eventIdxIncrement = eventQueue.length;
+        mouseMoveEventAdded = false;
         denyNewEventNotify = false;
         active = true;
 
@@ -157,41 +177,72 @@ function putEvent(event) {
     newEventNotify();
 }
 
+function preventDefault(event) {
+    if(event.preventDefault) {
+        event.preventDefault();
+    } else {
+        event.returnValue = false;
+    }
+}
+
 window.onresize = function() {
     newEventNotify();
 };
 
-var mouseX = 0;
-var mouseY = 0;
-function updateMousePos(event) {
-    mouseX = event.clientX | 0;
-    mouseY = event.clientY | 0;
-    if(fixMousePosition) {
-        mouseX -= 2;
-        mouseY -= 2;
-    }
-}
-
 document.onmousedown = function(event) {
     if(!event) event = window.event;
     updateMousePos(event);
-    putEvent('MOUSEDOWN_' + mouseX + '_' + mouseY);
+    var button = event.button | 0;
+    if(button >= 0 && button <= 2) {
+        putEvent('MDN_' + mouseX + '_' + mouseY + '_' + button);
+    }
+    preventDefault(event);
 };
 
 document.onmouseup = function(event) {
     if(!event) event = window.event;
     updateMousePos(event);
-    putEvent('MOUSEUP_' + mouseX + '_' + mouseY);
+    var button = event.button | 0;
+    if(button >= 0 && button <= 2) {
+        putEvent('MUP_' + mouseX + '_' + mouseY + '_' + button);
+    }
+    preventDefault(event);
 };
 
 document.ondblclick = function(event) {
     if(!event) event = window.event;
     updateMousePos(event);
-    putEvent('MOUSEDBLCLICK_' + mouseX + '_' + mouseY);
+    putEvent('MDBL_' + mouseX + '_' + mouseY);
+    preventDefault(event);
 };
+
+document.onmousemove = function(event) {
+    if(!event) event = window.event;
+    updateMousePos(event);
+    if(!mouseMoved) {
+        mouseMoved = true;
+        newEventNotify();
+    }
+};
+
+if(useOnMouseWheel) {
+    document.onmousewheel = function(event) {
+        if(!event) event = window.event;
+        putEvent('MWH_' + mouseX + '_' + mouseY + '_' + (event.wheelDelta | 0));
+    };
+} else {
+    document.onwheel = function(event) {
+        putEvent('MWH_' + mouseX + '_' + mouseY + '_' + ((-30 * event.deltaY) | 0));
+    };
+}
 
 document.ondragstart = function() {
     return false;
+};
+
+document.oncontextmenu = function(event) {
+    if(!event) event = window.event;
+    preventDefault(event);
 };
 
 };
