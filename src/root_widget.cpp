@@ -3,8 +3,12 @@
 #include "control_bar.hpp"
 #include "browser_area.hpp"
 
-RootWidget::RootWidget(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler)
-    : Widget(widgetEventHandler)
+RootWidget::RootWidget(CKey,
+    weak_ptr<WidgetEventHandler> widgetEventHandler,
+    weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
+)
+    : Widget(widgetEventHandler),
+      browserAreaEventHandler_(browserAreaEventHandler)
 {
     CEF_REQUIRE_UI_THREAD();
     // Initialization is finalized in afterConstruct_
@@ -27,7 +31,8 @@ void RootWidget::onWidgetViewDirty() {
 
 void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {
     controlBar_ = ControlBar::create(self);
-    browserArea_ = BrowserArea::create(self);
+    browserArea_ = BrowserArea::create(self, browserAreaEventHandler_);
+    browserAreaEventHandler_.reset();
 }
 
 void RootWidget::widgetViewportUpdated_() {

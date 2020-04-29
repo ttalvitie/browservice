@@ -1,5 +1,6 @@
 #pragma once
 
+#include "browser_area.hpp"
 #include "http.hpp"
 #include "image_slice.hpp"
 #include "widget.hpp"
@@ -19,7 +20,9 @@ class CefBrowser;
 // for onSessionClosed event. 
 class Session :
     public WidgetEventHandler,
-    public enable_shared_from_this<Session> {
+    public BrowserAreaEventHandler,
+    public enable_shared_from_this<Session>
+{
 SHARED_ONLY_CLASS(Session);
 public:
     Session(CKey, weak_ptr<SessionEventHandler> eventHandler);
@@ -35,6 +38,9 @@ public:
 
     // WidgetEventHandler:
     virtual void onWidgetViewDirty() override;
+
+    // BrowserAreaEventHandler:
+    virtual void onBrowserAreaViewDirty() override;
 
 private:
     // Class that implements CefClient interfaces for this session

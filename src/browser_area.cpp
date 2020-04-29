@@ -82,7 +82,10 @@ public:
             }
 
             if(updated) {
-                browserArea_->signalViewDirty_();
+                postTask(
+                    browserArea_->eventHandler_,
+                    &BrowserAreaEventHandler::onBrowserAreaViewDirty
+                );
             }
         }
     }
@@ -93,8 +96,12 @@ private:
     IMPLEMENT_REFCOUNTING(RenderHandler);
 };
 
-BrowserArea::BrowserArea(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler)
-    : Widget(widgetEventHandler)
+BrowserArea::BrowserArea(CKey,
+    weak_ptr<WidgetEventHandler> widgetEventHandler,
+    weak_ptr<BrowserAreaEventHandler> eventHandler
+)
+    : Widget(widgetEventHandler),
+      eventHandler_(eventHandler)
 {
     CEF_REQUIRE_UI_THREAD();
 }

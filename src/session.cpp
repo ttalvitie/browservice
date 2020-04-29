@@ -222,8 +222,13 @@ void Session::onWidgetViewDirty() {
     imageCompressor_->updateImage(rootViewport_);
 }
 
+void Session::onBrowserAreaViewDirty() {
+    CEF_REQUIRE_UI_THREAD();
+    imageCompressor_->updateImage(rootViewport_);
+}
+
 void Session::afterConstruct_(shared_ptr<Session> self) {
-    rootWidget_ = RootWidget::create(self);
+    rootWidget_ = RootWidget::create(self, self);
     rootWidget_->setViewport(rootViewport_);
 
     CefRefPtr<CefClient> client = new Client(self);
