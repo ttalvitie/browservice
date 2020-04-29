@@ -27,6 +27,7 @@ var maxRetries = 10;
 
 var useOnMouseWheel = false;
 var fixMousePosition = false;
+var leftMouseButtonIs1 = false;
 var bodyOverflowHiddenNotSupported = false;
 (function() {
     var ua = window.navigator.userAgent;
@@ -36,6 +37,7 @@ var bodyOverflowHiddenNotSupported = false;
         if(ver <= 8) {
             useOnMouseWheel = true;
             fixMousePosition = true;
+            leftMouseButtonIs1 = true;
         }
         if(ver <= 5) {
             bodyOverflowHiddenNotSupported = true;
@@ -194,6 +196,9 @@ document.onmousedown = function(event) {
     updateMousePos(event);
     var button = event.button | 0;
     if(button >= 0 && button <= 2) {
+        if(leftMouseButtonIs1 && button == 1) {
+            button = 0;
+        }
         putEvent('MDN_' + mouseX + '_' + mouseY + '_' + button);
     }
     preventDefault(event);
@@ -204,6 +209,9 @@ document.onmouseup = function(event) {
     updateMousePos(event);
     var button = event.button | 0;
     if(button >= 0 && button <= 2) {
+        if(leftMouseButtonIs1 && button == 1) {
+            button = 0;
+        }
         putEvent('MUP_' + mouseX + '_' + mouseY + '_' + button);
     }
     preventDefault(event);

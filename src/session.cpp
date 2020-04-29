@@ -242,8 +242,8 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
     if(!CefBrowserHost::CreateBrowser(
         windowInfo,
         client,
-//        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
-        "https://animejs.com",
+        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+//        "https://animejs.com",
         browserSettings,
         nullptr,
         nullptr
