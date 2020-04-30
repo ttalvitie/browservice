@@ -10,6 +10,7 @@ void writeNewSessionHTML(ostream& out, const NewSessionHTMLData& data);
 struct MainHTMLData {
     uint64_t sessionID;
     uint64_t mainIdx;
+    const string& nonCharKeyList;
 };
 void writeMainHTML(ostream& out, const MainHTMLData& data);
 

@@ -3,6 +3,7 @@
 #include "browser_area.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
+#include "key.hpp"
 #include "timeout.hpp"
 #include "root_widget.hpp"
 
@@ -184,7 +185,11 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             ++curMainIdx_;
             curImgIdx_ = 0;
             curEventIdx_ = 0;
-            request->sendHTMLResponse(200, writeMainHTML, {id_, curMainIdx_});
+            request->sendHTMLResponse(
+                200,
+                writeMainHTML,
+                {id_, curMainIdx_, supportedNonCharKeyList}
+            );
         } else {
             request->sendHTMLResponse(200, writePreMainHTML, {id_});
             preMainVisited_ = true;
@@ -386,6 +391,24 @@ bool Session::handleEvent_(const string& name, int argCount, int* args) {
     }
     if(name == "MMO" && argCount == 2) {
         LOG(INFO) << "Mouse moved to (" << args[0] << ", " << args[1] << ")";
+        return true;
+    }
+    if(name == "KDN" && argCount == 1) {
+        if(optional<Key> key = Key::fromID(-args[0])) {
+            LOG(INFO) << "Key " << key->name() << " down";
+        }
+        return true;
+    }
+    if(name == "KUP" && argCount == 1) {
+        if(optional<Key> key = Key::fromID(-args[0])) {
+            LOG(INFO) << "Key " << key->name() << " up";
+        }
+        return true;
+    }
+    if(name == "KPR" && argCount == 1) {
+        if(optional<Key> key = Key::fromID(args[0])) {
+            LOG(INFO) << "Key " << key->name() << " press";
+        }
         return true;
     }
 

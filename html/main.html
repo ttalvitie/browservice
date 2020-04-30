@@ -253,6 +253,56 @@ document.oncontextmenu = function(event) {
     preventDefault(event);
 };
 
+var nonCharKeyList = [%-nonCharKeyList-%];
+var nonCharKeys = {};
+for(var i = 0; i < nonCharKeyList.length; ++i) {
+    nonCharKeys[nonCharKeyList[i]] = true;
+}
+
+document.onkeypress = function(event) {
+    if(!event) {
+        event = window.event;
+        var key = event.keyCode | 0;
+    } else {
+        var key = event.which | 0;
+    }
+    if(key <= 0) return;
+    putEvent('KPR_' + key);
+    preventDefault(event);
+};
+
+var nonCharKeyList = [%-nonCharKeyList-%];
+var nonCharKeys = {};
+for(var i = 0; i < nonCharKeyList.length; ++i) {
+    nonCharKeys[nonCharKeyList[i]] = true;
+}
+
+var nonCharKeysDown = {};
+
+document.onkeydown = function(event) {
+    if(!event) {
+        event = window.event;
+        var key = event.keyCode | 0;
+    } else {
+        var key = event.which | 0;
+    }
+    if(!nonCharKeys[key]) return;
+    putEvent('KDN_' + key);
+    preventDefault(event);
+};
+
+document.onkeyup = function(event) {
+    if(!event) {
+        event = window.event;
+        var key = event.keyCode | 0;
+    } else {
+        var key = event.which | 0;
+    }
+    if(!nonCharKeys[key]) return;
+    putEvent('KUP_' + key);
+    preventDefault(event);
+};
+
 };
 </script>
 </head>
