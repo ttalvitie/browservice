@@ -373,42 +373,80 @@ void Session::handleEvent_(string::const_iterator begin, string::const_iterator 
 }
 
 bool Session::handleEvent_(const string& name, int argCount, int* args) {
-    if(name == "MDN" && argCount == 3) {
-        LOG(INFO) << "Mouse button " << args[2] << " down at (" << args[0] << ", " << args[1] << ")";
+    auto clampCoords = [&](int& x, int& y) {
+        x = max(x, -1000);
+        y = max(y, -1000);
+        x = min(x, rootViewport_.width() + 1000);
+        y = min(y, rootViewport_.height() + 1000);
+    };
+
+    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        clampCoords(x, y);
+        rootWidget_->sendMouseDownEvent(x, y, button);
         return true;
     }
-    if(name == "MUP" && argCount == 3) {
-        LOG(INFO) << "Mouse button " << args[2] << " up at (" << args[0] << ", " << args[1] << ")";
+    if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        clampCoords(x, y);
+        rootWidget_->sendMouseUpEvent(x, y, button);
         return true;
     }
     if(name == "MDBL" && argCount == 2) {
-        LOG(INFO) << "Mouse doubleclick at (" << args[0] << ", " << args[1] << ")";
+        int x = args[0];
+        int y = args[1];
+        clampCoords(x, y);
+        rootWidget_->sendMouseDoubleClickEvent(x, y);
         return true;
     }
     if(name == "MWH" && argCount == 3) {
-        LOG(INFO) << "Mouse wheel " << args[2] << " at (" << args[0] << ", " << args[1] << ")";
+        int x = args[0];
+        int y = args[1];
+        int delta = args[2];
+        clampCoords(x, y);
+        delta = max(-1000, min(1000, delta));
+        rootWidget_->sendMouseWheelEvent(x, y, delta);
         return true;
     }
     if(name == "MMO" && argCount == 2) {
-        LOG(INFO) << "Mouse moved to (" << args[0] << ", " << args[1] << ")";
+        int x = args[0];
+        int y = args[1];
+        clampCoords(x, y);
+        rootWidget_->sendMouseMoveEvent(x, y);
+        return true;
+    }
+    if(name == "MOUT" && argCount == 2) {
+        int x = args[0];
+        int y = args[1];
+        clampCoords(x, y);
+        rootWidget_->sendMouseLeaveEvent(x, y);
         return true;
     }
     if(name == "KDN" && argCount == 1) {
         if(optional<Key> key = Key::fromID(-args[0])) {
-            LOG(INFO) << "Key " << key->name() << " down";
+            rootWidget_->sendKeyDownEvent(*key);
         }
         return true;
     }
     if(name == "KUP" && argCount == 1) {
         if(optional<Key> key = Key::fromID(-args[0])) {
-            LOG(INFO) << "Key " << key->name() << " up";
+            rootWidget_->sendKeyUpEvent(*key);
         }
         return true;
     }
     if(name == "KPR" && argCount == 1) {
         if(optional<Key> key = Key::fromID(args[0])) {
-            LOG(INFO) << "Key " << key->name() << " press";
+            rootWidget_->sendKeyDownEvent(*key);
+            rootWidget_->sendKeyUpEvent(*key);
         }
+        return true;
+    }
+    if(name == "FOUT" && argCount == 0) {
+        rootWidget_->sendLoseFocusEvent();
         return true;
     }
 

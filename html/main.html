@@ -244,6 +244,14 @@ if(useOnMouseWheel) {
     };
 }
 
+document.body.onmouseleave = function() {
+    putEvent('MOUT_' + mouseX + '_' + mouseY);
+};
+
+window.onblur = function() {
+    putEvent('FOUT');
+};
+
 document.ondragstart = function() {
     return false;
 };

@@ -42,6 +42,7 @@ namespace keys {
 
 extern const Key Space;
 extern const Key A;
+extern const Key a;
 
 }
 

@@ -52,3 +52,8 @@ void RootWidget::widgetRender_() {
     controlBar_->render();
     browserArea_->render();
 }
+
+vector<shared_ptr<Widget>> RootWidget::widgetListChildren_() {
+    CEF_REQUIRE_UI_THREAD();
+    return {controlBar_, browserArea_};
+}
