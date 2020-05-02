@@ -59,8 +59,6 @@ private:
         string::const_iterator begin,
         string::const_iterator end
     );
-    void handleEvent_(string::const_iterator begin, string::const_iterator end);
-    bool handleEvent_(const string& name, int argCount, int* args);
 
     weak_ptr<SessionEventHandler> eventHandler_;
 

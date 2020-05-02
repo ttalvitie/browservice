@@ -1,6 +1,7 @@
 #include "session.hpp"
 
 #include "browser_area.hpp"
+#include "event.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
 #include "key.hpp"
@@ -183,6 +184,11 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
         if(preMainVisited_) {
             ++curMainIdx_;
+
+            // Avoid keys/mouse buttons staying pressed down
+            rootWidget_->sendLoseFocusEvent();
+            rootWidget_->sendMouseLeaveEvent(0, 0);
+
             curImgIdx_ = 0;
             curEventIdx_ = 0;
             request->sendHTMLResponse(
@@ -318,137 +324,13 @@ void Session::handleEvents_(
         }
 
         if(eventIdx == curEventIdx_) {
-            handleEvent_(eventBegin, eventEnd);
+            if(!processEvent(rootWidget_, eventBegin, eventEnd)) {
+                LOG(WARNING) << "Could not parse event '" << string(eventBegin, eventEnd) << "' in session " << id_;
+            }
             ++eventIdx;
             curEventIdx_ = eventIdx;
         } else {
             ++eventIdx;
         }
     }
-}
-
-void Session::handleEvent_(string::const_iterator begin, string::const_iterator end) {
-    CHECK(begin < end && *(end - 1) == '/');
-
-    string name;
-
-    const int MaxArgCount = 3;
-    int args[MaxArgCount];
-    int argCount = 0;
-
-    string::const_iterator pos = begin;
-    while(*pos != '/' && *pos != '_') {
-        ++pos;
-    }
-    name = string(begin, pos);
-
-    bool ok = true;
-    if(*pos == '_') {
-        ++pos;
-        while(true) {
-            if(argCount == MaxArgCount) {
-                ok = false;
-                break;
-            }
-            string::const_iterator argStart = pos;
-            while(*pos != '/' && *pos != '_') {
-                ++pos;
-            }
-            optional<int> arg = parseString<int>(argStart, pos);
-            if(!arg) {
-                ok = false;
-                break;
-            }
-            args[argCount++] = *arg;
-            if(*pos == '/') {
-                break;
-            }
-            ++pos;
-        }
-    }
-
-    if(!ok || !handleEvent_(name, argCount, args)) {
-        LOG(WARNING) << "Could not parse event '" << string(begin, end) << "' in session " << id_;
-    }
-}
-
-bool Session::handleEvent_(const string& name, int argCount, int* args) {
-    auto clampCoords = [&](int& x, int& y) {
-        x = max(x, -1000);
-        y = max(y, -1000);
-        x = min(x, rootViewport_.width() + 1000);
-        y = min(y, rootViewport_.height() + 1000);
-    };
-
-    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
-        int x = args[0];
-        int y = args[1];
-        int button = args[2];
-        clampCoords(x, y);
-        rootWidget_->sendMouseDownEvent(x, y, button);
-        return true;
-    }
-    if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
-        int x = args[0];
-        int y = args[1];
-        int button = args[2];
-        clampCoords(x, y);
-        rootWidget_->sendMouseUpEvent(x, y, button);
-        return true;
-    }
-    if(name == "MDBL" && argCount == 2) {
-        int x = args[0];
-        int y = args[1];
-        clampCoords(x, y);
-        rootWidget_->sendMouseDoubleClickEvent(x, y);
-        return true;
-    }
-    if(name == "MWH" && argCount == 3) {
-        int x = args[0];
-        int y = args[1];
-        int delta = args[2];
-        clampCoords(x, y);
-        delta = max(-1000, min(1000, delta));
-        rootWidget_->sendMouseWheelEvent(x, y, delta);
-        return true;
-    }
-    if(name == "MMO" && argCount == 2) {
-        int x = args[0];
-        int y = args[1];
-        clampCoords(x, y);
-        rootWidget_->sendMouseMoveEvent(x, y);
-        return true;
-    }
-    if(name == "MOUT" && argCount == 2) {
-        int x = args[0];
-        int y = args[1];
-        clampCoords(x, y);
-        rootWidget_->sendMouseLeaveEvent(x, y);
-        return true;
-    }
-    if(name == "KDN" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(-args[0])) {
-            rootWidget_->sendKeyDownEvent(*key);
-        }
-        return true;
-    }
-    if(name == "KUP" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(-args[0])) {
-            rootWidget_->sendKeyUpEvent(*key);
-        }
-        return true;
-    }
-    if(name == "KPR" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(args[0])) {
-            rootWidget_->sendKeyDownEvent(*key);
-            rootWidget_->sendKeyUpEvent(*key);
-        }
-        return true;
-    }
-    if(name == "FOUT" && argCount == 0) {
-        rootWidget_->sendLoseFocusEvent();
-        return true;
-    }
-
-    return false;
 }
