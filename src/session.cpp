@@ -26,7 +26,8 @@ regex imagePathRegex(
 
 class Session::Client :
     public CefClient,
-    public CefLifeSpanHandler
+    public CefLifeSpanHandler,
+    public CefLoadHandler
 {
 public:
     Client(shared_ptr<Session> session) {
@@ -41,6 +42,9 @@ public:
     }
     virtual CefRefPtr<CefRenderHandler> GetRenderHandler() override {
         return renderHandler_;
+    }
+    virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override {
+        return this;
     }
 
     // CefLifeSpanHandler:
@@ -71,6 +75,22 @@ public:
 
         postTask(session_->eventHandler_, &SessionEventHandler::onSessionClosed, session_->id_);
         session_->updateInactivityTimeout_();
+    }
+
+    // CefLoadHandler:
+    virtual void OnLoadStart(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        TransitionType transitionType
+    ) {
+        CEF_REQUIRE_UI_THREAD();
+
+        if(frame->IsMain()) {
+            // Clear the status so that the loaded page gets gain focus and
+            // mouse enter events when appropriate
+            session_->rootWidget_->sendLoseFocusEvent();
+            session_->rootWidget_->sendMouseLeaveEvent(0, 0);
+        }
     }
 
 private:
