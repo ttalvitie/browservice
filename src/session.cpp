@@ -119,6 +119,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
     prePrevVisited_ = false;
     preMainVisited_ = false;
 
+    prevNextClicked_ = false;
+
     curMainIdx_ = 0;
     curImgIdx_ = 0;
     curEventIdx_ = 0;
@@ -205,6 +207,13 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         if(preMainVisited_) {
             ++curMainIdx_;
 
+            if(curMainIdx_ > 1 && !prevNextClicked_) {
+                // This is not first main page load and no prev/next clicked,
+                // so this must be a refresh
+                browser_->Reload();
+            }
+            prevNextClicked_ = false;
+
             // Avoid keys/mouse buttons staying pressed down
             rootWidget_->sendLoseFocusEvent();
             rootWidget_->sendMouseLeaveEvent(0, 0);
@@ -224,7 +233,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
-        if(curMainIdx_ > 0 && browser_) {
+        if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
+            prevNextClicked_ = true;
             browser_->GoBack();
         }
 
@@ -238,7 +248,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
-        if(curMainIdx_ > 0 && browser_) {
+        if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
+            prevNextClicked_ = true;
             browser_->GoForward();
         }
 

@@ -67,6 +67,8 @@ private:
     bool prePrevVisited_;
     bool preMainVisited_;
 
+    bool prevNextClicked_;
+
     // How many times the main page has been requested. The main page mentions
     // its index to all the requests it makes, and we discard all the requests
     // that are not from the newest main page.
