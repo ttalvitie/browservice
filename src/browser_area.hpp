@@ -40,6 +40,20 @@ private:
 
     virtual void widgetViewportUpdated_() override;
 
+    virtual void widgetMouseDownEvent_(int x, int y, int button) override;
+    virtual void widgetMouseUpEvent_(int x, int y, int button) override;
+    virtual void widgetMouseDoubleClickEvent_(int x, int y) override;
+    virtual void widgetMouseWheelEvent_(int x, int y, int delta) override;
+    virtual void widgetMouseMoveEvent_(int x, int y) override;
+    virtual void widgetMouseEnterEvent_(int x, int y) override;
+    virtual void widgetMouseLeaveEvent_(int x, int y) override;
+    virtual void widgetKeyDownEvent_(Key key) override;
+    virtual void widgetKeyUpEvent_(Key key) override;
+    virtual void widgetGainFocusEvent_(int x, int y) override;
+    virtual void widgetLoseFocusEvent_() override;
+
     weak_ptr<BrowserAreaEventHandler> eventHandler_;
     CefRefPtr<CefBrowser> browser_;
+
+    uint32_t eventModifiers_;
 };

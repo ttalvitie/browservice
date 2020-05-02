@@ -100,10 +100,11 @@ BrowserArea::BrowserArea(CKey,
     weak_ptr<WidgetEventHandler> widgetEventHandler,
     weak_ptr<BrowserAreaEventHandler> eventHandler
 )
-    : Widget(widgetEventHandler),
-      eventHandler_(eventHandler)
+    : Widget(widgetEventHandler)
 {
     CEF_REQUIRE_UI_THREAD();
+    eventHandler_ = eventHandler;
+    eventModifiers_ = 0;
 }
 
 BrowserArea::~BrowserArea() {}
@@ -130,4 +131,130 @@ void BrowserArea::widgetViewportUpdated_() {
         browser_->GetHost()->Invalidate(PET_VIEW);
         browser_->GetHost()->Invalidate(PET_POPUP);
     }
+}
+
+namespace {
+
+CefMouseEvent createMouseEvent(int x, int y, uint32_t eventModifiers) {
+    CefMouseEvent event;
+    event.x = x;
+    event.y = y;
+    event.modifiers = eventModifiers;
+    return event;
+}
+
+pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
+    CefBrowserHost::MouseButtonType buttonType;
+    uint32_t buttonFlag;
+    if(button == 0) {
+        buttonType = MBT_LEFT;
+        buttonFlag = EVENTFLAG_LEFT_MOUSE_BUTTON;
+    } else if(button == 1) {
+        buttonType = MBT_MIDDLE;
+        buttonFlag = EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+    } else {
+        buttonType = MBT_RIGHT;
+        buttonFlag = EVENTFLAG_RIGHT_MOUSE_BUTTON;
+    }
+    return {buttonType, buttonFlag};
+}
+
+}
+
+void BrowserArea::widgetMouseDownEvent_(int x, int y, int button) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+
+    CefBrowserHost::MouseButtonType buttonType;
+    uint32_t buttonFlag;
+    tie(buttonType, buttonFlag) = getMouseButtonInfo(button);
+
+    browser_->GetHost()->SendMouseClickEvent(event, buttonType, false, 1);
+
+    eventModifiers_ |= buttonFlag;
+}
+
+void BrowserArea::widgetMouseUpEvent_(int x, int y, int button) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+
+    CefBrowserHost::MouseButtonType buttonType;
+    uint32_t buttonFlag;
+    tie(buttonType, buttonFlag) = getMouseButtonInfo(button);
+
+    browser_->GetHost()->SendMouseClickEvent(event, buttonType, true, 1);
+
+    eventModifiers_ &= ~buttonFlag;
+}
+
+void BrowserArea::widgetMouseDoubleClickEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseClickEvent(event, MBT_LEFT, false, 2);
+}
+
+void BrowserArea::widgetMouseWheelEvent_(int x, int y, int delta) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseWheelEvent(event, 0, delta);
+}
+
+void BrowserArea::widgetMouseMoveEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseMoveEvent(event, false);
+}
+
+void BrowserArea::widgetMouseEnterEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseMoveEvent(event, false);
+}
+
+void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseMoveEvent(event, true);
+}
+
+void BrowserArea::widgetKeyDownEvent_(Key key) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    LOG(INFO) << "Key events not implemented in BrowserArea";
+}
+
+void BrowserArea::widgetKeyUpEvent_(Key key) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    LOG(INFO) << "Key events not implemented in BrowserArea";
+}
+
+void BrowserArea::widgetGainFocusEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    browser_->GetHost()->SendFocusEvent(true);
+}
+
+void BrowserArea::widgetLoseFocusEvent_() {
+    CEF_REQUIRE_UI_THREAD();
+    if(!browser_) return;
+
+    browser_->GetHost()->SendFocusEvent(false);
 }

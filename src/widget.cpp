@@ -226,9 +226,9 @@ shared_ptr<Widget> Widget::childByPoint_(int x, int y) {
 #define DEFINE_EVENT_FORWARD(name, widgetPtr, args, call) \
     void Widget::forward ## name ## Event_ args { \
         if(widgetPtr) { \
-            EVENT_PREPROCESSING \
             widgetPtr->send ## name ## Event call; \
         } else { \
+            EVENT_PREPROCESSING \
             widget ## name ## Event_ call; \
         } \
     }
