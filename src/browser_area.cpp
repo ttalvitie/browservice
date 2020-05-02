@@ -18,6 +18,7 @@ public:
 
         rect.Set(0, 0, width, height);
     }
+
     virtual bool GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo& info) override {
         CEF_REQUIRE_UI_THREAD();
 
@@ -30,6 +31,35 @@ public:
 
         return true;
     }
+
+    virtual void OnPopupShow(CefRefPtr<CefBrowser> browser, bool show) override {
+        CEF_REQUIRE_UI_THREAD();
+
+        browserArea_->popupOpen_ = show;
+
+        if(show) {
+            browserArea_->popupRect_ = Rect();
+        } else {
+            browser->GetHost()->Invalidate(PET_VIEW);
+        }
+    }
+
+    virtual void OnPopupSize(CefRefPtr<CefBrowser> browser, const CefRect& rect) override {
+        CEF_REQUIRE_UI_THREAD();
+
+        browserArea_->popupRect_ = Rect(
+            rect.x,
+            rect.x + rect.width,
+            rect.y,
+            rect.y + rect.height
+        );
+
+        if(browserArea_->popupOpen_) {
+            browser->GetHost()->Invalidate(PET_VIEW);
+            browser->GetHost()->Invalidate(PET_POPUP);
+        }
+    }
+
     virtual void OnPaint(
         CefRefPtr<CefBrowser>,
         PaintElementType type,
@@ -40,53 +70,74 @@ public:
     ) override {
         CEF_REQUIRE_UI_THREAD();
 
+        ImageSlice viewport = browserArea_->getViewport();
+
+        int offsetX = 0;
+        int offsetY = 0;
+
+        Rect bounds(0, viewport.width(), 0, viewport.height());
+        Rect cutout;
+
         if(type == PET_VIEW) {
-            ImageSlice viewport = browserArea_->getViewport();
-            bool updated = false;
-
-            auto copyRange = [&](int y, int ax, int bx) {
-                if(ax >= bx) {
-                    return;
-                }
-
-                uint8_t* src = &((uint8_t*)buffer)[4 * (y * bufWidth + ax)];
-                uint8_t* dest = viewport.getPixelPtr(ax, y);
-                int byteCount = 4 * (bx - ax);
-
-                if(updated) {
-                    memcpy(dest, src, byteCount);
-                } else {
-                    if(memcmp(src, dest, byteCount)) {
-                        updated = true;
-                        memcpy(dest, src, byteCount);
-                    }
-                }
-            };
-
-            for(const CefRect& dirtyRect : dirtyRects) {
-                int ax = max(dirtyRect.x, 0);
-                int bx = min(
-                    dirtyRect.x + dirtyRect.width,
-                    min(viewport.width(), bufWidth)
-                );
-                int ay = max(dirtyRect.y, 0);
-                int by = min(
-                    dirtyRect.y + dirtyRect.height,
-                    min(viewport.height(), bufHeight)
-                );
-                if(ax < bx) {
-                    for(int y = ay; y < by; ++y) {
-                        copyRange(y, ax, bx);
-                    }
-                }
+            if(browserArea_->popupOpen_) {
+                cutout = browserArea_->popupRect_;
             }
+        } else if(type == PET_POPUP && browserArea_->popupOpen_) {
+            offsetX = browserArea_->popupRect_.startX;
+            offsetY = browserArea_->popupRect_.startY;
+
+            bounds = Rect::intersection(bounds, browserArea_->popupRect_);
+            bounds = Rect::translate(bounds, -offsetX, -offsetY);
+        } else {
+            return;
+        }
+
+        bool updated = false;
+        auto copyRange = [&](int y, int ax, int bx) {
+            if(ax >= bx) {
+                return;
+            }
+
+            uint8_t* src = &((uint8_t*)buffer)[4 * (y * bufWidth + ax)];
+            uint8_t* dest = viewport.getPixelPtr(ax + offsetX, y + offsetY);
+            int byteCount = 4 * (bx - ax);
 
             if(updated) {
-                postTask(
-                    browserArea_->eventHandler_,
-                    &BrowserAreaEventHandler::onBrowserAreaViewDirty
-                );
+                memcpy(dest, src, byteCount);
+            } else {
+                if(memcmp(src, dest, byteCount)) {
+                    updated = true;
+                    memcpy(dest, src, byteCount);
+                }
             }
+        };
+
+        for(const CefRect& dirtyRect : dirtyRects) {
+            Rect rect = Rect(
+                dirtyRect.x,
+                dirtyRect.x + dirtyRect.width,
+                dirtyRect.y,
+                dirtyRect.y + dirtyRect.height
+            );
+            rect = Rect::intersection(rect, bounds);
+
+            if(!rect.isEmpty()) {
+                for(int y = rect.startY; y < rect.endY; ++y) {
+                    if(y >= cutout.startY && y < cutout.endY) {
+                        copyRange(y, rect.startX, min(rect.endX, cutout.startX));
+                        copyRange(y, max(rect.startX, cutout.endX), rect.endX);
+                    } else {
+                        copyRange(y, rect.startX, rect.endX);
+                    }
+                }
+            }
+        }
+
+        if(updated) {
+            postTask(
+                browserArea_->eventHandler_,
+                &BrowserAreaEventHandler::onBrowserAreaViewDirty
+            );
         }
     }
 
@@ -104,6 +155,7 @@ BrowserArea::BrowserArea(CKey,
 {
     CEF_REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
+    popupOpen_ = false;
     eventModifiers_ = 0;
 }
 

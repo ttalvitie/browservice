@@ -1,5 +1,6 @@
 #pragma once
 
+#include "rect.hpp"
 #include "widget.hpp"
 
 class BrowserAreaEventHandler {
@@ -54,6 +55,9 @@ private:
 
     weak_ptr<BrowserAreaEventHandler> eventHandler_;
     CefRefPtr<CefBrowser> browser_;
+
+    bool popupOpen_;
+    Rect popupRect_;
 
     uint32_t eventModifiers_;
 };
