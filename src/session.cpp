@@ -224,6 +224,10 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
+        if(curMainIdx_ > 0 && browser_) {
+            browser_->GoBack();
+        }
+
         if(prePrevVisited_) {
             request->sendHTMLResponse(200, writePrevHTML, {id_});
         } else {
@@ -234,6 +238,10 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
+        if(curMainIdx_ > 0 && browser_) {
+            browser_->GoForward();
+        }
+
         request->sendHTMLResponse(200, writeNextHTML, {id_});
         return;
     }
@@ -273,7 +281,8 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
     if(!CefBrowserHost::CreateBrowser(
         windowInfo,
         client,
-        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+        "https://news.ycombinator.com",
+//        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
 //        "https://animejs.com",
         browserSettings,
         nullptr,
