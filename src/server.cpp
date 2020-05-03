@@ -25,7 +25,8 @@ void Server::shutdown() {
 
         httpServer_->shutdown();
 
-        for(pair<uint64_t, shared_ptr<Session>> p : sessions_) {
+        map<uint64_t, shared_ptr<Session>> sessions = sessions_;
+        for(pair<uint64_t, shared_ptr<Session>> p : sessions) {
             p.second->close();
         }
     }
@@ -52,7 +53,8 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         if(sessionID) {
             auto it = sessions_.find(*sessionID);
             if(it != sessions_.end()) {
-                it->second->handleHTTPRequest(request);
+                shared_ptr<Session> session = it->second;
+                session->handleHTTPRequest(request);
             } else {
                 request->sendTextResponse(400, "ERROR: Invalid session ID");
             }
@@ -76,6 +78,16 @@ void Server::onSessionClosed(uint64_t id) {
     sessions_.erase(it);
 
     checkShutdownStatus_();
+}
+
+void Server::onPopupSessionOpen(shared_ptr<Session> session) {
+    CEF_REQUIRE_UI_THREAD();
+
+    CHECK(sessions_.emplace(session->id(), session).second);
+
+    if(state_ == ShutdownPending) {
+        session->close();
+    }
 }
 
 void Server::afterConstruct_(shared_ptr<Server> self) {

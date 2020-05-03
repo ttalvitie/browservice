@@ -5,9 +5,15 @@
 #include "image_slice.hpp"
 #include "widget.hpp"
 
+class Session;
+
 class SessionEventHandler {
 public:
     virtual void onSessionClosed(uint64_t id) = 0;
+
+    // Exceptionally, onPopupSessionOpen is called directly instead of the
+    // event loop to avoid race conditions.
+    virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
 };
 
 class ImageCompressor;
@@ -25,7 +31,13 @@ class Session :
 {
 SHARED_ONLY_CLASS(Session);
 public:
-    Session(CKey, weak_ptr<SessionEventHandler> eventHandler);
+    // Creates new session. The isPopup argument is only used internally to
+    // create popup sessions.
+    Session(CKey,
+        weak_ptr<SessionEventHandler> eventHandler,
+        bool isPopup = false
+    );
+
     ~Session();
 
     // Close browser if it is not yet closed
@@ -63,6 +75,8 @@ private:
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
+
+    bool isPopup_;
 
     bool prePrevVisited_;
     bool preMainVisited_;

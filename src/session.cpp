@@ -48,6 +48,38 @@ public:
     }
 
     // CefLifeSpanHandler:
+    virtual bool OnBeforePopup(
+        CefRefPtr<CefBrowser> evBrowser,
+        CefRefPtr<CefFrame> frame,
+        const CefString&,
+        const CefString&,
+        WindowOpenDisposition,
+        bool,
+        const CefPopupFeatures&,
+        CefWindowInfo& windowInfo,
+        CefRefPtr<CefClient>& client,
+        CefBrowserSettings& browserSettings,
+        CefRefPtr<CefDictionaryValue>&,
+        bool*
+    ) override {
+        CEF_REQUIRE_UI_THREAD();
+
+        browserSettings.background_color = (cef_color_t)-1;
+        windowInfo.SetAsWindowless(kNullWindowHandle);
+
+        LOG(INFO) << "Session " << session_->id() << " opening popup";
+
+        shared_ptr<Session> popupSession =
+            Session::create(session_->eventHandler_, true);
+        client = new Client(popupSession);
+
+        if(auto eventHandler = session_->eventHandler_.lock()) {
+            eventHandler->onPopupSessionOpen(popupSession);
+        }
+
+        return false;
+    }
+
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
         CEF_REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Pending);
@@ -62,6 +94,7 @@ public:
             session_->close();
         }
     }
+
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
         CEF_REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Open || session_->state_ == Closing);
@@ -101,10 +134,12 @@ private:
     IMPLEMENT_REFCOUNTING(Client);
 };
 
-Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler) {
+Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup) {
     CEF_REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
+
+    isPopup_ = isPopup;
 
     while(true) {
         id_ = uniform_int_distribution<uint64_t>()(sessionIDRNG);
@@ -281,27 +316,29 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
     rootWidget_ = RootWidget::create(self, self);
     rootWidget_->setViewport(rootViewport_);
 
-    CefRefPtr<CefClient> client = new Client(self);
+    if(!isPopup_) {
+        CefRefPtr<CefClient> client = new Client(self);
 
-    CefWindowInfo windowInfo;
-    windowInfo.SetAsWindowless(kNullWindowHandle);
+        CefWindowInfo windowInfo;
+        windowInfo.SetAsWindowless(kNullWindowHandle);
 
-    CefBrowserSettings browserSettings;
-    browserSettings.background_color = (cef_color_t)-1;
+        CefBrowserSettings browserSettings;
+        browserSettings.background_color = (cef_color_t)-1;
 
-    if(!CefBrowserHost::CreateBrowser(
-        windowInfo,
-        client,
-        "https://news.ycombinator.com",
-//        "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
-//        "https://animejs.com",
-        browserSettings,
-        nullptr,
-        nullptr
-    )) {
-        LOG(INFO) << "Opening browser for session " << id_ << " failed, closing session";
-        state_ = Closed;
-        postTask(eventHandler_, &SessionEventHandler::onSessionClosed, id_);
+        if(!CefBrowserHost::CreateBrowser(
+            windowInfo,
+            client,
+//            "https://news.ycombinator.com",
+            "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+//            "https://animejs.com",
+            browserSettings,
+            nullptr,
+            nullptr
+        )) {
+            LOG(INFO) << "Opening browser for session " << id_ << " failed, closing session";
+            state_ = Closed;
+            postTask(eventHandler_, &SessionEventHandler::onSessionClosed, id_);
+        }
     }
 
     updateInactivityTimeout_();
