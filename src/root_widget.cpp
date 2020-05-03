@@ -4,7 +4,7 @@
 #include "browser_area.hpp"
 
 RootWidget::RootWidget(CKey,
-    weak_ptr<WidgetEventHandler> widgetEventHandler,
+    weak_ptr<WidgetParent> widgetEventHandler,
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
 )
     : Widget(widgetEventHandler),
@@ -22,11 +22,6 @@ shared_ptr<ControlBar> RootWidget::controlBar() {
 shared_ptr<BrowserArea> RootWidget::browserArea() {
     CEF_REQUIRE_UI_THREAD();
     return browserArea_;
-}
-
-void RootWidget::onWidgetViewDirty() {
-    CEF_REQUIRE_UI_THREAD();
-    signalViewDirty_();
 }
 
 void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {

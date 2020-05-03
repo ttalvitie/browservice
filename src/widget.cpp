@@ -1,9 +1,9 @@
 #include "widget.hpp"
 
-Widget::Widget(weak_ptr<WidgetEventHandler> eventHandler) {
+Widget::Widget(weak_ptr<WidgetParent> parent) {
     CEF_REQUIRE_UI_THREAD();
 
-    eventHandler_ = eventHandler;
+    parent_ = parent;
     viewDirty_ = false;
 
     mouseOver_ = false;
@@ -157,12 +157,17 @@ void Widget::sendLoseFocusEvent() {
     }
 }
 
+void Widget::onWidgetViewDirty() {
+    CEF_REQUIRE_UI_THREAD();
+    signalViewDirty_();
+}
+
 void Widget::signalViewDirty_() {
     CEF_REQUIRE_UI_THREAD();
 
     if(!viewDirty_) {
         viewDirty_ = true;
-        postTask(eventHandler_, &WidgetEventHandler::onWidgetViewDirty);
+        postTask(parent_, &WidgetParent::onWidgetViewDirty);
     }
 }
 

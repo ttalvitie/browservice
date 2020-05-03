@@ -25,7 +25,7 @@ class CefBrowser;
 // Single browser session. Before quitting CEF message loop, call close and wait
 // for onSessionClosed event. 
 class Session :
-    public WidgetEventHandler,
+    public WidgetParent,
     public BrowserAreaEventHandler,
     public enable_shared_from_this<Session>
 {
@@ -48,7 +48,7 @@ public:
     // Get the unique and constant ID of this session
     uint64_t id();
 
-    // WidgetEventHandler:
+    // WidgetParent:
     virtual void onWidgetViewDirty() override;
 
     // BrowserAreaEventHandler:

@@ -6,22 +6,16 @@ class ControlBar;
 class BrowserAreaEventHandler;
 class BrowserArea;
 
-class RootWidget :
-    public Widget,
-    public WidgetEventHandler
-{
+class RootWidget : public Widget {
 SHARED_ONLY_CLASS(RootWidget);
 public:
     RootWidget(CKey,
-        weak_ptr<WidgetEventHandler> widgetEventHandler,
+        weak_ptr<WidgetParent> widgetEventHandler,
         weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
     );
 
     shared_ptr<ControlBar> controlBar();
     shared_ptr<BrowserArea> browserArea();
-
-    // WidgetEventHandler:
-    virtual void onWidgetViewDirty() override;
 
 private:
     void afterConstruct_(shared_ptr<RootWidget> self);

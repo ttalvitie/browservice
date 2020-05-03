@@ -8,14 +8,14 @@ static constexpr int NormalCursor = 1;
 static constexpr int TextCursor = 2;
 static constexpr int CursorTypeCount = 3;
 
-class WidgetEventHandler {
+class WidgetParent {
 public:
     virtual void onWidgetViewDirty() = 0;
 };
 
-class Widget {
+class Widget : public WidgetParent {
 public:
-    Widget(weak_ptr<WidgetEventHandler> eventHandler);
+    Widget(weak_ptr<WidgetParent> parent);
 
     void setViewport(ImageSlice viewport);
     ImageSlice getViewport();
@@ -37,6 +37,9 @@ public:
     void sendKeyUpEvent(Key key);
     void sendGainFocusEvent(int x, int y);
     void sendLoseFocusEvent();
+
+    // WidgetParent: (forward events from possible children)
+    virtual void onWidgetViewDirty() override;
 
 protected:
     // The widget should call this when its view has updated and the changes
@@ -97,7 +100,7 @@ private:
     void forwardGainFocusEvent_(int x, int y);
     void forwardLoseFocusEvent_();
 
-    weak_ptr<WidgetEventHandler> eventHandler_;
+    weak_ptr<WidgetParent> parent_;
     ImageSlice viewport_;
     bool viewDirty_;
 

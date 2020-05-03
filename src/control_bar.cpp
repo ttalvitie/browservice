@@ -1,7 +1,7 @@
 #include "control_bar.hpp"
 
-ControlBar::ControlBar(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler)
-    : Widget(widgetEventHandler)
+ControlBar::ControlBar(CKey, weak_ptr<WidgetParent> widgetParent)
+    : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
 }

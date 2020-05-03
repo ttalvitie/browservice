@@ -14,7 +14,7 @@ class CefRenderHandler;
 
 // BrowserArea is a special widget in the sense that it renders continuously
 // (outside render() calls) and does not notify of updates using
-// WidgetEventHandler::onWidgetViewDirty; instead, it calls
+// WidgetParent::onWidgetViewDirty; instead, it calls
 // BrowserAreaEventHandler::onBrowserAreaViewDirty. This is to avoid redrawing
 // the rest of the UI every time the browser area updates.
 class BrowserArea :
@@ -24,7 +24,7 @@ class BrowserArea :
 SHARED_ONLY_CLASS(BrowserArea);
 public:
     BrowserArea(CKey,
-        weak_ptr<WidgetEventHandler> widgetEventHandler,
+        weak_ptr<WidgetParent> widgetParent,
         weak_ptr<BrowserAreaEventHandler> eventHandler
     );
     ~BrowserArea();

@@ -167,10 +167,10 @@ private:
 };
 
 BrowserArea::BrowserArea(CKey,
-    weak_ptr<WidgetEventHandler> widgetEventHandler,
+    weak_ptr<WidgetParent> widgetParent,
     weak_ptr<BrowserAreaEventHandler> eventHandler
 )
-    : Widget(widgetEventHandler)
+    : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;

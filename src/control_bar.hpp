@@ -7,7 +7,7 @@ SHARED_ONLY_CLASS(ControlBar);
 public:
     static constexpr int Height = 27;
 
-    ControlBar(CKey, weak_ptr<WidgetEventHandler> widgetEventHandler);
+    ControlBar(CKey, weak_ptr<WidgetParent> widgetParent);
 
 private:
     virtual void widgetMouseDownEvent_(int x, int y, int button) override {
