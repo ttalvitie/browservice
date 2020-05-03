@@ -66,11 +66,18 @@ private:
     // dimensions to sane interval.
     void updateRootViewportSize_(int width, int height);
 
+    // Send paddedRootViewport_ to the image compressor correctly clamped such
+    // that its dimensions result in signals (widthSignal_, heightSignal_).
+    void sendViewportToCompressor_();
+
     void handleEvents_(
         uint64_t startIdx,
         string::const_iterator begin,
         string::const_iterator end
     );
+
+    void setWidthSignal_(int newWidthSignal);
+    void setHeightSignal_(int newHeightSignal);
 
     weak_ptr<SessionEventHandler> eventHandler_;
 
@@ -106,8 +113,25 @@ private:
 
     shared_ptr<ImageCompressor> imageCompressor_;
 
+    ImageSlice paddedRootViewport_;
     ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
+
+    // We use width and height modulo WidthSignalModulus and HeightSignalModulus
+    // of the part of rootViewport_ sent to imageCompressor_ to signal various
+    // things to the client. We make the initial signals (1, 1) as
+    // imageCompressor_ initially sends a 1x1 image.
+    static constexpr int WidthSignalNewIframe = 0;
+    static constexpr int WidthSignalNoNewIframe = 1;
+    static constexpr int WidthSignalModulus = 2;
+
+    static constexpr int HeightSignalHandCursor = 0;
+    static constexpr int HeightSignalNormalCursor = 1;
+    static constexpr int HeightSignalIBeamCursor = 2;
+    static constexpr int HeightSignalModulus = 3;
+
+    int widthSignal_;
+    int heightSignal_;
 
     // Only available in Open state
     CefRefPtr<CefBrowser> browser_;

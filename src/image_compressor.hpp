@@ -18,7 +18,7 @@ public:
     ~ImageCompressor();
 
     // The compressor may copy the image contents to be compressed from image
-    // later than this call in CEF UI thread
+    // later than this call in CEF UI thread. Image must be nonempty.
     void updateImage(ImageSlice image);
 
     // Send the most recent compressed image immediately

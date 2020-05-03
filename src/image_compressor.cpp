@@ -13,6 +13,8 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
     sendTimeout_ = Timeout::create(sendTimeoutMs);
     compressorThread_ = CefThread::CreateThread("Image compressor");
 
+    // Prior to compressing the first image, our image is a white pixel
+    image_ = ImageSlice::createImage(1, 1);
     compressedImage_ = [](shared_ptr<HTTPRequest> request) {
         CEF_REQUIRE_UI_THREAD();
 
@@ -54,6 +56,7 @@ ImageCompressor::~ImageCompressor() {}
 
 void ImageCompressor::updateImage(ImageSlice image) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(!image.isEmpty());
 
     image_ = image;
     imageUpdated_ = true;
@@ -96,6 +99,8 @@ void ImageCompressor::pump_() {
     if(compressionInProgress_ || !imageUpdated_ || compressedImageUpdated_) {
         return;
     }
+
+    CHECK(!image_.isEmpty());
 
     compressionInProgress_ = true;
     imageUpdated_ = false;

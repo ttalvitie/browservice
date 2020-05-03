@@ -77,6 +77,8 @@ public:
             eventHandler->onPopupSessionOpen(popupSession);
         }
 
+        session_->setWidthSignal_(WidthSignalNewIframe);
+
         return false;
     }
 
@@ -168,7 +170,14 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
 
     imageCompressor_ = ImageCompressor::create(2000);
 
-    rootViewport_ = ImageSlice::createImage(800, 600);
+    paddedRootViewport_ = ImageSlice::createImage(
+        800 + WidthSignalModulus - 1,
+        600 + HeightSignalModulus - 1
+    );
+    rootViewport_ = paddedRootViewport_.subRect(0, 800, 0, 600);
+
+    widthSignal_ = WidthSignalNoNewIframe;
+    heightSignal_ = HeightSignalNormalCursor;
 
     // Initialization is finalized in afterConstruct_
 }
@@ -304,12 +313,12 @@ void Session::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
 
     rootWidget_->render();
-    imageCompressor_->updateImage(rootViewport_);
+    sendViewportToCompressor_();
 }
 
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
-    imageCompressor_->updateImage(rootViewport_);
+    sendViewportToCompressor_();
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {
@@ -370,9 +379,32 @@ void Session::updateRootViewportSize_(int width, int height) {
     height = max(min(height, 4096), 64);
 
     if(rootViewport_.width() != width || rootViewport_.height() != height) {
-        rootViewport_ = ImageSlice::createImage(width, height);
+        paddedRootViewport_ = ImageSlice::createImage(
+            width + WidthSignalModulus - 1,
+            height + HeightSignalModulus - 1
+        );
+        rootViewport_ = paddedRootViewport_.subRect(0, width, 0, height);
         rootWidget_->setViewport(rootViewport_);
     }
+}
+
+void Session::sendViewportToCompressor_() {
+    CHECK(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
+    CHECK(heightSignal_ >= 0 && heightSignal_ < HeightSignalModulus);
+
+    int width = paddedRootViewport_.width();
+    while(width % WidthSignalModulus != widthSignal_) {
+        --width;
+    }
+
+    int height = paddedRootViewport_.height();
+    while(height % HeightSignalModulus != heightSignal_) {
+        --height;
+    }
+
+    imageCompressor_->updateImage(
+        paddedRootViewport_.subRect(0, width, 0, height)
+    );
 }
 
 void Session::handleEvents_(
@@ -409,5 +441,19 @@ void Session::handleEvents_(
         } else {
             ++eventIdx;
         }
+    }
+}
+
+void Session::setWidthSignal_(int newWidthSignal) {
+    if(newWidthSignal != widthSignal_) {
+        widthSignal_ = newWidthSignal;
+        sendViewportToCompressor_();
+    }
+}
+
+void Session::setHeightSignal_(int newHeightSignal) {
+    if(newHeightSignal != heightSignal_) {
+        heightSignal_ = newHeightSignal;
+        sendViewportToCompressor_();
     }
 }
