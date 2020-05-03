@@ -187,7 +187,7 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
     rootViewport_ = paddedRootViewport_.subRect(0, 800, 0, 600);
 
     widthSignal_ = WidthSignalNoNewIframe;
-    heightSignal_ = HeightSignalNormalCursor;
+    heightSignal_ = NormalCursor;
 
     // Initialization is finalized in afterConstruct_
 }
@@ -351,6 +351,13 @@ void Session::onWidgetViewDirty() {
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
+}
+
+void Session::onBrowserAreaCursorChanged(int cursor) {
+    CEF_REQUIRE_UI_THREAD();
+    CHECK(cursor >= 0 && cursor < CursorTypeCount);
+
+    setHeightSignal_(cursor);
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {

@@ -23,6 +23,16 @@ iframe {
     display: none;
     z-index: 1;
 }
+.handCursor {
+    cursor: pointer;
+    cursor: hand;
+}
+.normalCursor {
+    cursor: default;
+}
+.textCursor {
+    cursor: text;
+}
 </style>
 <script type="text/javascript">
 window.onload = function() {
@@ -106,6 +116,8 @@ var img1 = {};
 var img2 = {};
 function setupImg(img, nextImg, elem) {
     img.elem = elem;
+    img.className = "cursorDefault";
+    img.elem.className = img.className;
 
     var imgLoaded;
     var attempts;
@@ -139,6 +151,19 @@ function setupImg(img, nextImg, elem) {
             loadIframe();
         } else {
             cancelIframeLoad();
+        }
+
+        var cursor = img.elem.height % 3;
+        if(cursor == 0) {
+            var newClassName = "handCursor";
+        } else if(cursor == 1) {
+            var newClassName = "normalCursor";
+        } else {
+            var newClassName = "textCursor";
+        }
+        if(newClassName != img.className) {
+            img.className = newClassName;
+            img.elem.className = img.className;
         }
 
         img.elem.style.zIndex = 3;

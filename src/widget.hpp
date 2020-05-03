@@ -3,6 +3,11 @@
 #include "image_slice.hpp"
 #include "key.hpp"
 
+static constexpr int HandCursor = 0;
+static constexpr int NormalCursor = 1;
+static constexpr int TextCursor = 2;
+static constexpr int CursorTypeCount = 3;
+
 class WidgetEventHandler {
 public:
     virtual void onWidgetViewDirty() = 0;
@@ -18,8 +23,8 @@ public:
     void render();
 
     // Send input event to the widget or its descendants (focus handling
-    // within the subtree is automatically handled). The event is propagated
-    // to the widget*Event_ handler function of the correct widget. The mouse
+    // within the subtree is done automatically). The event is propagated to the
+    // widget*Event_ handler function of the correct widget. The given mouse
     // coordinates should be global.
     void sendMouseDownEvent(int x, int y, int button);
     void sendMouseUpEvent(int x, int y, int button);

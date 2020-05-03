@@ -6,6 +6,7 @@
 class BrowserAreaEventHandler {
 public:
     virtual void onBrowserAreaViewDirty() = 0;
+    virtual void onBrowserAreaCursorChanged(int cursor) = 0;
 };
 
 class CefBrowser;

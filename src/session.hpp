@@ -53,6 +53,7 @@ public:
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
+    virtual void onBrowserAreaCursorChanged(int cursor) override;
 
 private:
     // Class that implements CefClient interfaces for this session
@@ -129,10 +130,8 @@ private:
     static constexpr int WidthSignalNoNewIframe = 1;
     static constexpr int WidthSignalModulus = 2;
 
-    static constexpr int HeightSignalHandCursor = 0;
-    static constexpr int HeightSignalNormalCursor = 1;
-    static constexpr int HeightSignalIBeamCursor = 2;
-    static constexpr int HeightSignalModulus = 3;
+    // Height signals are given by *Cursor defined in widget.hpp
+    static constexpr int HeightSignalModulus = CursorTypeCount;
 
     int widthSignal_;
     int heightSignal_;

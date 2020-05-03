@@ -141,6 +141,25 @@ public:
         }
     }
 
+    virtual void OnCursorChange(
+        CefRefPtr<CefBrowser> browser,
+        CefCursorHandle cursorHandle,
+        CefRenderHandler::CursorType type,
+        const CefCursorInfo& customCursorInfo
+    ) override {
+        CEF_REQUIRE_UI_THREAD();
+
+        int cursor = NormalCursor;
+        if(type == CT_HAND) cursor = HandCursor;
+        if(type == CT_IBEAM) cursor = TextCursor;
+
+        postTask(
+            browserArea_->eventHandler_,
+            &BrowserAreaEventHandler::onBrowserAreaCursorChanged,
+            cursor
+        );
+    }
+
 private:
     shared_ptr<BrowserArea> browserArea_;
 
