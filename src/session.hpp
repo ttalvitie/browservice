@@ -50,10 +50,10 @@ public:
 
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
+    virtual void onWidgetCursorChanged() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
-    virtual void onBrowserAreaCursorChanged(int cursor) override;
 
 private:
     // Class that implements CefClient interfaces for this session

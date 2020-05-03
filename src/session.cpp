@@ -348,16 +348,17 @@ void Session::onWidgetViewDirty() {
     sendViewportToCompressor_();
 }
 
+void Session::onWidgetCursorChanged() {
+    CEF_REQUIRE_UI_THREAD();
+
+    int cursor = rootWidget_->cursor();
+    CHECK(cursor >= 0 && cursor < CursorTypeCount);
+    setHeightSignal_(cursor);
+}
+
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
-}
-
-void Session::onBrowserAreaCursorChanged(int cursor) {
-    CEF_REQUIRE_UI_THREAD();
-    CHECK(cursor >= 0 && cursor < CursorTypeCount);
-
-    setHeightSignal_(cursor);
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {

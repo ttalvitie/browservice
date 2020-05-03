@@ -11,6 +11,9 @@ Widget::Widget(weak_ptr<WidgetParent> parent) {
 
     lastMouseX_ = -1;
     lastMouseY_ = -1;
+
+    cursor_ = NormalCursor;
+    myCursor_ = NormalCursor;
 }
 
 void Widget::setViewport(ImageSlice viewport) {
@@ -31,6 +34,11 @@ void Widget::render() {
 
     viewDirty_ = false;
     widgetRender_();
+}
+
+int Widget::cursor() {
+    CEF_REQUIRE_UI_THREAD();
+    return cursor_;
 }
 
 void Widget::sendMouseDownEvent(int x, int y, int button) {
@@ -117,6 +125,7 @@ void Widget::sendMouseLeaveEvent(int x, int y) {
         forwardMouseLeaveEvent_(x, y);
         mouseOverChild_.reset();
         mouseOver_ = false;
+        updateCursor_();
     }
 }
 
@@ -162,6 +171,11 @@ void Widget::onWidgetViewDirty() {
     signalViewDirty_();
 }
 
+void Widget::onWidgetCursorChanged() {
+    CEF_REQUIRE_UI_THREAD();
+    updateCursor_();
+}
+
 void Widget::signalViewDirty_() {
     CEF_REQUIRE_UI_THREAD();
 
@@ -169,6 +183,14 @@ void Widget::signalViewDirty_() {
         viewDirty_ = true;
         postTask(parent_, &WidgetParent::onWidgetViewDirty);
     }
+}
+
+void Widget::setCursor_(int newCursor) {
+    CEF_REQUIRE_UI_THREAD();
+    CHECK(newCursor >= 0 && newCursor < CursorTypeCount);
+
+    myCursor_ = newCursor;
+    updateCursor_();
 }
 
 void Widget::updateFocus_(int x, int y) {
@@ -200,6 +222,7 @@ void Widget::updateMouseOver_(int x, int y) {
         mouseOverChild_ = newMouseOverChild;
         mouseOver_ = true;
         forwardMouseEnterEvent_(x, y);
+        updateCursor_();
     }
 }
 
@@ -226,6 +249,19 @@ shared_ptr<Widget> Widget::childByPoint_(int x, int y) {
         }
     }
     return {};
+}
+
+void Widget::updateCursor_() {
+    int newCursor;
+    if(mouseOverChild_) {
+        newCursor = mouseOverChild_->cursor();
+    } else {
+        newCursor = myCursor_;
+    }
+    if(newCursor != cursor_) {
+        cursor_ = newCursor;
+        postTask(parent_, &WidgetParent::onWidgetCursorChanged);
+    }
 }
 
 #define DEFINE_EVENT_FORWARD(name, widgetPtr, args, call) \

@@ -153,11 +153,7 @@ public:
         if(type == CT_HAND) cursor = HandCursor;
         if(type == CT_IBEAM) cursor = TextCursor;
 
-        postTask(
-            browserArea_->eventHandler_,
-            &BrowserAreaEventHandler::onBrowserAreaCursorChanged,
-            cursor
-        );
+        browserArea_->setCursor_(cursor);
     }
 
 private:

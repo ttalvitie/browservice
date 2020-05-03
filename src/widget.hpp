@@ -11,6 +11,7 @@ static constexpr int CursorTypeCount = 3;
 class WidgetParent {
 public:
     virtual void onWidgetViewDirty() = 0;
+    virtual void onWidgetCursorChanged() = 0;
 };
 
 class Widget : public WidgetParent {
@@ -21,6 +22,8 @@ public:
     ImageSlice getViewport();
 
     void render();
+
+    int cursor();
 
     // Send input event to the widget or its descendants (focus handling
     // within the subtree is done automatically). The event is propagated to the
@@ -40,11 +43,16 @@ public:
 
     // WidgetParent: (forward events from possible children)
     virtual void onWidgetViewDirty() override;
+    virtual void onWidgetCursorChanged() override;
 
 protected:
     // The widget should call this when its view has updated and the changes
     // should be rendered
     void signalViewDirty_();
+
+    // The widget should call this to update its own cursor; the effects might
+    // not be immediately visible if mouse is not over this widget
+    void setCursor_(int newCursor);
 
     // Functions to be implemented by the widget:
 
@@ -88,6 +96,8 @@ private:
 
     shared_ptr<Widget> childByPoint_(int x, int y);
 
+    void updateCursor_();
+
     void forwardMouseDownEvent_(int x, int y, int button);
     void forwardMouseUpEvent_(int x, int y, int button);
     void forwardMouseDoubleClickEvent_(int x, int y);
@@ -115,4 +125,7 @@ private:
 
     set<int> mouseButtonsDown_;
     set<Key> keysDown_;
+
+    int cursor_;
+    int myCursor_;
 };
