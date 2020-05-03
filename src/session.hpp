@@ -79,6 +79,8 @@ private:
     void setWidthSignal_(int newWidthSignal);
     void setHeightSignal_(int newHeightSignal);
 
+    void addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe);
+
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
@@ -116,6 +118,8 @@ private:
     ImageSlice paddedRootViewport_;
     ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
+
+    queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
 
     // We use width and height modulo WidthSignalModulus and HeightSignalModulus
     // of the part of rootViewport_ sent to imageCompressor_ to signal various

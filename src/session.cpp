@@ -21,6 +21,9 @@ regex nextPathRegex("/[0-9]+/next/");
 regex imagePathRegex(
     "/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
 );
+regex iframePathRegex(
+    "/[0-9]+/iframe/([0-9]+)/[0-9]+/"
+);
 
 }
 
@@ -77,7 +80,14 @@ public:
             eventHandler->onPopupSessionOpen(popupSession);
         }
 
-        session_->setWidthSignal_(WidthSignalNewIframe);
+        uint64_t popupSessionID = popupSession->id();
+        session_->addIframe_([popupSessionID](shared_ptr<HTTPRequest> request) {
+            request->sendHTMLResponse(
+                200,
+                writePopupIframeHTML,
+                {popupSessionID}
+            );
+        });
 
         return false;
     }
@@ -242,6 +252,28 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
                 } else {
                     imageCompressor_->sendCompressedImageWait(request);
                 }
+            }
+            return;
+        }
+    }
+
+    if(method == "GET" && regex_match(path, match, iframePathRegex)) {
+        CHECK(match.size() == 2);
+        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
+        if(mainIdx) {
+            if(*mainIdx != curMainIdx_) {
+                request->sendTextResponse(400, "ERROR: Outdated request");
+            } else if(iframeQueue_.empty()) {
+                request->sendTextResponse(200, "OK");
+            } else {
+                function<void(shared_ptr<HTTPRequest>)> iframe = iframeQueue_.front();
+                iframeQueue_.pop();
+
+                if(iframeQueue_.empty()) {
+                    setWidthSignal_(WidthSignalNoNewIframe);
+                }
+
+                iframe(request);
             }
             return;
         }
@@ -456,4 +488,9 @@ void Session::setHeightSignal_(int newHeightSignal) {
         heightSignal_ = newHeightSignal;
         sendViewportToCompressor_();
     }
+}
+
+void Session::addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe) {
+    iframeQueue_.push(iframe);
+    setWidthSignal_(WidthSignalNewIframe);
 }

@@ -19,12 +19,17 @@ img {
     image-rendering: optimize-contrast;
     -ms-interpolation-mode: nearest-neighbor;
 }
+iframe {
+    display: none;
+    z-index: 1;
+}
 </style>
 <script type="text/javascript">
 window.onload = function() {
 
 var retryInterval = 3000;
 var maxRetries = 10;
+var minIframeLoadInterval = 2000;
 
 var useOnMouseWheel = false;
 var fixMousePosition = false;
@@ -47,6 +52,40 @@ var bodyOverflowHiddenNotSupported = false;
 })();
 
 var imgIdx = 0;
+
+var loadIframe;
+var cancelIframeLoad;
+(function() {
+    var nextAllowedTime = new Date().getTime();
+    var iframeIdx = 0;
+
+    var loadTimeout = null;
+    function loadNow() {
+        loadTimeout = null;
+        nextAllowedTime = new Date().getTime() + minIframeLoadInterval;
+
+        ++iframeIdx;
+        if(iframeIdx >= document.forms.length) {
+            iframeIdx = 0;
+        }
+
+        var rand = (1e9 * Math.random()) | 0;
+        document.forms[iframeIdx].innerHTML =
+            '<iframe src="/%-sessionID-%/iframe/%-mainIdx-%/' + rand + '/"></iframe>';
+    }
+
+    loadIframe = function() {
+        if(!loadTimeout) {
+            loadTimeout = setTimeout(loadNow, Math.max(nextAllowedTime - new Date().getTime(), 0));
+        }
+    };
+    cancelIframeLoad = function() {
+        if(loadTimeout) {
+            clearTimeout(loadTimeout);
+            loadTimeout = null;
+        }
+    }
+})();
 
 var eventQueue = [];
 var eventQueueStartIdx = 0;
@@ -94,6 +133,12 @@ function setupImg(img, nextImg, elem) {
         eventQueue = [];
         for(var i = eventIdxIncrement; i < oldEventQueue.length; ++i) {
             eventQueue[eventQueue.length] = oldEventQueue[i];
+        }
+
+        if(img.elem.width % 2 == 0) {
+            loadIframe();
+        } else {
+            cancelIframeLoad();
         }
 
         img.elem.style.zIndex = 3;
@@ -318,5 +363,8 @@ document.onkeyup = function(event) {
 <body>
 <img>
 <img>
+<form></form>
+<form></form>
+<form></form>
 </body>
 </html>

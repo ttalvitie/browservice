@@ -42,5 +42,4 @@ private:
 
     shared_ptr<HTTPServer> httpServer_;
     map<uint64_t, shared_ptr<Session>> sessions_;
-    
 };

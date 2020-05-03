@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <queue>
 #include <random>
 #include <regex>
 #include <set>
@@ -43,6 +44,7 @@ using std::optional;
 using std::ostream;
 using std::pair;
 using std::promise;
+using std::queue;
 using std::random_device;
 using std::regex;
 using std::regex_match;

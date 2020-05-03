@@ -33,3 +33,8 @@ struct NextHTMLData {
     uint64_t sessionID;
 };
 void writeNextHTML(ostream& out, const NextHTMLData& data);
+
+struct PopupIframeHTMLData {
+    uint64_t sessionID;
+};
+void writePopupIframeHTML(ostream& out, const PopupIframeHTMLData& data);
