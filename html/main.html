@@ -37,9 +37,9 @@ var leftMouseButtonIs1 = false;
 var bodyOverflowHiddenNotSupported = false;
 (function() {
     var ua = window.navigator.userAgent;
-    var msie = ua.indexOf('MSIE ');
+    var msie = ua.indexOf("MSIE ");
     if(msie > 0) {
-        var ver = parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+        var ver = parseInt(ua.substring(msie + 5, ua.indexOf(".", msie)), 10);
         if(ver <= 8) {
             useOnMouseWheel = true;
             fixMousePosition = true;
@@ -71,7 +71,7 @@ var cancelIframeLoad;
 
         var rand = (1e9 * Math.random()) | 0;
         document.forms[iframeIdx].innerHTML =
-            '<iframe src="/%-sessionID-%/iframe/%-mainIdx-%/' + rand + '/"></iframe>';
+            "<iframe src=\"/%-sessionID-%/iframe/%-mainIdx-%/" + rand + "/\"></iframe>";
     }
 
     loadIframe = function() {
@@ -160,7 +160,7 @@ function setupImg(img, nextImg, elem) {
         ++attempts;
 
         if(mouseMoved && !mouseMoveEventAdded) {
-            eventQueue[eventQueue.length] = 'MMO_' + mouseX + '_' + mouseY;
+            eventQueue[eventQueue.length] = "MMO_" + mouseX + "_" + mouseY;
             mouseMoved = false;
             mouseMoveEventAdded = true;
         }
@@ -245,7 +245,7 @@ document.onmousedown = function(event) {
         if(leftMouseButtonIs1 && button == 1) {
             button = 0;
         }
-        putEvent('MDN_' + mouseX + '_' + mouseY + '_' + button);
+        putEvent("MDN_" + mouseX + "_" + mouseY + "_" + button);
     }
     preventDefault(event);
 };
@@ -258,7 +258,7 @@ document.onmouseup = function(event) {
         if(leftMouseButtonIs1 && button == 1) {
             button = 0;
         }
-        putEvent('MUP_' + mouseX + '_' + mouseY + '_' + button);
+        putEvent("MUP_" + mouseX + "_" + mouseY + "_" + button);
     }
     preventDefault(event);
 };
@@ -266,7 +266,7 @@ document.onmouseup = function(event) {
 document.ondblclick = function(event) {
     if(!event) event = window.event;
     updateMousePos(event);
-    putEvent('MDBL_' + mouseX + '_' + mouseY);
+    putEvent("MDBL_" + mouseX + "_" + mouseY);
     preventDefault(event);
 };
 
@@ -282,20 +282,20 @@ document.onmousemove = function(event) {
 if(useOnMouseWheel) {
     document.onmousewheel = function(event) {
         if(!event) event = window.event;
-        putEvent('MWH_' + mouseX + '_' + mouseY + '_' + (event.wheelDelta | 0));
+        putEvent("MWH_" + mouseX + "_" + mouseY + "_" + (event.wheelDelta | 0));
     };
 } else {
     document.onwheel = function(event) {
-        putEvent('MWH_' + mouseX + '_' + mouseY + '_' + ((-30 * event.deltaY) | 0));
+        putEvent("MWH_" + mouseX + "_" + mouseY + "_" + ((-30 * event.deltaY) | 0));
     };
 }
 
 document.body.onmouseleave = function() {
-    putEvent('MOUT_' + mouseX + '_' + mouseY);
+    putEvent("MOUT_" + mouseX + "_" + mouseY);
 };
 
 window.onblur = function() {
-    putEvent('FOUT');
+    putEvent("FOUT");
 };
 
 document.ondragstart = function() {
@@ -321,7 +321,7 @@ document.onkeypress = function(event) {
         var key = event.which | 0;
     }
     if(key <= 0) return;
-    putEvent('KPR_' + key);
+    putEvent("KPR_" + key);
     preventDefault(event);
 };
 
@@ -341,7 +341,7 @@ document.onkeydown = function(event) {
         var key = event.which | 0;
     }
     if(!nonCharKeys[key]) return;
-    putEvent('KDN_' + key);
+    putEvent("KDN_" + key);
     preventDefault(event);
 };
 
@@ -353,7 +353,7 @@ document.onkeyup = function(event) {
         var key = event.which | 0;
     }
     if(!nonCharKeys[key]) return;
-    putEvent('KUP_' + key);
+    putEvent("KUP_" + key);
     preventDefault(event);
 };
 
