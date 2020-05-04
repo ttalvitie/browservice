@@ -1,7 +1,10 @@
 #include "globals.hpp"
 
+#include "text.hpp"
+
 Globals::Globals(CKey, shared_ptr<Config> config)
-    : config(config)
+    : config(config),
+      textRenderContext(TextRenderContext::create())
 {
     CHECK(config);
 }
