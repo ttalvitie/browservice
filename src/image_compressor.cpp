@@ -2,6 +2,7 @@
 
 #include "http.hpp"
 #include "jpeg.hpp"
+#include "png.hpp"
 #include "timeout.hpp"
 
 #include "include/cef_thread.h"
@@ -12,6 +13,12 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
 
     sendTimeout_ = Timeout::create(sendTimeoutMs);
     compressorThread_ = CefThread::CreateThread("Image compressor");
+
+    int pngThreadCount = (int)thread::hardware_concurrency();
+    pngThreadCount = min(pngThreadCount, 4);
+    pngThreadCount = max(pngThreadCount, 1);
+
+    pngCompressor_ = make_shared<PNGCompressor>(pngThreadCount);
 
     // Prior to compressing the first image, our image is a white pixel
     image_ = ImageSlice::createImage(1, 1);
@@ -107,8 +114,9 @@ void ImageCompressor::pump_() {
 
     ImageSlice imageCopy = image_.clone();
     shared_ptr<ImageCompressor> self = shared_from_this();
-    function<void()> compressTask = [imageCopy, self]() mutable {
-        shared_ptr<JPEGData> jpeg = make_shared<JPEGData>(compressJPEG(
+    shared_ptr<PNGCompressor> pngCompressor = pngCompressor_;
+    function<void()> compressTask = [imageCopy, self, pngCompressor]() mutable {
+        /*shared_ptr<JPEGData> jpeg = make_shared<JPEGData>(compressJPEG(
             imageCopy.buf(),
             imageCopy.width(),
             imageCopy.height(),
@@ -126,7 +134,39 @@ void ImageCompressor::pump_() {
                         out.write((const char*)jpeg->data.get(), jpeg->length);
                     }
                 );
+            };*/
+
+        shared_ptr<vector<vector<uint8_t>>> png =
+            make_shared<vector<vector<uint8_t>>>(
+                pngCompressor->compress(
+                    imageCopy.buf(),
+                    imageCopy.width(),
+                    imageCopy.height(),
+                    imageCopy.pitch()
+                )
+            );
+
+        uint64_t length = 0;
+        for(const vector<uint8_t>& chunk : *png) {
+            length += chunk.size();
+        }
+
+        CompressedImage compressedImage =
+            [png, length](shared_ptr<HTTPRequest> request) {
+                CEF_REQUIRE_UI_THREAD();
+
+                request->sendResponse(
+                    200,
+                    "image/png",
+                    length,
+                    [png](ostream& out) {
+                        for(const vector<uint8_t>& chunk : *png) {
+                            out.write((const char*)chunk.data(), chunk.size());
+                        }
+                    }
+                );
             };
+
         postTask(self, &ImageCompressor::compressTaskDone_, compressedImage);
     };
 

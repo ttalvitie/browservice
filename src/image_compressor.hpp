@@ -1,6 +1,7 @@
 #include "image_slice.hpp"
 
 class HTTPRequest;
+class PNGCompressor;
 class Timeout;
 
 class CefThread;
@@ -39,6 +40,8 @@ private:
 
     shared_ptr<Timeout> sendTimeout_;
     CefRefPtr<CefThread> compressorThread_;
+
+    shared_ptr<PNGCompressor> pngCompressor_;
 
     ImageSlice image_;
     CompressedImage compressedImage_;
