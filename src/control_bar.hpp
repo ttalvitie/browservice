@@ -2,6 +2,8 @@
 
 #include "widget.hpp"
 
+class TextLayout;
+
 class ControlBar : public Widget {
 SHARED_ONLY_CLASS(ControlBar);
 public:
@@ -10,6 +12,12 @@ public:
     ControlBar(CKey, weak_ptr<WidgetParent> widgetParent);
 
 private:
+    class Layout;
+
+    Layout layout_();
+
+    // Widget:
+    virtual void widgetRender_() override;
     virtual void widgetMouseDownEvent_(int x, int y, int button) override {
         LOG(INFO) << "Control bar: Mouse button " << button << " down at (" << x << ", " << y << ")\n";
     }
@@ -44,5 +52,5 @@ private:
         LOG(INFO) << "Control bar: Lose focus\n";
     }
 
-    virtual void widgetRender_() override;
+    shared_ptr<TextLayout> addressText_;
 };
