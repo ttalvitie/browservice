@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "rect.hpp"
 
 // Reference to a rectangular part of a shared image buffer
 class ImageSlice {
@@ -19,6 +19,14 @@ public:
     // color (r, g, b)
     static ImageSlice createImage(int width, int height, uint8_t r, uint8_t g, uint8_t b);
     static ImageSlice createImage(int width, int height, uint8_t rgb = 255);
+
+    // Create new buffer with contents given by strings. In rows, each element
+    // contains the pixels of each row as characters. The colors mapping
+    // describes which color each character represents (given as RGB triplet).
+    static ImageSlice createImageFromStrings(
+        const vector<string>& rows,
+        const map<char, array<uint8_t, 3>>& colors
+    );
 
     // Returns pointer buf such that for all 0 <= y < height() and
     // 0 <= x < width(), buf[4 * (y * pitch() + x) + c] is the value in pixel
@@ -64,6 +72,24 @@ public:
     }
     void setPixel(int x, int y, uint8_t rgb) {
         setPixel(x, y, rgb, rgb, rgb);
+    }
+
+    // Copy the contents of src to this image slice such that its top left
+    // corner is copied to (offsetX, offsetY). If src overflows this image
+    // slice, the overflowing part is discarded.
+    void putImage(ImageSlice src, int x, int y) {
+        Rect rect = Rect::intersection(
+            Rect(0, src.width_, 0, src.height_),
+            Rect::translate(Rect(0, width_, 0, height_), -x, -y)
+        );
+
+        if(!rect.isEmpty()) {
+            for(int lineY = rect.startY; lineY < rect.endY; ++lineY) {
+                const uint8_t* srcLine = src.getPixelPtr(rect.startX, lineY);
+                uint8_t* destLine = getPixelPtr(rect.startX + x, lineY + y);
+                memcpy(destLine, srcLine, 4 * (rect.endX - rect.startX));
+            }
+        }
     }
 
     // Get image slice for subrectangle [startX, endX) x [startY, endY] of this

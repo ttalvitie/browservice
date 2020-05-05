@@ -2,6 +2,12 @@
 
 #include "widget.hpp"
 
+enum class SecurityStatus {
+    Secure,
+    Warning,
+    Insecure
+};
+
 class TextLayout;
 
 class ControlBar : public Widget {
@@ -10,6 +16,8 @@ public:
     static constexpr int Height = 27;
 
     ControlBar(CKey, weak_ptr<WidgetParent> widgetParent);
+
+    void setSecurityStatus(SecurityStatus value);
 
 private:
     class Layout;
@@ -53,4 +61,6 @@ private:
     }
 
     shared_ptr<TextLayout> addressText_;
+
+    SecurityStatus securityStatus_;
 };

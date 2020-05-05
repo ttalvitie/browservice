@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
@@ -24,6 +25,7 @@
 #include "include/base/cef_logging.h"
 #include "include/wrapper/cef_helpers.h"
 
+using std::array;
 using std::atomic;
 using std::cerr;
 using std::cout;

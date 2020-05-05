@@ -1,6 +1,7 @@
 #include "session.hpp"
 
 #include "browser_area.hpp"
+#include "control_bar.hpp"
 #include "event.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
@@ -30,7 +31,9 @@ regex iframePathRegex(
 class Session::Client :
     public CefClient,
     public CefLifeSpanHandler,
-    public CefLoadHandler
+    public CefLoadHandler,
+    public CefDisplayHandler,
+    public CefRequestHandler
 {
 public:
     Client(shared_ptr<Session> session) {
@@ -49,6 +52,12 @@ public:
     virtual CefRefPtr<CefLoadHandler> GetLoadHandler() override {
         return this;
     }
+    virtual CefRefPtr<CefDisplayHandler> GetDisplayHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
+        return this;
+    }
 
     // CefLifeSpanHandler:
     virtual bool OnBeforePopup(
@@ -56,7 +65,7 @@ public:
         CefRefPtr<CefFrame> frame,
         const CefString&,
         const CefString&,
-        WindowOpenDisposition,
+        CefLifeSpanHandler::WindowOpenDisposition,
         bool,
         const CefPopupFeatures&,
         CefWindowInfo& windowInfo,
@@ -127,7 +136,7 @@ public:
         CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
         TransitionType transitionType
-    ) {
+    ) override {
         CEF_REQUIRE_UI_THREAD();
 
         if(frame->IsMain()) {
@@ -136,6 +145,42 @@ public:
             session_->rootWidget_->sendLoseFocusEvent();
             session_->rootWidget_->sendMouseLeaveEvent(0, 0);
         }
+    }
+
+    virtual void OnLoadingStateChange(
+        CefRefPtr<CefBrowser> browser,
+        bool isLoading,
+        bool canGoBack,
+        bool canGoForward
+    ) override {
+        CEF_REQUIRE_UI_THREAD();
+        session_->updateSecurityStatus_();
+    }
+
+    // CefDisplayHandler:
+    virtual void OnAddressChange(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        const CefString& url
+    ) override {
+        CEF_REQUIRE_UI_THREAD();
+        session_->updateSecurityStatus_();
+    }
+
+    // CefRequestHandler:
+    virtual CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        CefRefPtr<CefRequest> request,
+        bool isNavigation,
+        bool isDownload,
+        const CefString& requestInitiator,
+        bool& disableDefaultHandling
+    ) override {
+        CEF_REQUIRE_IO_THREAD();
+
+        postTask(session_, &Session::updateSecurityStatus_);
+        return nullptr;
     }
 
 private:
@@ -177,6 +222,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
     closeOnOpen_ = false;
 
     inactivityTimeout_ = Timeout::create(30000);
+
+    lastSecurityStatusUpdateTime_ = steady_clock::now();
 
     imageCompressor_ = ImageCompressor::create(2000);
 
@@ -226,6 +273,14 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     updateInactivityTimeout_();
+
+    // Force update security status every once in a while just to make sure we
+    // don't miss updates for a long time
+    if(duration_cast<milliseconds>(
+        steady_clock::now() - lastSecurityStatusUpdateTime_
+    ).count() >= 1000) {
+        updateSecurityStatus_();
+    }
 
     string method = request->method();
     string path = request->path();
@@ -410,6 +465,39 @@ void Session::updateInactivityTimeout_() {
             }
         });
     }
+}
+
+void Session::updateSecurityStatus_() {
+    CEF_REQUIRE_UI_THREAD();
+
+    lastSecurityStatusUpdateTime_ = steady_clock::now();
+
+    SecurityStatus securityStatus = SecurityStatus::Insecure;
+    if(browser_) {
+        CefRefPtr<CefNavigationEntry> nav = browser_->GetHost()->GetVisibleNavigationEntry();
+        if(nav) {
+            CefRefPtr<CefSSLStatus> sslStatus = nav->GetSSLStatus();
+            if(
+                sslStatus &&
+                sslStatus->IsSecureConnection() &&
+                !(sslStatus->GetCertStatus() & ~(
+                    // non-error statuses
+                    CERT_STATUS_IS_EV |
+                    CERT_STATUS_REV_CHECKING_ENABLED |
+                    CERT_STATUS_SHA1_SIGNATURE_PRESENT |
+                    CERT_STATUS_CT_COMPLIANCE_FAILED
+                ))
+            ) {
+                if(sslStatus->GetContentStatus() == SSL_CONTENT_NORMAL_CONTENT) {
+                    securityStatus = SecurityStatus::Secure;
+                } else {
+                    securityStatus = SecurityStatus::Warning;
+                }
+            }
+        }
+    }
+
+    rootWidget_->controlBar()->setSecurityStatus(securityStatus);
 }
 
 void Session::updateRootViewportSize_(int width, int height) {

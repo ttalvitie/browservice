@@ -63,6 +63,8 @@ private:
 
     void updateInactivityTimeout_();
 
+    void updateSecurityStatus_();
+
     // Change root viewport size if it is different than currently. Clamps
     // dimensions to sane interval.
     void updateRootViewportSize_(int width, int height);
@@ -113,6 +115,8 @@ private:
     bool closeOnOpen_;
 
     shared_ptr<Timeout> inactivityTimeout_;
+
+    steady_clock::time_point lastSecurityStatusUpdateTime_;
 
     shared_ptr<ImageCompressor> imageCompressor_;
 

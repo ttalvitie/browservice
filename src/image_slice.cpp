@@ -24,3 +24,31 @@ ImageSlice ImageSlice::createImage(int width, int height, uint8_t rgb) {
     slice.globalY_ = 0;
     return slice;
 }
+
+ImageSlice ImageSlice::createImageFromStrings(
+    const vector<string>& rows,
+    const map<char, array<uint8_t, 3>>& colors
+) {
+    if(rows.empty()) {
+        return createImage(0, 0);
+    }
+
+    int height = rows.size();
+    int width = rows[0].size();
+    for(int y = 1; y < height; ++y) {
+        CHECK(rows[y].size() == (size_t)width);
+    }
+
+    ImageSlice ret = createImage(width, height, 0);
+
+    for(int y = 0; y < height; ++y) {
+        for(int x = 0; x < width; ++x) {
+            char colorChar = rows[y][x];
+            auto it = colors.find(colorChar);
+            CHECK(it != colors.end());
+            ret.setPixel(x, y, it->second[0], it->second[1], it->second[2]);
+        }
+    }
+
+    return ret;
+}
