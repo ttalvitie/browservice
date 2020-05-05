@@ -41,13 +41,6 @@ void RootWidget::widgetViewportUpdated_() {
     browserArea_->setViewport(browserAreaViewport);
 }
 
-void RootWidget::widgetRender_() {
-    CEF_REQUIRE_UI_THREAD();
-
-    controlBar_->render();
-    browserArea_->render();
-}
-
 vector<shared_ptr<Widget>> RootWidget::widgetListChildren_() {
     CEF_REQUIRE_UI_THREAD();
     return {controlBar_, browserArea_};

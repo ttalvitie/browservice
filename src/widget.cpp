@@ -34,6 +34,11 @@ void Widget::render() {
 
     viewDirty_ = false;
     widgetRender_();
+
+    for(shared_ptr<Widget> child : widgetListChildren_()) {
+        CHECK(child);
+        child->render();
+    }
 }
 
 int Widget::cursor() {
@@ -241,10 +246,9 @@ void Widget::clearEventState_(int x, int y) {
 }
 
 shared_ptr<Widget> Widget::childByPoint_(int x, int y) {
-    vector<shared_ptr<Widget>> children = widgetListChildren_();
-
-    for(shared_ptr<Widget> child : children) {
-        if(child && child->viewport_.containsGlobalPoint(x, y)) {
+    for(shared_ptr<Widget> child : widgetListChildren_()) {
+        CHECK(child);
+        if(child->viewport_.containsGlobalPoint(x, y)) {
             return child;
         }
     }

@@ -22,7 +22,6 @@ private:
 
     // Widget:
     virtual void widgetViewportUpdated_() override;
-    virtual void widgetRender_() override;
     virtual vector<shared_ptr<Widget>> widgetListChildren_() override;
 
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler_;

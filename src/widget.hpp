@@ -58,6 +58,8 @@ protected:
 
     // Called after viewport (available through getViewport()) has been updated.
     // Does not need to call signalViewDirty_, as it is automatically called.
+    // For widgets containing child widgets, the implementation of this function
+    // should typically update the viewport of each child with setViewport. 
     virtual void widgetViewportUpdated_() {}
 
     // Called when widget should immediately ensure that it has been rendered
@@ -65,11 +67,13 @@ protected:
     // through widgetViewportUpdated_ prior to this call). The widget is also
     // allowed to render to the viewport outside this function; however, it
     // is possible that some other widget (such as the parent) is drawing to
-    // the same viewport.
+    // the same viewport. The children of this widget (in the list returned by
+    // widgetListChildren_) are rendered after this call.
     virtual void widgetRender_() {}
 
-    // This function should list the child widgets of this widget; it is called
-    // to route events to the correct widget.
+    // This function should list the child widgets of this widget; it is used
+    // to route events to the correct widget and to know which widgets to render
+    // after this widget
     virtual vector<shared_ptr<Widget>> widgetListChildren_() {
         return {};
     }
