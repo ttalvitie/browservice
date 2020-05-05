@@ -15,7 +15,8 @@ public:
     // The resulting compressed PNG data can be obtained by concatenating the
     // returned chunks.
     // 
-    // This function is not safe to call from multiple threads at the same time.
+    // This function is not safe to call from multiple threads at the same time
+    // for the same PNGCompressor object.
     std::vector<std::vector<uint8_t>> compress(
         const uint8_t* image,
         size_t width,
