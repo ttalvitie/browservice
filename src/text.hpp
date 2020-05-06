@@ -25,6 +25,7 @@ public:
 
     // Uses the global context globals->textRenderContext
     TextLayout(CKey);
+
     ~TextLayout();
 
     // Set the text to be laid out. Must be valid UTF-8.
@@ -46,4 +47,39 @@ public:
 private:
     struct Impl;
     unique_ptr<Impl> impl_;
+};
+
+class OverflowTextLayout {
+SHARED_ONLY_CLASS(OverflowTextLayout);
+public:
+    OverflowTextLayout(CKey, shared_ptr<TextRenderContext> ctx);
+
+    // Uses the global context globals->textRenderContext
+    OverflowTextLayout(CKey);
+
+    void setText(const string& text);
+    const string& text();
+
+    // Set/get the width to which the text is clamped
+    void setWidth(int width);
+    int width();
+
+    // The logical size of text without clamping
+    int textWidth();
+    int textHeight();
+
+    // Set/get the current text offset (nonnegative number, clamped to suitable
+    // range)
+    void setOffset(int offset);
+    int offset();
+
+    void render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b);
+    void render(ImageSlice dest, uint8_t rgb = 0);
+
+private:
+    void clampOffset_();
+
+    shared_ptr<TextLayout> textLayout_;
+    int width_;
+    int offset_;
 };

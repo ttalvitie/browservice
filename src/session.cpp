@@ -164,6 +164,7 @@ public:
         const CefString& url
     ) override {
         CEF_REQUIRE_UI_THREAD();
+        session_->rootWidget_->controlBar()->setAddress(url);
         session_->updateSecurityStatus_();
     }
 

@@ -254,3 +254,84 @@ void TextLayout::render(
 ) {
     render(dest, x, y, rgb, rgb, rgb);
 }
+
+OverflowTextLayout::OverflowTextLayout(CKey, shared_ptr<TextRenderContext> ctx) {
+    CEF_REQUIRE_UI_THREAD();
+
+    textLayout_ = TextLayout::create(ctx);
+    width_ = 0;
+    offset_ = 0;
+}
+
+OverflowTextLayout::OverflowTextLayout(CKey) {
+    CEF_REQUIRE_UI_THREAD();
+
+    textLayout_ = TextLayout::create();
+    width_ = 0;
+    offset_ = 0;
+}
+
+void OverflowTextLayout::setText(const string& text) {
+    CEF_REQUIRE_UI_THREAD();
+
+    textLayout_->setText(text);
+    clampOffset_();
+}
+
+const string& OverflowTextLayout::text() {
+    return textLayout_->text();
+}
+
+void OverflowTextLayout::setWidth(int width) {
+    CEF_REQUIRE_UI_THREAD();
+    CHECK(width >= 0);
+
+    width_ = width;
+    clampOffset_();
+}
+
+int OverflowTextLayout::width() {
+    CEF_REQUIRE_UI_THREAD();
+    return width_;
+}
+
+int OverflowTextLayout::textWidth() {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->width();
+}
+
+int OverflowTextLayout::textHeight() {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->height();
+}
+
+void OverflowTextLayout::setOffset(int offset) {
+    CEF_REQUIRE_UI_THREAD();
+
+    offset_ = offset;
+    clampOffset_();
+}
+
+int OverflowTextLayout::offset() {
+    CEF_REQUIRE_UI_THREAD();
+    return offset_;
+}
+
+void OverflowTextLayout::render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b) {
+    CEF_REQUIRE_UI_THREAD();
+
+    ImageSlice subDest = dest.subRect(0, width_, 0, dest.height());
+    textLayout_->render(subDest, -offset_, 0, r, g, b);
+}
+
+void OverflowTextLayout::render(ImageSlice dest, uint8_t rgb) {
+    CEF_REQUIRE_UI_THREAD();
+
+    ImageSlice subDest = dest.subRect(0, width_, 0, dest.height());
+    textLayout_->render(subDest, -offset_, 0, rgb);
+}
+
+void OverflowTextLayout::clampOffset_() {
+    offset_ = min(offset_, textWidth() - width_);
+    offset_ = max(offset_, 0);
+}

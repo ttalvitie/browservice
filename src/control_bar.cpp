@@ -1,6 +1,7 @@
 #include "control_bar.hpp"
 
 #include "text.hpp"
+#include "text_field.hpp"
 
 namespace {
 
@@ -111,10 +112,13 @@ struct ControlBar::Layout {
         addrBoxEnd = addrEnd;
 
         int addrBoxInnerStart = addrBoxStart + 2;
-//        int addrBoxInnerEnd = addrBoxEnd - 2;
+        int addrBoxInnerEnd = addrBoxEnd - 2;
 
         securityIconStart = addrBoxInnerStart + 4;
-//        int securityIconEnd = securityIconStart + 13;
+        int securityIconEnd = securityIconStart + 13;
+
+        addrFieldStart = securityIconEnd + 4;
+        addrFieldEnd = addrBoxInnerEnd;
     }
 
     int width;
@@ -126,6 +130,9 @@ struct ControlBar::Layout {
     int addrBoxEnd;
 
     int securityIconStart;
+
+    int addrFieldStart;
+    int addrFieldEnd;
 };
 
 ControlBar::ControlBar(CKey, weak_ptr<WidgetParent> widgetParent)
@@ -133,8 +140,12 @@ ControlBar::ControlBar(CKey, weak_ptr<WidgetParent> widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
 
-    addressText_ = TextLayout::create();
-    addressText_->setText("Address");
+    addrText_ = TextLayout::create();
+    addrText_->setText("Address");
+
+    securityStatus_ = SecurityStatus::Insecure;
+
+    // Initialization is completed in afterConstruct_
 }
 
 void ControlBar::setSecurityStatus(SecurityStatus value) {
@@ -146,8 +157,28 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
     }
 }
 
+void ControlBar::setAddress(const string& addr) {
+    CEF_REQUIRE_UI_THREAD();
+    addrField_->setText(addr);
+}
+
+void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
+    addrField_ = TextField::create(self);
+}
+
 ControlBar::Layout ControlBar::layout_() {
     return Layout(getViewport().width());
+}
+
+void ControlBar::widgetViewportUpdated_() {
+    CEF_REQUIRE_UI_THREAD();
+
+    ImageSlice viewport = getViewport();
+    Layout layout = layout_();
+
+    addrField_->setViewport(viewport.subRect(
+        layout.addrFieldStart, layout.addrFieldEnd, 4, viewport.height()
+    ));
 }
 
 void ControlBar::widgetRender_() {
@@ -169,7 +200,7 @@ void ControlBar::widgetRender_() {
     viewport.fill(1, layout.width - 1, 1, Height - 4, 192);
 
     // "Address" text
-    addressText_->render(
+    addrText_->render(
         viewport.subRect(layout.addrTextStart, layout.addrTextEnd, 1, Height - 4),
         3, 3
     );
@@ -189,4 +220,9 @@ void ControlBar::widgetRender_() {
 
     // Security icon
     viewport.putImage(securityStatusIcon(securityStatus_), layout.securityIconStart, 6);
+}
+
+vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
+    CEF_REQUIRE_UI_THREAD();
+    return {addrField_};
 }
