@@ -37,6 +37,13 @@ public:
     int width();
     int height();
 
+    // Get the byte index of the character boundary closest to given X
+    // coordinate.
+    int xCoordToIndex(int x);
+
+    // Return the x coordinate of a character boundary given as byte index.
+    int indexToXCoord(int idx);
+
     // Render the text with color (r, g, b) to given image slice. The
     // coordinates (x, y) offset the position of the text. If both are zero, the
     // top left corners of the logical text rectangle and the image slice are
@@ -72,6 +79,10 @@ public:
     // range)
     void setOffset(int offset);
     int offset();
+
+    // Adaptations of TextLayout functions that take offset into account
+    int xCoordToIndex(int x);
+    int indexToXCoord(int idx);
 
     void render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b);
     void render(ImageSlice dest, uint8_t rgb = 0);

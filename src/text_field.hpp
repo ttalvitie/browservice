@@ -15,6 +15,8 @@ private:
     // Widget:
     virtual void widgetViewportUpdated_() override;
     virtual void widgetRender_() override;
+    virtual void widgetMouseDownEvent_(int x, int y, int button) override;
+    virtual void widgetMouseMoveEvent_(int x, int y) override;
 
     shared_ptr<OverflowTextLayout> textLayout_;
 };

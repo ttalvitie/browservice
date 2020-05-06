@@ -27,3 +27,15 @@ void TextField::widgetRender_() {
     ImageSlice viewport = getViewport();
     textLayout_->render(viewport);
 }
+
+// For testing, TODO remove
+void TextField::widgetMouseDownEvent_(int x, int y, int button) {
+    CEF_REQUIRE_UI_THREAD();
+    textLayout_->setOffset(x - 50);
+    signalViewDirty_();
+}
+void TextField::widgetMouseMoveEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    int idx = textLayout_->xCoordToIndex(x);
+    LOG(INFO) << idx << ": " << x << " -> " << textLayout_->indexToXCoord(idx);
+}

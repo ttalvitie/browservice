@@ -8,6 +8,40 @@
 
 namespace {
 
+int jumpUTF8Chars(const string& str, int idx, int count) {
+    CHECK(idx >= 0 && idx <= (int)str.size());
+    CHECK(count >= 0);
+    while(count --> 0) {
+        CHECK(idx < (int)str.size());
+        if((int)str[idx] & 0x80) {
+            CHECK((int)str[idx] & 0x40);
+            // Multibyte character
+            int bytes;
+            if(!((int)str[idx] & 0x20)) {
+                bytes = 2;
+            } else if(!((int)str[idx] & 0x10)) {
+                bytes = 3;
+            } else {
+                bytes = 4;
+                CHECK(!((int)str[idx] & 0x8));
+            }
+            CHECK(idx + bytes <= (int)str.size());
+            ++idx;
+            for(int i = 0; i < bytes - 1; ++i) {
+                CHECK(((int)str[idx++] & 0xC0) == 0x80);
+            }
+        } else {
+            // One-byte character
+            ++idx;
+        }
+    }
+    CHECK(idx <= (int)str.size());
+    if(idx != (int)str.size()) {
+        CHECK(((int)str[idx] & 0xC0) != 0x80);
+    }
+    return idx;
+}
+
 // FreeType2 TrueType interpreter version can only be set using an environment
 // variable, so we set it temporarily using this class
 class FreeType2SetEnv {
@@ -150,6 +184,26 @@ struct TextLayout::Impl {
         CHECK(text == newText);
     }
 
+    int xCoordToIndex(int x) {
+        PangoLayoutLine* line = pango_layout_get_line_readonly(layout, 0);
+        CHECK(line != nullptr);
+
+        int idx, trailing;
+        pango_layout_line_x_to_index(line, x * PANGO_SCALE, &idx, &trailing);
+        idx = jumpUTF8Chars(text, idx, trailing);
+        CHECK(idx >= 0 && idx <= (int)text.size());
+
+        return idx;
+    }
+
+    int indexToXCoord(int idx) {
+        CHECK(idx >= 0 && idx <= (int)text.size());
+
+        PangoRectangle rect;
+        pango_layout_get_cursor_pos(layout, idx, &rect, nullptr);
+        return rect.x / PANGO_SCALE;
+    }
+
     void render(
         ImageSlice dest,
         int offsetX, int offsetY,
@@ -242,6 +296,16 @@ int TextLayout::height() {
     return impl_->getExtents().height;
 }
 
+int TextLayout::xCoordToIndex(int x) {
+    CEF_REQUIRE_UI_THREAD();
+    return impl_->xCoordToIndex(x);
+}
+
+int TextLayout::indexToXCoord(int idx) {
+    CEF_REQUIRE_UI_THREAD();
+    return impl_->indexToXCoord(idx);
+}
+
 void TextLayout::render(
     ImageSlice dest, int x, int y, uint8_t r, uint8_t g, uint8_t b
 ) {
@@ -315,6 +379,16 @@ void OverflowTextLayout::setOffset(int offset) {
 int OverflowTextLayout::offset() {
     CEF_REQUIRE_UI_THREAD();
     return offset_;
+}
+
+int OverflowTextLayout::xCoordToIndex(int x) {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->xCoordToIndex(x + offset_);
+}
+
+int OverflowTextLayout::indexToXCoord(int idx) {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->indexToXCoord(idx) - offset_;
 }
 
 void OverflowTextLayout::render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b) {
