@@ -134,11 +134,6 @@ void TextField::widgetMouseDownEvent_(int x, int y, int button) {
             setCaret_(0, (int)textLayout_->text().size());
         }
     }
-
-    if(button == 2) {
-        textLayout_->setOffset(x - 50);
-        signalViewDirty_();
-    }
 }
 
 void TextField::widgetMouseUpEvent_(int x, int y, int button) {

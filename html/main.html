@@ -107,8 +107,8 @@ function updateMousePos(event) {
     mouseX = event.clientX | 0;
     mouseY = event.clientY | 0;
     if(fixMousePosition) {
-        --mouseX;
-        --mouseY;
+        mouseX -= 2;
+        mouseY -= 2;
     }
 }
 
