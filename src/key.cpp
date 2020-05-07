@@ -33,6 +33,7 @@ map<Key, Key::Info> Key::initSupportedKeys_() {
     { \
         Key key(id); \
         Info info = {#name, character}; \
+        CHECK((character[0] == '\0') == (id < 0)); \
         CHECK(ret.emplace(key, info).second); \
     }
 
