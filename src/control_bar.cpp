@@ -177,7 +177,7 @@ void ControlBar::widgetViewportUpdated_() {
     Layout layout = layout_();
 
     addrField_->setViewport(viewport.subRect(
-        layout.addrFieldStart, layout.addrFieldEnd, 4, viewport.height()
+        layout.addrFieldStart, layout.addrFieldEnd, 4, Height - 6
     ));
 }
 

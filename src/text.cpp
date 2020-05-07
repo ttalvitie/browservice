@@ -204,6 +204,32 @@ struct TextLayout::Impl {
         return rect.x / PANGO_SCALE;
     }
 
+    int visualMoveIdx(int idx, bool forward) {
+        CHECK(idx >= 0 && idx <= (int)text.size());
+
+        int trailing;
+        pango_layout_move_cursor_visually(
+            layout,
+            true,
+            idx,
+            false,
+            forward ? 1 : -1,
+            &idx,
+            &trailing
+        );
+
+        if(idx == -1) {
+            idx = 0;
+        } else if(idx == G_MAXINT) {
+            idx = (int)text.size();
+        } else {
+            CHECK(idx >= 0 && idx <= (int)text.size());
+            idx = jumpUTF8Chars(text, idx, trailing);
+        }
+
+        return idx;
+    }
+
     void render(
         ImageSlice dest,
         int offsetX, int offsetY,
@@ -306,6 +332,11 @@ int TextLayout::indexToXCoord(int idx) {
     return impl_->indexToXCoord(idx);
 }
 
+int TextLayout::visualMoveIdx(int idx, bool forward) {
+    CEF_REQUIRE_UI_THREAD();
+    return impl_->visualMoveIdx(idx, forward);
+}
+
 void TextLayout::render(
     ImageSlice dest, int x, int y, uint8_t r, uint8_t g, uint8_t b
 ) {
@@ -381,6 +412,17 @@ int OverflowTextLayout::offset() {
     return offset_;
 }
 
+void OverflowTextLayout::makeVisible(int idx) {
+    CEF_REQUIRE_UI_THREAD();
+
+    int x = textLayout_->indexToXCoord(idx);
+
+    int offset = offset_;
+    offset = min(offset, x);
+    offset = max(offset, x + 1 - width_);
+    setOffset(offset);
+}
+
 int OverflowTextLayout::xCoordToIndex(int x) {
     CEF_REQUIRE_UI_THREAD();
     return textLayout_->xCoordToIndex(x + offset_);
@@ -389,6 +431,11 @@ int OverflowTextLayout::xCoordToIndex(int x) {
 int OverflowTextLayout::indexToXCoord(int idx) {
     CEF_REQUIRE_UI_THREAD();
     return textLayout_->indexToXCoord(idx) - offset_;
+}
+
+int OverflowTextLayout::visualMoveIdx(int idx, bool forward) {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->visualMoveIdx(idx, forward);
 }
 
 void OverflowTextLayout::render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b) {
@@ -406,6 +453,6 @@ void OverflowTextLayout::render(ImageSlice dest, uint8_t rgb) {
 }
 
 void OverflowTextLayout::clampOffset_() {
-    offset_ = min(offset_, textWidth() - width_);
+    offset_ = min(offset_, textWidth() + 1 - width_);
     offset_ = max(offset_, 0);
 }

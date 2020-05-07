@@ -41,6 +41,9 @@ private:
 namespace keys {
 
 extern const Key Space;
+extern const Key Shift;
+extern const Key Left;
+extern const Key Right;
 extern const Key A;
 extern const Key a;
 

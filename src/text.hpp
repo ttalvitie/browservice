@@ -44,6 +44,10 @@ public:
     // Return the x coordinate of a character boundary given as byte index.
     int indexToXCoord(int idx);
 
+    // Returns the previous/next visual character boundary from given byte
+    // index. The movement is clamped to the beginning/end indices.
+    int visualMoveIdx(int idx, bool forward);
+
     // Render the text with color (r, g, b) to given image slice. The
     // coordinates (x, y) offset the position of the text. If both are zero, the
     // top left corners of the logical text rectangle and the image slice are
@@ -80,9 +84,15 @@ public:
     void setOffset(int offset);
     int offset();
 
+    // Adjust the offset such that given character boundary (given as byte
+    // index) is visible
+    void makeVisible(int idx);
+
     // Adaptations of TextLayout functions that take offset into account
     int xCoordToIndex(int x);
     int indexToXCoord(int idx);
+
+    int visualMoveIdx(int idx, bool forward);
 
     void render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b);
     void render(ImageSlice dest, uint8_t rgb = 0);
