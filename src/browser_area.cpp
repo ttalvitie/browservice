@@ -302,14 +302,14 @@ void BrowserArea::widgetKeyDownEvent_(Key key) {
     CEF_REQUIRE_UI_THREAD();
     if(!browser_) return;
 
-    LOG(INFO) << "Key events not implemented in BrowserArea";
+    LOG(INFO) << "BrowserArea got key " << key.name() << "/" << key.character() << " down";
 }
 
 void BrowserArea::widgetKeyUpEvent_(Key key) {
     CEF_REQUIRE_UI_THREAD();
     if(!browser_) return;
 
-    LOG(INFO) << "Key events not implemented in BrowserArea";
+    LOG(INFO) << "BrowserArea got key " << key.name() << "/" << key.character() << " up";
 }
 
 void BrowserArea::widgetGainFocusEvent_(int x, int y) {

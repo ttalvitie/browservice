@@ -17,6 +17,10 @@ public:
     // the keys namespace)
     const char* name() const;
 
+    // Returns string literal representing the character that the key produces
+    // (empty if this is a non-character key)
+    const char* character() const;
+
     #define DEFINE_KEY_OP(op) \
         bool operator op(Key other) const { \
             return id_ op other.id_; \
@@ -34,18 +38,26 @@ private:
 
     int id_;
 
+    struct Info {
+        const char* name;
+        const char* character;
+    };
+
+    static map<Key, Info> initSupportedKeys_();
+    static const map<Key, Info> SupportedKeys_;
+
     friend Key createKeyUnchecked_(int id);
 };
 
 // Namespace containing all the supported keys
 namespace keys {
 
-extern const Key Space;
-extern const Key Shift;
-extern const Key Left;
-extern const Key Right;
-extern const Key A;
-extern const Key a;
+#define KEY_DEF(name, id, character) \
+    extern const Key name;
+
+#include "key_defs.hpp"
+
+#undef KEY_DEF
 
 }
 

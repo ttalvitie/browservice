@@ -1,0 +1,6 @@
+KEY_DEF(Space, -32, "")
+KEY_DEF(Shift, -16, "")
+KEY_DEF(Left, -37, "")
+KEY_DEF(Right, -39, "")
+KEY_DEF(A, 65, "A")
+KEY_DEF(a, 97, "a")

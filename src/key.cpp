@@ -1,10 +1,12 @@
 #include "key.hpp"
 
 optional<Key> Key::fromID(int id) {
-    if(id == -32 || id == -16 || id == -37 || id == -39 || id == 65 || id == 97) {
-        return Key(id);
+    Key key(id);
+    if(SupportedKeys_.count(key)) {
+        return key;
+    } else {
+        return {};
     }
-    return {};
 }
 
 Key::Key(int id) {
@@ -12,27 +14,36 @@ Key::Key(int id) {
 }
 
 const char* Key::name() const {
-    if(id_ == -32) {
-        return "Space";
-    }
-    if(id_ == -16) {
-        return "Shift";
-    }
-    if(id_ == -37) {
-        return "Left";
-    }
-    if(id_ == -39) {
-        return "Right";
-    }
-    if(id_ == 65) {
-        return "A";
-    }
-    if(id_ == 97) {
-        return "a";
-    }
-    CHECK(false);
-    return "";
+    auto it = SupportedKeys_.find(*this);
+    CHECK(it != SupportedKeys_.end());
+    return it->second.name;
 }
+
+const char* Key::character() const {
+    auto it = SupportedKeys_.find(*this);
+    CHECK(it != SupportedKeys_.end());
+    return it->second.character;
+}
+
+
+map<Key, Key::Info> Key::initSupportedKeys_() {
+    map<Key, Info> ret;
+
+#define KEY_DEF(name, id, character) \
+    { \
+        Key key(id); \
+        Info info = {#name, character}; \
+        CHECK(ret.emplace(key, info).second); \
+    }
+
+#include "key_defs.hpp"
+
+#undef KEY_DEF
+
+    return ret;
+}
+
+const map<Key, Key::Info> Key::SupportedKeys_ = Key::initSupportedKeys_();
 
 Key createKeyUnchecked_(int id) {
     return Key(id);
@@ -40,15 +51,33 @@ Key createKeyUnchecked_(int id) {
 
 namespace keys {
 
-using namespace key_;
+#define KEY_DEF(name, id, character) \
+    const Key name = createKeyUnchecked_(id);
 
-const Key Space = createKeyUnchecked_(-32);
-const Key Shift = createKeyUnchecked_(-16);
-const Key Left = createKeyUnchecked_(-37);
-const Key Right = createKeyUnchecked_(-39);
-const Key A = createKeyUnchecked_(65);
-const Key a = createKeyUnchecked_(97);
+#include "key_defs.hpp"
+
+#undef KEY_DEF
 
 }
 
-const string supportedNonCharKeyList = "32,16,37,39";
+static string initSupportedNonCharKeyList() {
+    stringstream ss;
+    bool first = true;
+
+#define KEY_DEF(name, id, character) \
+    if(id < 0) { \
+        if(!first) { \
+            ss << ","; \
+        } \
+        first = false; \
+        ss << -id; \
+    }
+
+#include "key_defs.hpp"
+
+#undef KEY_DEF
+
+    return ss.str();
+}
+
+const string supportedNonCharKeyList = initSupportedNonCharKeyList();
