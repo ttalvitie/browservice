@@ -9,7 +9,10 @@ TextField::TextField(CKey, weak_ptr<WidgetParent> widgetParent)
     CEF_REQUIRE_UI_THREAD();
 
     textLayout_ = OverflowTextLayout::create();
+
     leftMouseButtonDown_ = false;
+    shiftKeyDown_ = false;
+
     caretActive_ = false;
     caretBlinkTimeout_ = Timeout::create(500);
 
