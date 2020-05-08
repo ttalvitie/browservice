@@ -13,6 +13,10 @@ Key::Key(int id) {
     id_ = id;
 }
 
+bool Key::isCharacter() const {
+    return id_ > 0;
+}
+
 const char* Key::name() const {
     auto it = SupportedKeys_.find(*this);
     CHECK(it != SupportedKeys_.end());

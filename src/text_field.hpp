@@ -2,6 +2,11 @@
 
 #include "widget.hpp"
 
+class TextFieldEventHandler {
+public:
+    virtual void onTextFieldSubmitted(string text) {}
+};
+
 class OverflowTextLayout;
 class Timeout;
 
@@ -11,14 +16,21 @@ class TextField :
 {
 SHARED_ONLY_CLASS(TextField);
 public:
-    TextField(CKey, weak_ptr<WidgetParent> widgetParent);
+    TextField(CKey,
+        weak_ptr<WidgetParent> widgetParent,
+        weak_ptr<TextFieldEventHandler> eventHandler
+    );
 
     void setText(const string& text);
+    const string& text();
 
 private:
     void unsetCaret_();
     void setCaret_(int start, int end);
     void scheduleBlinkCaret_();
+
+    void typeCharacter_(string character);
+    void eraseRange_();
 
     // Widget:
     virtual void widgetViewportUpdated_() override;
@@ -30,6 +42,8 @@ private:
     virtual void widgetKeyDownEvent_(Key key) override;
     virtual void widgetKeyUpEvent_(Key key) override;
     virtual void widgetLoseFocusEvent_() override;
+
+    weak_ptr<TextFieldEventHandler> eventHandler_;
 
     shared_ptr<OverflowTextLayout> textLayout_;
 

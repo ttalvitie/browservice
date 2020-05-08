@@ -3,10 +3,15 @@
 #include "text.hpp"
 #include "timeout.hpp"
 
-TextField::TextField(CKey, weak_ptr<WidgetParent> widgetParent)
+TextField::TextField(CKey,
+    weak_ptr<WidgetParent> widgetParent,
+    weak_ptr<TextFieldEventHandler> eventHandler
+)
     : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
+
+    eventHandler_ = eventHandler;
 
     textLayout_ = OverflowTextLayout::create();
 
@@ -27,6 +32,11 @@ void TextField::setText(const string& text) {
     textLayout_->setOffset(0);
 
     signalViewDirty_();
+}
+
+const string& TextField::text() {
+    CEF_REQUIRE_UI_THREAD();
+    return textLayout_->text();
 }
 
 void TextField::unsetCaret_() {
@@ -76,6 +86,40 @@ void TextField::scheduleBlinkCaret_() {
             }
         }
     });
+}
+
+void TextField::typeCharacter_(string character) {
+    if(caretActive_) {
+        int idx1 = min(caretStart_, caretEnd_);
+        int idx2 = max(caretStart_, caretEnd_);
+        unsetCaret_();
+
+        const string& oldTextRef = textLayout_->text();
+        string newText =
+            oldTextRef.substr(0, idx1) +
+            character +
+            oldTextRef.substr(idx2, (int)oldTextRef.size() - idx2);
+        textLayout_->setText(newText);
+
+        int idx = idx1 + character.size();
+        setCaret_(idx, idx);
+    }
+}
+
+void TextField::eraseRange_() {
+    if(caretActive_) {
+        int idx1 = min(caretStart_, caretEnd_);
+        int idx2 = max(caretStart_, caretEnd_);
+        unsetCaret_();
+
+        const string& oldTextRef = textLayout_->text();
+        string newText =
+            oldTextRef.substr(0, idx1) +
+            oldTextRef.substr(idx2, (int)oldTextRef.size() - idx2);
+        textLayout_->setText(newText);
+
+        setCaret_(idx1, idx1);
+    }
 }
 
 void TextField::widgetViewportUpdated_() {
@@ -171,6 +215,30 @@ void TextField::widgetKeyDownEvent_(Key key) {
     if((key == keys::Left || key == keys::Right) && caretActive_) {
         int idx = textLayout_->visualMoveIdx(caretEnd_, key == keys::Right);
         setCaret_(shiftKeyDown_ ? caretStart_ : idx, idx);
+    }
+
+    if(key.isCharacter()) {
+        typeCharacter_(key.character());
+    }
+    if(key == keys::Space) {
+        typeCharacter_(" ");
+    }
+
+    if((key == keys::Backspace || key == keys::Delete) && caretActive_) {
+        if(caretStart_ == caretEnd_) {
+            caretEnd_ = textLayout_->visualMoveIdx(
+                caretEnd_, key == keys::Delete
+            );
+        }
+        eraseRange_();
+    }
+
+    if(key == keys::Enter && caretActive_) {
+        unsetCaret_();
+        string text = textLayout_->text();
+        postTask(
+            eventHandler_, &TextFieldEventHandler::onTextFieldSubmitted, text
+        );
     }
 }
 

@@ -1,7 +1,6 @@
 #include "control_bar.hpp"
 
 #include "text.hpp"
-#include "text_field.hpp"
 
 namespace {
 
@@ -135,10 +134,15 @@ struct ControlBar::Layout {
     int addrFieldEnd;
 };
 
-ControlBar::ControlBar(CKey, weak_ptr<WidgetParent> widgetParent)
+ControlBar::ControlBar(CKey,
+    weak_ptr<WidgetParent> widgetParent,
+    weak_ptr<ControlBarEventHandler> eventHandler
+)
     : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
+
+    eventHandler_ = eventHandler;
 
     addrText_ = TextLayout::create();
     addrText_->setText("Address");
@@ -162,8 +166,13 @@ void ControlBar::setAddress(const string& addr) {
     addrField_->setText(addr);
 }
 
+void ControlBar::onTextFieldSubmitted(string text) {
+    CEF_REQUIRE_UI_THREAD();
+    postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
+}
+
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
-    addrField_ = TextField::create(self);
+    addrField_ = TextField::create(self, self);
 }
 
 ControlBar::Layout ControlBar::layout_() {

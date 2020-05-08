@@ -13,6 +13,8 @@ public:
     // point for character keys).
     static optional<Key> fromID(int id);
 
+    bool isCharacter() const;
+
     // Returns string literal that is the canonical name of the key (same as in
     // the keys namespace)
     const char* name() const;

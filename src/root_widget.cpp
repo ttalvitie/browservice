@@ -4,10 +4,12 @@
 #include "browser_area.hpp"
 
 RootWidget::RootWidget(CKey,
-    weak_ptr<WidgetParent> widgetEventHandler,
+    weak_ptr<WidgetParent> widgetParent,
+    weak_ptr<ControlBarEventHandler> controlBarEventHandler,
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
 )
-    : Widget(widgetEventHandler),
+    : Widget(widgetParent),
+      controlBarEventHandler_(controlBarEventHandler),
       browserAreaEventHandler_(browserAreaEventHandler)
 {
     CEF_REQUIRE_UI_THREAD();
@@ -25,8 +27,10 @@ shared_ptr<BrowserArea> RootWidget::browserArea() {
 }
 
 void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {
-    controlBar_ = ControlBar::create(self);
+    controlBar_ = ControlBar::create(self, controlBarEventHandler_);
     browserArea_ = BrowserArea::create(self, browserAreaEventHandler_);
+
+    controlBarEventHandler_.reset();
     browserAreaEventHandler_.reset();
 }
 

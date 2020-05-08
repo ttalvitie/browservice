@@ -1,6 +1,7 @@
 #pragma once
 
 #include "browser_area.hpp"
+#include "control_bar.hpp"
 #include "http.hpp"
 #include "image_slice.hpp"
 #include "widget.hpp"
@@ -26,6 +27,7 @@ class CefBrowser;
 // for onSessionClosed event. 
 class Session :
     public WidgetParent,
+    public ControlBarEventHandler,
     public BrowserAreaEventHandler,
     public enable_shared_from_this<Session>
 {
@@ -51,6 +53,9 @@ public:
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+
+    // ControlBarEventHandler:
+    virtual void onAddressSubmitted(string url) override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;

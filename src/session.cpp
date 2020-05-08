@@ -1,7 +1,5 @@
 #include "session.hpp"
 
-#include "browser_area.hpp"
-#include "control_bar.hpp"
 #include "event.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
@@ -412,13 +410,24 @@ void Session::onWidgetCursorChanged() {
     setHeightSignal_(cursor);
 }
 
+void Session::onAddressSubmitted(string url) {
+    CEF_REQUIRE_UI_THREAD();
+
+    if(!browser_) return;
+
+    CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
+    if(frame) {
+        frame->LoadURL(url);
+    }
+}
+
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {
-    rootWidget_ = RootWidget::create(self, self);
+    rootWidget_ = RootWidget::create(self, self, self);
     rootWidget_->setViewport(rootViewport_);
 
     if(!isPopup_) {

@@ -3,6 +3,7 @@
 #include "widget.hpp"
 
 class ControlBar;
+class ControlBarEventHandler;
 class BrowserAreaEventHandler;
 class BrowserArea;
 
@@ -10,7 +11,8 @@ class RootWidget : public Widget {
 SHARED_ONLY_CLASS(RootWidget);
 public:
     RootWidget(CKey,
-        weak_ptr<WidgetParent> widgetEventHandler,
+        weak_ptr<WidgetParent> widgetParent,
+        weak_ptr<ControlBarEventHandler> controlBarEventHandler,
         weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
     );
 
@@ -24,6 +26,7 @@ private:
     virtual void widgetViewportUpdated_() override;
     virtual vector<shared_ptr<Widget>> widgetListChildren_() override;
 
+    weak_ptr<ControlBarEventHandler> controlBarEventHandler_;
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler_;
 
     shared_ptr<ControlBar> controlBar_;
