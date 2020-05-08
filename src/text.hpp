@@ -29,9 +29,9 @@ public:
     ~TextLayout();
 
     // Set the text to be laid out. Must be valid UTF-8.
-    void setText(const string& text);
+    void setText(string text);
 
-    const string& text();
+    string text();
 
     // The logical size of the current text when rendered.
     int width();
@@ -68,8 +68,8 @@ public:
     // Uses the global context globals->textRenderContext
     OverflowTextLayout(CKey);
 
-    void setText(const string& text);
-    const string& text();
+    void setText(string text);
+    string text();
 
     // Set/get the width to which the text is clamped
     void setWidth(int width);

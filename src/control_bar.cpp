@@ -161,9 +161,9 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
     }
 }
 
-void ControlBar::setAddress(const string& addr) {
+void ControlBar::setAddress(string addr) {
     CEF_REQUIRE_UI_THREAD();
-    addrField_->setText(addr);
+    addrField_->setText(move(addr));
 }
 
 void ControlBar::onTextFieldSubmitted(string text) {

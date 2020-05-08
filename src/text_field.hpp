@@ -21,8 +21,8 @@ public:
         weak_ptr<TextFieldEventHandler> eventHandler
     );
 
-    void setText(const string& text);
-    const string& text();
+    void setText(string text);
+    string text();
 
 private:
     void unsetCaret_();

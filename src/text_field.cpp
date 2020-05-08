@@ -24,17 +24,17 @@ TextField::TextField(CKey,
     setCursor_(TextCursor);
 }
 
-void TextField::setText(const string& text) {
+void TextField::setText(string text) {
     CEF_REQUIRE_UI_THREAD();
 
     unsetCaret_();
-    textLayout_->setText(text);
+    textLayout_->setText(move(text));
     textLayout_->setOffset(0);
 
     signalViewDirty_();
 }
 
-const string& TextField::text() {
+string TextField::text() {
     CEF_REQUIRE_UI_THREAD();
     return textLayout_->text();
 }
@@ -94,11 +94,11 @@ void TextField::typeCharacter_(string character) {
         int idx2 = max(caretStart_, caretEnd_);
         unsetCaret_();
 
-        const string& oldTextRef = textLayout_->text();
+        string oldText = textLayout_->text();
         string newText =
-            oldTextRef.substr(0, idx1) +
+            oldText.substr(0, idx1) +
             character +
-            oldTextRef.substr(idx2, (int)oldTextRef.size() - idx2);
+            oldText.substr(idx2, (int)oldText.size() - idx2);
         textLayout_->setText(newText);
 
         int idx = idx1 + character.size();
@@ -112,10 +112,10 @@ void TextField::eraseRange_() {
         int idx2 = max(caretStart_, caretEnd_);
         unsetCaret_();
 
-        const string& oldTextRef = textLayout_->text();
+        string oldText = textLayout_->text();
         string newText =
-            oldTextRef.substr(0, idx1) +
-            oldTextRef.substr(idx2, (int)oldTextRef.size() - idx2);
+            oldText.substr(0, idx1) +
+            oldText.substr(idx2, (int)oldText.size() - idx2);
         textLayout_->setText(newText);
 
         setCaret_(idx1, idx1);

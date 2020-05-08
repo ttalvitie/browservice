@@ -30,7 +30,7 @@ public:
     );
 
     void setSecurityStatus(SecurityStatus value);
-    void setAddress(const string& addr);
+    void setAddress(string addr);
 
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;

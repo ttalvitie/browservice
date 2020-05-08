@@ -174,14 +174,15 @@ struct TextLayout::Impl {
         g_object_unref(layout);
     }
 
-    void setText(const string& newText) {
+    void setText(string newText) {
         graymap.reset();
 
         pango_layout_set_text(layout, newText.data(), newText.size());
 
         // Check that Pango agrees that the text is valid UTF-8
-        text = pango_layout_get_text(layout);
-        CHECK(text == newText);
+        CHECK(!strcmp(pango_layout_get_text(layout), newText.c_str()));
+
+        text = move(newText);
     }
 
     int xCoordToIndex(int x) {
@@ -302,12 +303,12 @@ TextLayout::TextLayout(CKey) {
 
 TextLayout::~TextLayout() {}
 
-void TextLayout::setText(const string& text) {
+void TextLayout::setText(string text) {
     CEF_REQUIRE_UI_THREAD();
-    impl_->setText(text);
+    impl_->setText(move(text));
 }
 
-const string& TextLayout::text() {
+string TextLayout::text() {
     CEF_REQUIRE_UI_THREAD();
     return impl_->text;
 }
@@ -366,14 +367,14 @@ OverflowTextLayout::OverflowTextLayout(CKey) {
     offset_ = 0;
 }
 
-void OverflowTextLayout::setText(const string& text) {
+void OverflowTextLayout::setText(string text) {
     CEF_REQUIRE_UI_THREAD();
 
-    textLayout_->setText(text);
+    textLayout_->setText(move(text));
     clampOffset_();
 }
 
-const string& OverflowTextLayout::text() {
+string OverflowTextLayout::text() {
     return textLayout_->text();
 }
 
