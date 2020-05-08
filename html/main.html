@@ -303,7 +303,10 @@ if(useOnMouseWheel) {
     };
 } else {
     document.onwheel = function(event) {
-        putEvent("MWH_" + mouseX + "_" + mouseY + "_" + ((-30 * event.deltaY) | 0));
+        var delta = 0;
+        if(event.deltaY > 0) delta = -120;
+        if(event.deltaY < 0) delta = 120;
+        putEvent("MWH_" + mouseX + "_" + mouseY + "_" + delta);
     };
 }
 
