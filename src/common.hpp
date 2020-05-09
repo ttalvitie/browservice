@@ -158,7 +158,7 @@ optional<T> parseString(const string& str) {
     T ret;
     stringstream ss(str);
     ss >> ret;
-    if(ss.fail()) {
+    if(ss.fail() || !ss.eof()) {
         optional<T> empty;
         return empty;
     } else {

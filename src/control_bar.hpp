@@ -1,6 +1,7 @@
 #pragma once
 
 #include "text_field.hpp"
+#include "quality_selector.hpp"
 #include "widget.hpp"
 
 enum class SecurityStatus {
@@ -12,13 +13,15 @@ enum class SecurityStatus {
 class ControlBarEventHandler {
 public:
     virtual void onAddressSubmitted(string url) = 0;
+    virtual void onQualityChanged(int quality) = 0;
 };
 
 class TextLayout;
 
 class ControlBar :
     public Widget,
-    public TextFieldEventHandler
+    public TextFieldEventHandler,
+    public QualitySelectorEventHandler
 {
 SHARED_ONLY_CLASS(ControlBar);
 public:
@@ -34,6 +37,9 @@ public:
 
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
+
+    // QualitySelectorEventHandler:
+    virtual void onQualityChanged(int quality) override;
 
 private:
     void afterConstruct_(shared_ptr<ControlBar> self);
@@ -52,4 +58,7 @@ private:
     shared_ptr<TextField> addrField_;
 
     SecurityStatus securityStatus_;
+
+    shared_ptr<TextLayout> qualityText_;
+    shared_ptr<QualitySelector> qualitySelector_;
 };

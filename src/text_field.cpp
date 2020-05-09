@@ -15,6 +15,7 @@ TextField::TextField(CKey,
 
     textLayout_ = OverflowTextLayout::create();
 
+    hasFocus_ = false;
     leftMouseButtonDown_ = false;
     shiftKeyDown_ = false;
 
@@ -37,6 +38,11 @@ void TextField::setText(string text) {
 string TextField::text() {
     CEF_REQUIRE_UI_THREAD();
     return textLayout_->text();
+}
+
+bool TextField::hasFocus() {
+    CEF_REQUIRE_UI_THREAD();
+    return hasFocus_;
 }
 
 void TextField::unsetCaret_() {
@@ -142,9 +148,9 @@ void TextField::widgetRender_() {
 
         ImageSlice fillSlice;
         if(startX < endX) {
-            fillSlice = viewport.subRect(startX, endX, 1, 15);
+            fillSlice = viewport.subRect(startX, endX, 0, 14);
         } else if(startX > endX) {
-            fillSlice = viewport.subRect(endX + 1, startX, 1, 15);
+            fillSlice = viewport.subRect(endX + 1, startX, 0, 14);
         }
 
         for(int y = 0; y < fillSlice.height(); ++y) {
@@ -164,7 +170,7 @@ void TextField::widgetRender_() {
         }
 
         if(caretBlinkState_) {
-            viewport.fill(endX, endX + 1, 1, 15, 0);
+            viewport.fill(endX, endX + 1, 0, 14, 0);
         }
     }
 }
@@ -196,6 +202,16 @@ void TextField::widgetMouseDoubleClickEvent_(int x, int y) {
     setCaret_(0, (int)textLayout_->text().size());
 }
 
+void TextField::widgetMouseWheelEvent_(int x, int y, int delta) {
+    CEF_REQUIRE_UI_THREAD();
+
+    postTask(
+        eventHandler_,
+        &TextFieldEventHandler::onTextFieldWheelEvent,
+        delta
+    );
+}
+
 void TextField::widgetMouseMoveEvent_(int x, int y) {
     CEF_REQUIRE_UI_THREAD();
 
@@ -210,6 +226,14 @@ void TextField::widgetKeyDownEvent_(Key key) {
 
     if(key == keys::Shift) {
         shiftKeyDown_ = true;
+    }
+
+    if(key == keys::Down || key == keys::Up) {
+        postTask(
+            eventHandler_,
+            &TextFieldEventHandler::onTextFieldUDKeyDown,
+            key == keys::Down
+        );
     }
 
     if((key == keys::Left || key == keys::Right) && caretActive_) {
@@ -245,12 +269,34 @@ void TextField::widgetKeyDownEvent_(Key key) {
 void TextField::widgetKeyUpEvent_(Key key) {
     CEF_REQUIRE_UI_THREAD();
 
+    if(key == keys::Down || key == keys::Up) {
+        postTask(
+            eventHandler_,
+            &TextFieldEventHandler::onTextFieldUDKeyUp,
+            key == keys::Down
+        );
+    }
+
     if(key == keys::Shift) {
         shiftKeyDown_ = false;
     }
 }
 
+void TextField::widgetGainFocusEvent_(int x, int y) {
+    CEF_REQUIRE_UI_THREAD();
+    hasFocus_ = true;
+}
+
 void TextField::widgetLoseFocusEvent_() {
     CEF_REQUIRE_UI_THREAD();
-    unsetCaret_();
+
+    hasFocus_ = false;
+
+    if(caretActive_) {
+        unsetCaret_();
+        postTask(
+            eventHandler_,
+            &TextFieldEventHandler::onTextFieldLostFocusAfterEdit
+        );
+    }
 }

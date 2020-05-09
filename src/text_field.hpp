@@ -5,6 +5,13 @@
 class TextFieldEventHandler {
 public:
     virtual void onTextFieldSubmitted(string text) {}
+    virtual void onTextFieldLostFocusAfterEdit() {}
+
+    // Some event forwarding functions useful for QualitySelector (if we need
+    // more of these, we should consider implementing event bubbling)
+    virtual void onTextFieldUDKeyDown(bool down) {}
+    virtual void onTextFieldUDKeyUp(bool down) {}
+    virtual void onTextFieldWheelEvent(int delta) {}
 };
 
 class OverflowTextLayout;
@@ -24,6 +31,8 @@ public:
     void setText(string text);
     string text();
 
+    bool hasFocus();
+
 private:
     void unsetCaret_();
     void setCaret_(int start, int end);
@@ -38,15 +47,18 @@ private:
     virtual void widgetMouseDownEvent_(int x, int y, int button) override;
     virtual void widgetMouseUpEvent_(int x, int y, int button) override;
     virtual void widgetMouseDoubleClickEvent_(int x, int y) override;
+    virtual void widgetMouseWheelEvent_(int x, int y, int delta) override;
     virtual void widgetMouseMoveEvent_(int x, int y) override;
     virtual void widgetKeyDownEvent_(Key key) override;
     virtual void widgetKeyUpEvent_(Key key) override;
+    virtual void widgetGainFocusEvent_(int x, int y) override;
     virtual void widgetLoseFocusEvent_() override;
 
     weak_ptr<TextFieldEventHandler> eventHandler_;
 
     shared_ptr<OverflowTextLayout> textLayout_;
 
+    bool hasFocus_;
     bool leftMouseButtonDown_;
     bool shiftKeyDown_;
 

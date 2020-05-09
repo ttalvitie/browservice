@@ -101,11 +101,25 @@ struct ControlBar::Layout {
         int contentStart = 1;
         int contentEnd = width - 1;
 
+        const int SeparatorWidth = 4;
+        const int AddressTextWidth = 52;
+        const int QualityTextWidth = 46;
+
+        qualitySelectorEnd = contentEnd;
+        qualitySelectorStart = qualitySelectorEnd - QualitySelector::Width;
+
+        qualityTextEnd = qualitySelectorStart;
+        qualityTextStart = qualityTextEnd - QualityTextWidth;
+
+        int separatorEnd = qualityTextStart;
+        int separatorStart = separatorEnd - SeparatorWidth;
+        separatorPos = separatorStart + SeparatorWidth / 2;
+
         int addrStart = contentStart;
-        int addrEnd = contentEnd;
+        int addrEnd = separatorStart;
 
         addrTextStart = addrStart;
-        addrTextEnd = addrTextStart + 52;
+        addrTextEnd = addrTextStart + AddressTextWidth;
 
         addrBoxStart = addrTextEnd;
         addrBoxEnd = addrEnd;
@@ -132,6 +146,14 @@ struct ControlBar::Layout {
 
     int addrFieldStart;
     int addrFieldEnd;
+
+    int separatorPos;
+
+    int qualityTextStart;
+    int qualityTextEnd;
+
+    int qualitySelectorStart;
+    int qualitySelectorEnd;
 };
 
 ControlBar::ControlBar(CKey,
@@ -146,6 +168,9 @@ ControlBar::ControlBar(CKey,
 
     addrText_ = TextLayout::create();
     addrText_->setText("Address");
+
+    qualityText_ = TextLayout::create();
+    qualityText_->setText("Quality");
 
     securityStatus_ = SecurityStatus::Insecure;
 
@@ -171,8 +196,14 @@ void ControlBar::onTextFieldSubmitted(string text) {
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
 }
 
+void ControlBar::onQualityChanged(int quality) {
+    CEF_REQUIRE_UI_THREAD();
+    postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
+}
+
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
+    qualitySelector_ = QualitySelector::create(self, self);
 }
 
 ControlBar::Layout ControlBar::layout_() {
@@ -186,7 +217,10 @@ void ControlBar::widgetViewportUpdated_() {
     Layout layout = layout_();
 
     addrField_->setViewport(viewport.subRect(
-        layout.addrFieldStart, layout.addrFieldEnd, 4, Height - 6
+        layout.addrFieldStart, layout.addrFieldEnd, 5, Height - 6
+    ));
+    qualitySelector_->setViewport(viewport.subRect(
+        layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
     ));
 }
 
@@ -211,7 +245,7 @@ void ControlBar::widgetRender_() {
     // "Address" text
     addrText_->render(
         viewport.subRect(layout.addrTextStart, layout.addrTextEnd, 1, Height - 4),
-        3, 3
+        3, 4
     );
 
     // Address field frame
@@ -229,9 +263,19 @@ void ControlBar::widgetRender_() {
 
     // Security icon
     viewport.putImage(securityStatusIcon(securityStatus_), layout.securityIconStart, 6);
+
+    // Separator
+    viewport.fill(layout.separatorPos - 1, layout.separatorPos, 1, Height - 4, 128);
+    viewport.fill(layout.separatorPos, layout.separatorPos + 1, 1, Height - 4, 255);
+
+    // "Quality" text
+    qualityText_->render(
+        viewport.subRect(layout.qualityTextStart, layout.qualityTextEnd, 1, Height - 4),
+        3, 4
+    );
 }
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     CEF_REQUIRE_UI_THREAD();
-    return {addrField_};
+    return {addrField_, qualitySelector_};
 }

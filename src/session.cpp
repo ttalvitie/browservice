@@ -421,6 +421,11 @@ void Session::onAddressSubmitted(string url) {
     }
 }
 
+void Session::onQualityChanged(int quality) {
+    CEF_REQUIRE_UI_THREAD();
+    imageCompressor_->setQuality(quality);
+}
+
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     sendViewportToCompressor_();

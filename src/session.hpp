@@ -56,6 +56,7 @@ public:
 
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;
+    virtual void onQualityChanged(int quality) override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;

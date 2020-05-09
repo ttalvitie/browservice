@@ -18,6 +18,8 @@ public:
     ImageCompressor(CKey, int64_t sendTimeoutMs);
     ~ImageCompressor();
 
+    void setQuality(int quality);
+
     // The compressor may copy the image contents to be compressed from image
     // later than this call in CEF UI thread. Image must be nonempty.
     void updateImage(ImageSlice image);
@@ -35,11 +37,23 @@ public:
 
 private:
     typedef function<void(shared_ptr<HTTPRequest>)> CompressedImage;
+
+    static CompressedImage compressPNG_(
+        ImageSlice image,
+        shared_ptr<PNGCompressor> pngCompressor
+    );
+    static CompressedImage compressJPEG_(
+        ImageSlice image,
+        int quality
+    );
+
     void pump_();
     void compressTaskDone_(CompressedImage compressedImage);
 
     shared_ptr<Timeout> sendTimeout_;
     CefRefPtr<CefThread> compressorThread_;
+
+    int quality_;
 
     shared_ptr<PNGCompressor> pngCompressor_;
 
