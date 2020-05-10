@@ -2,6 +2,7 @@
 
 #include "browser_area.hpp"
 #include "control_bar.hpp"
+#include "download_manager.hpp"
 #include "http.hpp"
 #include "image_slice.hpp"
 #include "widget.hpp"
@@ -17,6 +18,7 @@ public:
     virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
 };
 
+class DownloadManager;
 class ImageCompressor;
 class RootWidget;
 class Timeout;
@@ -29,6 +31,7 @@ class Session :
     public WidgetParent,
     public ControlBarEventHandler,
     public BrowserAreaEventHandler,
+    public DownloadManagerEventHandler,
     public enable_shared_from_this<Session>
 {
 SHARED_ONLY_CLASS(Session);
@@ -60,6 +63,10 @@ public:
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
+
+    // DownloadManagerEventHandler:
+    virtual void onPendingDownloadCountChanged(int count) override;
+    virtual void onDownloadProgressChanged(vector<int> progress) override;
 
 private:
     // Class that implements CefClient interfaces for this session
@@ -145,6 +152,8 @@ private:
 
     int widthSignal_;
     int heightSignal_;
+
+    shared_ptr<DownloadManager> downloadManager_;
 
     // Only available in Open state
     CefRefPtr<CefBrowser> browser_;

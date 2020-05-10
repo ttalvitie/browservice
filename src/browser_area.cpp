@@ -4,9 +4,9 @@
 
 class BrowserArea::RenderHandler : public CefRenderHandler {
 public:
-    RenderHandler(shared_ptr<BrowserArea> browserArea)
-        : browserArea_(browserArea)
-    {}
+    RenderHandler(shared_ptr<BrowserArea> browserArea) {
+        browserArea_ = browserArea;
+    }
 
     // CefRenderHandler:
     virtual void GetViewRect(CefRefPtr<CefBrowser>, CefRect& rect) override {

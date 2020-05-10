@@ -38,6 +38,8 @@ public:
         session_ = session;
         renderHandler_ =
             session->rootWidget_->browserArea()->createCefRenderHandler();
+        downloadHandler_ =
+            session->downloadManager_->createCefDownloadHandler();
     }
 
     // CefClient:
@@ -55,6 +57,9 @@ public:
     }
     virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
         return this;
+    }
+    virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() override {
+        return downloadHandler_;
     }
 
     // CefLifeSpanHandler:
@@ -186,6 +191,7 @@ private:
     shared_ptr<Session> session_;
 
     CefRefPtr<CefRenderHandler> renderHandler_;
+    CefRefPtr<CefDownloadHandler> downloadHandler_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };
@@ -431,9 +437,31 @@ void Session::onBrowserAreaViewDirty() {
     sendViewportToCompressor_();
 }
 
+void Session::onPendingDownloadCountChanged(int count) {
+    CEF_REQUIRE_UI_THREAD();
+
+    if(count > 0) {
+        LOG(INFO) << "Accepting pending download";
+        downloadManager_->acceptPendingDownload();
+    }
+}
+
+void Session::onDownloadProgressChanged(vector<int> progress) {
+    CEF_REQUIRE_UI_THREAD();
+
+    stringstream ss;
+    ss << "Download progress:";
+    for(int x : progress) {
+        ss << ' ' << x;
+    }
+    LOG(INFO) << ss.str();
+}
+
 void Session::afterConstruct_(shared_ptr<Session> self) {
     rootWidget_ = RootWidget::create(self, self, self);
     rootWidget_->setViewport(rootViewport_);
+
+    downloadManager_ = DownloadManager::create(self);
 
     if(!isPopup_) {
         CefRefPtr<CefClient> client = new Client(self);
