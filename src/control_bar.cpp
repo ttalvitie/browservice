@@ -121,8 +121,11 @@ struct ControlBar::Layout {
         addrTextStart = addrStart;
         addrTextEnd = addrTextStart + AddressTextWidth;
 
+        goButtonEnd = addrEnd;
+        goButtonStart = goButtonEnd - GoButton::Width;
+
         addrBoxStart = addrTextEnd;
-        addrBoxEnd = addrEnd;
+        addrBoxEnd = goButtonStart - 1;
 
         int addrBoxInnerStart = addrBoxStart + 2;
         int addrBoxInnerEnd = addrBoxEnd - 2;
@@ -141,6 +144,9 @@ struct ControlBar::Layout {
 
     int addrBoxStart;
     int addrBoxEnd;
+
+    int goButtonStart;
+    int goButtonEnd;
 
     int securityIconStart;
 
@@ -196,6 +202,15 @@ void ControlBar::onTextFieldSubmitted(string text) {
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
 }
 
+void ControlBar::onGoButtonPressed() {
+    CEF_REQUIRE_UI_THREAD();
+    postTask(
+        eventHandler_,
+        &ControlBarEventHandler::onAddressSubmitted,
+        addrField_->text()
+    );
+}
+
 void ControlBar::onQualityChanged(int quality) {
     CEF_REQUIRE_UI_THREAD();
     postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
@@ -203,6 +218,7 @@ void ControlBar::onQualityChanged(int quality) {
 
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
+    goButton_ = GoButton::create(self, self);
     qualitySelector_ = QualitySelector::create(self, self);
 }
 
@@ -218,6 +234,9 @@ void ControlBar::widgetViewportUpdated_() {
 
     addrField_->setViewport(viewport.subRect(
         layout.addrFieldStart, layout.addrFieldEnd, 5, Height - 6
+    ));
+    goButton_->setViewport(viewport.subRect(
+        layout.goButtonStart, layout.goButtonEnd, 1, Height - 4
     ));
     qualitySelector_->setViewport(viewport.subRect(
         layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
@@ -277,5 +296,5 @@ void ControlBar::widgetRender_() {
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     CEF_REQUIRE_UI_THREAD();
-    return {addrField_, qualitySelector_};
+    return {addrField_, goButton_, qualitySelector_};
 }

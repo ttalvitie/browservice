@@ -1,5 +1,6 @@
 #pragma once
 
+#include "go_button.hpp"
 #include "text_field.hpp"
 #include "quality_selector.hpp"
 #include "widget.hpp"
@@ -21,6 +22,7 @@ class TextLayout;
 class ControlBar :
     public Widget,
     public TextFieldEventHandler,
+    public GoButtonEventHandler,
     public QualitySelectorEventHandler
 {
 SHARED_ONLY_CLASS(ControlBar);
@@ -37,6 +39,9 @@ public:
 
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
+
+    // GoButtonEventHandler:
+    virtual void onGoButtonPressed() override;
 
     // QualitySelectorEventHandler:
     virtual void onQualityChanged(int quality) override;
@@ -58,6 +63,8 @@ private:
     shared_ptr<TextField> addrField_;
 
     SecurityStatus securityStatus_;
+
+    shared_ptr<GoButton> goButton_;
 
     shared_ptr<TextLayout> qualityText_;
     shared_ptr<QualitySelector> qualitySelector_;
