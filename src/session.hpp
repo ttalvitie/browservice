@@ -67,6 +67,7 @@ public:
     // DownloadManagerEventHandler:
     virtual void onPendingDownloadCountChanged(int count) override;
     virtual void onDownloadProgressChanged(vector<int> progress) override;
+    virtual void onDownloadCompleted(shared_ptr<CompletedDownload> file) override;
 
 private:
     // Class that implements CefClient interfaces for this session

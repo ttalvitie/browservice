@@ -22,7 +22,8 @@ public:
             sendTextResponse(
                 500,
                 "ERROR: Request handling failure\n",
-                true
+                true,
+                {}
             );
         }
     }
@@ -41,7 +42,8 @@ public:
         string contentType,
         uint64_t contentLength,
         function<void(ostream&)> body,
-        bool noCache
+        bool noCache,
+        vector<pair<string, string>> extraHeaders
     ) {
         CHECK(!responseSent_);
         responseSent_ = true;
@@ -51,7 +53,8 @@ public:
                 contentType{move(contentType)},
                 contentLength,
                 body,
-                noCache
+                noCache,
+                extraHeaders{move(extraHeaders)}
             ](Poco::Net::HTTPServerResponse& response) {
                 response.add("Content-Type", contentType);
                 response.setContentLength64(contentLength);
@@ -60,13 +63,21 @@ public:
                     response.add("Pragma", "no-cache");
                     response.add("Expires", "0");
                 }
+                for(const pair<string, string>& header : extraHeaders) {
+                    response.add(header.first, header.second);
+                }
                 response.setStatus((Poco::Net::HTTPResponse::HTTPStatus)status);
                 body(response.send());
             }
         );
     }
 
-    void sendTextResponse(int status, string text, bool noCache) {
+    void sendTextResponse(
+        int status,
+        string text,
+        bool noCache,
+        vector<pair<string, string>> extraHeaders
+    ) {
         uint64_t contentLength = text.size();
         sendResponse(
             status,
@@ -75,7 +86,8 @@ public:
             [text{move(text)}](ostream& out) {
                 out << text;
             },
-            noCache
+            noCache,
+            move(extraHeaders)
         );
     }
 
@@ -158,15 +170,23 @@ void HTTPRequest::sendResponse(
     string contentType,
     uint64_t contentLength,
     function<void(ostream&)> body,
-    bool noCache
+    bool noCache,
+    vector<pair<string, string>> extraHeaders
 ) {
     CEF_REQUIRE_UI_THREAD();
-    impl_->sendResponse(status, contentType, contentLength, body, noCache);
+    impl_->sendResponse(
+        status, contentType, contentLength, body, noCache, move(extraHeaders)
+    );
 }
 
-void HTTPRequest::sendTextResponse(int status, string text, bool noCache) {
+void HTTPRequest::sendTextResponse(
+    int status,
+    string text,
+    bool noCache,
+    vector<pair<string, string>> extraHeaders
+) {
     CEF_REQUIRE_UI_THREAD();
-    impl_->sendTextResponse(status, move(text), noCache);
+    impl_->sendTextResponse(status, move(text), noCache, move(extraHeaders));
 }
 
 class HTTPServer::Impl : public enable_shared_from_this<Impl> {

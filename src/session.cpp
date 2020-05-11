@@ -457,6 +457,14 @@ void Session::onDownloadProgressChanged(vector<int> progress) {
     LOG(INFO) << ss.str();
 }
 
+void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
+    CEF_REQUIRE_UI_THREAD();
+
+    addIframe_([file](shared_ptr<HTTPRequest> request) {
+        file->serve(request);
+    });
+}
+
 void Session::afterConstruct_(shared_ptr<Session> self) {
     rootWidget_ = RootWidget::create(self, self, self);
     rootWidget_->setViewport(rootViewport_);

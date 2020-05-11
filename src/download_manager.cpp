@@ -1,5 +1,6 @@
 #include "download_manager.hpp"
 
+#include "http.hpp"
 #include "temp_dir.hpp"
 
 #include "include/cef_download_handler.h"
@@ -76,6 +77,66 @@ string sanitizeFilename(const string& filename) {
 
 }
 
+CompletedDownload::CompletedDownload(CKey,
+    shared_ptr<TempDir> tempDir,
+    string path,
+    string name,
+    uint64_t length
+) {
+    tempDir_ = tempDir;
+    path_ = move(path);
+    name_ = move(name);
+    length_ = length;
+}
+
+CompletedDownload::~CompletedDownload() {
+    if(unlink(path_.c_str())) {
+        LOG(WARNING) << "Unlinking file " << path_ << " failed";
+    }
+}
+
+void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
+    CEF_REQUIRE_UI_THREAD();
+
+    shared_ptr<CompletedDownload> self = shared_from_this();
+    function<void(ostream&)> body = [self](ostream& out) {
+        ifstream fp;
+        fp.open(self->path_, ifstream::binary);
+
+        if(!fp.good()) {
+            LOG(ERROR) << "Opening downloaded file " << self->path_ << " failed";
+            return;
+        }
+
+        const uint64_t BufSize = 1 << 16;
+        char buf[BufSize];
+
+        uint64_t left = self->length_;
+        while(left) {
+            uint64_t readSize = min(left, BufSize);
+            fp.read(buf, readSize);
+
+            if(!fp.good()) {
+                LOG(ERROR) << "Reading downloaded file " << self->path_ << " failed";
+                return;
+            }
+
+            out.write(buf, readSize);
+            left -= readSize;
+        }
+        fp.close();
+    };
+
+    request->sendResponse(
+        200,
+        "application/download",
+        length_,
+        body,
+        false,
+        {{"Content-Disposition", "attachment; filename=\"" + name_ + "\""}}
+    );
+}
+
 class DownloadManager::DownloadHandler : public CefDownloadHandler {
 public:
     DownloadHandler(shared_ptr<DownloadManager> downloadManager) {
@@ -127,20 +188,19 @@ public:
         if(downloadItem->IsComplete()) {
             int64_t length = downloadItem->GetReceivedBytes();
             CHECK(length >= 0);
-/*            CefRefPtr<CompletedDownload> file = new CompletedDownload(
-                tempDir_,
-                move(info.path),
+
+            shared_ptr<CompletedDownload> file = CompletedDownload::create(
+                downloadManager_->tempDir_,
+                downloadManager_->getFilePath_(info.fileIdx),
                 move(info.name),
                 (uint64_t)length
-            );*/
-            LOG(INFO) << "Download of " << length << " bytes complete";
-            downloadManager_->unlinkFile_(info.fileIdx);
+            );
             downloadManager_->infos_.erase(id);
-/*            CefPostTask(TID_UI, base::Bind(
+            postTask(
+                downloadManager_->eventHandler_,
                 &DownloadManagerEventHandler::onDownloadCompleted,
-                eventHandler_,
                 file
-            ));*/
+            );
         } else if(!downloadItem->IsInProgress()) {
             info.cancelCallback->Cancel();
             downloadManager_->unlinkFile_(info.fileIdx);

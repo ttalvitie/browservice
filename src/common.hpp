@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -35,6 +36,7 @@ using std::fill;
 using std::forward;
 using std::function;
 using std::future;
+using std::ifstream;
 using std::make_shared;
 using std::make_unique;
 using std::map;

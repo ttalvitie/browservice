@@ -28,17 +28,24 @@ public:
         string contentType,
         uint64_t contentLength,
         function<void(ostream&)> body,
-        bool noCache = true
+        bool noCache = true,
+        vector<pair<string, string>> extraHeaders = {}
     );
 
-    void sendTextResponse(int status, string text, bool noCache = true);
+    void sendTextResponse(
+        int status,
+        string text,
+        bool noCache = true,
+        vector<pair<string, string>> extraHeaders = {}
+    );
 
     template <typename Data>
     void sendHTMLResponse(
         int status,
         void (*writer)(ostream&, const Data&),
         const Data& data,
-        bool noCache = true
+        bool noCache = true,
+        vector<pair<string, string>> extraHeaders = {}
     ) {
         stringstream htmlSS;
         writer(htmlSS, data);
@@ -53,7 +60,8 @@ public:
             [html{move(html)}](ostream& out) {
                 out << html;
             },
-            noCache
+            noCache,
+            move(extraHeaders)
         );
     }
 
