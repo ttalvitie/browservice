@@ -50,7 +50,7 @@ public:
 
     // Render the text with color (r, g, b) to given image slice. The
     // coordinates (x, y) offset the position of the text. If both are zero, the
-    // top left corners of the logical text rectangle and the image slice are
+    // bottom left corners of the logical text rectangle and the image slice are
     // aligned.
     void render(ImageSlice dest, int x, int y, uint8_t r, uint8_t g, uint8_t b);
     void render(ImageSlice dest, int x, int y, uint8_t rgb = 0);

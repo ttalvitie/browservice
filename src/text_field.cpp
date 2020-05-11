@@ -142,15 +142,18 @@ void TextField::widgetRender_() {
 
     textLayout_->render(viewport);
 
+    int caretStartY = viewport.height() - 14;
+    int caretEndY = viewport.height();
+
     if(caretActive_) {
         int startX = textLayout_->indexToXCoord(caretStart_);
         int endX = textLayout_->indexToXCoord(caretEnd_);
 
         ImageSlice fillSlice;
         if(startX < endX) {
-            fillSlice = viewport.subRect(startX, endX, 0, 14);
+            fillSlice = viewport.subRect(startX, endX, caretStartY, caretEndY);
         } else if(startX > endX) {
-            fillSlice = viewport.subRect(endX + 1, startX, 0, 14);
+            fillSlice = viewport.subRect(endX + 1, startX, caretStartY, caretEndY);
         }
 
         for(int y = 0; y < fillSlice.height(); ++y) {
@@ -170,7 +173,7 @@ void TextField::widgetRender_() {
         }
 
         if(caretBlinkState_) {
-            viewport.fill(endX, endX + 1, 0, 14, 0);
+            viewport.fill(endX, endX + 1, caretStartY, caretEndY, 0);
         }
     }
 }

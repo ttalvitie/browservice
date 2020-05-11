@@ -233,7 +233,7 @@ void ControlBar::widgetViewportUpdated_() {
     Layout layout = layout_();
 
     addrField_->setViewport(viewport.subRect(
-        layout.addrFieldStart, layout.addrFieldEnd, 5, Height - 6
+        layout.addrFieldStart, layout.addrFieldEnd, 3, Height - 8
     ));
     goButton_->setViewport(viewport.subRect(
         layout.goButtonStart, layout.goButtonEnd, 1, Height - 4
@@ -264,7 +264,7 @@ void ControlBar::widgetRender_() {
     // "Address" text
     addrText_->render(
         viewport.subRect(layout.addrTextStart, layout.addrTextEnd, 1, Height - 4),
-        3, 4
+        3, -4
     );
 
     // Address field frame
@@ -290,7 +290,7 @@ void ControlBar::widgetRender_() {
     // "Quality" text
     qualityText_->render(
         viewport.subRect(layout.qualityTextStart, layout.qualityTextEnd, 1, Height - 4),
-        3, 4
+        3, -4
     );
 }
 

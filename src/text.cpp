@@ -238,6 +238,8 @@ struct TextLayout::Impl {
     ) {
         ensureGraymapRendered();
 
+        offsetY += dest.height() - graymap->height;
+
         Rect rect = Rect::intersection(
             Rect(0, graymap->width, 0, graymap->height),
             Rect::translate(

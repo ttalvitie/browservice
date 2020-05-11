@@ -122,7 +122,7 @@ void QualitySelector::widgetViewportUpdated_() {
     CEF_REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
-    textField_->setViewport(viewport.subRect(4, Width - 19, 4, Height - 2));
+    textField_->setViewport(viewport.subRect(4, Width - 19, 2, Height - 4));
 }
 
 void QualitySelector::widgetRender_() {
