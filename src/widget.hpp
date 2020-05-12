@@ -10,6 +10,9 @@ static constexpr int CursorTypeCount = 3;
 
 class WidgetParent {
 public:
+    // Exceptionally, these event handlers are called directly (instead of
+    // calling them from the CEF UI thread) for performance reasons. The
+    // implementor should take care to avoid re-entrancy issues.
     virtual void onWidgetViewDirty() = 0;
     virtual void onWidgetCursorChanged() = 0;
 };

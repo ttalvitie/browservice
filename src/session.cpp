@@ -404,16 +404,22 @@ uint64_t Session::id() {
 void Session::onWidgetViewDirty() {
     CEF_REQUIRE_UI_THREAD();
 
-    rootWidget_->render();
-    sendViewportToCompressor_();
+    shared_ptr<Session> self = shared_from_this();
+    postTask([self]() {
+        self->rootWidget_->render();
+        self->sendViewportToCompressor_();
+    });
 }
 
 void Session::onWidgetCursorChanged() {
     CEF_REQUIRE_UI_THREAD();
 
-    int cursor = rootWidget_->cursor();
-    CHECK(cursor >= 0 && cursor < CursorTypeCount);
-    setHeightSignal_(cursor);
+    shared_ptr<Session> self = shared_from_this();
+    postTask([self]() {
+        int cursor = self->rootWidget_->cursor();
+        CHECK(cursor >= 0 && cursor < CursorTypeCount);
+        self->setHeightSignal_(cursor);
+    });
 }
 
 void Session::onAddressSubmitted(string url) {

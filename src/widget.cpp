@@ -186,7 +186,9 @@ void Widget::signalViewDirty_() {
 
     if(!viewDirty_) {
         viewDirty_ = true;
-        postTask(parent_, &WidgetParent::onWidgetViewDirty);
+        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+            parent->onWidgetViewDirty();
+        }
     }
 }
 
@@ -264,7 +266,9 @@ void Widget::updateCursor_() {
     }
     if(newCursor != cursor_) {
         cursor_ = newCursor;
-        postTask(parent_, &WidgetParent::onWidgetCursorChanged);
+        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+            parent->onWidgetCursorChanged();
+        }
     }
 }
 
