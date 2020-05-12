@@ -1,5 +1,6 @@
 #pragma once
 
+#include "button.hpp"
 #include "go_button.hpp"
 #include "text_field.hpp"
 #include "quality_selector.hpp"
@@ -15,6 +16,7 @@ class ControlBarEventHandler {
 public:
     virtual void onAddressSubmitted(string url) = 0;
     virtual void onQualityChanged(int quality) = 0;
+    virtual void onPendingDownloadAccepted() = 0;
 };
 
 class TextLayout;
@@ -23,7 +25,8 @@ class ControlBar :
     public Widget,
     public TextFieldEventHandler,
     public GoButtonEventHandler,
-    public QualitySelectorEventHandler
+    public QualitySelectorEventHandler,
+    public ButtonEventHandler
 {
 SHARED_ONLY_CLASS(ControlBar);
 public:
@@ -37,6 +40,9 @@ public:
     void setSecurityStatus(SecurityStatus value);
     void setAddress(string addr);
 
+    void setPendingDownloadCount(int count);
+    void setDownloadProgress(vector<int> progress);
+
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
 
@@ -46,8 +52,13 @@ public:
     // QualitySelectorEventHandler:
     virtual void onQualityChanged(int quality) override;
 
+    // ButtonEventHandler:
+    virtual void onButtonPressed() override;
+
 private:
     void afterConstruct_(shared_ptr<ControlBar> self);
+
+    bool isDownloadVisible_();
 
     class Layout;
     Layout layout_();
@@ -68,4 +79,8 @@ private:
 
     shared_ptr<TextLayout> qualityText_;
     shared_ptr<QualitySelector> qualitySelector_;
+
+    int pendingDownloadCount_;
+    vector<int> downloadProgress_;
+    shared_ptr<Button> downloadButton_;
 };

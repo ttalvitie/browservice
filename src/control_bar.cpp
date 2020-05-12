@@ -97,7 +97,7 @@ ImageSlice securityStatusIcon(SecurityStatus status) {
 }
 
 struct ControlBar::Layout {
-    Layout(int width) : width(width) {
+    Layout(int width, bool isDownloadVisible) : width(width) {
         int contentStart = 1;
         int contentEnd = width - 1;
 
@@ -105,7 +105,16 @@ struct ControlBar::Layout {
         const int AddressTextWidth = 52;
         const int QualityTextWidth = 46;
 
-        qualitySelectorEnd = contentEnd;
+        int downloadWidth = isDownloadVisible ? 98 : 0;
+        int downloadSpacerWidth = isDownloadVisible ? 2 : 0;
+
+        downloadEnd = contentEnd;
+        downloadStart = downloadEnd - downloadWidth;
+
+        int downloadSpacerEnd = downloadStart;
+        int downloadSpacerStart = downloadSpacerEnd - downloadSpacerWidth;
+
+        qualitySelectorEnd = downloadSpacerStart;
         qualitySelectorStart = qualitySelectorEnd - QualitySelector::Width;
 
         qualityTextEnd = qualitySelectorStart;
@@ -160,6 +169,9 @@ struct ControlBar::Layout {
 
     int qualitySelectorStart;
     int qualitySelectorEnd;
+
+    int downloadStart;
+    int downloadEnd;
 };
 
 ControlBar::ControlBar(CKey,
@@ -180,6 +192,8 @@ ControlBar::ControlBar(CKey,
 
     securityStatus_ = SecurityStatus::Insecure;
 
+    pendingDownloadCount_ = 0;
+
     // Initialization is completed in afterConstruct_
 }
 
@@ -195,6 +209,36 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 void ControlBar::setAddress(string addr) {
     CEF_REQUIRE_UI_THREAD();
     addrField_->setText(move(addr));
+}
+
+void ControlBar::setPendingDownloadCount(int count) {
+    CEF_REQUIRE_UI_THREAD();
+    CHECK(count >= 0);
+
+    if(count != pendingDownloadCount_) {
+        pendingDownloadCount_ = count;
+
+        if(count > 0) {
+            downloadButton_->setEnabled(true);
+            downloadButton_->setText("Download (" + toString(count) + ")");
+        } else {
+            downloadButton_->setEnabled(false);
+            downloadButton_->setText("Download");
+        }
+
+        widgetViewportUpdated_();
+        signalViewDirty_();
+    }
+}
+
+void ControlBar::setDownloadProgress(vector<int> progress) {
+    CEF_REQUIRE_UI_THREAD();
+
+    if(progress != downloadProgress_) {
+        downloadProgress_ = move(progress);
+        signalViewDirty_();
+        widgetViewportUpdated_();
+    }
 }
 
 void ControlBar::onTextFieldSubmitted(string text) {
@@ -216,14 +260,24 @@ void ControlBar::onQualityChanged(int quality) {
     postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
 }
 
+void ControlBar::onButtonPressed() {
+    CEF_REQUIRE_UI_THREAD();
+    postTask(eventHandler_, &ControlBarEventHandler::onPendingDownloadAccepted);
+}
+
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     goButton_ = GoButton::create(self, self);
     qualitySelector_ = QualitySelector::create(self, self);
+    downloadButton_ = Button::create(self, self);
+}
+
+bool ControlBar::isDownloadVisible_() {
+    return pendingDownloadCount_ > 0 || !downloadProgress_.empty();
 }
 
 ControlBar::Layout ControlBar::layout_() {
-    return Layout(getViewport().width());
+    return Layout(getViewport().width(), isDownloadVisible_());
 }
 
 void ControlBar::widgetViewportUpdated_() {
@@ -241,6 +295,12 @@ void ControlBar::widgetViewportUpdated_() {
     qualitySelector_->setViewport(viewport.subRect(
         layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
     ));
+    if(isDownloadVisible_()) {
+        downloadButton_->setViewport(viewport.subRect(
+            layout.downloadStart, layout.downloadEnd,
+            1, Height - 4 - (downloadProgress_.empty() ? 0 : 5)
+        ));
+    }
 }
 
 void ControlBar::widgetRender_() {
@@ -292,9 +352,35 @@ void ControlBar::widgetRender_() {
         viewport.subRect(layout.qualityTextStart, layout.qualityTextEnd, 1, Height - 4),
         3, -4
     );
+
+    // Download progress bar
+    if(!downloadProgress_.empty()) {
+        int startY = Height - 9;
+        int endY = Height - 4;
+
+        int startX = layout.downloadStart;
+        int downloadCount = (int)downloadProgress_.size();
+        int rangeLength = layout.downloadEnd - layout.downloadStart;
+        for(int i = 0; i < downloadCount; ++i) {
+            int endX =
+                layout.downloadStart +
+                ((i + 1) * rangeLength + downloadCount - 1) / downloadCount;
+            int barMaxX = endX - (i == downloadCount - 1 ? 0 : 1);
+            int barEndX = startX + downloadProgress_[i] * (barMaxX - startX) / 100;
+            viewport.fill(startX, barEndX, startY, endY, 0, 0, 255);
+            viewport.fill(barEndX, endX, startY, endY, 192);
+
+            startX = endX;
+        }
+    }
 }
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     CEF_REQUIRE_UI_THREAD();
-    return {addrField_, goButton_, qualitySelector_};
+    vector<shared_ptr<Widget>> children =
+        {addrField_, goButton_, qualitySelector_};
+    if(isDownloadVisible_()) {
+        children.push_back(downloadButton_);
+    }
+    return children;
 }

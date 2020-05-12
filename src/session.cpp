@@ -438,6 +438,11 @@ void Session::onQualityChanged(int quality) {
     imageCompressor_->setQuality(quality);
 }
 
+void Session::onPendingDownloadAccepted() {
+    CEF_REQUIRE_UI_THREAD();
+    downloadManager_->acceptPendingDownload();
+}
+
 void Session::onBrowserAreaViewDirty() {
     CEF_REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
@@ -445,22 +450,12 @@ void Session::onBrowserAreaViewDirty() {
 
 void Session::onPendingDownloadCountChanged(int count) {
     CEF_REQUIRE_UI_THREAD();
-
-    if(count > 0) {
-        LOG(INFO) << "Accepting pending download";
-        downloadManager_->acceptPendingDownload();
-    }
+    rootWidget_->controlBar()->setPendingDownloadCount(count);
 }
 
 void Session::onDownloadProgressChanged(vector<int> progress) {
     CEF_REQUIRE_UI_THREAD();
-
-    stringstream ss;
-    ss << "Download progress:";
-    for(int x : progress) {
-        ss << ' ' << x;
-    }
-    LOG(INFO) << ss.str();
+    rootWidget_->controlBar()->setDownloadProgress(move(progress));
 }
 
 void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {

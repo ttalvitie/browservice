@@ -60,6 +60,7 @@ public:
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;
     virtual void onQualityChanged(int quality) override;
+    virtual void onPendingDownloadAccepted() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
