@@ -75,6 +75,8 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
+using std::this_thread::sleep_for;
+
 #ifdef NDEBUG
 #define SHARED_ONLY_CLASS_LEAK_CHECK(ClassName)
 #else

@@ -225,7 +225,18 @@ public:
         
         shared_ptr<Impl> self = shared_from_this();
         thread stopThread([self{move(self)}]() {
-            self->httpServer_.stopAll(false);
+            // Do not accept new connections
+            self->httpServer_.stop();
+
+            // 1s grace time for current connections before abort
+            for(int i = 0; i < 10; ++i) {
+                if(self->httpServer_.currentConnections() == 0) {
+                    break;
+                }
+                sleep_for(milliseconds(100));
+            }
+            self->httpServer_.stopAll(true);
+
             postTask([self{move(self)}]() {
                 CHECK(self->state_ == ShutdownPending);
                 self->state_ = ShutdownComplete;
