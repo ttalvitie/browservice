@@ -1,5 +1,7 @@
 #include "widget.hpp"
 
+#include "key.hpp"
+
 Widget::Widget(weak_ptr<WidgetParent> parent) {
     CEF_REQUIRE_UI_THREAD();
 
@@ -134,15 +136,17 @@ void Widget::sendMouseLeaveEvent(int x, int y) {
     }
 }
 
-void Widget::sendKeyDownEvent(Key key) {
+void Widget::sendKeyDownEvent(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
 
     keysDown_.insert(key);
     forwardKeyDownEvent_(key);
 }
 
-void Widget::sendKeyUpEvent(Key key) {
+void Widget::sendKeyUpEvent(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
 
     if(!keysDown_.count(key)) {
         return;
@@ -241,7 +245,7 @@ void Widget::clearEventState_(int x, int y) {
     }
 
     while(!keysDown_.empty()) {
-        Key key = *keysDown_.begin();
+        int key = *keysDown_.begin();
         keysDown_.erase(keysDown_.begin());
         forwardKeyUpEvent_(key);
     }
@@ -313,10 +317,10 @@ DEFINE_EVENT_FORWARD(
 
 #define EVENT_PREPROCESSING
 DEFINE_EVENT_FORWARD(
-    KeyDown, focusChild_, (Key key), (key)
+    KeyDown, focusChild_, (int key), (key)
 );
 DEFINE_EVENT_FORWARD(
-    KeyUp, focusChild_, (Key key), (key)
+    KeyUp, focusChild_, (int key), (key)
 );
 DEFINE_EVENT_FORWARD(
     LoseFocus, focusChild_, (), ()

@@ -1,5 +1,6 @@
 #include "text_field.hpp"
 
+#include "key.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
 
@@ -94,20 +95,24 @@ void TextField::scheduleBlinkCaret_() {
     });
 }
 
-void TextField::typeCharacter_(string character) {
+void TextField::typeCharacter_(int key) {
     if(caretActive_) {
         int idx1 = min(caretStart_, caretEnd_);
         int idx2 = max(caretStart_, caretEnd_);
         unsetCaret_();
 
         string oldText = textLayout_->text();
-        string newText =
-            oldText.substr(0, idx1) +
-            character +
-            oldText.substr(idx2, (int)oldText.size() - idx2);
+
+        UTF8Char utf8Char = keyToUTF8(key);
+
+        string newText;
+        newText.append(oldText, 0, idx1);
+        newText.append((const char*)utf8Char.data, utf8Char.length);
+        newText.append(oldText, idx2, (int)oldText.size() - idx2);
+
         textLayout_->setText(newText);
 
-        int idx = idx1 + character.size();
+        int idx = idx1 + utf8Char.length;
         setCaret_(idx, idx);
     }
 }
@@ -224,8 +229,9 @@ void TextField::widgetMouseMoveEvent_(int x, int y) {
     }
 }
 
-void TextField::widgetKeyDownEvent_(Key key) {
+void TextField::widgetKeyDownEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
 
     if(key == keys::Shift) {
         shiftKeyDown_ = true;
@@ -244,11 +250,11 @@ void TextField::widgetKeyDownEvent_(Key key) {
         setCaret_(shiftKeyDown_ ? caretStart_ : idx, idx);
     }
 
-    if(key.isCharacter()) {
-        typeCharacter_(key.character());
+    if(key > 0) {
+        typeCharacter_(key);
     }
     if(key == keys::Space) {
-        typeCharacter_(" ");
+        typeCharacter_((int)' ');
     }
 
     if((key == keys::Backspace || key == keys::Delete) && caretActive_) {
@@ -269,8 +275,9 @@ void TextField::widgetKeyDownEvent_(Key key) {
     }
 }
 
-void TextField::widgetKeyUpEvent_(Key key) {
+void TextField::widgetKeyUpEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
 
     if(key == keys::Down || key == keys::Up) {
         postTask(

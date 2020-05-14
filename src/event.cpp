@@ -1,5 +1,6 @@
 #include "event.hpp"
 
+#include "key.hpp"
 #include "widget.hpp"
 
 namespace {
@@ -66,21 +67,24 @@ bool processParsedEvent(
         return true;
     }
     if(name == "KDN" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(-args[0])) {
-            widget->sendKeyDownEvent(*key);
+        int key = -args[0];
+        if(key < 0 && isValidKey(key)) {
+            widget->sendKeyDownEvent(key);
         }
         return true;
     }
     if(name == "KUP" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(-args[0])) {
-            widget->sendKeyUpEvent(*key);
+        int key = -args[0];
+        if(key < 0 && isValidKey(key)) {
+            widget->sendKeyUpEvent(key);
         }
         return true;
     }
     if(name == "KPR" && argCount == 1) {
-        if(optional<Key> key = Key::fromID(args[0])) {
-            widget->sendKeyDownEvent(*key);
-            widget->sendKeyUpEvent(*key);
+        int key = args[0];
+        if(key > 0 && isValidKey(key)) {
+            widget->sendKeyDownEvent(key);
+            widget->sendKeyUpEvent(key);
         }
         return true;
     }

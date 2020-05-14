@@ -1,5 +1,7 @@
 #include "browser_area.hpp"
 
+#include "key.hpp"
+
 #include "include/cef_render_handler.h"
 
 class BrowserArea::RenderHandler : public CefRenderHandler {
@@ -298,18 +300,20 @@ void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
     browser_->GetHost()->SendMouseMoveEvent(event, true);
 }
 
-void BrowserArea::widgetKeyDownEvent_(Key key) {
+void BrowserArea::widgetKeyDownEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
     if(!browser_) return;
 
-    LOG(INFO) << "BrowserArea got key " << key.name() << "/" << key.character() << " down";
+    LOG(INFO) << "BrowserArea got key " << key << " down";
 }
 
-void BrowserArea::widgetKeyUpEvent_(Key key) {
+void BrowserArea::widgetKeyUpEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
+    CHECK(isValidKey(key));
     if(!browser_) return;
 
-    LOG(INFO) << "BrowserArea got key " << key.name() << "/" << key.character() << " up";
+    LOG(INFO) << "BrowserArea got key " << key << " up";
 }
 
 void BrowserArea::widgetGainFocusEvent_(int x, int y) {

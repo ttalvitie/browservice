@@ -1,7 +1,6 @@
 #pragma once
 
 #include "image_slice.hpp"
-#include "key.hpp"
 
 static constexpr int HandCursor = 0;
 static constexpr int NormalCursor = 1;
@@ -39,8 +38,8 @@ public:
     void sendMouseMoveEvent(int x, int y);
     void sendMouseEnterEvent(int x, int y);
     void sendMouseLeaveEvent(int x, int y);
-    void sendKeyDownEvent(Key key);
-    void sendKeyUpEvent(Key key);
+    void sendKeyDownEvent(int key);
+    void sendKeyUpEvent(int key);
     void sendGainFocusEvent(int x, int y);
     void sendLoseFocusEvent();
 
@@ -90,8 +89,8 @@ protected:
     virtual void widgetMouseMoveEvent_(int x, int y) {}
     virtual void widgetMouseEnterEvent_(int x, int y) {}
     virtual void widgetMouseLeaveEvent_(int x, int y) {}
-    virtual void widgetKeyDownEvent_(Key key) {}
-    virtual void widgetKeyUpEvent_(Key key) {}
+    virtual void widgetKeyDownEvent_(int key) {}
+    virtual void widgetKeyUpEvent_(int key) {}
     virtual void widgetGainFocusEvent_(int x, int y) {}
     virtual void widgetLoseFocusEvent_() {}
 
@@ -112,8 +111,8 @@ private:
     void forwardMouseMoveEvent_(int x, int y);
     void forwardMouseEnterEvent_(int x, int y);
     void forwardMouseLeaveEvent_(int x, int y);
-    void forwardKeyDownEvent_(Key key);
-    void forwardKeyUpEvent_(Key key);
+    void forwardKeyDownEvent_(int key);
+    void forwardKeyUpEvent_(int key);
     void forwardGainFocusEvent_(int x, int y);
     void forwardLoseFocusEvent_();
 
@@ -131,7 +130,7 @@ private:
     int lastMouseY_;
 
     set<int> mouseButtonsDown_;
-    set<Key> keysDown_;
+    set<int> keysDown_;
 
     int cursor_;
     int myCursor_;

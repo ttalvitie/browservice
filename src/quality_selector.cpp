@@ -1,6 +1,7 @@
 #include "quality_selector.hpp"
 
 #include "globals.hpp"
+#include "key.hpp"
 #include "timeout.hpp"
 
 QualitySelector::QualitySelector(CKey,
@@ -227,7 +228,7 @@ void QualitySelector::widgetMouseWheelEvent_(int x, int y, int delta) {
     }
 }
 
-void QualitySelector::widgetKeyDownEvent_(Key key) {
+void QualitySelector::widgetKeyDownEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
 
     if(key == keys::Down || key == keys::Up) {
@@ -242,7 +243,7 @@ void QualitySelector::widgetKeyDownEvent_(Key key) {
     }
 }
 
-void QualitySelector::widgetKeyUpEvent_(Key key) {
+void QualitySelector::widgetKeyUpEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
 
     if(key == keys::Down || key == keys::Up) {

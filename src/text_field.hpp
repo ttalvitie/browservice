@@ -38,7 +38,7 @@ private:
     void setCaret_(int start, int end);
     void scheduleBlinkCaret_();
 
-    void typeCharacter_(string character);
+    void typeCharacter_(int key);
     void eraseRange_();
 
     // Widget:
@@ -49,8 +49,8 @@ private:
     virtual void widgetMouseDoubleClickEvent_(int x, int y) override;
     virtual void widgetMouseWheelEvent_(int x, int y, int delta) override;
     virtual void widgetMouseMoveEvent_(int x, int y) override;
-    virtual void widgetKeyDownEvent_(Key key) override;
-    virtual void widgetKeyUpEvent_(Key key) override;
+    virtual void widgetKeyDownEvent_(int key) override;
+    virtual void widgetKeyUpEvent_(int key) override;
     virtual void widgetGainFocusEvent_(int x, int y) override;
     virtual void widgetLoseFocusEvent_() override;
 

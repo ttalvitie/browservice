@@ -2,67 +2,36 @@
 
 #include "common.hpp"
 
-namespace key_ {}
+// Keys are represented by integers; positive integers are Unicode code points
+// and negative integers are Windows key codes for non-character keys.
+bool isValidKey(int key);
 
-// Identifier of a supported key
-class Key {
-public:
-    // Given key ID, returns either the key or empty if the key is not supported.
-    // Positive key IDs refer to character keys and negative key IDs to
-    // non-character keys; the absolute value should be the JS key code (code
-    // point for character keys).
-    static optional<Key> fromID(int id);
-
-    bool isCharacter() const;
-
-    // Returns string literal that is the canonical name of the key (same as in
-    // the keys namespace)
-    const char* name() const;
-
-    // Returns string literal representing the character that the key produces
-    // (empty if this is a non-character key)
-    const char* character() const;
-
-    #define DEFINE_KEY_OP(op) \
-        bool operator op(Key other) const { \
-            return id_ op other.id_; \
-        }
-    DEFINE_KEY_OP(==);
-    DEFINE_KEY_OP(!=);
-    DEFINE_KEY_OP(<);
-    DEFINE_KEY_OP(>);
-    DEFINE_KEY_OP(<=);
-    DEFINE_KEY_OP(>=);
-    #undef DEFINE_KEY_OP
-
-private:
-    Key(int id);
-
-    int id_;
-
-    struct Info {
-        const char* name;
-        const char* character;
-    };
-
-    static map<Key, Info> initSupportedKeys_();
-    static const map<Key, Info> SupportedKeys_;
-
-    friend Key createKeyUnchecked_(int id);
+struct UTF8Char {
+    uint8_t data[4];
+    int length;
 };
 
-// Namespace containing all the supported keys
+// Returns the UTF-8 representation of the character represented by given valid
+// key. If key < 0, the return value has length equal to 0.
+UTF8Char keyToUTF8(int key);
+
+// String containing a comma-separated list of the negations of valid negative
+// (that is, non-character) key IDs
+extern const string validNonCharKeyList;
+
 namespace keys {
 
-#define KEY_DEF(name, id, character) \
-    extern const Key name;
-
-#include "key_defs.hpp"
-
-#undef KEY_DEF
+constexpr int Backspace = -8;
+constexpr int Tab = -9;
+constexpr int Enter = -13;
+constexpr int Shift = -16;
+constexpr int Space = -32;
+constexpr int PageUp = -33;
+constexpr int PageDown = -34;
+constexpr int Left = -37;
+constexpr int Up = -38;
+constexpr int Right = -39;
+constexpr int Down = -40;
+constexpr int Delete = -46;
 
 }
-
-// String containing a comma-separated list of the negations of supported
-// non-character key IDs
-extern const string supportedNonCharKeyList;

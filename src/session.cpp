@@ -359,7 +359,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             request->sendHTMLResponse(
                 200,
                 writeMainHTML,
-                {id_, curMainIdx_, supportedNonCharKeyList}
+                {id_, curMainIdx_, validNonCharKeyList}
             );
         } else {
             request->sendHTMLResponse(200, writePreMainHTML, {id_});

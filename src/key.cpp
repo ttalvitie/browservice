@@ -1,88 +1,87 @@
 #include "key.hpp"
 
-optional<Key> Key::fromID(int id) {
-    Key key(id);
-    if(SupportedKeys_.count(key)) {
-        return key;
-    } else {
-        return {};
-    }
-}
+namespace {
 
-Key::Key(int id) {
-    id_ = id;
-}
-
-bool Key::isCharacter() const {
-    return id_ > 0;
-}
-
-const char* Key::name() const {
-    auto it = SupportedKeys_.find(*this);
-    CHECK(it != SupportedKeys_.end());
-    return it->second.name;
-}
-
-const char* Key::character() const {
-    auto it = SupportedKeys_.find(*this);
-    CHECK(it != SupportedKeys_.end());
-    return it->second.character;
-}
-
-
-map<Key, Key::Info> Key::initSupportedKeys_() {
-    map<Key, Info> ret;
-
-#define KEY_DEF(name, id, character) \
-    { \
-        Key key(id); \
-        Info info = {#name, character}; \
-        CHECK((character[0] == '\0') == (id < 0)); \
-        CHECK(ret.emplace(key, info).second); \
-    }
-
-#include "key_defs.hpp"
-
-#undef KEY_DEF
-
+vector<int> initSortedValidNonCharKeys() {
+    vector<int> ret = {
+        keys::Backspace,
+        keys::Tab,
+        keys::Enter,
+        keys::Shift,
+        keys::Space,
+        keys::PageUp,
+        keys::PageDown,
+        keys::Left,
+        keys::Up,
+        keys::Right,
+        keys::Down,
+        keys::Delete
+    };
+    sort(ret.begin(), ret.end());
     return ret;
 }
 
-const map<Key, Key::Info> Key::SupportedKeys_ = Key::initSupportedKeys_();
+vector<int> sortedValidNonCharKeys = initSortedValidNonCharKeys();
 
-Key createKeyUnchecked_(int id) {
-    return Key(id);
-}
-
-namespace keys {
-
-#define KEY_DEF(name, id, character) \
-    const Key name = createKeyUnchecked_(id);
-
-#include "key_defs.hpp"
-
-#undef KEY_DEF
-
-}
-
-static string initSupportedNonCharKeyList() {
+string initValidNonCharKeyList() {
     stringstream ss;
     bool first = true;
-
-#define KEY_DEF(name, id, character) \
-    if(id < 0) { \
-        if(!first) { \
-            ss << ","; \
-        } \
-        first = false; \
-        ss << -id; \
+    for(int i = (int)sortedValidNonCharKeys.size() - 1; i >= 0; --i) {
+        if(!first) {
+            ss << ",";
+        }
+        first = false;
+        ss << -sortedValidNonCharKeys[i];
     }
-
-#include "key_defs.hpp"
-
-#undef KEY_DEF
-
     return ss.str();
 }
 
-const string supportedNonCharKeyList = initSupportedNonCharKeyList();
+}
+
+bool isValidKey(int key) {
+    return
+        (key >= 1 && key <= 0xD7FF) ||
+        (key >= 0xE000 && key <= 0x10FFFF) ||
+        binary_search(
+            sortedValidNonCharKeys.begin(),
+            sortedValidNonCharKeys.end(),
+            key
+        );
+}
+
+UTF8Char keyToUTF8(int key) {
+    CHECK(isValidKey(key));
+
+    auto getBits = [&](int count) {
+        int bits = key & ((1 << count) - 1);
+        key >>= count;
+        return bits;
+    };
+
+    UTF8Char ret;
+    if(key < 0) {
+        ret.length = 0;
+    } else if(key <= 0x7F) {
+        ret.length = 1;
+        ret.data[0] = (uint8_t)key;
+    } else if(key <= 0x7FF) {
+        ret.length = 2;
+        ret.data[1] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[0] = (uint8_t)(key | 0xC0);
+    } else if(key <= 0xFFFF) {
+        ret.length = 3;
+        ret.data[2] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[1] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[0] = (uint8_t)(key | 0xE0);
+    } else {
+        CHECK(key <= 0x10FFFF);
+        ret.length = 4;
+        ret.data[3] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[2] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[1] = (uint8_t)(getBits(6) | 0x80);
+        ret.data[0] = (uint8_t)(key | 0xF0);
+    }
+    return ret;
+}
+
+const string validNonCharKeyList = initValidNonCharKeyList();

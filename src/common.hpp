@@ -28,6 +28,7 @@
 
 using std::array;
 using std::atomic;
+using std::binary_search;
 using std::cerr;
 using std::cout;
 using std::declval;

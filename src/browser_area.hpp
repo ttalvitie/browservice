@@ -48,8 +48,8 @@ private:
     virtual void widgetMouseMoveEvent_(int x, int y) override;
     virtual void widgetMouseEnterEvent_(int x, int y) override;
     virtual void widgetMouseLeaveEvent_(int x, int y) override;
-    virtual void widgetKeyDownEvent_(Key key) override;
-    virtual void widgetKeyUpEvent_(Key key) override;
+    virtual void widgetKeyDownEvent_(int key) override;
+    virtual void widgetKeyUpEvent_(int key) override;
     virtual void widgetGainFocusEvent_(int x, int y) override;
     virtual void widgetLoseFocusEvent_() override;
 
