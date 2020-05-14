@@ -228,34 +228,68 @@ pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
     return {buttonType, buttonFlag};
 }
 
+CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
+    CHECK(isValidKey(key));
+
+    CefKeyEvent event;
+    event.windows_key_code = 0;
+    event.native_key_code = 0;
+    event.modifiers = eventModifiers;
+    event.is_system_key = (bool)(event.modifiers & EVENTFLAG_ALT_DOWN);
+    event.unmodified_character = 0;
+
+    if(key < 0) {
+        event.windows_key_code = -key;
+
+        if(key == keys::Enter) {
+            event.unmodified_character = '\r';
+        }
+        if(key == keys::Space) {
+            event.unmodified_character = ' ';
+        }
+    } else {
+        event.unmodified_character = key;
+    }
+
+    event.character = event.unmodified_character;
+    return event;
+}
+
+uint32_t getKeyModifierFlag(int key) {
+    if(key == keys::Shift) return EVENTFLAG_SHIFT_DOWN;
+    if(key == keys::Control) return EVENTFLAG_CONTROL_DOWN;
+    if(key == keys::Alt) return EVENTFLAG_ALT_DOWN;
+    return 0;
+}
+
 }
 
 void BrowserArea::widgetMouseDownEvent_(int x, int y, int button) {
     CEF_REQUIRE_UI_THREAD();
-    if(!browser_) return;
-
-    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
 
     CefBrowserHost::MouseButtonType buttonType;
     uint32_t buttonFlag;
     tie(buttonType, buttonFlag) = getMouseButtonInfo(button);
 
-    browser_->GetHost()->SendMouseClickEvent(event, buttonType, false, 1);
+    if(browser_) {
+        CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+        browser_->GetHost()->SendMouseClickEvent(event, buttonType, false, 1);
+    }
 
     eventModifiers_ |= buttonFlag;
 }
 
 void BrowserArea::widgetMouseUpEvent_(int x, int y, int button) {
     CEF_REQUIRE_UI_THREAD();
-    if(!browser_) return;
-
-    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
 
     CefBrowserHost::MouseButtonType buttonType;
     uint32_t buttonFlag;
     tie(buttonType, buttonFlag) = getMouseButtonInfo(button);
 
-    browser_->GetHost()->SendMouseClickEvent(event, buttonType, true, 1);
+    if(browser_) {
+        CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+        browser_->GetHost()->SendMouseClickEvent(event, buttonType, true, 1);
+    }
 
     eventModifiers_ &= ~buttonFlag;
 }
@@ -303,17 +337,29 @@ void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
 void BrowserArea::widgetKeyDownEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
-    if(!browser_) return;
 
-    LOG(INFO) << "BrowserArea got key " << key << " down";
+    if(browser_) {
+        CefKeyEvent event = createKeyEvent(key, eventModifiers_);
+        event.type = KEYEVENT_RAWKEYDOWN;
+        browser_->GetHost()->SendKeyEvent(event);
+        event.type = KEYEVENT_CHAR;
+        browser_->GetHost()->SendKeyEvent(event);
+    }
+
+    eventModifiers_ |= getKeyModifierFlag(key);
 }
 
 void BrowserArea::widgetKeyUpEvent_(int key) {
     CEF_REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
-    if(!browser_) return;
 
-    LOG(INFO) << "BrowserArea got key " << key << " up";
+    if(browser_) {
+        CefKeyEvent event = createKeyEvent(key, eventModifiers_);
+        event.type = KEYEVENT_KEYUP;
+        browser_->GetHost()->SendKeyEvent(event);
+    }
+
+    eventModifiers_ &= ~getKeyModifierFlag(key);
 }
 
 void BrowserArea::widgetGainFocusEvent_(int x, int y) {

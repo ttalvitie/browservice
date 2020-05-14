@@ -8,6 +8,8 @@ vector<int> initSortedValidNonCharKeys() {
         keys::Tab,
         keys::Enter,
         keys::Shift,
+        keys::Control,
+        keys::Alt,
         keys::Space,
         keys::PageUp,
         keys::PageDown,
