@@ -228,6 +228,8 @@ pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
     return {buttonType, buttonFlag};
 }
 
+#include "key_codes.hpp"
+
 CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
     CHECK(isValidKey(key));
 
@@ -238,9 +240,13 @@ CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
     event.is_system_key = (bool)(event.modifiers & EVENTFLAG_ALT_DOWN);
     event.unmodified_character = 0;
 
-    if(key < 0) {
-        event.windows_key_code = -key;
+    auto it = keyCodes.find(key);
+    if(it != keyCodes.end()) {
+        event.windows_key_code = it->second.first;
+        event.native_key_code = it->second.second;
+    }
 
+    if(key < 0) {
         if(key == keys::Enter) {
             event.unmodified_character = '\r';
         }

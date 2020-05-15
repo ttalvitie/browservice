@@ -10,16 +10,37 @@ vector<int> initSortedValidNonCharKeys() {
         keys::Shift,
         keys::Control,
         keys::Alt,
+        keys::CapsLock,
+        keys::Esc,
         keys::Space,
         keys::PageUp,
         keys::PageDown,
+        keys::End,
+        keys::Home,
         keys::Left,
         keys::Up,
         keys::Right,
         keys::Down,
-        keys::Delete
+        keys::Insert,
+        keys::Delete,
+        keys::Win,
+        keys::Menu,
+        keys::F1,
+        keys::F2,
+        keys::F3,
+        keys::F4,
+        keys::F5,
+        keys::F6,
+        keys::F7,
+        keys::F8,
+        keys::F9,
+        keys::F10,
+        keys::F11,
+        keys::F12,
+        keys::NumLock
     };
     sort(ret.begin(), ret.end());
+    CHECK(ret.back() < 0);
     return ret;
 }
 
