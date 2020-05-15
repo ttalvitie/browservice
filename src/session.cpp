@@ -157,6 +157,7 @@ public:
         bool canGoForward
     ) override {
         CEF_REQUIRE_UI_THREAD();
+        session_->rootWidget_->controlBar()->setLoading(isLoading);
         session_->updateSecurityStatus_();
     }
 

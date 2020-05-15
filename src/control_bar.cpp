@@ -1,6 +1,7 @@
 #include "control_bar.hpp"
 
 #include "text.hpp"
+#include "timeout.hpp"
 
 namespace {
 
@@ -184,6 +185,8 @@ ControlBar::ControlBar(CKey,
 
     eventHandler_ = eventHandler;
 
+    animationTimeout_ = Timeout::create(30);
+
     addrText_ = TextLayout::create();
     addrText_->setText("Address");
 
@@ -193,6 +196,8 @@ ControlBar::ControlBar(CKey,
     securityStatus_ = SecurityStatus::Insecure;
 
     pendingDownloadCount_ = 0;
+
+    loading_ = false;
 
     // Initialization is completed in afterConstruct_
 }
@@ -209,6 +214,15 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 void ControlBar::setAddress(string addr) {
     CEF_REQUIRE_UI_THREAD();
     addrField_->setText(move(addr));
+}
+
+void ControlBar::setLoading(bool loading) {
+    CEF_REQUIRE_UI_THREAD();
+
+    if(loading != loading_) {
+        loading_ = loading;
+        signalViewDirty_();
+    }
 }
 
 void ControlBar::setPendingDownloadCount(int count) {
@@ -306,6 +320,8 @@ void ControlBar::widgetViewportUpdated_() {
 void ControlBar::widgetRender_() {
     CEF_REQUIRE_UI_THREAD();
 
+    animationTimeout_->clear(false);
+
     ImageSlice viewport = getViewport();
     Layout layout = layout_();
 
@@ -372,6 +388,49 @@ void ControlBar::widgetRender_() {
 
             startX = endX;
         }
+    }
+
+    // Loading bar
+    if(loading_) {
+        int64_t elapsed;
+        if(loadingAnimationStartTime_) {
+            elapsed = duration_cast<milliseconds>(
+                steady_clock::now() - *loadingAnimationStartTime_
+            ).count();
+        } else {
+            elapsed = 0;
+            loadingAnimationStartTime_ = steady_clock::now();
+        }
+
+        ImageSlice viewport = getViewport();
+        Layout layout = layout_();
+        ImageSlice slice = viewport.subRect(
+            layout.addrFieldStart - 2, layout.addrBoxEnd - 2,
+            Height - 7, Height - 6
+        );
+
+        if(!slice.isEmpty()) {
+            int barWidth = slice.width() / 12;
+            int64_t p = elapsed * (int64_t)slice.width() / (int64_t)5000;
+            int barStart = p % slice.width();
+            int barEnd = (p + barWidth) % slice.width();
+
+            if(barStart <= barEnd) {
+                slice.fill(barStart, barEnd, 0, slice.height(), 0, 0, 255);
+            } else {
+                slice.fill(0, barEnd, 0, slice.height(), 0, 0, 255);
+                slice.fill(barStart, slice.width(), 0, slice.height(), 0, 0, 255);
+            }
+        }
+
+        weak_ptr<ControlBar> selfWeak = shared_from_this();
+        animationTimeout_->set([selfWeak]() {
+            if(shared_ptr<ControlBar> self = selfWeak.lock()) {
+                self->signalViewDirty_();
+            }
+        });
+    } else {
+        loadingAnimationStartTime_.reset();
     }
 }
 

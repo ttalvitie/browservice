@@ -20,13 +20,15 @@ public:
 };
 
 class TextLayout;
+class Timeout;
 
 class ControlBar :
     public Widget,
     public TextFieldEventHandler,
     public GoButtonEventHandler,
     public QualitySelectorEventHandler,
-    public ButtonEventHandler
+    public ButtonEventHandler,
+    public enable_shared_from_this<ControlBar>
 {
 SHARED_ONLY_CLASS(ControlBar);
 public:
@@ -39,6 +41,7 @@ public:
 
     void setSecurityStatus(SecurityStatus value);
     void setAddress(string addr);
+    void setLoading(bool loading);
 
     void setPendingDownloadCount(int count);
     void setDownloadProgress(vector<int> progress);
@@ -70,6 +73,8 @@ private:
 
     weak_ptr<ControlBarEventHandler> eventHandler_;
 
+    shared_ptr<Timeout> animationTimeout_;
+
     shared_ptr<TextLayout> addrText_;
     shared_ptr<TextField> addrField_;
 
@@ -83,4 +88,7 @@ private:
     int pendingDownloadCount_;
     vector<int> downloadProgress_;
     shared_ptr<Button> downloadButton_;
+
+    bool loading_;
+    optional<steady_clock::time_point> loadingAnimationStartTime_;
 };
