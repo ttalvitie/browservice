@@ -256,8 +256,22 @@ CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
     } else {
         event.unmodified_character = key;
     }
-
     event.character = event.unmodified_character;
+
+    // Hack to avoid breaking AltGr keys
+    if(
+        key > 0 &&
+        (event.modifiers & EVENTFLAG_CONTROL_DOWN) &&
+        (event.modifiers & EVENTFLAG_ALT_DOWN) &&
+        !(key >= (int)'a' && key <= (int)'z') &&
+        !(key >= (int)'A' && key <= (int)'Z') &&
+        !(key >= (int)'0' && key <= (int)'9')
+    ) {
+        event.modifiers &= ~EVENTFLAG_CONTROL_DOWN;
+        event.modifiers &= ~EVENTFLAG_ALT_DOWN;
+        event.is_system_key = false;
+    }
+
     return event;
 }
 
