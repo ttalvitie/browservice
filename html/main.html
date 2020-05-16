@@ -27,6 +27,9 @@ iframe {
 }
 </style>
 <script type="text/javascript">
+var iframeLoadNowTimeoutFunc;
+var imageReloadTimeoutFunc;
+
 window.onload = function() {
 
 var shutdown = false;
@@ -82,7 +85,11 @@ var cancelIframeLoad;
 
     loadIframe = function() {
         if(!loadTimeout && !shutdown) {
-            loadTimeout = setTimeout(loadNow, Math.max(nextAllowedTime - new Date().getTime(), 0));
+            iframeLoadNowTimeoutFunc = loadNow;
+            loadTimeout = setTimeout(
+                "iframeLoadNowTimeoutFunc()",
+                Math.max(nextAllowedTime - new Date().getTime(), 0)
+            );
         }
     };
     cancelIframeLoad = function() {
@@ -211,11 +218,12 @@ function setupImg(img, nextImg, elem) {
         img.elem.src = imgPath;
 
         var myReloadIdx = ++reloadIdx;
-        reloadTimeout = setTimeout(function() {
+        imageReloadTimeoutFunc = function() {
             if(reloadIdx == myReloadIdx) {
                 reload();
             }
-        }, retryInterval);
+        };
+        reloadTimeout = setTimeout("imageReloadTimeoutFunc()", retryInterval);
     }
 
     img.newEventNotify = function() {
