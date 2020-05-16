@@ -1,5 +1,7 @@
 #include "config.hpp"
 
+#include "quality.hpp"
+
 #include <Poco/Net/HTTPServer.h>
 
 namespace {
@@ -21,6 +23,9 @@ template <typename T, const T Config::* Var, typename S>
 struct OptInfoBase {
     string defaultValStr() {
         return "default " + toString(static_cast<S*>(this)->defaultVal());
+    }
+    optional<T> parse(const string& str) {
+        return OptParser<T>::parse(str);
     }
 };
 
@@ -48,7 +53,7 @@ string helpLine(OptInfo<T, Var> info) {
     while(ss.tellp() < 32) {
         ss << ' ';
     }
-    ss << info.desc << " [" << info.defaultValStr() << "]";
+    ss << info.desc() << " [" << info.defaultValStr() << "]";
     return ss.str();
 }
 
@@ -91,7 +96,7 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
     #define CONF_FOREACH_OPT_ITEM(var) \
         optHandlers[CONF_OPT_INFO(var).name] = [&src](const string& valStr) { \
             typedef CONF_OPT_TYPE(var) T; \
-            optional<T> val = OptParser<T>::parse(valStr); \
+            optional<T> val = CONF_OPT_INFO(var).parse(valStr); \
             if(val && CONF_OPT_INFO(var).validate((const T&)*val)) { \
                 src.var = move(*val); \
                 return true; \

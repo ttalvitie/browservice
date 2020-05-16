@@ -5,8 +5,7 @@
 
 Globals::Globals(CKey, shared_ptr<Config> config)
     : config(config),
-      textRenderContext(TextRenderContext::create()),
-      defaultQuality(MaxQuality)
+      textRenderContext(TextRenderContext::create())
 {
     CHECK(config);
 }

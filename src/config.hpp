@@ -18,5 +18,6 @@ public:
 public:
     const string httpListenAddr;
     const string userAgent;
+    const int defaultQuality;
 };
 

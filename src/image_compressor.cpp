@@ -52,7 +52,7 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
     sendTimeout_ = Timeout::create(sendTimeoutMs);
     compressorThread_ = CefThread::CreateThread("Image compressor");
 
-    quality_ = globals->defaultQuality;
+    quality_ = globals->config->defaultQuality;
 
     int pngThreadCount = (int)thread::hardware_concurrency();
     pngThreadCount = min(pngThreadCount, 4);

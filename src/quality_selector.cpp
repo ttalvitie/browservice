@@ -18,7 +18,7 @@ QualitySelector::QualitySelector(CKey,
     longMouseRepeatTimeout_ = Timeout::create(500);
     shortMouseRepeatTimeout_ = Timeout::create(50);
 
-    quality_ = globals->defaultQuality;
+    quality_ = globals->config->defaultQuality;
 
     hasFocus_ = false;
     upKeyPressed_ = false;
