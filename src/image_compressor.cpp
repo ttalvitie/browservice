@@ -4,6 +4,7 @@
 #include "http.hpp"
 #include "jpeg.hpp"
 #include "png.hpp"
+#include "quality.hpp"
 #include "timeout.hpp"
 
 #include "include/cef_thread.h"
@@ -73,7 +74,7 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
 ImageCompressor::~ImageCompressor() {}
 
 void ImageCompressor::setQuality(int quality) {
-    CHECK(quality >= globals->minQuality && quality <= globals->maxQuality);
+    CHECK(quality >= MinQuality && quality <= MaxQuality);
     if(quality != quality_) {
         quality_ = quality;
         imageUpdated_ = true;
@@ -200,7 +201,7 @@ void ImageCompressor::pump_() {
     shared_ptr<PNGCompressor> pngCompressor = pngCompressor_;
     function<void()> compressTask = [quality, imageCopy, self, pngCompressor]() mutable {
         CompressedImage compressedImage;
-        if(quality == globals->PNGQuality) {
+        if(quality == MaxQuality) {
             compressedImage = compressPNG_(imageCopy, pngCompressor);
         } else {
             compressedImage = compressJPEG_(imageCopy, quality);

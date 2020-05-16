@@ -2,6 +2,7 @@
 
 #include "globals.hpp"
 #include "key.hpp"
+#include "quality.hpp"
 #include "timeout.hpp"
 
 QualitySelector::QualitySelector(CKey,
@@ -63,7 +64,7 @@ void QualitySelector::afterConstruct_(shared_ptr<QualitySelector> self) {
 
 void QualitySelector::setQuality_(string qualityStr) {
     if(qualityStr == "PNG") {
-        setQuality_(globals->PNGQuality);
+        setQuality_(MaxQuality);
     } else {
         optional<int> quality = parseString<int>(qualityStr);
         if(quality) {
@@ -75,8 +76,8 @@ void QualitySelector::setQuality_(string qualityStr) {
 }
 
 void QualitySelector::setQuality_(int quality) {
-    quality = min(quality, globals->maxQuality);
-    quality = max(quality, globals->minQuality);
+    quality = min(quality, MaxQuality);
+    quality = max(quality, MinQuality);
 
     if(quality_ != quality) {
         quality_ = quality;
@@ -92,9 +93,9 @@ void QualitySelector::setQuality_(int quality) {
 }
 
 void QualitySelector::updateTextField_() {
-    CHECK(quality_ >= globals->minQuality && quality_ <= globals->maxQuality);
+    CHECK(quality_ >= MinQuality && quality_ <= MaxQuality);
 
-    if(quality_ == globals->PNGQuality) {
+    if(quality_ == MaxQuality) {
         textField_->setText("PNG");
     } else {
         textField_->setText(toString(quality_));
@@ -105,7 +106,7 @@ void QualitySelector::mouseRepeat_(int direction, bool first) {
     CEF_REQUIRE_UI_THREAD();
 
     int quality = quality_ + direction;
-    if(quality >= globals->minQuality && quality <= globals->maxQuality) {
+    if(quality >= MinQuality && quality <= MaxQuality) {
         setQuality_(quality);
     }
 
@@ -177,8 +178,8 @@ void QualitySelector::widgetRender_() {
         viewport.fill(arrowX - 1, arrowX + 2, arrowY, arrowY + 1, enabled ? 0 : 128);
         viewport.fill(arrowX - 2, arrowX + 3, arrowY - dy, arrowY + 1 - dy, enabled ? 0 : 128);
     };
-    drawButton(2, true, upKeyPressed_ || upButtonPressed_, quality_ < globals->maxQuality);
-    drawButton(11, false, downKeyPressed_ || downButtonPressed_, quality_ > globals->minQuality);
+    drawButton(2, true, upKeyPressed_ || upButtonPressed_, quality_ < MaxQuality);
+    drawButton(11, false, downKeyPressed_ || downButtonPressed_, quality_ > MinQuality);
 }
 
 vector<shared_ptr<Widget>> QualitySelector::widgetListChildren_() {
@@ -236,7 +237,7 @@ void QualitySelector::widgetKeyDownEvent_(int key) {
         upKeyPressed_ = key == keys::Up;
 
         int quality = quality_ + (key == keys::Down ? -1 : 1);
-        if(quality >= globals->minQuality && quality <= globals->maxQuality) {
+        if(quality >= MinQuality && quality <= MaxQuality) {
             setQuality_(quality);
             signalViewDirty_();
         }
