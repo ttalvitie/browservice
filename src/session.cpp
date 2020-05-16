@@ -23,6 +23,9 @@ regex imagePathRegex(
 regex iframePathRegex(
     "/[0-9]+/iframe/([0-9]+)/[0-9]+/"
 );
+regex closePathRegex(
+    "/[0-9]+/close/([0-9]+)/"
+);
 
 }
 
@@ -227,7 +230,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
 
     closeOnOpen_ = false;
 
-    inactivityTimeout_ = Timeout::create(30000);
+    inactivityTimeoutLong_ = Timeout::create(30000);
+    inactivityTimeoutShort_ = Timeout::create(4000);
 
     lastSecurityStatusUpdateTime_ = steady_clock::now();
 
@@ -278,8 +282,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         return;
     }
 
-    updateInactivityTimeout_();
-
     // Force update security status every once in a while just to make sure we
     // don't miss updates for a long time
     if(duration_cast<milliseconds>(
@@ -305,6 +307,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             if(*mainIdx != curMainIdx_ || *imgIdx <= curImgIdx_) {
                 request->sendTextResponse(400, "ERROR: Outdated request");
             } else {
+                updateInactivityTimeout_();
+
                 handleEvents_(*startEventIdx, match[7].first, match[7].second);
                 curImgIdx_ = *imgIdx;
                 updateRootViewportSize_(*width, *height);
@@ -327,6 +331,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             } else if(iframeQueue_.empty()) {
                 request->sendTextResponse(200, "OK");
             } else {
+                updateInactivityTimeout_();
+
                 function<void(shared_ptr<HTTPRequest>)> iframe = iframeQueue_.front();
                 iframeQueue_.pop();
 
@@ -340,7 +346,30 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         }
     }
 
+    if(method == "GET" && regex_match(path, match, closePathRegex)) {
+        CHECK(match.size() == 2);
+        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
+        if(mainIdx) {
+            if(*mainIdx != curMainIdx_) {
+                request->sendTextResponse(400, "ERROR: Outdated request");
+            } else {
+                // Close requested, increment mainIdx to invalidate requests to
+                // the current main and set shortened inactivity timer as this
+                // may be a reload
+                ++curMainIdx_;
+                curImgIdx_ = 0;
+                curEventIdx_ = 0;
+                updateInactivityTimeout_(true);
+
+                request->sendTextResponse(200, "OK");
+            }
+            return;
+        }
+    }
+
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
+        updateInactivityTimeout_();
+
         if(preMainVisited_) {
             ++curMainIdx_;
 
@@ -370,6 +399,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
+        updateInactivityTimeout_();
+
         if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
             prevNextClicked_ = true;
             browser_->GoBack();
@@ -385,6 +416,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
+        updateInactivityTimeout_();
+
         if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
             prevNextClicked_ = true;
             browser_->GoForward();
@@ -501,18 +534,24 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
     updateInactivityTimeout_();
 }
 
-void Session::updateInactivityTimeout_() {
+void Session::updateInactivityTimeout_(bool shortened) {
     CEF_REQUIRE_UI_THREAD();
 
-    inactivityTimeout_->clear(false);
+    inactivityTimeoutLong_->clear(false);
+    inactivityTimeoutShort_->clear(false);
 
     if(state_ == Pending || state_ == Open) {
+        shared_ptr<Timeout> timeout =
+            shortened ? inactivityTimeoutShort_ : inactivityTimeoutLong_;
+
         weak_ptr<Session> self = shared_from_this();
-        inactivityTimeout_->set([self]() {
+        timeout->set([self, shortened]() {
             CEF_REQUIRE_UI_THREAD();
             if(shared_ptr<Session> session = self.lock()) {
                 if(session->state_ == Pending || session->state_ == Open) {
-                    LOG(INFO) << "Inactivity timeout for session " << session->id_ << " reached";
+                    LOG(INFO)
+                        << "Inactivity timeout for session " << session->id_ << " reached"
+                        << (shortened ? " (shortened due to client close signal)" : "");
                     session->close();
                 }
             }

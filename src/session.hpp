@@ -76,7 +76,7 @@ private:
 
     void afterConstruct_(shared_ptr<Session> self);
 
-    void updateInactivityTimeout_();
+    void updateInactivityTimeout_(bool shortened = false);
 
     void updateSecurityStatus_();
 
@@ -129,7 +129,8 @@ private:
     // If true, browser should close as soon as it is opened
     bool closeOnOpen_;
 
-    shared_ptr<Timeout> inactivityTimeout_;
+    shared_ptr<Timeout> inactivityTimeoutLong_;
+    shared_ptr<Timeout> inactivityTimeoutShort_;
 
     steady_clock::time_point lastSecurityStatusUpdateTime_;
 

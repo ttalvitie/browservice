@@ -29,6 +29,8 @@ iframe {
 <script type="text/javascript">
 window.onload = function() {
 
+var shutdown = false;
+
 var retryInterval = 3000;
 var maxRetries = 10;
 var minIframeLoadInterval = 2000;
@@ -63,6 +65,8 @@ var cancelIframeLoad;
 
     var loadTimeout = null;
     function loadNow() {
+        if(shutdown) return;
+
         loadTimeout = null;
         nextAllowedTime = new Date().getTime() + minIframeLoadInterval;
 
@@ -77,12 +81,12 @@ var cancelIframeLoad;
     }
 
     loadIframe = function() {
-        if(!loadTimeout) {
+        if(!loadTimeout && !shutdown) {
             loadTimeout = setTimeout(loadNow, Math.max(nextAllowedTime - new Date().getTime(), 0));
         }
     };
     cancelIframeLoad = function() {
-        if(loadTimeout) {
+        if(loadTimeout && !shutdown) {
             clearTimeout(loadTimeout);
             loadTimeout = null;
         }
@@ -128,7 +132,7 @@ function setupImg(img, nextImg, elem) {
     };
 
     img.elem.onload = function() {
-        if(!active) return;
+        if(!active || shutdown) return;
         active = false;
         clearReloadTimeout();
 
@@ -165,7 +169,7 @@ function setupImg(img, nextImg, elem) {
     };
 
     function reload() {
-        if(!active) return;
+        if(!active || shutdown) return;
 
         if(attempts > maxRetries) {
             clearReloadTimeout();
@@ -206,7 +210,7 @@ function setupImg(img, nextImg, elem) {
     }
 
     img.newEventNotify = function() {
-        if(!active) return;
+        if(!active || shutdown) return;
         if(denyNewEventNotify) return;
         denyNewEventNotify = true;
         --attempts;
@@ -215,7 +219,7 @@ function setupImg(img, nextImg, elem) {
     };
 
     img.load = function() {
-        if(active) return;
+        if(active || shutdown) return;
 
         imgLoaded = false;
         attempts = 0;
@@ -375,6 +379,16 @@ document.onkeyup = function(event) {
     if(!nonCharKeys[key]) return;
     putEvent("KUP_" + key);
     preventDefault(event);
+};
+
+window.onbeforeunload = function(event) {
+    shutdown = true;
+
+    img1.elem.src = "/%-sessionID-%/close/%-mainIdx-%/";
+    img2.elem.src = "/%-sessionID-%/close/%-mainIdx-%/";
+
+    var start = new Date().getTime();
+    while(new Date().getTime() - start < 50) {}
 };
 
 };
