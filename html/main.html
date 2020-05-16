@@ -186,6 +186,15 @@ function setupImg(img, nextImg, elem) {
             mouseMoveEventAdded = true;
         }
 
+        var width = document.body.clientWidth;
+        var height = document.body.clientHeight;
+        if(bodyOverflowHiddenNotSupported) {
+            width -= 1;
+            height -= 2;
+        }
+        width = Math.max(width | 0, 1);
+        height = Math.max(height | 0, 1);
+
         var immediate = ((imgLoaded || imgIdx == 0) ? 1 : 0);
         imgLoaded = true;
         imgPath =
@@ -193,8 +202,8 @@ function setupImg(img, nextImg, elem) {
             "%-mainIdx-%/" +
             (++imgIdx) + "/" +
             immediate + "/" +
-            document.body.clientWidth + "/" +
-            document.body.clientHeight + "/" +
+            width + "/" +
+            height + "/" +
             eventQueueStartIdx + "/";
         for(var i = 0; i < eventQueue.length; ++i) {
             imgPath += eventQueue[i] + "/";
@@ -342,9 +351,9 @@ document.onkeypress = function(event) {
         event = window.event;
         var key = event.keyCode | 0;
     } else {
-        var key = event.which | 0;
+        var key = event.which | 0;
     }
-    if(key <= 0) return;
+    if(key <= 0 || key == 32) return;
     putEvent("KPR_" + key);
     preventDefault(event);
 };
