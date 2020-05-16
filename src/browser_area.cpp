@@ -359,11 +359,26 @@ void BrowserArea::widgetKeyDownEvent_(int key) {
     CHECK(isValidKey(key));
 
     if(browser_) {
-        CefKeyEvent event = createKeyEvent(key, eventModifiers_);
-        event.type = KEYEVENT_RAWKEYDOWN;
-        browser_->GetHost()->SendKeyEvent(event);
-        event.type = KEYEVENT_CHAR;
-        browser_->GetHost()->SendKeyEvent(event);
+        bool controlDown = (bool)(eventModifiers_ & EVENTFLAG_CONTROL_DOWN);
+        bool xKey = key == (int)'x' || key == (int)'X';
+        bool cKey = key == (int)'c' || key == (int)'C';
+        bool vKey = key == (int)'v' || key == (int)'V';
+        CefRefPtr<CefFrame> frame;
+        if(
+            controlDown &&
+            (xKey || cKey || vKey) &&
+            (frame = browser_->GetFocusedFrame())
+        ) {
+            if(xKey) frame->Cut();
+            if(cKey) frame->Copy();
+            if(vKey) frame->Paste();
+        } else {
+            CefKeyEvent event = createKeyEvent(key, eventModifiers_);
+            event.type = KEYEVENT_RAWKEYDOWN;
+            browser_->GetHost()->SendKeyEvent(event);
+            event.type = KEYEVENT_CHAR;
+            browser_->GetHost()->SendKeyEvent(event);
+        }
     }
 
     eventModifiers_ |= getKeyModifierFlag(key);

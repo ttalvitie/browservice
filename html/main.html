@@ -355,7 +355,7 @@ for(var i = 0; i < nonCharKeyList.length; ++i) {
     nonCharKeys[nonCharKeyList[i]] = true;
 }
 
-var nonCharKeysDown = {};
+var controlDown = false;
 
 document.onkeydown = function(event) {
     if(!event) {
@@ -364,9 +364,15 @@ document.onkeydown = function(event) {
     } else {
         var key = event.which | 0;
     }
-    if(!nonCharKeys[key]) return;
-    putEvent("KDN_" + key);
-    preventDefault(event);
+    if(controlDown && key >= 65 && key <= 90) {
+        putEvent("KPR_" + (key + 32));
+        preventDefault(event);
+    } else {
+        if(!nonCharKeys[key]) return;
+        if(key == 17) controlDown = true;
+        putEvent("KDN_" + key);
+        preventDefault(event);
+    }
 };
 
 document.onkeyup = function(event) {
@@ -377,6 +383,7 @@ document.onkeyup = function(event) {
         var key = event.which | 0;
     }
     if(!nonCharKeys[key]) return;
+    if(key == 17) controlDown = false;
     putEvent("KUP_" + key);
     preventDefault(event);
 };
