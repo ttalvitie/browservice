@@ -20,7 +20,8 @@ public:
 
     QualitySelector(CKey,
         weak_ptr<WidgetParent> widgetParent,
-        weak_ptr<QualitySelectorEventHandler> eventHandler
+        weak_ptr<QualitySelectorEventHandler> eventHandler,
+        bool allowPNG
     );
 
     // TextFieldEventHandler:
@@ -53,6 +54,8 @@ private:
     virtual void widgetLoseFocusEvent_() override;
 
     weak_ptr<QualitySelectorEventHandler> eventHandler_;
+
+    bool allowPNG_;
 
     shared_ptr<TextField> textField_;
 

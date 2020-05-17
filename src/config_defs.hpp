@@ -46,7 +46,7 @@ CONF_DEF_OPT_INFO(defaultQuality) {
     string desc() {
         stringstream ss;
         ss << "initial image quality for each session ";
-        ss << "(" << MinQuality << ".." << (MaxQuality - 1) << " or 'PNG')";
+        ss << "(" << MinQuality << ".." << (MaxQuality - 1) << " or PNG)";
         return ss.str();
     }
     int defaultVal() {
@@ -55,8 +55,11 @@ CONF_DEF_OPT_INFO(defaultQuality) {
     string defaultValStr() {
         return "default PNG";
     }
-    optional<int> parse(const string& str) {
-        if(str == "PNG") {
+    optional<int> parse(string str) {
+        for(char& c : str) {
+            c = tolower(c);
+        }
+        if(str == "png") {
             return MaxQuality;
         } else {
             return parseString<int>(str);

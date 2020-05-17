@@ -2,6 +2,7 @@
 
 #include "globals.hpp"
 #include "html.hpp"
+#include "quality.hpp"
 
 namespace {
 
@@ -39,7 +40,9 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        shared_ptr<Session> session = Session::create(shared_from_this());
+        shared_ptr<Session> session = Session::create(
+            shared_from_this(), hasPNGSupport(request->userAgent())
+        );
         sessions_[session->id()] = session;
 
         request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});

@@ -36,7 +36,8 @@ public:
 
     ControlBar(CKey,
         weak_ptr<WidgetParent> widgetParent,
-        weak_ptr<ControlBarEventHandler> eventHandler
+        weak_ptr<ControlBarEventHandler> eventHandler,
+        bool allowPNG
     );
 
     void setSecurityStatus(SecurityStatus value);
@@ -72,6 +73,8 @@ private:
     virtual vector<shared_ptr<Widget>> widgetListChildren_() override;
 
     weak_ptr<ControlBarEventHandler> eventHandler_;
+
+    bool allowPNG_;
 
     shared_ptr<Timeout> animationTimeout_;
 

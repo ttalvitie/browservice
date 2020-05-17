@@ -40,6 +40,7 @@ public:
     // create popup sessions.
     Session(CKey,
         weak_ptr<SessionEventHandler> eventHandler,
+        bool allowPNG,
         bool isPopup = false
     );
 
@@ -139,6 +140,7 @@ private:
 
     steady_clock::time_point lastSecurityStatusUpdateTime_;
 
+    bool allowPNG_;
     shared_ptr<ImageCompressor> imageCompressor_;
 
     ImageSlice paddedRootViewport_;

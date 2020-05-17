@@ -20,6 +20,7 @@ public:
 
     string method() const;
     string path() const;
+    string userAgent() const;
 
     // The body function may be called from a different thread. The given
     // content length should match the number of bytes written by body.

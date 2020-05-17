@@ -6,13 +6,18 @@
 RootWidget::RootWidget(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ControlBarEventHandler> controlBarEventHandler,
-    weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler
+    weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler,
+    bool allowPNG
 )
-    : Widget(widgetParent),
-      controlBarEventHandler_(controlBarEventHandler),
-      browserAreaEventHandler_(browserAreaEventHandler)
+    : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
+
+    allowPNG_ = allowPNG;
+
+    controlBarEventHandler_ = controlBarEventHandler;
+    browserAreaEventHandler_ = browserAreaEventHandler;
+
     // Initialization is finalized in afterConstruct_
 }
 
@@ -27,7 +32,7 @@ shared_ptr<BrowserArea> RootWidget::browserArea() {
 }
 
 void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {
-    controlBar_ = ControlBar::create(self, controlBarEventHandler_);
+    controlBar_ = ControlBar::create(self, controlBarEventHandler_, allowPNG_);
     browserArea_ = BrowserArea::create(self, browserAreaEventHandler_);
 
     controlBarEventHandler_.reset();

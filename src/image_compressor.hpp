@@ -15,7 +15,7 @@ class CefThread;
 class ImageCompressor : public enable_shared_from_this<ImageCompressor> {
 SHARED_ONLY_CLASS(ImageCompressor);
 public:
-    ImageCompressor(CKey, int64_t sendTimeoutMs);
+    ImageCompressor(CKey, int64_t sendTimeoutMs, bool allowPNG);
     ~ImageCompressor();
 
     void setQuality(int quality);
@@ -49,6 +49,8 @@ private:
 
     void pump_();
     void compressTaskDone_(CompressedImage compressedImage);
+
+    bool allowPNG_;
 
     shared_ptr<Timeout> sendTimeout_;
     CefRefPtr<CefThread> compressorThread_;

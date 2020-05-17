@@ -7,7 +7,8 @@
 
 QualitySelector::QualitySelector(CKey,
     weak_ptr<WidgetParent> widgetParent,
-    weak_ptr<QualitySelectorEventHandler> eventHandler
+    weak_ptr<QualitySelectorEventHandler> eventHandler,
+    bool allowPNG
 )
     : Widget(widgetParent)
 {
@@ -15,10 +16,12 @@ QualitySelector::QualitySelector(CKey,
 
     eventHandler_ = eventHandler;
 
+    allowPNG_ = allowPNG;
+
     longMouseRepeatTimeout_ = Timeout::create(500);
     shortMouseRepeatTimeout_ = Timeout::create(50);
 
-    quality_ = globals->config->defaultQuality;
+    quality_ = getDefaultQuality(allowPNG);
 
     hasFocus_ = false;
     upKeyPressed_ = false;
@@ -63,8 +66,11 @@ void QualitySelector::afterConstruct_(shared_ptr<QualitySelector> self) {
 }
 
 void QualitySelector::setQuality_(string qualityStr) {
-    if(qualityStr == "PNG") {
-        setQuality_(MaxQuality);
+    for(char& c : qualityStr) {
+        c = tolower(c);
+    }
+    if(qualityStr == "png") {
+        setQuality_(getMaxQuality(allowPNG_));
     } else {
         optional<int> quality = parseString<int>(qualityStr);
         if(quality) {
@@ -76,7 +82,7 @@ void QualitySelector::setQuality_(string qualityStr) {
 }
 
 void QualitySelector::setQuality_(int quality) {
-    quality = min(quality, MaxQuality);
+    quality = min(quality, getMaxQuality(allowPNG_));
     quality = max(quality, MinQuality);
 
     if(quality_ != quality) {
@@ -93,7 +99,7 @@ void QualitySelector::setQuality_(int quality) {
 }
 
 void QualitySelector::updateTextField_() {
-    CHECK(quality_ >= MinQuality && quality_ <= MaxQuality);
+    CHECK(quality_ >= MinQuality && quality_ <= getMaxQuality(allowPNG_));
 
     if(quality_ == MaxQuality) {
         textField_->setText("PNG");
@@ -106,7 +112,7 @@ void QualitySelector::mouseRepeat_(int direction, bool first) {
     CEF_REQUIRE_UI_THREAD();
 
     int quality = quality_ + direction;
-    if(quality >= MinQuality && quality <= MaxQuality) {
+    if(quality >= MinQuality && quality <= getMaxQuality(allowPNG_)) {
         setQuality_(quality);
     }
 
@@ -178,7 +184,7 @@ void QualitySelector::widgetRender_() {
         viewport.fill(arrowX - 1, arrowX + 2, arrowY, arrowY + 1, enabled ? 0 : 128);
         viewport.fill(arrowX - 2, arrowX + 3, arrowY - dy, arrowY + 1 - dy, enabled ? 0 : 128);
     };
-    drawButton(2, true, upKeyPressed_ || upButtonPressed_, quality_ < MaxQuality);
+    drawButton(2, true, upKeyPressed_ || upButtonPressed_, quality_ < getMaxQuality(allowPNG_));
     drawButton(11, false, downKeyPressed_ || downButtonPressed_, quality_ > MinQuality);
 }
 
@@ -237,7 +243,7 @@ void QualitySelector::widgetKeyDownEvent_(int key) {
         upKeyPressed_ = key == keys::Up;
 
         int quality = quality_ + (key == keys::Down ? -1 : 1);
-        if(quality >= MinQuality && quality <= MaxQuality) {
+        if(quality >= MinQuality && quality <= getMaxQuality(allowPNG_)) {
             setQuality_(quality);
             signalViewDirty_();
         }

@@ -177,13 +177,16 @@ struct ControlBar::Layout {
 
 ControlBar::ControlBar(CKey,
     weak_ptr<WidgetParent> widgetParent,
-    weak_ptr<ControlBarEventHandler> eventHandler
+    weak_ptr<ControlBarEventHandler> eventHandler,
+    bool allowPNG
 )
     : Widget(widgetParent)
 {
     CEF_REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
+
+    allowPNG_ = allowPNG;
 
     animationTimeout_ = Timeout::create(30);
 
@@ -282,7 +285,7 @@ void ControlBar::onButtonPressed() {
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     goButton_ = GoButton::create(self, self);
-    qualitySelector_ = QualitySelector::create(self, self);
+    qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
 }
 

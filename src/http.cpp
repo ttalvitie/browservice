@@ -36,6 +36,10 @@ public:
         CHECK(!responseSent_);
         return request_.getURI();
     }
+    string userAgent() const {
+        CHECK(!responseSent_);
+        return request_.get("User-Agent", "");
+    }
 
     void sendResponse(
         int status,
@@ -163,6 +167,11 @@ string HTTPRequest::method() const {
 string HTTPRequest::path() const {
     CEF_REQUIRE_UI_THREAD();
     return impl_->path();
+}
+
+string HTTPRequest::userAgent() const {
+    CEF_REQUIRE_UI_THREAD();
+    return impl_->userAgent();
 }
 
 void HTTPRequest::sendResponse(

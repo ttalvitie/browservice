@@ -46,13 +46,15 @@ void serveWhiteJPEGPixel(shared_ptr<HTTPRequest> request) {
 
 }
 
-ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
+ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs, bool allowPNG) {
     CEF_REQUIRE_UI_THREAD();
+
+    allowPNG_ = allowPNG;
 
     sendTimeout_ = Timeout::create(sendTimeoutMs);
     compressorThread_ = CefThread::CreateThread("Image compressor");
 
-    quality_ = globals->config->defaultQuality;
+    quality_ = getDefaultQuality(allowPNG);
 
     int pngThreadCount = (int)thread::hardware_concurrency();
     pngThreadCount = min(pngThreadCount, 4);
@@ -74,7 +76,7 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs) {
 ImageCompressor::~ImageCompressor() {}
 
 void ImageCompressor::setQuality(int quality) {
-    CHECK(quality >= MinQuality && quality <= MaxQuality);
+    CHECK(quality >= MinQuality && quality <= getMaxQuality(allowPNG_));
     if(quality != quality_) {
         quality_ = quality;
         imageUpdated_ = true;

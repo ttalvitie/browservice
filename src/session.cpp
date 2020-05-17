@@ -91,7 +91,7 @@ public:
         LOG(INFO) << "Session " << session_->id() << " opening popup";
 
         shared_ptr<Session> popupSession =
-            Session::create(session_->eventHandler_, true);
+            Session::create(session_->eventHandler_, session_->allowPNG_, true);
         client = new Client(popupSession);
 
         if(auto eventHandler = session_->eventHandler_.lock()) {
@@ -203,7 +203,11 @@ private:
     IMPLEMENT_REFCOUNTING(Client);
 };
 
-Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup) {
+Session::Session(CKey,
+    weak_ptr<SessionEventHandler> eventHandler,
+    bool allowPNG,
+    bool isPopup
+) {
     CEF_REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
@@ -238,9 +242,11 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
     inactivityTimeoutLong_ = Timeout::create(30000);
     inactivityTimeoutShort_ = Timeout::create(4000);
 
+    allowPNG_ = allowPNG;
+
     lastSecurityStatusUpdateTime_ = steady_clock::now();
 
-    imageCompressor_ = ImageCompressor::create(2000);
+    imageCompressor_ = ImageCompressor::create(2000, allowPNG_);
 
     paddedRootViewport_ = ImageSlice::createImage(
         800 + WidthSignalModulus - 1,
@@ -546,7 +552,7 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
 }
 
 void Session::afterConstruct_(shared_ptr<Session> self) {
-    rootWidget_ = RootWidget::create(self, self, self);
+    rootWidget_ = RootWidget::create(self, self, self, allowPNG_);
     rootWidget_->setViewport(rootViewport_);
 
     downloadManager_ = DownloadManager::create(self);
