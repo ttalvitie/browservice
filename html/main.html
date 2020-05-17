@@ -44,16 +44,20 @@ var fixMousePosition = false;
 var leftMouseButtonIs1 = false;
 var bodyOverflowHiddenNotSupported = false;
 (function() {
-    var ua = window.navigator.userAgent;
-    var msie = ua.indexOf("MSIE ");
+    var ua = window.navigator.userAgent.toLowerCase();
+    var msie = ua.indexOf("msie ");
     if(msie > 0) {
         var ver = parseInt(ua.substring(msie + 5, ua.indexOf(".", msie)), 10);
+        var win16Bit =
+            ua.indexOf("windows 3.1") != -1 ||
+            ua.indexOf("win16") != -1 ||
+            ua.indexOf("windows 16-bit") != -1;
         if(ver <= 8) {
             useOnMouseWheel = true;
             fixMousePosition = true;
             leftMouseButtonIs1 = true;
         }
-        if(ver <= 4) {
+        if(ver <= 4 || (ver == 5 && win16Bit)) {
             bodyOverflowHiddenNotSupported = true;
         }
     }
