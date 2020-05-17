@@ -124,6 +124,11 @@ private:
     // twice as it cannot know for sure which requests make it through.
     uint64_t curEventIdx_;
 
+    // Downloads whose iframe has been loaded, and the actual file is kept
+    // available until a timeout has expired.
+    map<uint64_t, pair<shared_ptr<CompletedDownload>, shared_ptr<Timeout>>> downloads_;
+    uint64_t curDownloadIdx_;
+
     enum {Pending, Open, Closing, Closed} state_;
 
     // If true, browser should close as soon as it is opened

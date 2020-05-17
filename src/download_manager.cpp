@@ -95,6 +95,11 @@ CompletedDownload::~CompletedDownload() {
     }
 }
 
+string CompletedDownload::name() {
+    CEF_REQUIRE_UI_THREAD();
+    return name_;
+}
+
 void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
     CEF_REQUIRE_UI_THREAD();
 

@@ -23,6 +23,9 @@ regex imagePathRegex(
 regex iframePathRegex(
     "/[0-9]+/iframe/([0-9]+)/[0-9]+/"
 );
+regex downloadPathRegex(
+    "/[0-9]+/download/([0-9]+)/.*"
+);
 regex closePathRegex(
     "/[0-9]+/close/([0-9]+)/"
 );
@@ -226,6 +229,8 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
     curImgIdx_ = 0;
     curEventIdx_ = 0;
 
+    curDownloadIdx_ = 0;
+
     state_ = Pending;
 
     closeOnOpen_ = false;
@@ -250,6 +255,10 @@ Session::Session(CKey, weak_ptr<SessionEventHandler> eventHandler, bool isPopup)
 }
 
 Session::~Session() {
+    for(auto elem : downloads_) {
+        elem.second.second->clear(false);
+    }
+
     uint64_t id = id_;
     postTask([id]() {
         usedSessionIDs.erase(id);
@@ -341,6 +350,20 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
                 }
 
                 iframe(request);
+            }
+            return;
+        }
+    }
+
+    if(method == "GET" && regex_match(path, match, downloadPathRegex)) {
+        CHECK(match.size() == 2);
+        optional<uint64_t> downloadIdx = parseString<uint64_t>(match[1]);
+        if(downloadIdx) {
+            auto it = downloads_.find(*downloadIdx);
+            if(it == downloads_.end()) {
+                request->sendTextResponse(400, "ERROR: Outdated download index");
+            } else {
+                it->second.first->serve(request);
             }
             return;
         }
@@ -495,8 +518,30 @@ void Session::onDownloadProgressChanged(vector<int> progress) {
 void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     CEF_REQUIRE_UI_THREAD();
 
-    addIframe_([file](shared_ptr<HTTPRequest> request) {
-        file->serve(request);
+    weak_ptr<Session> selfWeak = shared_from_this();
+    addIframe_([file, selfWeak](shared_ptr<HTTPRequest> request) {
+        CEF_REQUIRE_UI_THREAD();
+
+        shared_ptr<Session> self = selfWeak.lock();
+        if(!self) return;
+
+        // Some browser use multiple requests to download a file. Thus, we add
+        // the file to downloads_ to be kept a certain period of time, and
+        // forward the client to the actual download page
+        uint64_t downloadIdx = ++self->curDownloadIdx_;
+        shared_ptr<Timeout> timeout = Timeout::create(180000);
+        CHECK(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
+
+        timeout->set([selfWeak, downloadIdx]() {
+            CEF_REQUIRE_UI_THREAD();
+            if(shared_ptr<Session> self = selfWeak.lock()) {
+                self->downloads_.erase(downloadIdx);
+            }
+        });
+
+        request->sendHTMLResponse(
+            200, writeDownloadIframeHTML, {self->id_, downloadIdx, file->name()}
+        );
     });
 }
 

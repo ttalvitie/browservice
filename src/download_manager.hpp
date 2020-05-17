@@ -16,6 +16,8 @@ public:
     );
     ~CompletedDownload();
 
+    string name();
+
     // Serve the downloaded file to as response to given request. Note that
     // no-cache-headers are omitted, so the result may be cached (to circumvent
     // bugs in IE).

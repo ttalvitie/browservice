@@ -38,3 +38,11 @@ struct PopupIframeHTMLData {
     uint64_t sessionID;
 };
 void writePopupIframeHTML(ostream& out, const PopupIframeHTMLData& data);
+
+struct DownloadIframeHTMLData {
+    uint64_t sessionID;
+    uint64_t downloadIdx;
+    string fileName;
+};
+
+void writeDownloadIframeHTML(ostream& out, const DownloadIframeHTMLData& data);
