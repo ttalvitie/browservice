@@ -535,7 +535,7 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
         // the file to downloads_ to be kept a certain period of time, and
         // forward the client to the actual download page
         uint64_t downloadIdx = ++self->curDownloadIdx_;
-        shared_ptr<Timeout> timeout = Timeout::create(180000);
+        shared_ptr<Timeout> timeout = Timeout::create(10000);
         CHECK(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
 
         timeout->set([selfWeak, downloadIdx]() {
