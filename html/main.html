@@ -16,6 +16,14 @@ iframe {
     position: absolute;
     z-index: 1;
 }
+input {
+    position: absolute;
+    z-index: 1;
+    left: -50px;
+    top: -50px;
+    width: 40px;
+    height: 40px;
+};
 .handCursor {
     cursor: pointer;
     cursor: hand;
@@ -43,6 +51,7 @@ var useOnMouseWheel = false;
 var fixMousePosition = false;
 var leftMouseButtonIs1 = false;
 var bodyOverflowHiddenNotSupported = false;
+var useBackspaceCaptureHack = false;
 (function() {
     var ua = window.navigator.userAgent.toLowerCase();
     var msie = ua.indexOf("msie ");
@@ -59,6 +68,7 @@ var bodyOverflowHiddenNotSupported = false;
         }
         if(ver <= 4 || (ver == 5 && win16Bit)) {
             bodyOverflowHiddenNotSupported = true;
+            useBackspaceCaptureHack = true;
         }
     }
 })();
@@ -79,7 +89,7 @@ var cancelIframeLoad;
         nextAllowedTime = new Date().getTime() + minIframeLoadInterval;
 
         ++iframeIdx;
-        if(iframeIdx >= document.forms.length) {
+        if(iframeIdx >= document.forms.length - 1) {
             iframeIdx = 0;
         }
 
@@ -340,9 +350,24 @@ document.body.onmouseleave = function() {
     putEvent("MOUT_" + mouseX + "_" + mouseY);
 };
 
-window.onblur = function() {
-    putEvent("FOUT");
-};
+if(useBackspaceCaptureHack) {
+    var hackForm = document.forms[document.forms.length - 1];
+    var hackInput = hackForm.elements[0];
+
+    hackForm.onsubmit = function() {
+        if(!event) event = window.event;
+        preventDefault(event);
+    };
+
+    window.onfocus = function() {
+        hackInput.focus();
+    };
+} else {
+    document.forms[document.forms.length - 1].innerHTML = "";
+    window.onblur = function() {
+        putEvent("FOUT");
+    };
+}
 
 document.ondragstart = function() {
     return false;
@@ -366,16 +391,11 @@ document.onkeypress = function(event) {
     } else {
         var key = event.which | 0;
     }
-    if(key <= 0 || key == 32) return;
-    putEvent("KPR_" + key);
+    if(key > 0 && key != 32) {
+        putEvent("KPR_" + key);
+    }
     preventDefault(event);
 };
-
-var nonCharKeyList = [%-nonCharKeyList-%];
-var nonCharKeys = {};
-for(var i = 0; i < nonCharKeyList.length; ++i) {
-    nonCharKeys[nonCharKeyList[i]] = true;
-}
 
 var controlDown = false;
 
@@ -389,8 +409,7 @@ document.onkeydown = function(event) {
     if(controlDown && key >= 65 && key <= 90) {
         putEvent("KPR_" + (key + 32));
         preventDefault(event);
-    } else {
-        if(!nonCharKeys[key]) return;
+    } else if(nonCharKeys[key]) {
         if(key == 17) controlDown = true;
         putEvent("KDN_" + key);
         preventDefault(event);
@@ -404,10 +423,11 @@ document.onkeyup = function(event) {
     } else {
         var key = event.which | 0;
     }
-    if(!nonCharKeys[key]) return;
-    if(key == 17) controlDown = false;
-    putEvent("KUP_" + key);
-    preventDefault(event);
+    if(nonCharKeys[key]) {
+        if(key == 17) controlDown = false;
+        putEvent("KUP_" + key);
+        preventDefault(event);
+    }
 };
 
 window.onbeforeunload = function(event) {
@@ -429,5 +449,6 @@ window.onbeforeunload = function(event) {
 <form></form>
 <form></form>
 <form></form>
+<form><input></form>
 </body>
 </html>
