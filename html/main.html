@@ -38,6 +38,7 @@ input {
 <script type="text/javascript">
 var iframeLoadNowTimeoutFunc;
 var imageReloadTimeoutFunc;
+var imagePostLoadTimeoutFunc;
 
 window.onload = function() {
 
@@ -144,27 +145,7 @@ function setupImg(img, nextImg, elem) {
     var denyNewEventNotify = true;
     var active = false;
 
-    var reloadIdx = 0;
-    var reloadTimeout = null;
-    function clearReloadTimeout() {
-        ++reloadIdx;
-        if(reloadTimeout) {
-            clearTimeout(reloadTimeout);
-        }
-    };
-
-    img.elem.onload = function() {
-        if(!active || shutdown) return;
-        active = false;
-        clearReloadTimeout();
-
-        eventQueueStartIdx += eventIdxIncrement;
-        var oldEventQueue = eventQueue;
-        eventQueue = [];
-        for(var i = eventIdxIncrement; i < oldEventQueue.length; ++i) {
-            eventQueue[eventQueue.length] = oldEventQueue[i];
-        }
-
+    function postLoad() {
         if(img.elem.width % 2 == 0) {
             loadIframe();
         } else {
@@ -188,6 +169,31 @@ function setupImg(img, nextImg, elem) {
         nextImg.elem.style.zIndex = 2;
 
         nextImg.load();
+    }
+
+    var reloadIdx = 0;
+    var reloadTimeout = null;
+    function clearReloadTimeout() {
+        ++reloadIdx;
+        if(reloadTimeout) {
+            clearTimeout(reloadTimeout);
+        }
+    };
+
+    img.elem.onload = function() {
+        if(!active || shutdown) return;
+        active = false;
+        clearReloadTimeout();
+
+        eventQueueStartIdx += eventIdxIncrement;
+        var oldEventQueue = eventQueue;
+        eventQueue = [];
+        for(var i = eventIdxIncrement; i < oldEventQueue.length; ++i) {
+            eventQueue[eventQueue.length] = oldEventQueue[i];
+        }
+
+        imagePostLoadTimeoutFunc = postLoad;
+        setTimeout("imagePostLoadTimeoutFunc()", 0);
     };
 
     function reload() {
