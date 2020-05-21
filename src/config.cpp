@@ -19,13 +19,59 @@ struct OptParser<string> {
     }
 };
 
+template <>
+struct OptParser<bool> {
+    static optional<bool> parse(string str) {
+        for(char& c : str) {
+            c = tolower(c);
+        }
+        if(
+            str == "1" ||
+            str == "yes" ||
+            str == "true" ||
+            str == "enable" ||
+            str == "enabled"
+        ) {
+            return true;
+        }
+        if(
+            str == "0" ||
+            str == "no" ||
+            str == "false" ||
+            str == "disable" ||
+            str == "disabled"
+        ) {
+            return false;
+        }
+        optional<bool> empty;
+        return empty;
+    }
+};
+
+template <typename T>
+struct DefaultValFormatter {
+    static string format(const T& val) {
+        return toString(val);
+    }
+};
+
+template <>
+struct DefaultValFormatter<bool> {
+    static string format(bool val) {
+        return val ? "yes" : "no";
+    }
+};
+
 template <typename T, const T Config::* Var, typename S>
 struct OptInfoBase {
     string defaultValStr() {
-        return "default " + toString(static_cast<S*>(this)->defaultVal());
+        return "default: " + DefaultValFormatter<T>::format(static_cast<S*>(this)->defaultVal());
     }
     optional<T> parse(const string& str) {
         return OptParser<T>::parse(str);
+    }
+    bool validate(const T& val) {
+        return true;
     }
 };
 
@@ -48,12 +94,47 @@ struct OptInfo;
 
 template <typename T, const T Config::* Var>
 string helpLine(OptInfo<T, Var> info) {
+    const int DescStart = 32;
+    const int DescStartIndented = 34;
+    const int MaxWidth = 90;
+
     stringstream ss;
     ss << "  --" << info.name << "=" << info.valSpec << ' ';
-    while(ss.tellp() < 32) {
+    while(ss.tellp() < DescStart) {
         ss << ' ';
     }
-    ss << info.desc() << " [" << info.defaultValStr() << "]";
+    int linePos = ss.tellp();
+
+    auto writeAtom = [&](string atom) {
+        if(linePos + (int)atom.size() > MaxWidth && linePos > DescStartIndented) {
+            ss << '\n';
+            for(int i = 0; i < DescStartIndented; ++i) {
+                ss << ' ';
+            }
+            linePos = DescStartIndented;
+
+            int s = 0;
+            while(s < (int)atom.size() && isspace(atom[s])) {
+                ++s;
+            }
+            atom = atom.substr(s);
+        }
+        ss << atom;
+        linePos += (int)atom.size();
+    };
+
+    string desc = info.desc();
+    int a = 0;
+    while(a < (int)desc.size()) {
+        int b = a + 1;
+        while(b < (int)desc.size() && !isspace(desc[b])) {
+            ++b;
+        }
+        writeAtom(desc.substr(a, b - a));
+        a = b;
+    }
+    writeAtom(" [" + info.defaultValStr() + "]");
+
     return ss.str();
 }
 

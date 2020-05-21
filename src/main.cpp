@@ -92,6 +92,12 @@ int main(int argc, char* argv[]) {
     if(!config) {
         return 1;
     }
+
+    if(config->useDedicatedXvfb) {
+        LOG(ERROR) << "Option --use-dedicated-xvfb=yes not yet supported";
+        return 1;
+    }
+
     globals = Globals::create(config);
 
     CefSettings settings;

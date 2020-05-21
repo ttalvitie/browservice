@@ -1,7 +1,8 @@
 #define CONF_FOREACH_OPT \
     CONF_FOREACH_OPT_ITEM(httpListenAddr) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
-    CONF_FOREACH_OPT_ITEM(defaultQuality)
+    CONF_FOREACH_OPT_ITEM(defaultQuality) \
+    CONF_FOREACH_OPT_ITEM(useDedicatedXvfb)
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";
@@ -53,7 +54,7 @@ CONF_DEF_OPT_INFO(defaultQuality) {
         return MaxQuality;
     }
     string defaultValStr() {
-        return "default PNG";
+        return "default: PNG";
     }
     optional<int> parse(string str) {
         for(char& c : str) {
@@ -67,5 +68,18 @@ CONF_DEF_OPT_INFO(defaultQuality) {
     }
     bool validate(int val) {
         return val >= MinQuality && val <= MaxQuality;
+    }
+};
+
+CONF_DEF_OPT_INFO(useDedicatedXvfb) {
+    const char* name = "use-dedicated-xvfb";
+    const char* valSpec = "YES/NO";
+    string desc() {
+        return
+            "if enabled, the browser is run in its own Xvfb X server; "
+            "otherwise, the browser shares the X session of the environment (including, e.g., the clipboard)";
+    }
+    bool defaultVal() {
+        return true;
     }
 };
