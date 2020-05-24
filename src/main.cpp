@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "server.hpp"
+#include "xvfb.hpp"
 
 #include <csignal>
 #include <cstdlib>
@@ -93,9 +94,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    shared_ptr<Xvfb> xvfb;
     if(config->useDedicatedXvfb) {
-        LOG(ERROR) << "Option --use-dedicated-xvfb=yes not yet supported";
-        return 1;
+        xvfb = Xvfb::create();
+        xvfb->setupEnv();
     }
 
     globals = Globals::create(config);
@@ -122,6 +124,7 @@ int main(int argc, char* argv[]) {
     CefShutdown();
 
     app = nullptr;
+    xvfb.reset();
     globals.reset();
 
     return 0;
