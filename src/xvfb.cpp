@@ -1,5 +1,7 @@
 #include "xvfb.hpp"
 
+#include "temp_dir.hpp"
+
 #include <csignal>
 
 #include <unistd.h>
@@ -22,10 +24,54 @@ optional<int> parseDisplay(string displayStr) {
     }
 }
 
+string generateCookie() {
+    string cookie;
+    random_device dev;
+    uniform_int_distribution<int> dist(0, 15);
+    for(int i = 0; i < 32; ++i) {
+        int val = dist(dev);
+        if(val < 10) {
+            cookie.push_back('0' + val);
+        } else {
+            cookie.push_back('a' + (val - 10));
+        }
+    }
+    return cookie;
+}
+
+void addCookieToXAuthFile(string path, int display, string cookie) {
+    string xauthCmd = "xauth -f " + path + " source -";
+    FILE* proc = popen(xauthCmd.c_str(), "w");
+    if(proc == nullptr) {
+        LOG(ERROR) << "Running xauth failed";
+        CHECK(false);
+    }
+
+    string input = "add :" + toString(display) + " . " + cookie + "\n";
+
+    CHECK(fwrite(input.data(), 1, input.size(), proc) == input.size());
+    if(pclose(proc) != 0) {
+        LOG(ERROR) << "Running xauth failed (nonzero exit status)";
+        CHECK(false);
+    }
+}
+
 }
 
 Xvfb::Xvfb(CKey) {
     LOG(INFO) << "Starting Xvfb X server as child process";
+
+    tempDir_ = TempDir::create();
+    xAuthPath_ = tempDir_->path() + "/.Xauthority";
+
+    // Create empty .Xauthority file
+    ofstream fp;
+    fp.open(xAuthPath_.c_str(), fp.out | fp.binary);
+    fp.close();
+    CHECK(fp.good());
+
+    // Add dummy cookie to stop server from accepting all connections
+    addCookieToXAuthFile(xAuthPath_, 0, generateCookie());
 
     // Pipe through which Xvfb sends us the display number
     int displayFds[2];
@@ -45,7 +91,14 @@ Xvfb::Xvfb(CKey) {
         CHECK(!setpgid(0, 0));
 
         string writeDisplayFdStr = toString(writeDisplayFd);
-        execlp("Xvfb", "Xvfb", "-displayfd", writeDisplayFdStr.c_str(), (char*)nullptr);
+        execlp(
+            "Xvfb",
+            "Xvfb",
+            "-displayfd", writeDisplayFdStr.c_str(),
+            "-auth", xAuthPath_.c_str(),
+            "-screen", "0", "640x480x24",
+            (char*)nullptr
+        );
 
         // If exec succeeded, this should not be reachable
         CHECK(false);
@@ -69,6 +122,7 @@ Xvfb::Xvfb(CKey) {
         }
         displayStr.append(buf, readCount);
     }
+    CHECK(!close(readDisplayFd));
 
     optional<int> display = parseDisplay(displayStr);
     if(!display) {
@@ -78,6 +132,10 @@ Xvfb::Xvfb(CKey) {
 
     display_ = *display;
     LOG(INFO) << "Xvfb X server :" << display_ << " successfully started";
+
+    // Now that we know the display number, we can add the xauth rule we
+    // actually use
+    addCookieToXAuthFile(xAuthPath_, display_, generateCookie());
 
     running_ = true;
 }
@@ -91,6 +149,7 @@ Xvfb::~Xvfb() {
 void Xvfb::setupEnv() {
     string displayStr = ":" + toString(display_);
     CHECK(!setenv("DISPLAY", displayStr.c_str(), true));
+    CHECK(!setenv("XAUTHORITY", xAuthPath_.c_str(), true));
 }
 
 void Xvfb::shutdown() {
@@ -107,6 +166,10 @@ void Xvfb::shutdown() {
     CHECK(waitpid(pid_, nullptr, 0) == pid_);
 
     LOG(INFO) << "Successfully shut down Xvfb X server";
+
+    if(unlink(xAuthPath_.c_str())) {
+        LOG(WARNING) << "Unlinking file " << xAuthPath_ << " failed";
+    }
 
     running_ = false;
 }

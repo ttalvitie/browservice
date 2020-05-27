@@ -47,6 +47,7 @@ using std::memory_order_relaxed;
 using std::min;
 using std::move;
 using std::mt19937;
+using std::ofstream;
 using std::optional;
 using std::ostream;
 using std::pair;
