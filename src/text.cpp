@@ -116,6 +116,8 @@ struct TextRenderContext::Impl {
         g_object_unref(pangoCtx);
         g_object_unref(fontMap);
     }
+
+    DISABLE_COPY_MOVE(Impl);
 };
 
 namespace {
@@ -173,6 +175,8 @@ struct TextLayout::Impl {
     ~Impl() {
         g_object_unref(layout);
     }
+
+    DISABLE_COPY_MOVE(Impl);
 
     void setText(string newText) {
         graymap.reset();

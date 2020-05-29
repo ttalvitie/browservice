@@ -1,11 +1,13 @@
 #include "session.hpp"
 
 #include "event.hpp"
+#include "globals.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
 #include "key.hpp"
 #include "timeout.hpp"
 #include "root_widget.hpp"
+#include "xwindow.hpp"
 
 #include "include/cef_client.h"
 
@@ -86,7 +88,7 @@ public:
         CEF_REQUIRE_UI_THREAD();
 
         browserSettings.background_color = (cef_color_t)-1;
-        windowInfo.SetAsWindowless(kNullWindowHandle);
+        windowInfo.SetAsWindowless((cef_window_handle_t)globals->xWindow->handle());
 
         LOG(INFO) << "Session " << session_->id() << " opening popup";
 
@@ -561,7 +563,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
         CefRefPtr<CefClient> client = new Client(self);
 
         CefWindowInfo windowInfo;
-        windowInfo.SetAsWindowless(kNullWindowHandle);
+        windowInfo.SetAsWindowless((cef_window_handle_t)globals->xWindow->handle());
 
         CefBrowserSettings browserSettings;
         browserSettings.background_color = (cef_color_t)-1;

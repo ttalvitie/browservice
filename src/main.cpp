@@ -124,8 +124,8 @@ int main(int argc, char* argv[]) {
     CefShutdown();
 
     app = nullptr;
-    xvfb.reset();
     globals.reset();
+    xvfb.reset();
 
     return 0;
 }

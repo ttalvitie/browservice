@@ -16,6 +16,7 @@ public:
           responderPromise_(move(responderPromise)),
           responseSent_(false)
     {}
+
     ~Impl() {
         if(!responseSent_) {
             LOG(WARNING) << "HTTP response not provided, sending internal server error";
@@ -27,6 +28,8 @@ public:
             );
         }
     }
+
+    DISABLE_COPY_MOVE(Impl);
 
     string method() const {
         CHECK(!responseSent_);

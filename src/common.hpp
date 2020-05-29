@@ -122,6 +122,12 @@ public:
 };
 #endif
 
+#define DISABLE_COPY_MOVE(ClassName) \
+    ClassName(const ClassName&) = delete; \
+    ClassName(ClassName&&) = delete; \
+    ClassName& operator=(const ClassName&) = delete; \
+    ClassName& operator=(ClassName&&) = delete
+
 #define SHARED_ONLY_CLASS(ClassName) \
     private: \
         SHARED_ONLY_CLASS_LEAK_CHECK(ClassName) \
@@ -135,10 +141,7 @@ public:
             ret->afterConstruct_(ret); \
             return ret; \
         } \
-        ClassName(const ClassName&) = delete; \
-        ClassName(ClassName&&) = delete; \
-        ClassName& operator=(const ClassName&) = delete; \
-        ClassName& operator=(ClassName&&) = delete
+        DISABLE_COPY_MOVE(ClassName)
 
 // Convenience functions for posting tasks to be run from the CEF UI thread
 // loop. May be called from any thread.
