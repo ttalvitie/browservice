@@ -243,6 +243,7 @@ private:
 };
 
 XWindow::XWindow(CKey) {
+    requireUIThread();
     impl_ = Impl::create();
 }
 

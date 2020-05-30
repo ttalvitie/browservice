@@ -290,6 +290,7 @@ struct TextLayout::Impl {
 };
 
 TextRenderContext::TextRenderContext(CKey) {
+    requireUIThread();
     impl_ = make_unique<Impl>();
 }
 
