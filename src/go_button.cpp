@@ -66,7 +66,7 @@ GoButton::GoButton(CKey,
 )
     : Widget(widgetParent)
 {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
 
@@ -88,7 +88,7 @@ void GoButton::mouseMove_(int x, int y) {
 }
 
 void GoButton::widgetRender_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     ImageSlice viewport = getViewport();
 
@@ -114,7 +114,7 @@ void GoButton::widgetRender_() {
 }
 
 void GoButton::widgetMouseDownEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0) {
         mouseDown_ = true;
@@ -123,7 +123,7 @@ void GoButton::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void GoButton::widgetMouseUpEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0) {
         if(mouseDown_ && mouseOver_) {
@@ -136,17 +136,17 @@ void GoButton::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void GoButton::widgetMouseMoveEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     mouseMove_(x, y);
 }
 
 void GoButton::widgetMouseEnterEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     mouseMove_(x, y);
 }
 
 void GoButton::widgetMouseLeaveEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(mouseOver_) {
         mouseOver_ = false;

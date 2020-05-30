@@ -3,7 +3,7 @@
 #include "key.hpp"
 
 Widget::Widget(weak_ptr<WidgetParent> parent) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     parent_ = parent;
     viewDirty_ = false;
@@ -19,7 +19,7 @@ Widget::Widget(weak_ptr<WidgetParent> parent) {
 }
 
 void Widget::setViewport(ImageSlice viewport) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     viewport_ = viewport;
     widgetViewportUpdated_();
@@ -27,12 +27,12 @@ void Widget::setViewport(ImageSlice viewport) {
 }
 
 ImageSlice Widget::getViewport() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return viewport_;
 }
 
 void Widget::render() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     viewDirty_ = false;
     widgetRender_();
@@ -44,12 +44,12 @@ void Widget::render() {
 }
 
 int Widget::cursor() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return cursor_;
 }
 
 void Widget::sendMouseDownEvent(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -65,7 +65,7 @@ void Widget::sendMouseDownEvent(int x, int y, int button) {
 }
 
 void Widget::sendMouseUpEvent(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -81,7 +81,7 @@ void Widget::sendMouseUpEvent(int x, int y, int button) {
 }
 
 void Widget::sendMouseDoubleClickEvent(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -90,7 +90,7 @@ void Widget::sendMouseDoubleClickEvent(int x, int y) {
 }
 
 void Widget::sendMouseWheelEvent(int x, int y, int delta) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -100,7 +100,7 @@ void Widget::sendMouseWheelEvent(int x, int y, int delta) {
 }
 
 void Widget::sendMouseMoveEvent(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(!mouseOver_ && x == lastMouseX_ && y == lastMouseY_) {
         return;
@@ -114,7 +114,7 @@ void Widget::sendMouseMoveEvent(int x, int y) {
 }
 
 void Widget::sendMouseEnterEvent(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -123,7 +123,7 @@ void Widget::sendMouseEnterEvent(int x, int y) {
 }
 
 void Widget::sendMouseLeaveEvent(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -137,7 +137,7 @@ void Widget::sendMouseLeaveEvent(int x, int y) {
 }
 
 void Widget::sendKeyDownEvent(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(isValidKey(key));
 
     keysDown_.insert(key);
@@ -145,7 +145,7 @@ void Widget::sendKeyDownEvent(int key) {
 }
 
 void Widget::sendKeyUpEvent(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(isValidKey(key));
 
     if(!keysDown_.count(key)) {
@@ -156,7 +156,7 @@ void Widget::sendKeyUpEvent(int key) {
 }
 
 void Widget::sendGainFocusEvent(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -165,7 +165,7 @@ void Widget::sendGainFocusEvent(int x, int y) {
 }
 
 void Widget::sendLoseFocusEvent() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(focused_) {
         clearEventState_(lastMouseX_, lastMouseY_);
@@ -176,17 +176,17 @@ void Widget::sendLoseFocusEvent() {
 }
 
 void Widget::onWidgetViewDirty() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     signalViewDirty_();
 }
 
 void Widget::onWidgetCursorChanged() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     updateCursor_();
 }
 
 void Widget::signalViewDirty_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(!viewDirty_) {
         viewDirty_ = true;
@@ -197,7 +197,7 @@ void Widget::signalViewDirty_() {
 }
 
 void Widget::setCursor_(int newCursor) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(newCursor >= 0 && newCursor < CursorTypeCount);
 
     myCursor_ = newCursor;

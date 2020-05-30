@@ -96,12 +96,12 @@ CompletedDownload::~CompletedDownload() {
 }
 
 string CompletedDownload::name() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return name_;
 }
 
 void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     shared_ptr<CompletedDownload> self = shared_from_this();
     function<void(ostream&)> body = [self](ostream& out) {
@@ -155,7 +155,7 @@ public:
         const CefString& suggestedName,
         CefRefPtr<CefBeforeDownloadCallback> callback
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(downloadItem->IsValid());
 
         uint32_t id = downloadItem->GetId();
@@ -177,7 +177,7 @@ public:
         CefRefPtr<CefDownloadItem> downloadItem,
         CefRefPtr<CefDownloadItemCallback> callback
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(downloadItem->IsValid());
 
         uint32_t id = downloadItem->GetId();
@@ -229,7 +229,7 @@ private:
 DownloadManager::DownloadManager(CKey,
     weak_ptr<DownloadManagerEventHandler> eventHandler
 ) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
     nextFileIdx_ = 1;
@@ -248,7 +248,7 @@ DownloadManager::~DownloadManager() {
 }
 
 void DownloadManager::acceptPendingDownload() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(!pending_.empty()) {
         uint32_t id = pending_.front();
@@ -269,7 +269,7 @@ void DownloadManager::acceptPendingDownload() {
 }
 
 CefRefPtr<CefDownloadHandler> DownloadManager::createCefDownloadHandler() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return new DownloadHandler(shared_from_this());
 }
 

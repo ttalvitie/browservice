@@ -11,14 +11,14 @@ regex sessionPathRegex("/([0-9]+)/.*");
 }
 
 Server::Server(CKey, weak_ptr<ServerEventHandler> eventHandler) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     eventHandler_ = eventHandler;
     state_ = Running;
     // Setup is finished in afterConstruct_
 }
 
 void Server::shutdown() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(state_ == Running) {
         state_ = ShutdownPending;
@@ -34,7 +34,7 @@ void Server::shutdown() {
 }
 
 void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     string method = request->method();
     string path = request->path();
@@ -69,12 +69,12 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
 }
 
 void Server::onHTTPServerShutdownComplete() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     checkShutdownStatus_();
 }
 
 void Server::onSessionClosed(uint64_t id) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     auto it = sessions_.find(id);
     CHECK(it != sessions_.end());
@@ -84,7 +84,7 @@ void Server::onSessionClosed(uint64_t id) {
 }
 
 void Server::onPopupSessionOpen(shared_ptr<Session> session) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     CHECK(sessions_.emplace(session->id(), session).second);
 

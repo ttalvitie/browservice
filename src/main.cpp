@@ -32,7 +32,7 @@ public:
     }
 
     void shutdown() {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         if(server_) {
             server_->shutdown();
@@ -55,7 +55,7 @@ public:
 
     // CefBrowserProcessHandler:
     virtual void OnContextInitialized() override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(!server_);
 
         server_ = Server::create(serverEventHandler_);
@@ -130,7 +130,9 @@ int main(int argc, char* argv[]) {
             app->shutdown();
         }
 
+        setRequireUIThreadEnabled(true);
         CefRunMessageLoop();
+        setRequireUIThreadEnabled(false);
 
         signal(SIGINT, [](int) {});
         signal(SIGTERM, [](int) {});

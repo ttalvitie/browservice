@@ -182,7 +182,7 @@ ControlBar::ControlBar(CKey,
 )
     : Widget(widgetParent)
 {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
 
@@ -206,7 +206,7 @@ ControlBar::ControlBar(CKey,
 }
 
 void ControlBar::setSecurityStatus(SecurityStatus value) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(securityStatus_ != value) {
         securityStatus_ = value;
@@ -215,12 +215,12 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 }
 
 void ControlBar::setAddress(string addr) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     addrField_->setText(move(addr));
 }
 
 void ControlBar::setLoading(bool loading) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(loading != loading_) {
         loading_ = loading;
@@ -229,7 +229,7 @@ void ControlBar::setLoading(bool loading) {
 }
 
 void ControlBar::setPendingDownloadCount(int count) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(count >= 0);
 
     if(count != pendingDownloadCount_) {
@@ -249,7 +249,7 @@ void ControlBar::setPendingDownloadCount(int count) {
 }
 
 void ControlBar::setDownloadProgress(vector<int> progress) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(progress != downloadProgress_) {
         downloadProgress_ = move(progress);
@@ -259,12 +259,12 @@ void ControlBar::setDownloadProgress(vector<int> progress) {
 }
 
 void ControlBar::onTextFieldSubmitted(string text) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
 }
 
 void ControlBar::onGoButtonPressed() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     postTask(
         eventHandler_,
         &ControlBarEventHandler::onAddressSubmitted,
@@ -273,12 +273,12 @@ void ControlBar::onGoButtonPressed() {
 }
 
 void ControlBar::onQualityChanged(int quality) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
 }
 
 void ControlBar::onButtonPressed() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     postTask(eventHandler_, &ControlBarEventHandler::onPendingDownloadAccepted);
 }
 
@@ -298,7 +298,7 @@ ControlBar::Layout ControlBar::layout_() {
 }
 
 void ControlBar::widgetViewportUpdated_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     ImageSlice viewport = getViewport();
     Layout layout = layout_();
@@ -321,7 +321,7 @@ void ControlBar::widgetViewportUpdated_() {
 }
 
 void ControlBar::widgetRender_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     animationTimeout_->clear(false);
 
@@ -438,7 +438,7 @@ void ControlBar::widgetRender_() {
 }
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     vector<shared_ptr<Widget>> children =
         {addrField_, goButton_, qualitySelector_};
     if(isDownloadVisible_()) {

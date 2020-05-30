@@ -12,7 +12,7 @@ QualitySelector::QualitySelector(CKey,
 )
     : Widget(widgetParent)
 {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
 
@@ -33,27 +33,27 @@ QualitySelector::QualitySelector(CKey,
 }
 
 void QualitySelector::onTextFieldSubmitted(string text) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     setQuality_(move(text));
 }
 
 void QualitySelector::onTextFieldLostFocusAfterEdit() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     setQuality_(textField_->text());
 }
 
 void QualitySelector::onTextFieldUDKeyDown(bool down) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     widgetKeyDownEvent_(down ? keys::Down : keys::Up);
 }
 
 void QualitySelector::onTextFieldUDKeyUp(bool down) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     widgetKeyUpEvent_(down ? keys::Down : keys::Up);
 }
 
 void QualitySelector::onTextFieldWheelEvent(int delta) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(delta != 0 && (hasFocus_ || textField_->hasFocus())) {
         setQuality_(quality_ + (delta > 0 ? 1 : -1));
@@ -109,7 +109,7 @@ void QualitySelector::updateTextField_() {
 }
 
 void QualitySelector::mouseRepeat_(int direction, bool first) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     int quality = quality_ + direction;
     if(quality >= MinQuality && quality <= getMaxQuality(allowPNG_)) {
@@ -127,14 +127,14 @@ void QualitySelector::mouseRepeat_(int direction, bool first) {
 }
 
 void QualitySelector::widgetViewportUpdated_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     ImageSlice viewport = getViewport();
     textField_->setViewport(viewport.subRect(4, Width - 19, 2, Height - 4));
 }
 
 void QualitySelector::widgetRender_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     ImageSlice viewport = getViewport();
 
@@ -189,12 +189,12 @@ void QualitySelector::widgetRender_() {
 }
 
 vector<shared_ptr<Widget>> QualitySelector::widgetListChildren_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return {textField_};
 }
 
 void QualitySelector::widgetMouseDownEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0 && x >= Width - 17 && x <= Width - 2 && y >= 2 && y < 20) {
         longMouseRepeatTimeout_->clear(false);
@@ -216,7 +216,7 @@ void QualitySelector::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void QualitySelector::widgetMouseUpEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0) {
         longMouseRepeatTimeout_->clear(false);
@@ -228,7 +228,7 @@ void QualitySelector::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void QualitySelector::widgetMouseWheelEvent_(int x, int y, int delta) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(delta != 0 && (hasFocus_ || textField_->hasFocus())) {
         setQuality_(quality_ + (delta > 0 ? 1 : -1));
@@ -236,7 +236,7 @@ void QualitySelector::widgetMouseWheelEvent_(int x, int y, int delta) {
 }
 
 void QualitySelector::widgetKeyDownEvent_(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(key == keys::Down || key == keys::Up) {
         downKeyPressed_ = key == keys::Down;
@@ -251,7 +251,7 @@ void QualitySelector::widgetKeyDownEvent_(int key) {
 }
 
 void QualitySelector::widgetKeyUpEvent_(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(key == keys::Down || key == keys::Up) {
         downKeyPressed_ = false;
@@ -261,11 +261,11 @@ void QualitySelector::widgetKeyUpEvent_(int key) {
 }
 
 void QualitySelector::widgetGainFocusEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     hasFocus_ = true;
 }
 
 void QualitySelector::widgetLoseFocusEvent_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     hasFocus_ = false;
 }

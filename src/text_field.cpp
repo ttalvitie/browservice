@@ -12,7 +12,7 @@ TextField::TextField(CKey,
 )
     : Widget(widgetParent)
 {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
 
@@ -30,7 +30,7 @@ TextField::TextField(CKey,
 }
 
 void TextField::setText(string text) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     unsetCaret_();
     textLayout_->setText(move(text));
@@ -40,12 +40,12 @@ void TextField::setText(string text) {
 }
 
 string TextField::text() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return textLayout_->text();
 }
 
 bool TextField::hasFocus() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return hasFocus_;
 }
 
@@ -80,13 +80,13 @@ void TextField::setCaret_(int start, int end) {
 }
 
 void TextField::scheduleBlinkCaret_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     caretBlinkTimeout_->clear(false);
 
     weak_ptr<TextField> selfWeak = shared_from_this();
     caretBlinkTimeout_->set([selfWeak]() {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         if(shared_ptr<TextField> self = selfWeak.lock()) {
             if(self->caretActive_) {
@@ -148,7 +148,7 @@ void TextField::pasteFromClipboard_() {
     if(caretActive_) {
         weak_ptr<TextField> selfWeak = shared_from_this();
         globals->xWindow->pasteFromClipboard([selfWeak](string text) {
-            CEF_REQUIRE_UI_THREAD();
+            requireUIThread();
             if(shared_ptr<TextField> self = selfWeak.lock()) {
                 self->typeText_(text.data(), text.size());
             }
@@ -169,12 +169,12 @@ void TextField::copyToClipboard_() {
 }
 
 void TextField::widgetViewportUpdated_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     textLayout_->setWidth(getViewport().width());
 }
 
 void TextField::widgetRender_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     ImageSlice viewport = getViewport();
 
@@ -219,7 +219,7 @@ void TextField::widgetRender_() {
 }
 
 void TextField::widgetMouseDownEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0) {
         if(caretActive_) {
@@ -233,7 +233,7 @@ void TextField::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void TextField::widgetMouseUpEvent_(int x, int y, int button) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(button == 0) {
         leftMouseButtonDown_ = false;
@@ -241,12 +241,12 @@ void TextField::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void TextField::widgetMouseDoubleClickEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     setCaret_(0, (int)textLayout_->text().size());
 }
 
 void TextField::widgetMouseWheelEvent_(int x, int y, int delta) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     postTask(
         eventHandler_,
@@ -256,7 +256,7 @@ void TextField::widgetMouseWheelEvent_(int x, int y, int delta) {
 }
 
 void TextField::widgetMouseMoveEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(leftMouseButtonDown_ && caretActive_) {
         int idx = textLayout_->xCoordToIndex(x);
@@ -265,7 +265,7 @@ void TextField::widgetMouseMoveEvent_(int x, int y) {
 }
 
 void TextField::widgetKeyDownEvent_(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(isValidKey(key));
 
     if(key == keys::Shift) {
@@ -320,7 +320,7 @@ void TextField::widgetKeyDownEvent_(int key) {
 }
 
 void TextField::widgetKeyUpEvent_(int key) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     CHECK(isValidKey(key));
 
     if(key == keys::Down || key == keys::Up) {
@@ -340,12 +340,12 @@ void TextField::widgetKeyUpEvent_(int key) {
 }
 
 void TextField::widgetGainFocusEvent_(int x, int y) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     hasFocus_ = true;
 }
 
 void TextField::widgetLoseFocusEvent_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     hasFocus_ = false;
 

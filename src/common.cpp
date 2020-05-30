@@ -8,3 +8,5 @@ void postTask(function<void()> func) {
     };
     CefPostTask(TID_UI, base::Bind(call, func));
 }
+
+atomic<bool> requireUIThreadEnabled_(false);

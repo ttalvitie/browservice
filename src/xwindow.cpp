@@ -70,7 +70,7 @@ public:
     }
 
     void pasteFromClipboard(function<void(string)> callback) {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(mode_ != Closed);
 
         if(mode_ == Pasting) {
@@ -116,7 +116,7 @@ public:
     }
 
     void copyToClipboard(string text) {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(mode_ != Closed);
 
         copyText_ = move(text);
@@ -153,7 +153,7 @@ private:
     }
 
     void pasteTimedOut_() {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(mode_ == Pasting);
 
         mode_ = Idle;
@@ -161,7 +161,7 @@ private:
     }
 
     void pasteResponseReceived_(string text) {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         if(mode_ == Pasting) {
             mode_ = Idle;
@@ -251,11 +251,11 @@ XWindow::~XWindow() {
 }
 
 void XWindow::pasteFromClipboard(function<void(string)> callback) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     impl_->pasteFromClipboard(callback);
 }
 
 void XWindow::copyToClipboard(string text) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     impl_->copyToClipboard(text);
 }

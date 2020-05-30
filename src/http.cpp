@@ -163,17 +163,17 @@ HTTPRequest::HTTPRequest(CKey, unique_ptr<Impl> impl)
 {}
 
 string HTTPRequest::method() const {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return impl_->method();
 }
 
 string HTTPRequest::path() const {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return impl_->path();
 }
 
 string HTTPRequest::userAgent() const {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return impl_->userAgent();
 }
 
@@ -185,7 +185,7 @@ void HTTPRequest::sendResponse(
     bool noCache,
     vector<pair<string, string>> extraHeaders
 ) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     impl_->sendResponse(
         status, contentType, contentLength, body, noCache, move(extraHeaders)
     );
@@ -197,7 +197,7 @@ void HTTPRequest::sendTextResponse(
     bool noCache,
     vector<pair<string, string>> extraHeaders
 ) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     impl_->sendTextResponse(status, move(text), noCache, move(extraHeaders));
 }
 
@@ -227,7 +227,7 @@ public:
     }
 
     void shutdown() {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         
         if(state_ != Running) {
             return;
@@ -262,7 +262,7 @@ public:
     }
 
     bool isShutdownComplete() {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         return state_ == ShutdownComplete;
     }
 
@@ -281,7 +281,7 @@ HTTPServer::HTTPServer(CKey,
     weak_ptr<HTTPServerEventHandler> eventHandler,
     const std::string& listenSockAddr
 ) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     impl_ = Impl::create(eventHandler, listenSockAddr);
 }
 

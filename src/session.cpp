@@ -83,7 +83,7 @@ public:
         CefRefPtr<CefDictionaryValue>&,
         bool*
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         browserSettings.background_color = (cef_color_t)-1;
         windowInfo.SetAsWindowless(kNullWindowHandle);
@@ -111,7 +111,7 @@ public:
     }
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(session_->state_ == Pending);
 
         LOG(INFO) << "CEF browser for session " << session_->id_ << " created";
@@ -126,7 +126,7 @@ public:
     }
 
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         CHECK(session_->state_ == Open || session_->state_ == Closing);
 
         session_->state_ = Closed;
@@ -146,7 +146,7 @@ public:
         CefRefPtr<CefFrame> frame,
         TransitionType transitionType
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         if(frame->IsMain()) {
             // Clear the status so that the loaded page gets gain focus and
@@ -162,7 +162,7 @@ public:
         bool canGoBack,
         bool canGoForward
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         session_->rootWidget_->controlBar()->setLoading(isLoading);
         session_->updateSecurityStatus_();
     }
@@ -173,7 +173,7 @@ public:
         CefRefPtr<CefFrame> frame,
         const CefString& url
     ) override {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
         session_->rootWidget_->controlBar()->setAddress(url);
         session_->updateSecurityStatus_();
     }
@@ -208,7 +208,7 @@ Session::Session(CKey,
     bool allowPNG,
     bool isPopup
 ) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     eventHandler_ = eventHandler;
 
@@ -272,7 +272,7 @@ Session::~Session() {
 }
 
 void Session::close() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(state_ == Open) {
         LOG(INFO) << "Closing session " << id_ << " requested";
@@ -290,7 +290,7 @@ void Session::close() {
 }
 
 void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(state_ == Closing || state_ == Closed) {
         request->sendTextResponse(503, "ERROR: Browser session has been closed");
@@ -460,12 +460,12 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
 }
 
 uint64_t Session::id() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     return id_;
 }
 
 void Session::onWidgetViewDirty() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self]() {
@@ -475,7 +475,7 @@ void Session::onWidgetViewDirty() {
 }
 
 void Session::onWidgetCursorChanged() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self]() {
@@ -486,7 +486,7 @@ void Session::onWidgetCursorChanged() {
 }
 
 void Session::onAddressSubmitted(string url) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     if(!browser_) return;
 
@@ -497,36 +497,36 @@ void Session::onAddressSubmitted(string url) {
 }
 
 void Session::onQualityChanged(int quality) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     imageCompressor_->setQuality(quality);
 }
 
 void Session::onPendingDownloadAccepted() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     downloadManager_->acceptPendingDownload();
 }
 
 void Session::onBrowserAreaViewDirty() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     sendViewportToCompressor_();
 }
 
 void Session::onPendingDownloadCountChanged(int count) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     rootWidget_->controlBar()->setPendingDownloadCount(count);
 }
 
 void Session::onDownloadProgressChanged(vector<int> progress) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
     rootWidget_->controlBar()->setDownloadProgress(move(progress));
 }
 
 void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     weak_ptr<Session> selfWeak = shared_from_this();
     addIframe_([file, selfWeak](shared_ptr<HTTPRequest> request) {
-        CEF_REQUIRE_UI_THREAD();
+        requireUIThread();
 
         shared_ptr<Session> self = selfWeak.lock();
         if(!self) return;
@@ -539,7 +539,7 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
         CHECK(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
 
         timeout->set([selfWeak, downloadIdx]() {
-            CEF_REQUIRE_UI_THREAD();
+            requireUIThread();
             if(shared_ptr<Session> self = selfWeak.lock()) {
                 self->downloads_.erase(downloadIdx);
             }
@@ -586,7 +586,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
 }
 
 void Session::updateInactivityTimeout_(bool shortened) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     inactivityTimeoutLong_->clear(false);
     inactivityTimeoutShort_->clear(false);
@@ -597,7 +597,7 @@ void Session::updateInactivityTimeout_(bool shortened) {
 
         weak_ptr<Session> self = shared_from_this();
         timeout->set([self, shortened]() {
-            CEF_REQUIRE_UI_THREAD();
+            requireUIThread();
             if(shared_ptr<Session> session = self.lock()) {
                 if(session->state_ == Pending || session->state_ == Open) {
                     LOG(INFO)
@@ -611,7 +611,7 @@ void Session::updateInactivityTimeout_(bool shortened) {
 }
 
 void Session::updateSecurityStatus_() {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     lastSecurityStatusUpdateTime_ = steady_clock::now();
 
@@ -644,7 +644,7 @@ void Session::updateSecurityStatus_() {
 }
 
 void Session::updateRootViewportSize_(int width, int height) {
-    CEF_REQUIRE_UI_THREAD();
+    requireUIThread();
 
     width = max(min(width, 4096), 64);
     height = max(min(height, 4096), 64);
