@@ -147,15 +147,12 @@ void TextField::eraseRange_() {
 void TextField::pasteFromClipboard_() {
     if(caretActive_) {
         weak_ptr<TextField> selfWeak = shared_from_this();
-        globals->xWindow->pasteFromClipboard(
-            [selfWeak](string text) {
-                CEF_REQUIRE_UI_THREAD();
-                if(shared_ptr<TextField> self = selfWeak.lock()) {
-                    self->typeText_(text.data(), text.size());
-                }
-            },
-            300
-        );
+        globals->xWindow->pasteFromClipboard([selfWeak](string text) {
+            CEF_REQUIRE_UI_THREAD();
+            if(shared_ptr<TextField> self = selfWeak.lock()) {
+                self->typeText_(text.data(), text.size());
+            }
+        });
     }
 }
 

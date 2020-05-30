@@ -3,7 +3,8 @@
 #include "include/wrapper/cef_closure_task.h"
 
 Timeout::Timeout(CKey, int64_t delayMs) {
-    CEF_REQUIRE_UI_THREAD();
+//    CEF_REQUIRE_UI_THREAD();
+//    TODO: ^ add back without breaking XWindow
 
     delayMs_ = max(delayMs, (int64_t)1);
     active_ = false;
@@ -35,7 +36,8 @@ void Timeout::set(Func func) {
 }
 
 void Timeout::clear(bool runFunc) {
-    CEF_REQUIRE_UI_THREAD();
+//    CEF_REQUIRE_UI_THREAD();
+//    TODO: ^ add back without breaking XWindow
 
     if(!active_) {
         return;

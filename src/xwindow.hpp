@@ -10,9 +10,9 @@ public:
     ~XWindow();
 
     // Pasting from clipboard is a best-effort implementation; the callback may
-    // not be called if the value is not available within the given timeout or
+    // not be called if the value is not available within reasonable time or
     // pasteFromClipboard or copyToClipboard is called again
-    void pasteFromClipboard(function<void(string)> callback, int64_t timeoutMs);
+    void pasteFromClipboard(function<void(string)> callback);
     void copyToClipboard(string text);
 
 private:
