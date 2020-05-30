@@ -6,7 +6,7 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 Install the dependencies:
 
 ```
-sudo apt install cmake g++ pkg-config libx11-dev libpoco-dev libjpeg-turbo8-dev zlib1g-dev libnss3 libxrandr2 libx11-xcb1 libxcomposite1 libpangocairo-1.0-0 libxcursor1 libxdamage1 libatk-bridge2.0-0 libasound2 libcups2 libxss1 libxi6 xvfb xauth libgbm1 libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer
+sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg-turbo8-dev zlib1g-dev libnss3 libxrandr2 libx11-xcb1 libxcomposite1 libpangocairo-1.0-0 libxcursor1 libxdamage1 libatk-bridge2.0-0 libasound2 libcups2 libxss1 libxi6 xvfb xauth libgbm1 libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer
 ```
 
 - On Ubuntu, the installation of `ttf-mscorefonts-installer` often fails silently due to problems with the SourceForge mirrors. If the file `/usr/share/fonts/truetype/msttcorefonts/Verdana.ttf` exists, your installation was successful. Otherwise, the texts in the BaaS UI will not work correctly. To rectify this, switch to the Debian package by running the following

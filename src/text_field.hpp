@@ -38,8 +38,12 @@ private:
     void setCaret_(int start, int end);
     void scheduleBlinkCaret_();
 
+    void typeText_(const char* textPtr, int textLength);
     void typeCharacter_(int key);
     void eraseRange_();
+
+    void pasteFromClipboard_();
+    void copyToClipboard_();
 
     // Widget:
     virtual void widgetViewportUpdated_() override;
@@ -61,6 +65,7 @@ private:
     bool hasFocus_;
     bool leftMouseButtonDown_;
     bool shiftKeyDown_;
+    bool controlKeyDown_;
 
     bool caretActive_;
     int caretStart_;

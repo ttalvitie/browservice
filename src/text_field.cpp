@@ -1,8 +1,10 @@
 #include "text_field.hpp"
 
+#include "globals.hpp"
 #include "key.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
+#include "xwindow.hpp"
 
 TextField::TextField(CKey,
     weak_ptr<WidgetParent> widgetParent,
@@ -19,6 +21,7 @@ TextField::TextField(CKey,
     hasFocus_ = false;
     leftMouseButtonDown_ = false;
     shiftKeyDown_ = false;
+    controlKeyDown_ = false;
 
     caretActive_ = false;
     caretBlinkTimeout_ = Timeout::create(500);
@@ -95,25 +98,31 @@ void TextField::scheduleBlinkCaret_() {
     });
 }
 
-void TextField::typeCharacter_(int key) {
+void TextField::typeText_(const char* textPtr, int textLength) {
     if(caretActive_) {
         int idx1 = min(caretStart_, caretEnd_);
         int idx2 = max(caretStart_, caretEnd_);
         unsetCaret_();
 
         string oldText = textLayout_->text();
-
-        UTF8Char utf8Char = keyToUTF8(key);
+        CHECK(idx1 >= 0 && idx2 <= (int)oldText.size());
 
         string newText;
         newText.append(oldText, 0, idx1);
-        newText.append((const char*)utf8Char.data, utf8Char.length);
+        newText.append(textPtr, textLength);
         newText.append(oldText, idx2, (int)oldText.size() - idx2);
 
         textLayout_->setText(newText);
 
-        int idx = idx1 + utf8Char.length;
+        int idx = idx1 + textLength;
         setCaret_(idx, idx);
+    }
+}
+
+void TextField::typeCharacter_(int key) {
+    if(caretActive_) {
+        UTF8Char utf8Char = keyToUTF8(key);
+        typeText_((const char*)utf8Char.data, utf8Char.length);
     }
 }
 
@@ -124,12 +133,41 @@ void TextField::eraseRange_() {
         unsetCaret_();
 
         string oldText = textLayout_->text();
+        CHECK(idx1 >= 0 && idx2 <= (int)oldText.size());
+
         string newText =
             oldText.substr(0, idx1) +
             oldText.substr(idx2, (int)oldText.size() - idx2);
         textLayout_->setText(newText);
 
         setCaret_(idx1, idx1);
+    }
+}
+
+void TextField::pasteFromClipboard_() {
+    if(caretActive_) {
+        weak_ptr<TextField> selfWeak = shared_from_this();
+        globals->xWindow->pasteFromClipboard(
+            [selfWeak](string text) {
+                CEF_REQUIRE_UI_THREAD();
+                if(shared_ptr<TextField> self = selfWeak.lock()) {
+                    self->typeText_(text.data(), text.size());
+                }
+            },
+            300
+        );
+    }
+}
+
+void TextField::copyToClipboard_() {
+    if(caretActive_) {
+        int idx1 = min(caretStart_, caretEnd_);
+        int idx2 = max(caretStart_, caretEnd_);
+        if(idx1 < idx2) {
+            string text = textLayout_->text();
+            CHECK(idx1 >= 0 && idx2 <= (int)text.size());
+            globals->xWindow->copyToClipboard(text.substr(idx1, idx2 - idx1));
+        }
     }
 }
 
@@ -236,6 +274,9 @@ void TextField::widgetKeyDownEvent_(int key) {
     if(key == keys::Shift) {
         shiftKeyDown_ = true;
     }
+    if(key == keys::Control) {
+        controlKeyDown_ = true;
+    }
 
     if(key == keys::Down || key == keys::Up) {
         postTask(
@@ -251,7 +292,13 @@ void TextField::widgetKeyDownEvent_(int key) {
     }
 
     if(key > 0) {
-        typeCharacter_(key);
+        if(controlKeyDown_ && (key == (int)'c' || key == (int)'C')) {
+            copyToClipboard_();
+        } else if(controlKeyDown_ && (key == (int)'v' || key == (int)'V')) {
+            pasteFromClipboard_();
+        } else {
+            typeCharacter_(key);
+        }
     }
     if(key == keys::Space) {
         typeCharacter_((int)' ');
@@ -289,6 +336,9 @@ void TextField::widgetKeyUpEvent_(int key) {
 
     if(key == keys::Shift) {
         shiftKeyDown_ = false;
+    }
+    if(key == keys::Control) {
+        controlKeyDown_ = false;
     }
 }
 

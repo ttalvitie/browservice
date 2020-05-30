@@ -2,18 +2,20 @@
 
 #include "common.hpp"
 
-// Our X Window that we can use to e.g. access clipboard
+// Our X window that we can use to e.g. access clipboard
 class XWindow {
 SHARED_ONLY_CLASS(XWindow);
 public:
     XWindow(CKey);
     ~XWindow();
 
-    // Get the X window handle (cast to uint64_t to avoid needing X11 headers
-    // in this header)
-    uint64_t handle();
+    // Pasting from clipboard is a best-effort implementation; the callback may
+    // not be called if the value is not available within the given timeout or
+    // pasteFromClipboard or copyToClipboard is called again
+    void pasteFromClipboard(function<void(string)> callback, int64_t timeoutMs);
+    void copyToClipboard(string text);
 
 private:
     class Impl;
-    unique_ptr<Impl> impl_;
+    shared_ptr<Impl> impl_;
 };

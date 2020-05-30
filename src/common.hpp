@@ -12,6 +12,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <queue>
 #include <random>
@@ -39,6 +40,7 @@ using std::forward;
 using std::function;
 using std::future;
 using std::ifstream;
+using std::lock_guard;
 using std::make_shared;
 using std::make_unique;
 using std::map;
@@ -47,6 +49,7 @@ using std::memory_order_relaxed;
 using std::min;
 using std::move;
 using std::mt19937;
+using std::mutex;
 using std::ofstream;
 using std::optional;
 using std::ostream;
