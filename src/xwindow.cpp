@@ -46,6 +46,8 @@ public:
         clipboardAtom_ = getAtom_("CLIPBOARD");
         utf8StringAtom_ = getAtom_("UTF8_STRING");
         incrAtom_ = getAtom_("INCR");
+        targetsAtom_ = getAtom_("TARGETS");
+        atomAtom_ = getAtom_("ATOM");
     }
 
     ~Impl() {
@@ -58,7 +60,10 @@ public:
         mode_ = Closed;
         pasteTimeout_->clear(false);
         pasteCallback_ = [](string) {};
-        copyText_.clear();
+        {
+            lock_guard<mutex> lock(copyTextMutex_);
+            copyText_.clear();
+        }
 
         CHECK(xcb_request_check(connection_,
             xcb_destroy_window_checked(connection_, window_)
@@ -76,6 +81,7 @@ public:
         if(mode_ == Pasting) {
             pasteCallback_ = callback;
         } else if(mode_ == Copying) {
+            lock_guard<mutex> lock(copyTextMutex_);
             string text = copyText_;
             postTask([callback, text{move(text)}]() { callback(text); });
         } else {
@@ -119,17 +125,32 @@ public:
         requireUIThread();
         CHECK(mode_ != Closed);
 
-        copyText_ = move(text);
-        if(mode_ != Copying) {
-            CHECK(mode_ == Pasting || mode_ == Idle);
-
+        if(mode_ == Copying) {
+            lock_guard<mutex> lock(copyTextMutex_);
+            copyText_ = move(text);
+        } else {
             if(mode_ == Pasting) {
                 pasteTimeout_->clear(false);
                 pasteCallback_ = [](string) {};
+                mode_ = Idle;
             }
+            CHECK(mode_ == Idle);
 
-            mode_ = Copying;
-            // TODO: start copying
+            xcb_generic_error_t* err = xcb_request_check(connection_,
+                xcb_set_selection_owner_checked(
+                    connection_,
+                    window_,
+                    clipboardAtom_,
+                    XCB_CURRENT_TIME
+                )
+            );
+            if(err == nullptr) {
+                mode_ = Copying;
+                lock_guard<mutex> lock(copyTextMutex_);
+                copyText_ = move(text);
+            } else {
+                free(err);
+            }
         }
     }
 
@@ -173,11 +194,23 @@ private:
         }
     }
 
+    void copyCleared_() {
+        requireUIThread();
+
+        if(mode_ == Copying) {
+            mode_ = Idle;
+            lock_guard<mutex> lock(copyTextMutex_);
+            copyText_.clear();
+        }
+    }
+
     void handleSelectionNotifyEvent_(xcb_selection_notify_event_t* event) {
         if(event->property == 0 || event->target == 0) {
             return;
         }
 
+        // Our request for clipboard content has been responded by setting a
+        // property in our window; fetch and delete it
         xcb_get_property_reply_t* reply = xcb_get_property_reply(
             connection_,
             xcb_get_property(
@@ -206,6 +239,73 @@ private:
         }
     }
 
+    void handleSelectionRequestEvent_(xcb_selection_request_event_t* event) {
+        bool needsNotify = false;
+        if(event->selection == clipboardAtom_) {
+            if(event->target == targetsAtom_) {
+                // We are asked to serve the list of formats we can serve to a
+                // property of the requesting window; we respond that we only serve
+                // UTF8 strings
+                xcb_atom_t targets[2] = {targetsAtom_, utf8StringAtom_};
+                xcb_change_property(
+                    connection_,
+                    XCB_PROP_MODE_REPLACE,
+                    event->requestor,
+                    event->property,
+                    atomAtom_,
+                    8 * sizeof(xcb_atom_t),
+                    2,
+                    targets
+                );
+                needsNotify = true;
+            } else if(event->target == utf8StringAtom_) {
+                // We are asked to serve the clipboard content to a property of the
+                // requesting window
+                lock_guard<mutex> lock(copyTextMutex_);
+                xcb_change_property(
+                    connection_,
+                    XCB_PROP_MODE_REPLACE,
+                    event->requestor,
+                    event->property,
+                    event->target,
+                    8,
+                    copyText_.size(),
+                    copyText_.data()
+                );
+                needsNotify = true;
+            }
+        }
+
+        if(needsNotify) {
+            // Notify the requesting window of the property changes
+            xcb_selection_notify_event_t notify;
+            notify.response_type = XCB_SELECTION_NOTIFY;
+            notify.pad0 = 0;
+            notify.sequence = 0;
+            notify.time = event->time;
+            notify.requestor = event->requestor;
+            notify.selection = clipboardAtom_;
+            notify.target = event->target;
+            notify.property = event->property;
+
+            xcb_send_event(
+                connection_,
+                false,
+                event->requestor,
+                XCB_EVENT_MASK_NO_EVENT,
+                (const char*)&notify
+            );
+            xcb_flush(connection_);
+        }
+    }
+
+    void handleSelectionClearEvent_(xcb_selection_clear_event_t* event) {
+        // We do not own the clipboard anymore; change mode accordingly
+        if(event->selection == clipboardAtom_) {
+            postTask(shared_from_this(), &Impl::copyCleared_);
+        }
+    }
+
     void runEventHandlerThread_() {
         while(true) {
             xcb_generic_event_t* event = xcb_wait_for_event(connection_);
@@ -222,6 +322,18 @@ private:
                     (xcb_selection_notify_event_t*)event
                 );
             }
+
+            if(type == XCB_SELECTION_REQUEST) {
+                handleSelectionRequestEvent_(
+                    (xcb_selection_request_event_t*)event
+                );
+            }
+
+            if(type == XCB_SELECTION_CLEAR) {
+                handleSelectionClearEvent_(
+                    (xcb_selection_clear_event_t*)event
+                );
+            }
         }
     }
 
@@ -235,11 +347,14 @@ private:
     xcb_atom_t clipboardAtom_;
     xcb_atom_t utf8StringAtom_;
     xcb_atom_t incrAtom_;
+    xcb_atom_t targetsAtom_;
+    xcb_atom_t atomAtom_;
 
     enum {Pasting, Copying, Idle, Closed} mode_;
     shared_ptr<Timeout> pasteTimeout_;
     function<void(string)> pasteCallback_;
     string copyText_;
+    mutex copyTextMutex_;
 };
 
 XWindow::XWindow(CKey) {
