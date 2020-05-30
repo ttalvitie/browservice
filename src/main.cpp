@@ -73,8 +73,14 @@ private:
 };
 
 CefRefPtr<App> app;
+bool termSignalReceived = false;
 
-void handleTermSignal(int signalID) {
+void handleTermSignalSetFlag(int signalID) {
+    LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
+    termSignalReceived = true;
+}
+
+void handleTermSignalInApp(int signalID) {
     LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
     CefPostTask(TID_UI, base::Bind(&App::shutdown, app));
 }
@@ -89,6 +95,9 @@ int main(int argc, char* argv[]) {
         return exitCode;
     }
 
+    signal(SIGINT, handleTermSignalSetFlag);
+    signal(SIGTERM, handleTermSignalSetFlag);
+
     shared_ptr<Config> config = Config::read(argc, argv);
     if(!config) {
         return 1;
@@ -102,28 +111,35 @@ int main(int argc, char* argv[]) {
 
     globals = Globals::create(config);
 
-    CefSettings settings;
-    settings.windowless_rendering_enabled = true;
-    settings.command_line_args_disabled = true;
-    if(!globals->config->userAgent.empty()) {
-        CefString(&settings.user_agent).FromString(globals->config->userAgent);
+    if(!termSignalReceived) {
+        app = new App;
+
+        CefSettings settings;
+        settings.windowless_rendering_enabled = true;
+        settings.command_line_args_disabled = true;
+        if(!globals->config->userAgent.empty()) {
+            CefString(&settings.user_agent).FromString(globals->config->userAgent);
+        }
+
+        CefInitialize(mainArgs, settings, app, nullptr);
+
+        signal(SIGINT, handleTermSignalInApp);
+        signal(SIGTERM, handleTermSignalInApp);
+
+        if(termSignalReceived) {
+            app->shutdown();
+        }
+
+        CefRunMessageLoop();
+
+        signal(SIGINT, [](int) {});
+        signal(SIGTERM, [](int) {});
+
+        CefShutdown();
+
+        app = nullptr;
     }
 
-    app = new App;
-
-    CefInitialize(mainArgs, settings, app, nullptr);
-
-    signal(SIGINT, handleTermSignal);
-    signal(SIGTERM, handleTermSignal);
-
-    CefRunMessageLoop();
-
-    signal(SIGINT, [](int) {});
-    signal(SIGTERM, [](int) {});
-
-    CefShutdown();
-
-    app = nullptr;
     globals.reset();
     xvfb.reset();
 
