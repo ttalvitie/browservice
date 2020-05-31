@@ -38,7 +38,8 @@ input {
 <script type="text/javascript">
 var iframeLoadNowTimeoutFunc;
 var imageReloadTimeoutFunc;
-var imagePostLoadTimeoutFunc;
+var imagePostLoadTimeoutFunc = function() {};
+var hackInputFocusTimeoutFunc;
 
 window.onload = function() {
 
@@ -136,6 +137,7 @@ var img2 = {};
 function setupImg(img, nextImg, elem) {
     img.elem = elem;
     img.className = "normalCursor";
+    img.firstLoad = true;
     img.elem.className = img.className;
 
     var imgLoaded;
@@ -145,13 +147,7 @@ function setupImg(img, nextImg, elem) {
     var denyNewEventNotify = true;
     var active = false;
 
-    function postLoad() {
-        if(img.elem.width % 2 == 0) {
-            loadIframe();
-        } else {
-            cancelIframeLoad();
-        }
-
+    function updateCursor() {
         var cursor = img.elem.height % 3;
         if(cursor == 0) {
             var newClassName = "handCursor";
@@ -164,11 +160,20 @@ function setupImg(img, nextImg, elem) {
             img.className = newClassName;
             img.elem.className = img.className;
         }
+    }
 
-        img.elem.style.zIndex = 3;
-        nextImg.elem.style.zIndex = 2;
+    function postLoad() {
+        imagePostLoadTimeoutFunc = function() {};
 
-        nextImg.load();
+        if(!img.firstLoad) {
+            if(img.elem.width % 2 == 0) {
+                loadIframe();
+            } else {
+                cancelIframeLoad();
+            }
+        }
+
+        updateCursor();
     }
 
     var reloadIdx = 0;
@@ -184,6 +189,7 @@ function setupImg(img, nextImg, elem) {
         if(!active || shutdown) return;
         active = false;
         clearReloadTimeout();
+        imagePostLoadTimeoutFunc();
 
         eventQueueStartIdx += eventIdxIncrement;
         var oldEventQueue = eventQueue;
@@ -192,8 +198,17 @@ function setupImg(img, nextImg, elem) {
             eventQueue[eventQueue.length] = oldEventQueue[i];
         }
 
+        updateCursor();
+
+        img.elem.style.zIndex = 3;
+        nextImg.elem.style.zIndex = 2;
+
         imagePostLoadTimeoutFunc = postLoad;
         setTimeout("imagePostLoadTimeoutFunc()", 0);
+
+        img.firstLoad = false;
+
+        nextImg.load();
     };
 
     function reload() {
@@ -366,7 +381,10 @@ if(useBackspaceCaptureHack) {
     };
 
     window.onfocus = function() {
-        hackInput.focus();
+        hackInputFocusTimeoutFunc = function() {
+            hackInput.focus();
+        };
+        loadTimeout = setTimeout("hackInputFocusTimeoutFunc()", 0);
     };
 } else {
     document.forms[document.forms.length - 1].innerHTML = "";
