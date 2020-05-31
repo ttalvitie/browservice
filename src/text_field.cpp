@@ -291,8 +291,13 @@ void TextField::widgetKeyDownEvent_(int key) {
     if(key > 0) {
         if(controlKeyDown_ && (key == (int)'c' || key == (int)'C')) {
             copyToClipboard_();
+        } else if(controlKeyDown_ && (key == (int)'x' || key == (int)'X')) {
+            copyToClipboard_();
+            eraseRange_();
         } else if(controlKeyDown_ && (key == (int)'v' || key == (int)'V')) {
             pasteFromClipboard_();
+        } else if(controlKeyDown_ && (key == (int)'a' || key == (int)'A')) {
+            setCaret_(0, (int)textLayout_->text().size());
         } else {
             typeCharacter_(key);
         }
