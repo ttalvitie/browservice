@@ -36,6 +36,10 @@ public:
     // this widget. The browser can be unset by passing a null pointer.
     void setBrowser(CefRefPtr<CefBrowser> browser);
 
+    // Inform the browser again about focus and mouseover status. Should be
+    // called when loading a new page
+    void refreshStatusEvents();
+
 private:
     class RenderHandler;
 

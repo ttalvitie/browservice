@@ -56,6 +56,12 @@ protected:
     // not be immediately visible if mouse is not over this widget
     void setCursor_(int newCursor);
 
+    // Functions to query widget status so that it does not always need its own
+    // bookkeeping
+    bool isMouseOver_();
+    bool isFocused_();
+    pair<int, int> getLastMousePos_();
+
     // Functions to be implemented by the widget:
 
     // Called after viewport (available through getViewport()) has been updated.

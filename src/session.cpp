@@ -149,10 +149,9 @@ public:
         requireUIThread();
 
         if(frame->IsMain()) {
-            // Clear the status so that the loaded page gets gain focus and
-            // mouse enter events when appropriate
-            session_->rootWidget_->sendLoseFocusEvent();
-            session_->rootWidget_->sendMouseLeaveEvent(0, 0);
+            // Make sure that the loaded page gets the correct idea about the
+            // focus and mouse over status
+            session_->rootWidget_->browserArea()->refreshStatusEvents();
         }
     }
 

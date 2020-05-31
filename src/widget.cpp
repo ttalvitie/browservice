@@ -204,6 +204,21 @@ void Widget::setCursor_(int newCursor) {
     updateCursor_();
 }
 
+bool Widget::isMouseOver_() {
+    requireUIThread();
+    return mouseOver_;
+}
+
+bool Widget::isFocused_() {
+    requireUIThread();
+    return focused_;
+}
+
+pair<int, int> Widget::getLastMousePos_() {
+    requireUIThread();
+    return {lastMouseX_, lastMouseY_};
+}
+
 void Widget::updateFocus_(int x, int y) {
     shared_ptr<Widget> newFocusChild = childByPoint_(x, y);
     if(newFocusChild != focusChild_ || !focused_) {

@@ -4,6 +4,88 @@
 
 #include "include/cef_render_handler.h"
 
+namespace {
+
+CefMouseEvent createMouseEvent(int x, int y, uint32_t eventModifiers) {
+    CefMouseEvent event;
+    event.x = x;
+    event.y = y;
+    event.modifiers = eventModifiers;
+    return event;
+}
+
+pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
+    CefBrowserHost::MouseButtonType buttonType;
+    uint32_t buttonFlag;
+    if(button == 0) {
+        buttonType = MBT_LEFT;
+        buttonFlag = EVENTFLAG_LEFT_MOUSE_BUTTON;
+    } else if(button == 1) {
+        buttonType = MBT_MIDDLE;
+        buttonFlag = EVENTFLAG_MIDDLE_MOUSE_BUTTON;
+    } else {
+        buttonType = MBT_RIGHT;
+        buttonFlag = EVENTFLAG_RIGHT_MOUSE_BUTTON;
+    }
+    return {buttonType, buttonFlag};
+}
+
+#include "key_codes.hpp"
+
+CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
+    CHECK(isValidKey(key));
+
+    CefKeyEvent event;
+    event.windows_key_code = 0;
+    event.native_key_code = 0;
+    event.modifiers = eventModifiers;
+    event.is_system_key = (bool)(event.modifiers & EVENTFLAG_ALT_DOWN);
+    event.unmodified_character = 0;
+
+    auto it = keyCodes.find(key);
+    if(it != keyCodes.end()) {
+        event.windows_key_code = it->second.first;
+        event.native_key_code = it->second.second;
+    }
+
+    if(key < 0) {
+        if(key == keys::Enter) {
+            event.unmodified_character = '\r';
+        }
+        if(key == keys::Space) {
+            event.unmodified_character = ' ';
+        }
+    } else {
+        event.unmodified_character = key;
+    }
+    event.character = event.unmodified_character;
+
+    // Hack to avoid breaking AltGr keys
+    if(
+        key > 0 &&
+        (event.modifiers & EVENTFLAG_CONTROL_DOWN) &&
+        (event.modifiers & EVENTFLAG_ALT_DOWN) &&
+        !(key >= (int)'a' && key <= (int)'z') &&
+        !(key >= (int)'A' && key <= (int)'Z') &&
+        !(key >= (int)'0' && key <= (int)'9')
+    ) {
+        event.modifiers &= ~EVENTFLAG_CONTROL_DOWN;
+        event.modifiers &= ~EVENTFLAG_ALT_DOWN;
+        event.is_system_key = false;
+    }
+
+    return event;
+}
+
+uint32_t getKeyModifierFlag(int key) {
+    if(key == keys::Shift) return EVENTFLAG_SHIFT_DOWN;
+    if(key == keys::Control) return EVENTFLAG_CONTROL_DOWN;
+    if(key == keys::Alt) return EVENTFLAG_ALT_DOWN;
+    return 0;
+}
+
+}
+
 class BrowserArea::RenderHandler : public CefRenderHandler {
 public:
     RenderHandler(shared_ptr<BrowserArea> browserArea) {
@@ -192,6 +274,18 @@ void BrowserArea::setBrowser(CefRefPtr<CefBrowser> browser) {
     }
 }
 
+void BrowserArea::refreshStatusEvents() {
+    requireUIThread();
+    if(!browser_) return;
+
+    browser_->GetHost()->SendFocusEvent(isFocused_());
+
+    int x, y;
+    tie(x, y) = getLastMousePos_();
+    CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
+    browser_->GetHost()->SendMouseMoveEvent(event, !isMouseOver_());
+}
+
 void BrowserArea::widgetViewportUpdated_() {
     requireUIThread();
 
@@ -200,88 +294,6 @@ void BrowserArea::widgetViewportUpdated_() {
         browser_->GetHost()->Invalidate(PET_VIEW);
         browser_->GetHost()->Invalidate(PET_POPUP);
     }
-}
-
-namespace {
-
-CefMouseEvent createMouseEvent(int x, int y, uint32_t eventModifiers) {
-    CefMouseEvent event;
-    event.x = x;
-    event.y = y;
-    event.modifiers = eventModifiers;
-    return event;
-}
-
-pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
-    CefBrowserHost::MouseButtonType buttonType;
-    uint32_t buttonFlag;
-    if(button == 0) {
-        buttonType = MBT_LEFT;
-        buttonFlag = EVENTFLAG_LEFT_MOUSE_BUTTON;
-    } else if(button == 1) {
-        buttonType = MBT_MIDDLE;
-        buttonFlag = EVENTFLAG_MIDDLE_MOUSE_BUTTON;
-    } else {
-        buttonType = MBT_RIGHT;
-        buttonFlag = EVENTFLAG_RIGHT_MOUSE_BUTTON;
-    }
-    return {buttonType, buttonFlag};
-}
-
-#include "key_codes.hpp"
-
-CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
-    CHECK(isValidKey(key));
-
-    CefKeyEvent event;
-    event.windows_key_code = 0;
-    event.native_key_code = 0;
-    event.modifiers = eventModifiers;
-    event.is_system_key = (bool)(event.modifiers & EVENTFLAG_ALT_DOWN);
-    event.unmodified_character = 0;
-
-    auto it = keyCodes.find(key);
-    if(it != keyCodes.end()) {
-        event.windows_key_code = it->second.first;
-        event.native_key_code = it->second.second;
-    }
-
-    if(key < 0) {
-        if(key == keys::Enter) {
-            event.unmodified_character = '\r';
-        }
-        if(key == keys::Space) {
-            event.unmodified_character = ' ';
-        }
-    } else {
-        event.unmodified_character = key;
-    }
-    event.character = event.unmodified_character;
-
-    // Hack to avoid breaking AltGr keys
-    if(
-        key > 0 &&
-        (event.modifiers & EVENTFLAG_CONTROL_DOWN) &&
-        (event.modifiers & EVENTFLAG_ALT_DOWN) &&
-        !(key >= (int)'a' && key <= (int)'z') &&
-        !(key >= (int)'A' && key <= (int)'Z') &&
-        !(key >= (int)'0' && key <= (int)'9')
-    ) {
-        event.modifiers &= ~EVENTFLAG_CONTROL_DOWN;
-        event.modifiers &= ~EVENTFLAG_ALT_DOWN;
-        event.is_system_key = false;
-    }
-
-    return event;
-}
-
-uint32_t getKeyModifierFlag(int key) {
-    if(key == keys::Shift) return EVENTFLAG_SHIFT_DOWN;
-    if(key == keys::Control) return EVENTFLAG_CONTROL_DOWN;
-    if(key == keys::Alt) return EVENTFLAG_ALT_DOWN;
-    return 0;
-}
-
 }
 
 void BrowserArea::widgetMouseDownEvent_(int x, int y, int button) {
