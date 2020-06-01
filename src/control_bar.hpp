@@ -1,6 +1,7 @@
 #pragma once
 
 #include "button.hpp"
+#include "find_bar.hpp"
 #include "menu_button.hpp"
 #include "text_field.hpp"
 #include "quality_selector.hpp"
@@ -28,6 +29,7 @@ class ControlBar :
     public MenuButtonEventHandler,
     public QualitySelectorEventHandler,
     public ButtonEventHandler,
+    public FindBarEventHandler,
     public enable_shared_from_this<ControlBar>
 {
 SHARED_ONLY_CLASS(ControlBar);
@@ -59,6 +61,9 @@ public:
     // ButtonEventHandler:
     virtual void onButtonPressed() override;
 
+    // FindBarEventHandler:
+    virtual void onFindBarClose() override;
+
 private:
     void afterConstruct_(shared_ptr<ControlBar> self);
 
@@ -84,9 +89,14 @@ private:
     SecurityStatus securityStatus_;
 
     shared_ptr<MenuButton> goButton_;
+    shared_ptr<MenuButton> findButton_;
 
     shared_ptr<TextLayout> qualityText_;
     shared_ptr<QualitySelector> qualitySelector_;
+
+    bool findBarVisible_;
+    shared_ptr<TextLayout> findText_;
+    shared_ptr<FindBar> findBar_;
 
     int pendingDownloadCount_;
     vector<int> downloadProgress_;

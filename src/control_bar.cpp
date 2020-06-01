@@ -98,18 +98,45 @@ ImageSlice securityStatusIcon(SecurityStatus status) {
 }
 
 struct ControlBar::Layout {
-    Layout(int width, bool isDownloadVisible) : width(width) {
+    Layout(
+        int width,
+        bool isDownloadVisible,
+        bool isFindBarVisible
+    ) : width(width) {
         int contentStart = 1;
         int contentEnd = width - 1;
 
         const int SeparatorWidth = 4;
         const int AddressTextWidth = 52;
         const int QualityTextWidth = 46;
+        const int FindTextWidth = 29;
 
-        int downloadWidth = isDownloadVisible ? 98 : 0;
+        int downloadWidth = isDownloadVisible ? 88 : 0;
         int downloadSpacerWidth = isDownloadVisible ? 2 : 0;
 
-        downloadEnd = contentEnd;
+        int separator3Start;
+        int separator3End;
+        if(isFindBarVisible) {
+            findBarEnd = contentEnd;
+            findBarStart = findBarEnd - FindBar::Width;
+            findTextEnd = findBarStart;
+            findTextStart = findTextEnd - FindTextWidth;
+            separator3End = findTextStart;
+            separator3Start = separator3End - SeparatorWidth;
+            separator3Visible = true;
+        } else {
+            findTextStart = contentEnd;
+            findTextEnd = contentEnd;
+            findBarStart = contentEnd;
+            findBarEnd = contentEnd;
+            separator3Start = contentEnd;
+            separator3End = contentEnd;
+            separator3Visible = false;
+        }
+
+        separator3Pos = separator3Start + SeparatorWidth / 2;
+
+        downloadEnd = separator3Start;
         downloadStart = downloadEnd - downloadWidth;
 
         int downloadSpacerEnd = downloadStart;
@@ -121,12 +148,19 @@ struct ControlBar::Layout {
         qualityTextEnd = qualitySelectorStart;
         qualityTextStart = qualityTextEnd - QualityTextWidth;
 
-        int separatorEnd = qualityTextStart;
-        int separatorStart = separatorEnd - SeparatorWidth;
-        separatorPos = separatorStart + SeparatorWidth / 2;
+        int separator2End = qualityTextStart;
+        int separator2Start = separator2End - SeparatorWidth;
+        separator2Pos = separator2Start + SeparatorWidth / 2;
+
+        findButtonEnd = separator2Start;
+        findButtonStart = findButtonEnd - MenuButton::Width;
+
+        int separator1End = findButtonStart;
+        int separator1Start = separator1End - SeparatorWidth;
+        separator1Pos = separator1Start + SeparatorWidth / 2;
 
         int addrStart = contentStart;
-        int addrEnd = separatorStart;
+        int addrEnd = separator1Start;
 
         addrTextStart = addrStart;
         addrTextEnd = addrTextStart + AddressTextWidth;
@@ -163,7 +197,10 @@ struct ControlBar::Layout {
     int addrFieldStart;
     int addrFieldEnd;
 
-    int separatorPos;
+    int separator1Pos;
+    int separator2Pos;
+    int separator3Pos;
+    bool separator3Visible;
 
     int qualityTextStart;
     int qualityTextEnd;
@@ -173,6 +210,15 @@ struct ControlBar::Layout {
 
     int downloadStart;
     int downloadEnd;
+
+    int findButtonStart;
+    int findButtonEnd;
+
+    int findTextStart;
+    int findTextEnd;
+
+    int findBarStart;
+    int findBarEnd;
 };
 
 ControlBar::ControlBar(CKey,
@@ -195,6 +241,10 @@ ControlBar::ControlBar(CKey,
 
     qualityText_ = TextLayout::create();
     qualityText_->setText("Quality");
+
+    findBarVisible_ = false;
+    findText_ = TextLayout::create();
+    findText_->setText("Find");
 
     securityStatus_ = SecurityStatus::Insecure;
 
@@ -273,6 +323,12 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
             addrField_->text()
         );
     }
+
+    if(button.lock() == findButton_ && !findBarVisible_) {
+        findBarVisible_ = true;
+        widgetViewportUpdated_();
+        signalViewDirty_();
+    }
 }
 
 void ControlBar::onQualityChanged(int quality) {
@@ -285,11 +341,23 @@ void ControlBar::onButtonPressed() {
     postTask(eventHandler_, &ControlBarEventHandler::onPendingDownloadAccepted);
 }
 
+void ControlBar::onFindBarClose() {
+    requireUIThread();
+
+    if(findBarVisible_) {
+        findBarVisible_ = false;
+        widgetViewportUpdated_();
+        signalViewDirty_();
+    }
+}
+
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     goButton_ = MenuButton::create(GoIcon, self, self);
+    findButton_ = MenuButton::create(EmptyIcon, self, self);
     qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
+    findBar_ = FindBar::create(self, self);
 }
 
 bool ControlBar::isDownloadVisible_() {
@@ -297,7 +365,7 @@ bool ControlBar::isDownloadVisible_() {
 }
 
 ControlBar::Layout ControlBar::layout_() {
-    return Layout(getViewport().width(), isDownloadVisible_());
+    return Layout(getViewport().width(), isDownloadVisible_(), findBarVisible_);
 }
 
 void ControlBar::widgetViewportUpdated_() {
@@ -312,6 +380,9 @@ void ControlBar::widgetViewportUpdated_() {
     goButton_->setViewport(viewport.subRect(
         layout.goButtonStart, layout.goButtonEnd, 1, Height - 4
     ));
+    findButton_->setViewport(viewport.subRect(
+        layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
+    ));
     qualitySelector_->setViewport(viewport.subRect(
         layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
     ));
@@ -320,6 +391,14 @@ void ControlBar::widgetViewportUpdated_() {
             layout.downloadStart, layout.downloadEnd,
             1, Height - 4 - (downloadProgress_.empty() ? 0 : 5)
         ));
+    }
+    if(findBarVisible_) {
+        findBar_->setViewport(viewport.subRect(
+            layout.findBarStart, layout.findBarEnd,
+            1, Height - 4
+        ));
+    } else {
+        findBar_->setViewport(ImageSlice());
     }
 }
 
@@ -365,15 +444,29 @@ void ControlBar::widgetRender_() {
     // Security icon
     viewport.putImage(securityStatusIcon(securityStatus_), layout.securityIconStart, 6);
 
-    // Separator
-    viewport.fill(layout.separatorPos - 1, layout.separatorPos, 1, Height - 4, 128);
-    viewport.fill(layout.separatorPos, layout.separatorPos + 1, 1, Height - 4, 255);
+    // Separators
+    viewport.fill(layout.separator1Pos - 1, layout.separator1Pos, 1, Height - 4, 128);
+    viewport.fill(layout.separator1Pos, layout.separator1Pos + 1, 1, Height - 4, 255);
+    viewport.fill(layout.separator2Pos - 1, layout.separator2Pos, 1, Height - 4, 128);
+    viewport.fill(layout.separator2Pos, layout.separator2Pos + 1, 1, Height - 4, 255);
+    if(layout.separator3Visible) {
+        viewport.fill(layout.separator3Pos - 1, layout.separator3Pos, 1, Height - 4, 128);
+        viewport.fill(layout.separator3Pos, layout.separator3Pos + 1, 1, Height - 4, 255);
+    }
 
     // "Quality" text
     qualityText_->render(
         viewport.subRect(layout.qualityTextStart, layout.qualityTextEnd, 1, Height - 4),
         3, -4
     );
+
+    // "Find" text
+    if(findBarVisible_) {
+        findText_->render(
+            viewport.subRect(layout.findTextStart, layout.findTextEnd, 1, Height - 4),
+            3, -4
+        );
+    }
 
     // Download progress bar
     if(!downloadProgress_.empty()) {
@@ -443,7 +536,7 @@ void ControlBar::widgetRender_() {
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     requireUIThread();
     vector<shared_ptr<Widget>> children =
-        {addrField_, goButton_, qualitySelector_};
+        {addrField_, goButton_, findButton_, qualitySelector_, findBar_};
     if(isDownloadVisible_()) {
         children.push_back(downloadButton_);
     }

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "widget.hpp"
 
 typedef pair<ImageSlice, ImageSlice> MenuButtonIcon;
