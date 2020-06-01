@@ -415,7 +415,10 @@ document.onkeypress = function(event) {
     } else {
         var key = event.which | 0;
     }
-    if(key > 32) {
+    if(
+        key > 32 &&
+        !(controlDown && ((key >= 65 && key <= 90) || (key >= 97 && key <= 122)))
+    ) {
         putEvent("KPR_" + key);
     }
     preventDefault(event);
