@@ -1,4 +1,4 @@
-#include "go_button.hpp"
+#include "menu_button.hpp"
 
 namespace {
 
@@ -55,18 +55,21 @@ ImageSlice createPassiveGoIcon() {
     );
 }
 
-ImageSlice activeGoIcon = createActiveGoIcon();
-ImageSlice passiveGoIcon = createPassiveGoIcon();
-
 }
 
-GoButton::GoButton(CKey,
+const MenuButtonIcon GoIcon = {createActiveGoIcon(), createPassiveGoIcon()};
+const MenuButtonIcon EmptyIcon;
+
+MenuButton::MenuButton(CKey,
+    MenuButtonIcon icon,
     weak_ptr<WidgetParent> widgetParent,
-    weak_ptr<GoButtonEventHandler> eventHandler
+    weak_ptr<MenuButtonEventHandler> eventHandler
 )
     : Widget(widgetParent)
 {
     requireUIThread();
+
+    icon_ = icon;
 
     eventHandler_ = eventHandler;
 
@@ -74,7 +77,7 @@ GoButton::GoButton(CKey,
     mouseDown_ = false;
 }
 
-void GoButton::mouseMove_(int x, int y) {
+void MenuButton::mouseMove_(int x, int y) {
     ImageSlice viewport = getViewport();
 
     bool newMouseOver =
@@ -87,7 +90,7 @@ void GoButton::mouseMove_(int x, int y) {
     }
 }
 
-void GoButton::widgetRender_() {
+void MenuButton::widgetRender_() {
     requireUIThread();
 
     ImageSlice viewport = getViewport();
@@ -107,13 +110,13 @@ void GoButton::widgetRender_() {
 
         // Icon
         int d = mouseDown_ ? 1 : 0;
-        viewport.putImage(activeGoIcon, IconX + d, IconY + d);
+        viewport.putImage(icon_.first, IconX + d, IconY + d);
     } else {
-        viewport.putImage(passiveGoIcon, IconX, IconY);
+        viewport.putImage(icon_.second, IconX, IconY);
     }
 }
 
-void GoButton::widgetMouseDownEvent_(int x, int y, int button) {
+void MenuButton::widgetMouseDownEvent_(int x, int y, int button) {
     requireUIThread();
 
     if(button == 0) {
@@ -122,12 +125,17 @@ void GoButton::widgetMouseDownEvent_(int x, int y, int button) {
     }
 }
 
-void GoButton::widgetMouseUpEvent_(int x, int y, int button) {
+void MenuButton::widgetMouseUpEvent_(int x, int y, int button) {
     requireUIThread();
 
     if(button == 0) {
         if(mouseDown_ && mouseOver_) {
-            postTask(eventHandler_, &GoButtonEventHandler::onGoButtonPressed);
+            weak_ptr<MenuButton> selfWeak = shared_from_this();
+            postTask(
+                eventHandler_,
+                &MenuButtonEventHandler::onMenuButtonPressed,
+                selfWeak
+            );
         }
 
         mouseDown_ = false;
@@ -135,17 +143,17 @@ void GoButton::widgetMouseUpEvent_(int x, int y, int button) {
     }
 }
 
-void GoButton::widgetMouseMoveEvent_(int x, int y) {
+void MenuButton::widgetMouseMoveEvent_(int x, int y) {
     requireUIThread();
     mouseMove_(x, y);
 }
 
-void GoButton::widgetMouseEnterEvent_(int x, int y) {
+void MenuButton::widgetMouseEnterEvent_(int x, int y) {
     requireUIThread();
     mouseMove_(x, y);
 }
 
-void GoButton::widgetMouseLeaveEvent_(int x, int y) {
+void MenuButton::widgetMouseLeaveEvent_(int x, int y) {
     requireUIThread();
 
     if(mouseOver_) {

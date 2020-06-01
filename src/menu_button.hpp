@@ -1,19 +1,30 @@
 #include "widget.hpp"
 
-class GoButtonEventHandler {
+typedef pair<ImageSlice, ImageSlice> MenuButtonIcon;
+
+extern const MenuButtonIcon GoIcon;
+extern const MenuButtonIcon EmptyIcon;
+
+class MenuButton;
+
+class MenuButtonEventHandler {
 public:
-    virtual void onGoButtonPressed() = 0;
+    virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) = 0;
 };
 
-class GoButton : public Widget {
-SHARED_ONLY_CLASS(GoButton);
+class MenuButton :
+    public Widget,
+    public enable_shared_from_this<MenuButton>
+{
+SHARED_ONLY_CLASS(MenuButton);
 public:
     static constexpr int Width = 22;
     static constexpr int Height = 22;
 
-    GoButton(CKey,
+    MenuButton(CKey,
+        MenuButtonIcon icon,
         weak_ptr<WidgetParent> widgetParent,
-        weak_ptr<GoButtonEventHandler> eventHandler
+        weak_ptr<MenuButtonEventHandler> eventHandler
     );
 
 private:
@@ -27,7 +38,9 @@ private:
     virtual void widgetMouseEnterEvent_(int x, int y) override;
     virtual void widgetMouseLeaveEvent_(int x, int y) override;
 
-    weak_ptr<GoButtonEventHandler> eventHandler_;
+    MenuButtonIcon icon_;
+
+    weak_ptr<MenuButtonEventHandler> eventHandler_;
 
     bool mouseOver_;
     bool mouseDown_;

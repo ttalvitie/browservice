@@ -132,7 +132,7 @@ struct ControlBar::Layout {
         addrTextEnd = addrTextStart + AddressTextWidth;
 
         goButtonEnd = addrEnd;
-        goButtonStart = goButtonEnd - GoButton::Width;
+        goButtonStart = goButtonEnd - MenuButton::Width;
 
         addrBoxStart = addrTextEnd;
         addrBoxEnd = goButtonStart - 1;
@@ -263,13 +263,16 @@ void ControlBar::onTextFieldSubmitted(string text) {
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
 }
 
-void ControlBar::onGoButtonPressed() {
+void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     requireUIThread();
-    postTask(
-        eventHandler_,
-        &ControlBarEventHandler::onAddressSubmitted,
-        addrField_->text()
-    );
+
+    if(button.lock() == goButton_) {
+        postTask(
+            eventHandler_,
+            &ControlBarEventHandler::onAddressSubmitted,
+            addrField_->text()
+        );
+    }
 }
 
 void ControlBar::onQualityChanged(int quality) {
@@ -284,7 +287,7 @@ void ControlBar::onButtonPressed() {
 
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
-    goButton_ = GoButton::create(self, self);
+    goButton_ = MenuButton::create(GoIcon, self, self);
     qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "button.hpp"
-#include "go_button.hpp"
+#include "menu_button.hpp"
 #include "text_field.hpp"
 #include "quality_selector.hpp"
 #include "widget.hpp"
@@ -25,7 +25,7 @@ class Timeout;
 class ControlBar :
     public Widget,
     public TextFieldEventHandler,
-    public GoButtonEventHandler,
+    public MenuButtonEventHandler,
     public QualitySelectorEventHandler,
     public ButtonEventHandler,
     public enable_shared_from_this<ControlBar>
@@ -50,8 +50,8 @@ public:
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
 
-    // GoButtonEventHandler:
-    virtual void onGoButtonPressed() override;
+    // MenuButtonEventHandler:
+    virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) override;
 
     // QualitySelectorEventHandler:
     virtual void onQualityChanged(int quality) override;
@@ -83,7 +83,7 @@ private:
 
     SecurityStatus securityStatus_;
 
-    shared_ptr<GoButton> goButton_;
+    shared_ptr<MenuButton> goButton_;
 
     shared_ptr<TextLayout> qualityText_;
     shared_ptr<QualitySelector> qualitySelector_;
