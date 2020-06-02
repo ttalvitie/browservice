@@ -49,7 +49,7 @@ string TextField::text() {
 void TextField::activate() {
     requireUIThread();
 
-    takeFocus_();
+    takeFocus();
     setCaret_(0, (int)textLayout_->text().size());
 }
 

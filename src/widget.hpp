@@ -36,6 +36,9 @@ public:
 
     int cursor();
 
+    // Make this widget the focused widget in the widget tree
+    void takeFocus();
+
     // Send input event to the widget or its descendants (focus handling
     // within the subtree is done automatically). The event is propagated to the
     // widget*Event_ handler function of the correct widget. The given mouse
@@ -72,11 +75,6 @@ protected:
     bool isMouseOver_();
     bool isFocused_();
     pair<int, int> getLastMousePos_();
-
-    // The widget can take focus by calling this; the changes are propagated up
-    // the tree and a widgetGainFocusEvent is generated if the widget did not
-    // already have focus
-    void takeFocus_();
 
     // Functions to be implemented by the widget:
 

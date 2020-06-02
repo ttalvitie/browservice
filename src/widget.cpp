@@ -48,6 +48,24 @@ int Widget::cursor() {
     return cursor_;
 }
 
+void Widget::takeFocus() {
+    requireUIThread();
+    if(focused_ && !focusChild_) return;
+
+    if(focused_) {
+        clearEventState_(lastMouseX_, lastMouseY_);
+        forwardLoseFocusEvent_();
+    } else {
+        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+            parent->onWidgetTakeFocus(this);
+        }
+    }
+
+    focusChild_ = nullptr;
+    focused_ = true;
+    widgetGainFocusEvent_(viewport_.width() / 2, viewport_.height() / 2);
+}
+
 void Widget::sendMouseDownEvent(int x, int y, int button) {
     requireUIThread();
 
@@ -256,24 +274,6 @@ bool Widget::isFocused_() {
 pair<int, int> Widget::getLastMousePos_() {
     requireUIThread();
     return {lastMouseX_, lastMouseY_};
-}
-
-void Widget::takeFocus_() {
-    requireUIThread();
-    if(focused_ && !focusChild_) return;
-
-    if(focused_) {
-        clearEventState_(lastMouseX_, lastMouseY_);
-        forwardLoseFocusEvent_();
-    } else {
-        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
-            parent->onWidgetTakeFocus(this);
-        }
-    }
-
-    focusChild_ = nullptr;
-    focused_ = true;
-    widgetGainFocusEvent_(viewport_.width() / 2, viewport_.height() / 2);
 }
 
 void Widget::updateFocus_(int x, int y) {

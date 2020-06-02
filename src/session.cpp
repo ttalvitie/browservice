@@ -506,12 +506,7 @@ void Session::onAddressSubmitted(string url) {
     CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
     if(frame) {
         frame->LoadURL(url);
-
-        // Move focus to browser area
-        ImageSlice viewport = rootWidget_->browserArea()->getViewport();
-        int x = viewport.globalX() + viewport.width() / 2;
-        int y = viewport.globalY() + viewport.height() / 2;
-        rootWidget_->sendGainFocusEvent(x, y);
+        rootWidget_->browserArea()->takeFocus();
     }
 }
 
