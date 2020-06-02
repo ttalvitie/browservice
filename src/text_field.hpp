@@ -11,6 +11,7 @@ public:
     // Some event forwarding functions useful for QualitySelector (if we need
     // more of these, we should consider implementing event bubbling)
     virtual void onTextFieldUDKeyDown(bool down) {}
+    virtual void onTextFieldEscKeyDown() {}
     virtual void onTextFieldUDKeyUp(bool down) {}
     virtual void onTextFieldWheelEvent(int delta) {}
 };

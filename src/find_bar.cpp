@@ -24,6 +24,16 @@ void FindBar::open() {
     }
 }
 
+void FindBar::close() {
+    requireUIThread();
+
+    if(isOpen_) {
+        isOpen_ = false;
+        postTask(eventHandler_, &FindBarEventHandler::onStopFind, false);
+        postTask(eventHandler_, &FindBarEventHandler::onFindBarClose);
+    }
+}
+
 void FindBar::findNext() {
     requireUIThread();
 
@@ -46,13 +56,16 @@ void FindBar::onTextFieldSubmitted(string text) {
     find_(text, lastDirForward_);
 }
 
+void FindBar::onTextFieldEscKeyDown() {
+    requireUIThread();
+    close();
+}
+
 void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     requireUIThread();
 
     if(button.lock() == closeButton_) {
-        isOpen_ = false;
-        postTask(eventHandler_, &FindBarEventHandler::onStopFind, false);
-        postTask(eventHandler_, &FindBarEventHandler::onFindBarClose);
+        close();
     }
 
     if(isOpen_) {
@@ -71,6 +84,11 @@ void FindBar::onMenuButtonEnterKeyDown() {
     if(isOpen_) {
         find_(textField_->text(), lastDirForward_);
     }
+}
+
+void FindBar::onMenuButtonEscKeyDown() {
+    requireUIThread();
+    close();
 }
 
 void FindBar::afterConstruct_(shared_ptr<FindBar> self) {

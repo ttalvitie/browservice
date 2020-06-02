@@ -26,15 +26,18 @@ public:
     );
 
     void open();
+    void close();
     void findNext();
 
     // TextFieldEventHandler:
     virtual void onTextFieldTextChanged() override;
     virtual void onTextFieldSubmitted(string text) override;
+    virtual void onTextFieldEscKeyDown() override;
 
     // MenuButtonEventHandler:
     virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) override;
     virtual void onMenuButtonEnterKeyDown() override;
+    virtual void onMenuButtonEscKeyDown() override;
 
 private:
     void afterConstruct_(shared_ptr<FindBar> self);

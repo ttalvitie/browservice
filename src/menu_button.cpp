@@ -1,5 +1,7 @@
 #include "menu_button.hpp"
 
+#include "key.hpp"
+
 namespace {
 
 const vector<string> goIconPattern = {
@@ -164,5 +166,11 @@ void MenuButton::widgetMouseLeaveEvent_(int x, int y) {
 
 void MenuButton::widgetKeyDownEvent_(int key) {
     requireUIThread();
-    postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEnterKeyDown);
+
+    if(key == keys::Enter) {
+        postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEnterKeyDown);
+    }
+    if(key == keys::Esc) {
+        postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEscKeyDown);
+    }
 }

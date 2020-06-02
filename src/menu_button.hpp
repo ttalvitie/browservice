@@ -16,6 +16,7 @@ public:
     // Some event forwarding functions useful for FindBar (if we need
     // more of these, we should consider implementing event bubbling)
     virtual void onMenuButtonEnterKeyDown() {}
+    virtual void onMenuButtonEscKeyDown() {}
 };
 
 class MenuButton :

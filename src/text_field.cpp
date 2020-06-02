@@ -294,6 +294,10 @@ void TextField::widgetKeyDownEvent_(int key) {
         );
     }
 
+    if(key == keys::Esc) {
+        postTask(eventHandler_, &TextFieldEventHandler::onTextFieldEscKeyDown);
+    }
+
     if((key == keys::Left || key == keys::Right) && caretActive_) {
         int idx = textLayout_->visualMoveIdx(caretEnd_, key == keys::Right);
         setCaret_(shiftKeyDown_ ? caretStart_ : idx, idx);
