@@ -158,8 +158,16 @@ void Widget::sendKeyDownEvent(int key) {
     requireUIThread();
     CHECK(isValidKey(key));
 
-    if(keysDown_.count(keys::Control) && (key == (int)'f' || key == (int)'F')) {
+    if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'f' || key == (int)'F')
+    ) {
         onGlobalHotkeyPressed(GlobalHotkey::Find);
+    } else if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'l' || key == (int)'L')
+    ) {
+        onGlobalHotkeyPressed(GlobalHotkey::Address);
     } else if(key == keys::F3) {
         onGlobalHotkeyPressed(GlobalHotkey::FindNext);
     } else {

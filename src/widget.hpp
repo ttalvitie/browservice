@@ -8,6 +8,7 @@ static constexpr int TextCursor = 2;
 static constexpr int CursorTypeCount = 3;
 
 enum class GlobalHotkey {
+    Address,
     Find,
     FindNext
 };

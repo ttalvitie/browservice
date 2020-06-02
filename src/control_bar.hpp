@@ -54,6 +54,8 @@ public:
     void openFindBar();
     void findNext();
 
+    void activateAddress();
+
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
 

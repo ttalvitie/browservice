@@ -326,6 +326,11 @@ void ControlBar::findNext() {
     }
 }
 
+void ControlBar::activateAddress() {
+    requireUIThread();
+    addrField_->activate();
+}
+
 void ControlBar::onTextFieldSubmitted(string text) {
     requireUIThread();
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);

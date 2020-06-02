@@ -489,6 +489,9 @@ void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self, key]() {
+        if(key == GlobalHotkey::Address) {
+            self->rootWidget_->controlBar()->activateAddress();
+        }
         if(key == GlobalHotkey::Find) {
             self->rootWidget_->controlBar()->openFindBar();
         }
