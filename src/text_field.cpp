@@ -46,6 +46,13 @@ string TextField::text() {
     return textLayout_->text();
 }
 
+void TextField::activate() {
+    requireUIThread();
+
+    takeFocus_();
+    setCaret_(0, (int)textLayout_->text().size());
+}
+
 bool TextField::hasFocus() {
     requireUIThread();
     return hasFocus_;

@@ -33,6 +33,8 @@ public:
     void setText(string text);
     string text();
 
+    void activate();
+
     bool hasFocus();
 
     void setRemoveCaretOnSubmit(bool value);

@@ -12,6 +12,8 @@ enum class GlobalHotkey {
     FindNext
 };
 
+class Widget;
+
 class WidgetParent {
 public:
     // Exceptionally, these event handlers are called directly (instead of
@@ -19,6 +21,7 @@ public:
     // implementor should take care to avoid re-entrancy issues.
     virtual void onWidgetViewDirty() = 0;
     virtual void onWidgetCursorChanged() = 0;
+    virtual void onWidgetTakeFocus(Widget* child) {}
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) = 0;
 };
 
@@ -52,6 +55,7 @@ public:
     // WidgetParent: (forward events from possible children)
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+    virtual void onWidgetTakeFocus(Widget* child) override;
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) override;
 
 protected:
@@ -68,6 +72,11 @@ protected:
     bool isMouseOver_();
     bool isFocused_();
     pair<int, int> getLastMousePos_();
+
+    // The widget can take focus by calling this; the changes are propagated up
+    // the tree and a widgetGainFocusEvent is generated if the widget did not
+    // already have focus
+    void takeFocus_();
 
     // Functions to be implemented by the widget:
 

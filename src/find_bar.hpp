@@ -27,6 +27,7 @@ public:
 
     void open();
     void close();
+    void activate();
     void findNext();
 
     // TextFieldEventHandler:

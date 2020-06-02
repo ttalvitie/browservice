@@ -313,6 +313,7 @@ void ControlBar::openFindBar() {
 
     findBarVisible_ = true;
     findBar_->open();
+    findBar_->activate();
     widgetViewportUpdated_();
     signalViewDirty_();
 }
@@ -341,7 +342,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         );
     }
 
-    if(button.lock() == findButton_ && !findBarVisible_) {
+    if(button.lock() == findButton_) {
         openFindBar();
     }
 }

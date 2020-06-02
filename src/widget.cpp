@@ -191,6 +191,31 @@ void Widget::onWidgetCursorChanged() {
     updateCursor_();
 }
 
+void Widget::onWidgetTakeFocus(Widget* child) {
+    requireUIThread();
+
+    shared_ptr<Widget> childShared;
+    for(shared_ptr<Widget> candidate : widgetListChildren_()) {
+        if(candidate.get() == child) {
+            childShared = candidate;
+        }
+    }
+
+    if(childShared) {
+        if(focused_) {
+            clearEventState_(lastMouseX_, lastMouseY_);
+            forwardLoseFocusEvent_();
+        } else {
+            if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+                parent->onWidgetTakeFocus(this);
+            }
+        }
+
+        focusChild_ = childShared;
+        focused_ = true;
+    }
+}
+
 void Widget::onGlobalHotkeyPressed(GlobalHotkey key) {
     requireUIThread();
 
@@ -231,6 +256,24 @@ bool Widget::isFocused_() {
 pair<int, int> Widget::getLastMousePos_() {
     requireUIThread();
     return {lastMouseX_, lastMouseY_};
+}
+
+void Widget::takeFocus_() {
+    requireUIThread();
+    if(focused_ && !focusChild_) return;
+
+    if(focused_) {
+        clearEventState_(lastMouseX_, lastMouseY_);
+        forwardLoseFocusEvent_();
+    } else {
+        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+            parent->onWidgetTakeFocus(this);
+        }
+    }
+
+    focusChild_ = nullptr;
+    focused_ = true;
+    widgetGainFocusEvent_(viewport_.width() / 2, viewport_.height() / 2);
 }
 
 void Widget::updateFocus_(int x, int y) {

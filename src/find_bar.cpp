@@ -34,6 +34,11 @@ void FindBar::close() {
     }
 }
 
+void FindBar::activate() {
+    requireUIThread();
+    textField_->activate();
+}
+
 void FindBar::findNext() {
     requireUIThread();
 
