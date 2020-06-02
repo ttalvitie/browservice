@@ -511,6 +511,20 @@ void Session::onPendingDownloadAccepted() {
     downloadManager_->acceptPendingDownload();
 }
 
+void Session::onFind(string text, bool forward, bool findNext) {
+    requireUIThread();
+    if(!browser_) return;
+
+    browser_->GetHost()->Find(0, text, forward, false, findNext);
+}
+
+void Session::onStopFind(bool clearSelection) {
+    requireUIThread();
+    if(!browser_) return;
+
+    browser_->GetHost()->StopFinding(clearSelection);
+}
+
 void Session::onBrowserAreaViewDirty() {
     requireUIThread();
     sendViewportToCompressor_();

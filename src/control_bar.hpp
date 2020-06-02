@@ -18,6 +18,8 @@ public:
     virtual void onAddressSubmitted(string url) = 0;
     virtual void onQualityChanged(int quality) = 0;
     virtual void onPendingDownloadAccepted() = 0;
+    virtual void onFind(string text, bool forward, bool findNext) = 0;
+    virtual void onStopFind(bool clearSelection) = 0;
 };
 
 class TextLayout;
@@ -63,6 +65,8 @@ public:
 
     // FindBarEventHandler:
     virtual void onFindBarClose() override;
+    virtual void onFind(string text, bool forward, bool findNext) override;
+    virtual void onStopFind(bool clearSelection) override;
 
 private:
     void afterConstruct_(shared_ptr<ControlBar> self);

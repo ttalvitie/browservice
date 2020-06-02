@@ -18,6 +18,8 @@ TextField::TextField(CKey,
 
     textLayout_ = OverflowTextLayout::create();
 
+    removeCaretOnSubmit_ = true;
+
     hasFocus_ = false;
     leftMouseButtonDown_ = false;
     shiftKeyDown_ = false;
@@ -47,6 +49,11 @@ string TextField::text() {
 bool TextField::hasFocus() {
     requireUIThread();
     return hasFocus_;
+}
+
+void TextField::setRemoveCaretOnSubmit(bool value) {
+    requireUIThread();
+    removeCaretOnSubmit_ = value;
 }
 
 void TextField::unsetCaret_() {
@@ -116,6 +123,8 @@ void TextField::typeText_(const char* textPtr, int textLength) {
 
         int idx = idx1 + textLength;
         setCaret_(idx, idx);
+
+        postTask(eventHandler_, &TextFieldEventHandler::onTextFieldTextChanged);
     }
 }
 
@@ -141,6 +150,8 @@ void TextField::eraseRange_() {
         textLayout_->setText(newText);
 
         setCaret_(idx1, idx1);
+
+        postTask(eventHandler_, &TextFieldEventHandler::onTextFieldTextChanged);
     }
 }
 
@@ -316,7 +327,9 @@ void TextField::widgetKeyDownEvent_(int key) {
     }
 
     if(key == keys::Enter && caretActive_) {
-        unsetCaret_();
+        if(removeCaretOnSubmit_) {
+            unsetCaret_();
+        }
         string text = textLayout_->text();
         postTask(
             eventHandler_, &TextFieldEventHandler::onTextFieldSubmitted, text

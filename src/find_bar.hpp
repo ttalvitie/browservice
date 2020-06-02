@@ -6,6 +6,8 @@
 class FindBarEventHandler {
 public:
     virtual void onFindBarClose() = 0;
+    virtual void onFind(string text, bool forward, bool findNext) = 0;
+    virtual void onStopFind(bool clearSelection) = 0;
 };
 
 class FindBar :
@@ -23,11 +25,21 @@ public:
         weak_ptr<FindBarEventHandler> eventHandler
     );
 
+    void open();
+
+    // TextFieldEventHandler:
+    virtual void onTextFieldTextChanged() override;
+    virtual void onTextFieldSubmitted(string text) override;
+
     // MenuButtonEventHandler:
     virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) override;
+    virtual void onMenuButtonEnterKeyDown() override;
 
 private:
     void afterConstruct_(shared_ptr<FindBar> self);
+
+    bool updateText_(string text);
+    void find_(string text, bool forward);
 
     // Widget:
     virtual void widgetViewportUpdated_() override;
@@ -40,4 +52,8 @@ private:
     shared_ptr<MenuButton> downButton_;
     shared_ptr<MenuButton> upButton_;
     shared_ptr<MenuButton> closeButton_;
+
+    bool isOpen_;
+    optional<string> text_;
+    bool lastDirForward_;
 };

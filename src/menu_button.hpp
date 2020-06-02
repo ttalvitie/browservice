@@ -12,6 +12,10 @@ class MenuButton;
 class MenuButtonEventHandler {
 public:
     virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) = 0;
+
+    // Some event forwarding functions useful for FindBar (if we need
+    // more of these, we should consider implementing event bubbling)
+    virtual void onMenuButtonEnterKeyDown() {}
 };
 
 class MenuButton :
@@ -39,6 +43,7 @@ private:
     virtual void widgetMouseMoveEvent_(int x, int y) override;
     virtual void widgetMouseEnterEvent_(int x, int y) override;
     virtual void widgetMouseLeaveEvent_(int x, int y) override;
+    virtual void widgetKeyDownEvent_(int key) override;
 
     MenuButtonIcon icon_;
 

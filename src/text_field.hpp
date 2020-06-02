@@ -6,6 +6,7 @@ class TextFieldEventHandler {
 public:
     virtual void onTextFieldSubmitted(string text) {}
     virtual void onTextFieldLostFocusAfterEdit() {}
+    virtual void onTextFieldTextChanged() {}
 
     // Some event forwarding functions useful for QualitySelector (if we need
     // more of these, we should consider implementing event bubbling)
@@ -32,6 +33,8 @@ public:
     string text();
 
     bool hasFocus();
+
+    void setRemoveCaretOnSubmit(bool value);
 
 private:
     void unsetCaret_();
@@ -61,6 +64,8 @@ private:
     weak_ptr<TextFieldEventHandler> eventHandler_;
 
     shared_ptr<OverflowTextLayout> textLayout_;
+
+    bool removeCaretOnSubmit_;
 
     bool hasFocus_;
     bool leftMouseButtonDown_;

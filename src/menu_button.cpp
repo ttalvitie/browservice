@@ -162,3 +162,7 @@ void MenuButton::widgetMouseLeaveEvent_(int x, int y) {
     }
 }
 
+void MenuButton::widgetKeyDownEvent_(int key) {
+    requireUIThread();
+    postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEnterKeyDown);
+}

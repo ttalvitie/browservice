@@ -326,6 +326,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 
     if(button.lock() == findButton_ && !findBarVisible_) {
         findBarVisible_ = true;
+        findBar_->open();
         widgetViewportUpdated_();
         signalViewDirty_();
     }
@@ -349,6 +350,25 @@ void ControlBar::onFindBarClose() {
         widgetViewportUpdated_();
         signalViewDirty_();
     }
+}
+
+void ControlBar::onFind(string text, bool forward, bool findNext) {
+    requireUIThread();
+
+    if(findBarVisible_) {
+        postTask(
+            eventHandler_,
+            &ControlBarEventHandler::onFind,
+            move(text),
+            forward,
+            findNext
+        );
+    }
+}
+
+void ControlBar::onStopFind(bool clearSelection) {
+    requireUIThread();
+    postTask(eventHandler_, &ControlBarEventHandler::onStopFind, clearSelection);
 }
 
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {

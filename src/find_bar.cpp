@@ -9,21 +9,108 @@ FindBar::FindBar(CKey,
     requireUIThread();
 
     eventHandler_ = eventHandler;
+
+    isOpen_ = false;
+}
+
+void FindBar::open() {
+    requireUIThread();
+    isOpen_ = true;
+    text_.reset();
+    textField_->setText("");
+    lastDirForward_ = true;
+}
+
+void FindBar::onTextFieldTextChanged() {
+    requireUIThread();
+    if(!isOpen_) return;
+
+    updateText_(textField_->text());
+}
+
+void FindBar::onTextFieldSubmitted(string text) {
+    requireUIThread();
+    if(!isOpen_) return;
+
+    find_(text, lastDirForward_);
 }
 
 void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     requireUIThread();
 
     if(button.lock() == closeButton_) {
+        isOpen_ = false;
+        postTask(eventHandler_, &FindBarEventHandler::onStopFind, false);
         postTask(eventHandler_, &FindBarEventHandler::onFindBarClose);
+    }
+
+    if(isOpen_ && text_) {
+        if(button.lock() == downButton_) {
+            find_(*text_, true);
+        }
+        if(button.lock() == upButton_) {
+            find_(*text_, false);
+        }
+    }
+}
+
+void FindBar::onMenuButtonEnterKeyDown() {
+    requireUIThread();
+
+    if(isOpen_ && text_) {
+        find_(*text_, lastDirForward_);
     }
 }
 
 void FindBar::afterConstruct_(shared_ptr<FindBar> self) {
     textField_ = TextField::create(self, self);
+    textField_->setRemoveCaretOnSubmit(false);
+
     downButton_ = MenuButton::create(EmptyIcon, self, self);
     upButton_ = MenuButton::create(EmptyIcon, self, self);
     closeButton_ = MenuButton::create(EmptyIcon, self, self);
+}
+
+bool FindBar::updateText_(string text) {
+    CHECK(isOpen_);
+
+    if(text.empty()) {
+        if(text_) {
+            postTask(eventHandler_, &FindBarEventHandler::onStopFind, true);
+            text_.reset();
+        }
+        return true;
+    } else {
+        if(text_ && *text_ == text) {
+            return false;
+        } else {
+            postTask(
+                eventHandler_,
+                &FindBarEventHandler::onFind,
+                text,
+                true,
+                false
+            );
+            text_ = text;
+            return true;
+        }
+    }
+}
+
+void FindBar::find_(string text, bool forward) {
+    CHECK(isOpen_);
+
+    lastDirForward_ = forward;
+
+    if(!updateText_(text)) {
+        postTask(
+            eventHandler_,
+            &FindBarEventHandler::onFind,
+            text,
+            forward,
+            true
+        );
+    }
 }
 
 void FindBar::widgetViewportUpdated_() {
