@@ -26,6 +26,7 @@ public:
     );
 
     void open();
+    void findNext();
 
     // TextFieldEventHandler:
     virtual void onTextFieldTextChanged() override;

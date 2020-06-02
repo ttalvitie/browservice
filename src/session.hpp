@@ -57,6 +57,7 @@ public:
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+    virtual void onGlobalHotkeyPressed(GlobalHotkey key) override;
 
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;

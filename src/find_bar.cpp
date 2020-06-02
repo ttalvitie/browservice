@@ -15,10 +15,21 @@ FindBar::FindBar(CKey,
 
 void FindBar::open() {
     requireUIThread();
-    isOpen_ = true;
-    text_.reset();
-    textField_->setText("");
-    lastDirForward_ = true;
+
+    if(!isOpen_) {
+        isOpen_ = true;
+        text_.reset();
+        textField_->setText("");
+        lastDirForward_ = true;
+    }
+}
+
+void FindBar::findNext() {
+    requireUIThread();
+
+    if(isOpen_) {
+        find_(textField_->text(), lastDirForward_);
+    }
 }
 
 void FindBar::onTextFieldTextChanged() {
@@ -44,12 +55,12 @@ void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         postTask(eventHandler_, &FindBarEventHandler::onFindBarClose);
     }
 
-    if(isOpen_ && text_) {
+    if(isOpen_) {
         if(button.lock() == downButton_) {
-            find_(*text_, true);
+            find_(textField_->text(), true);
         }
         if(button.lock() == upButton_) {
-            find_(*text_, false);
+            find_(textField_->text(), false);
         }
     }
 }
@@ -57,8 +68,8 @@ void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 void FindBar::onMenuButtonEnterKeyDown() {
     requireUIThread();
 
-    if(isOpen_ && text_) {
-        find_(*text_, lastDirForward_);
+    if(isOpen_) {
+        find_(textField_->text(), lastDirForward_);
     }
 }
 

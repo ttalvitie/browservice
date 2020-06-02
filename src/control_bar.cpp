@@ -308,6 +308,23 @@ void ControlBar::setDownloadProgress(vector<int> progress) {
     }
 }
 
+void ControlBar::openFindBar() {
+    requireUIThread();
+
+    findBarVisible_ = true;
+    findBar_->open();
+    widgetViewportUpdated_();
+    signalViewDirty_();
+}
+
+void ControlBar::findNext() {
+    requireUIThread();
+
+    if(findBarVisible_) {
+        findBar_->findNext();
+    }
+}
+
 void ControlBar::onTextFieldSubmitted(string text) {
     requireUIThread();
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
@@ -325,10 +342,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     }
 
     if(button.lock() == findButton_ && !findBarVisible_) {
-        findBarVisible_ = true;
-        findBar_->open();
-        widgetViewportUpdated_();
-        signalViewDirty_();
+        openFindBar();
     }
 }
 

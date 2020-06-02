@@ -140,8 +140,14 @@ void Widget::sendKeyDownEvent(int key) {
     requireUIThread();
     CHECK(isValidKey(key));
 
-    keysDown_.insert(key);
-    forwardKeyDownEvent_(key);
+    if(keysDown_.count(keys::Control) && (key == (int)'f' || key == (int)'F')) {
+        onGlobalHotkeyPressed(GlobalHotkey::Find);
+    } else if(key == keys::F3) {
+        onGlobalHotkeyPressed(GlobalHotkey::FindNext);
+    } else {
+        keysDown_.insert(key);
+        forwardKeyDownEvent_(key);
+    }
 }
 
 void Widget::sendKeyUpEvent(int key) {
@@ -183,6 +189,14 @@ void Widget::onWidgetViewDirty() {
 void Widget::onWidgetCursorChanged() {
     requireUIThread();
     updateCursor_();
+}
+
+void Widget::onGlobalHotkeyPressed(GlobalHotkey key) {
+    requireUIThread();
+
+    if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+        parent->onGlobalHotkeyPressed(key);
+    }
 }
 
 void Widget::signalViewDirty_() {

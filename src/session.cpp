@@ -484,6 +484,20 @@ void Session::onWidgetCursorChanged() {
     });
 }
 
+void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
+    requireUIThread();
+
+    shared_ptr<Session> self = shared_from_this();
+    postTask([self, key]() {
+        if(key == GlobalHotkey::Find) {
+            self->rootWidget_->controlBar()->openFindBar();
+        }
+        if(key == GlobalHotkey::FindNext) {
+            self->rootWidget_->controlBar()->findNext();
+        }
+    });
+}
+
 void Session::onAddressSubmitted(string url) {
     requireUIThread();
 

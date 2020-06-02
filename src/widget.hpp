@@ -7,6 +7,11 @@ static constexpr int NormalCursor = 1;
 static constexpr int TextCursor = 2;
 static constexpr int CursorTypeCount = 3;
 
+enum class GlobalHotkey {
+    Find,
+    FindNext
+};
+
 class WidgetParent {
 public:
     // Exceptionally, these event handlers are called directly (instead of
@@ -14,6 +19,7 @@ public:
     // implementor should take care to avoid re-entrancy issues.
     virtual void onWidgetViewDirty() = 0;
     virtual void onWidgetCursorChanged() = 0;
+    virtual void onGlobalHotkeyPressed(GlobalHotkey key) = 0;
 };
 
 class Widget : public WidgetParent {
@@ -46,6 +52,7 @@ public:
     // WidgetParent: (forward events from possible children)
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+    virtual void onGlobalHotkeyPressed(GlobalHotkey key) override;
 
 protected:
     // The widget should call this when its view has updated and the changes

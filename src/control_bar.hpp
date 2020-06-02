@@ -51,6 +51,9 @@ public:
     void setPendingDownloadCount(int count);
     void setDownloadProgress(vector<int> progress);
 
+    void openFindBar();
+    void findNext();
+
     // TextFieldEventHandler:
     virtual void onTextFieldSubmitted(string text) override;
 
