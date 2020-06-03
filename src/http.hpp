@@ -18,9 +18,11 @@ private:
 public:
     HTTPRequest(CKey, unique_ptr<Impl> impl);
 
-    string method() const;
-    string path() const;
-    string userAgent() const;
+    string method();
+    string path();
+    string userAgent();
+
+    string getFormParam(string name);
 
     // The body function may be called from a different thread. The given
     // content length should match the number of bytes written by body.

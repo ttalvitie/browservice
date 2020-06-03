@@ -1,5 +1,6 @@
 #include "http.hpp"
 
+#include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPServer.h>
 #include <Poco/Net/HTTPServerResponse.h>
 #include <Poco/Net/HTTPRequest.h>
@@ -31,17 +32,29 @@ public:
 
     DISABLE_COPY_MOVE(Impl);
 
-    string method() const {
+    string method() {
         CHECK(!responseSent_);
         return request_.getMethod();
     }
-    string path() const {
+    string path() {
         CHECK(!responseSent_);
         return request_.getURI();
     }
-    string userAgent() const {
+    string userAgent() {
         CHECK(!responseSent_);
         return request_.get("User-Agent", "");
+    }
+
+    string getFormParam(string name) {
+        CHECK(!responseSent_);
+        if(!form_) {
+            if(method() == "POST") {
+                form_.emplace(request_, request_.stream());
+            } else {
+                form_.emplace();
+            }
+        }
+        return form_->get(name, "");
     }
 
     void sendResponse(
@@ -100,6 +113,7 @@ public:
 
 private:
     Poco::Net::HTTPServerRequest& request_;
+    optional<Poco::Net::HTMLForm> form_;
     promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise_;
     bool responseSent_;
 };
@@ -162,19 +176,24 @@ HTTPRequest::HTTPRequest(CKey, unique_ptr<Impl> impl)
     : impl_(move(impl))
 {}
 
-string HTTPRequest::method() const {
+string HTTPRequest::method() {
     requireUIThread();
     return impl_->method();
 }
 
-string HTTPRequest::path() const {
+string HTTPRequest::path() {
     requireUIThread();
     return impl_->path();
 }
 
-string HTTPRequest::userAgent() const {
+string HTTPRequest::userAgent() {
     requireUIThread();
     return impl_->userAgent();
+}
+
+string HTTPRequest::getFormParam(string name) {
+    requireUIThread();
+    return impl_->getFormParam(name);
 }
 
 void HTTPRequest::sendResponse(

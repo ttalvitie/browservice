@@ -65,6 +65,7 @@ public:
     virtual void onPendingDownloadAccepted() override;
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;
+    virtual void onClipboardButtonPressed() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;

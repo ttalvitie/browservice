@@ -20,6 +20,7 @@ public:
     virtual void onPendingDownloadAccepted() = 0;
     virtual void onFind(string text, bool forward, bool findNext) = 0;
     virtual void onStopFind(bool clearSelection) = 0;
+    virtual void onClipboardButtonPressed() = 0;
 };
 
 class TextLayout;
@@ -99,6 +100,7 @@ private:
 
     shared_ptr<MenuButton> goButton_;
     shared_ptr<MenuButton> findButton_;
+    shared_ptr<MenuButton> clipboardButton_;
 
     shared_ptr<TextLayout> qualityText_;
     shared_ptr<QualitySelector> qualitySelector_;

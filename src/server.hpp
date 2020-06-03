@@ -34,6 +34,8 @@ public:
 private:
     void afterConstruct_(shared_ptr<Server> self);
 
+    void handleClipboardRequest_(shared_ptr<HTTPRequest> request);
+
     void checkShutdownStatus_();
 
     weak_ptr<ServerEventHandler> eventHandler_;

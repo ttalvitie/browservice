@@ -3,10 +3,31 @@
 #include "globals.hpp"
 #include "html.hpp"
 #include "quality.hpp"
+#include "xwindow.hpp"
 
 namespace {
 
 regex sessionPathRegex("/([0-9]+)/.*");
+
+string htmlEscapeString(string src) {
+    string ret;
+    for(char c : src) {
+        if(c == '&') {
+            ret += "&amp;";
+        } else if(c == '<') {
+            ret += "&lt;";
+        } else if(c == '>') {
+            ret += "&gt;";
+        } else if(c == '"') {
+            ret += "&quot;";
+        } else if(c == '\'') {
+            ret += "&apos;";
+        } else {
+            ret.push_back(c);
+        }
+    }
+    return ret;
+}
 
 }
 
@@ -46,6 +67,11 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         sessions_[session->id()] = session;
 
         request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
+        return;
+    }
+
+    if(path == "/clipboard/") {
+        handleClipboardRequest_(request);
         return;
     }
 
@@ -95,6 +121,58 @@ void Server::onPopupSessionOpen(shared_ptr<Session> session) {
 
 void Server::afterConstruct_(shared_ptr<Server> self) {
     httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);
+}
+
+void Server::handleClipboardRequest_(shared_ptr<HTTPRequest> request) {
+    string method = request->method();
+    if(method == "GET") {
+        request->sendHTMLResponse(200, writeClipboardHTML, {""});
+    } else if(method == "POST") {
+        string mode = request->getFormParam("mode");
+        if(mode == "get") {
+            // Make sure that response is written even if paste callback is
+            // dropped using custom destructor
+            struct Responder {
+                shared_ptr<HTTPRequest> request;
+
+                void respond(string text) {
+                    if(request) {
+                        request->sendHTMLResponse(
+                            200,
+                            writeClipboardHTML,
+                            {htmlEscapeString(text)}
+                        );
+                        request.reset();
+                    }
+                }
+
+                ~Responder() {
+                    if(request) {
+                        request->sendHTMLResponse(200, writeClipboardHTML, {""});
+                    }
+                }
+            };
+
+            shared_ptr<Responder> responder = make_shared<Responder>();
+            responder->request = request;
+
+            globals->xWindow->pasteFromClipboard([responder](string text) {
+                responder->respond(text);
+            });
+        } else if(mode == "set") {
+            string text = request->getFormParam("text");
+            globals->xWindow->copyToClipboard(text);
+            request->sendHTMLResponse(
+                200,
+                writeClipboardHTML,
+                {htmlEscapeString(text)}
+            );
+        } else {
+            request->sendTextResponse(400, "ERROR: Invalid request parameters");
+        }
+    } else {
+        request->sendTextResponse(400, "ERROR: Invalid request method");
+    }
 }
 
 void Server::checkShutdownStatus_() {

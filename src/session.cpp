@@ -537,6 +537,14 @@ void Session::onStopFind(bool clearSelection) {
     browser_->GetHost()->StopFinding(clearSelection);
 }
 
+void Session::onClipboardButtonPressed() {
+    requireUIThread();
+
+    addIframe_([](shared_ptr<HTTPRequest> request) {
+        request->sendHTMLResponse(200, writeClipboardIframeHTML, {});
+    });
+}
+
 void Session::onBrowserAreaViewDirty() {
     requireUIThread();
     sendViewportToCompressor_();

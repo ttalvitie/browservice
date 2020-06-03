@@ -46,3 +46,11 @@ struct DownloadIframeHTMLData {
 };
 
 void writeDownloadIframeHTML(ostream& out, const DownloadIframeHTMLData& data);
+
+struct ClipboardIframeHTMLData {};
+void writeClipboardIframeHTML(ostream& out, const ClipboardIframeHTMLData& data);
+
+struct ClipboardHTMLData {
+    string escapedText;
+};
+void writeClipboardHTML(ostream& out, const ClipboardHTMLData& data);

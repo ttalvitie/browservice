@@ -152,7 +152,10 @@ struct ControlBar::Layout {
         int separator2Start = separator2End - SeparatorWidth;
         separator2Pos = separator2Start + SeparatorWidth / 2;
 
-        findButtonEnd = separator2Start;
+        clipboardButtonEnd = separator2Start;
+        clipboardButtonStart = clipboardButtonEnd - MenuButton::Width;
+
+        findButtonEnd = clipboardButtonStart;
         findButtonStart = findButtonEnd - MenuButton::Width;
 
         int separator1End = findButtonStart;
@@ -213,6 +216,9 @@ struct ControlBar::Layout {
 
     int findButtonStart;
     int findButtonEnd;
+
+    int clipboardButtonStart;
+    int clipboardButtonEnd;
 
     int findTextStart;
     int findTextEnd;
@@ -350,6 +356,13 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     if(button.lock() == findButton_) {
         openFindBar();
     }
+
+    if(button.lock() == clipboardButton_) {
+        postTask(
+            eventHandler_,
+            &ControlBarEventHandler::onClipboardButtonPressed
+        );
+    }
 }
 
 void ControlBar::onQualityChanged(int quality) {
@@ -395,6 +408,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     goButton_ = MenuButton::create(GoIcon, self, self);
     findButton_ = MenuButton::create(EmptyIcon, self, self);
+    clipboardButton_ = MenuButton::create(EmptyIcon, self, self);
     qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
     findBar_ = FindBar::create(self, self);
@@ -422,6 +436,9 @@ void ControlBar::widgetViewportUpdated_() {
     ));
     findButton_->setViewport(viewport.subRect(
         layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
+    ));
+    clipboardButton_->setViewport(viewport.subRect(
+        layout.clipboardButtonStart, layout.clipboardButtonEnd, 1, Height - 4
     ));
     qualitySelector_->setViewport(viewport.subRect(
         layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
@@ -575,10 +592,18 @@ void ControlBar::widgetRender_() {
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     requireUIThread();
-    vector<shared_ptr<Widget>> children =
-        {addrField_, goButton_, findButton_, qualitySelector_, findBar_};
+    vector<shared_ptr<Widget>> children = {
+        addrField_,
+        goButton_,
+        findButton_,
+        clipboardButton_,
+        qualitySelector_
+    };
     if(isDownloadVisible_()) {
         children.push_back(downloadButton_);
+    }
+    if(findBarVisible_) {
+        children.push_back(findBar_);
     }
     return children;
 }

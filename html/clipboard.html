@@ -1,0 +1,46 @@
+<html>
+<head>
+<title>BaaS clipboard</title>
+<style>
+body {
+    overflow: hidden;
+}
+textarea {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 400px;
+    height: 260px;
+}
+input {
+    position: absolute;
+    top: 260px;
+    height: 40px;
+    width: 200px;
+}
+.get {
+    left: 0px;
+}
+.set {
+    left: 200px;
+}
+</style>
+<script type="text/javascript">
+window.onload = function() {
+    document.forms[0].elements[0].focus();
+    document.forms[0].elements[0].select();
+};
+</script>
+</head>
+<body>
+<form method="POST" action="/clipboard/">
+<textarea name="text">%-escapedText-%</textarea>
+<input type="hidden" name="mode" value="set">
+<input type="submit" class="set" value="Set clipboard">
+</form>
+<form method="POST" action="/clipboard/">
+<input type="hidden" name="mode" value="get">
+<input type="submit" class="get" value="Get clipboard">
+</form>
+</body>
+</html>
