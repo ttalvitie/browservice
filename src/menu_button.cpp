@@ -2,66 +2,6 @@
 
 #include "key.hpp"
 
-namespace {
-
-const vector<string> goIconPattern = {
-    "GGGGGGGGGBGGGGG",
-    "GGGGGGGGGBBGGGG",
-    "GGGGGGGGGBUBGGG",
-    "ccccccccccUuBGG",
-    "cUUUUUUUUUUvvBG",
-    "cUvMMMMMMMMMMdB",
-    "cUMMMMMMMMMMddB",
-    "cMDDDDDDDDMdDBG",
-    "cbbbbbbbbbdDBGG",
-    "GGGGGGGGGBDBGGG",
-    "GGGGGGGGGBBGGGG",
-    "GGGGGGGGGBGGGGG"
-};
-
-ImageSlice createActiveGoIcon() {
-    return ImageSlice::createImageFromStrings(
-        goIconPattern,
-        {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}},
-            {'b', {32, 32, 32}},
-            {'c', {64, 64, 64}},
-            {'W', {255, 255, 255}},
-            {'U', {120, 255, 120}},
-            {'u', {109, 236, 109}},
-            {'v', {102, 226, 102}},
-            {'M', {96, 216, 96}},
-            {'d', {82, 188, 82}},
-            {'D', {68, 160, 68}},
-        }
-    );
-}
-
-ImageSlice createPassiveGoIcon() {
-    return ImageSlice::createImageFromStrings(
-        goIconPattern,
-        {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}},
-            {'b', {32, 32, 32}},
-            {'c', {64, 64, 64}},
-            {'W', {255, 255, 255}},
-            {'U', {255, 255, 255}},
-            {'u', {232, 232, 232}},
-            {'v', {214, 214, 214}},
-            {'M', {200, 200, 200}},
-            {'d', {172, 172, 172}},
-            {'D', {144, 144, 144}},
-        }
-    );
-}
-
-}
-
-const MenuButtonIcon GoIcon = {createActiveGoIcon(), createPassiveGoIcon()};
-const MenuButtonIcon EmptyIcon;
-
 MenuButton::MenuButton(CKey,
     MenuButtonIcon icon,
     weak_ptr<WidgetParent> widgetParent,
@@ -97,24 +37,24 @@ void MenuButton::widgetRender_() {
 
     ImageSlice viewport = getViewport();
 
-    // Background
-    viewport.fill(0, Width, 0, Height, 192);
+    int width = icon_.first.width() + 3;
+    int height = icon_.first.height() + 3;
 
-    const int IconX = 4;
-    const int IconY = 5;
+    // Background
+    viewport.fill(0, width, 0, height, 192);
 
     if(mouseOver_) {
         // Frame
-        viewport.fill(0, Width - 1, 0, 1, mouseDown_ ? 128 : 255);
-        viewport.fill(0, 1, 1, Height - 1, mouseDown_ ? 128 : 255);
-        viewport.fill(0, Width - 1, Height - 1, Height, mouseDown_ ? 255 : 128);
-        viewport.fill(Width - 1, Width, 0, Height, mouseDown_ ? 255 : 128);
+        viewport.fill(0, width - 1, 0, 1, mouseDown_ ? 128 : 255);
+        viewport.fill(0, 1, 1, height - 1, mouseDown_ ? 128 : 255);
+        viewport.fill(0, width - 1, height - 1, height, mouseDown_ ? 255 : 128);
+        viewport.fill(width - 1, width, 0, height, mouseDown_ ? 255 : 128);
 
         // Icon
         int d = mouseDown_ ? 1 : 0;
-        viewport.putImage(icon_.first, IconX + d, IconY + d);
+        viewport.putImage(icon_.first, 1 + d, 1 + d);
     } else {
-        viewport.putImage(icon_.second, IconX, IconY);
+        viewport.putImage(icon_.second, 1, 1);
     }
 }
 

@@ -1,5 +1,126 @@
 #include "find_bar.hpp"
 
+namespace {
+
+vector<string> downIconPattern = {
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGBGGBGGBGGGG",
+    "GGGGGGBGBGBGGGGG",
+    "GGGGGGGBBBGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG"
+};
+
+vector<string> upIconPattern = {
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGBBBGGGGGG",
+    "GGGGGGBGBGBGGGGG",
+    "GGGGGBGGBGGBGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG"
+};
+
+vector<string> closeIconPattern = {
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGBGGGGGBGGGG",
+    "GGGGGGBGGGBGGGGG",
+    "GGGGGGGBGBGGGGGG",
+    "GGGGGGGGBGGGGGGG",
+    "GGGGGGGBGBGGGGGG",
+    "GGGGGGBGGGBGGGGG",
+    "GGGGGBGGGGGBGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGG"
+};
+
+map<char, array<uint8_t, 3>> activeArrowColors = {
+    {'G', {192, 192, 192}},
+    {'B', {255, 255, 0}}
+};
+
+map<char, array<uint8_t, 3>> passiveArrowColors = {
+    {'G', {192, 192, 192}},
+    {'B', {0, 0, 0}}
+};
+
+MenuButtonIcon downIcon = {
+    ImageSlice::createImageFromStrings(
+        downIconPattern,
+        activeArrowColors
+    ),
+    ImageSlice::createImageFromStrings(
+        downIconPattern,
+        passiveArrowColors
+    )
+};
+
+MenuButtonIcon upIcon = {
+    ImageSlice::createImageFromStrings(
+        upIconPattern,
+        activeArrowColors
+    ),
+    ImageSlice::createImageFromStrings(
+        upIconPattern,
+        passiveArrowColors
+    )
+};
+
+MenuButtonIcon closeIcon = {
+    ImageSlice::createImageFromStrings(
+        closeIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {255, 0, 0}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        closeIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}}
+        }
+    )
+};
+
+const int BtnWidth = 19;
+
+}
+
 FindBar::FindBar(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<FindBarEventHandler> eventHandler
@@ -100,9 +221,9 @@ void FindBar::afterConstruct_(shared_ptr<FindBar> self) {
     textField_ = TextField::create(self, self);
     textField_->setRemoveCaretOnSubmit(false);
 
-    downButton_ = MenuButton::create(EmptyIcon, self, self);
-    upButton_ = MenuButton::create(EmptyIcon, self, self);
-    closeButton_ = MenuButton::create(EmptyIcon, self, self);
+    downButton_ = MenuButton::create(downIcon, self, self);
+    upButton_ = MenuButton::create(upIcon, self, self);
+    closeButton_ = MenuButton::create(closeIcon, self, self);
 }
 
 bool FindBar::updateText_(string text) {
@@ -152,7 +273,6 @@ void FindBar::widgetViewportUpdated_() {
 
     ImageSlice viewport = getViewport();
 
-    const int BtnWidth = MenuButton::Width;
     textField_->setViewport(
         viewport.subRect(4, Width - 3 * BtnWidth - 4, 2, Height - 4)
     );
@@ -172,7 +292,7 @@ void FindBar::widgetRender_() {
 
     // Text field border and background
     ImageSlice viewport =
-        getViewport().subRect(0, Width - 3 * MenuButton::Width, 0, Height);
+        getViewport().subRect(0, Width - 3 * BtnWidth, 0, Height);
     int width = viewport.width();
     viewport.fill(0, width - 1, 0, 1, 128);
     viewport.fill(0, 1, 1, Height - 1, 128);

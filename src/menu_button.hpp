@@ -4,9 +4,6 @@
 
 typedef pair<ImageSlice, ImageSlice> MenuButtonIcon;
 
-extern const MenuButtonIcon GoIcon;
-extern const MenuButtonIcon EmptyIcon;
-
 class MenuButton;
 
 class MenuButtonEventHandler {
@@ -25,9 +22,6 @@ class MenuButton :
 {
 SHARED_ONLY_CLASS(MenuButton);
 public:
-    static constexpr int Width = 22;
-    static constexpr int Height = 22;
-
     MenuButton(CKey,
         MenuButtonIcon icon,
         weak_ptr<WidgetParent> widgetParent,

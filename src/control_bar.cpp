@@ -5,83 +5,75 @@
 
 namespace {
 
-ImageSlice createSecureIcon() {
-    return ImageSlice::createImageFromStrings({
-        "WWWWWBBWWWWWW",
-        "WWWWBWWBWWWWW",
-        "WWWBWWWWBWWWW",
-        "WWWBWWWWBWWWW",
-        "WWWBWWWWBWWWW",
-        "WEEEEEEEEEBWW",
-        "WEGGGGGGGGBWW",
-        "WEGGGGGGGGBWW",
-        "WEGGGGGGGGBWW",
-        "WEGGGGGGGGBWW",
-        "WEGGGGGGGGBWW",
-        "WBBBBBBBBBBWW",
-        "WWWWWWWWWWWWW",
-    }, {
-        {'B', {0, 0, 0}},
-        {'E', {128, 128, 128}},
-        {'G', {192, 192, 192}},
-        {'W', {255, 255, 255}},
-    });
-}
-ImageSlice createWarningIcon() {
-    return ImageSlice::createImageFromStrings({
-        "WWWWWBBWvWWWW",
-        "WWWWBWWvYjWWW",
-        "WWWBWWWvYjWWW",
-        "WWWBWWvYYYjWW",
-        "WWWBWWvYBYjWW",
-        "WEEEEEvYBYjWW",
-        "WEGGGvYYBYYjW",
-        "WEGGGvYYBYYjW",
-        "WEGGGvYYBYYjW",
-        "WEGGvYYYYYYYj",
-        "WEGGvYYYBYYYj",
-        "WBBBvYYYYYYYj",
-        "WWWWyyyyyyyyy",
-    }, {
-        {'B', {0, 0, 0}},
-        {'E', {128, 128, 128}},
-        {'G', {192, 192, 192}},
-        {'W', {255, 255, 255}},
-        {'Y', {255, 255, 0}},
-        {'y', {32, 32, 0}},
-        {'j', {64, 64, 0}},
-        {'v', {128, 128, 0}},
-    });
-}
-ImageSlice createInsecureIcon() {
-    return ImageSlice::createImageFromStrings({
-        "WWWWWBBWWWRRW",
-        "WWWWBWWBWRRRW",
-        "WWWBWWWWRRRWW",
-        "WWWBWWWRRRWWW",
-        "WWWBWWRRRWWWW",
-        "WEEEERRRWbBWW",
-        "WEGGRRRWgGBWW",
-        "WEGRRRWgGGBWW",
-        "WERRRWgGGGBWW",
-        "WRRRWgGGGGBWW",
-        "RRRWgGGGGGBWW",
-        "RRWbBBBBBBBWW",
-        "WWWWWWWWWWWWW",
-    }, {
-        {'B', {0, 0, 0}},
-        {'b', {128, 128, 128}},
-        {'E', {128, 128, 128}},
-        {'G', {192, 192, 192}},
-        {'g', {224, 224, 224}},
-        {'W', {255, 255, 255}},
-        {'R', {255, 0, 0}},
-    });
-}
+ImageSlice secureIcon = ImageSlice::createImageFromStrings({
+    "WWWWWBBWWWWWW",
+    "WWWWBWWBWWWWW",
+    "WWWBWWWWBWWWW",
+    "WWWBWWWWBWWWW",
+    "WWWBWWWWBWWWW",
+    "WEEEEEEEEEBWW",
+    "WEGGGGGGGGBWW",
+    "WEGGGGGGGGBWW",
+    "WEGGGGGGGGBWW",
+    "WEGGGGGGGGBWW",
+    "WEGGGGGGGGBWW",
+    "WBBBBBBBBBBWW",
+    "WWWWWWWWWWWWW",
+}, {
+    {'B', {0, 0, 0}},
+    {'E', {128, 128, 128}},
+    {'G', {192, 192, 192}},
+    {'W', {255, 255, 255}},
+});
 
-ImageSlice secureIcon = createSecureIcon();
-ImageSlice warningIcon = createWarningIcon();
-ImageSlice insecureIcon = createInsecureIcon();
+ImageSlice warningIcon = ImageSlice::createImageFromStrings({
+    "WWWWWBBWvWWWW",
+    "WWWWBWWvYjWWW",
+    "WWWBWWWvYjWWW",
+    "WWWBWWvYYYjWW",
+    "WWWBWWvYBYjWW",
+    "WEEEEEvYBYjWW",
+    "WEGGGvYYBYYjW",
+    "WEGGGvYYBYYjW",
+    "WEGGGvYYBYYjW",
+    "WEGGvYYYYYYYj",
+    "WEGGvYYYBYYYj",
+    "WBBBvYYYYYYYj",
+    "WWWWyyyyyyyyy",
+}, {
+    {'B', {0, 0, 0}},
+    {'E', {128, 128, 128}},
+    {'G', {192, 192, 192}},
+    {'W', {255, 255, 255}},
+    {'Y', {255, 255, 0}},
+    {'y', {32, 32, 0}},
+    {'j', {64, 64, 0}},
+    {'v', {128, 128, 0}},
+});
+
+ImageSlice insecureIcon = ImageSlice::createImageFromStrings({
+    "WWWWWBBWWWRRW",
+    "WWWWBWWBWRRRW",
+    "WWWBWWWWRRRWW",
+    "WWWBWWWRRRWWW",
+    "WWWBWWRRRWWWW",
+    "WEEEERRRWbBWW",
+    "WEGGRRRWgGBWW",
+    "WEGRRRWgGGBWW",
+    "WERRRWgGGGBWW",
+    "WRRRWgGGGGBWW",
+    "RRRWgGGGGGBWW",
+    "RRWbBBBBBBBWW",
+    "WWWWWWWWWWWWW",
+}, {
+    {'B', {0, 0, 0}},
+    {'b', {128, 128, 128}},
+    {'E', {128, 128, 128}},
+    {'G', {192, 192, 192}},
+    {'g', {224, 224, 224}},
+    {'W', {255, 255, 255}},
+    {'R', {255, 0, 0}},
+});
 
 ImageSlice securityStatusIcon(SecurityStatus status) {
     if(status == SecurityStatus::Secure) {
@@ -94,6 +86,143 @@ ImageSlice securityStatusIcon(SecurityStatus status) {
     CHECK(false);
     return insecureIcon;
 }
+
+vector<string> goIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGBGGGGGG",
+    "GGGGGGGGGGGGBBGGGGG",
+    "GGGGGGGGGGGGBUBGGGG",
+    "GGGccccccccccUuBGGG",
+    "GGGcUUUUUUUUUUvvBGG",
+    "GGGcUvMMMMMMMMMMdBG",
+    "GGGcUMMMMMMMMMMddBG",
+    "GGGcMDDDDDDDDMdDBGG",
+    "GGGcbbbbbbbbbdDBGGG",
+    "GGGGGGGGGGGGBDBGGGG",
+    "GGGGGGGGGGGGBBGGGGG",
+    "GGGGGGGGGGGGBGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG"
+};
+
+MenuButtonIcon goIcon = {
+    ImageSlice::createImageFromStrings(
+        goIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}},
+            {'b', {32, 32, 32}},
+            {'c', {64, 64, 64}},
+            {'W', {255, 255, 255}},
+            {'U', {120, 255, 120}},
+            {'u', {109, 236, 109}},
+            {'v', {102, 226, 102}},
+            {'M', {96, 216, 96}},
+            {'d', {82, 188, 82}},
+            {'D', {68, 160, 68}},
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        goIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}},
+            {'b', {32, 32, 32}},
+            {'c', {64, 64, 64}},
+            {'W', {255, 255, 255}},
+            {'U', {255, 255, 255}},
+            {'u', {232, 232, 232}},
+            {'v', {214, 214, 214}},
+            {'M', {200, 200, 200}},
+            {'d', {172, 172, 172}},
+            {'D', {144, 144, 144}},
+        }
+    )
+};
+
+vector<string> findIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGBBBGGGGGGGGG",
+    "GGGGGGBGGGBGGGGGGGG",
+    "GGGGGBGGGGGBGGGGGGG",
+    "GGGGGBGGGGGBGGGGGGG",
+    "GGGGGBGGGGGBGGGGGGG",
+    "GGGGGGBGGGBGGGGGGGG",
+    "GGGGGGGBBBGBGGGGGGG",
+    "GGGGGGGGGGGGBGGGGGG",
+    "GGGGGGGGGGGGGBGGGGG",
+    "GGGGGGGGGGGGGGBGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG"
+};
+
+MenuButtonIcon findIcon = {
+    ImageSlice::createImageFromStrings(
+        findIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 255}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        findIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}}
+        }
+    )
+};
+
+vector<string> clipboardIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGBBBBBBBBBBBBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBGGGGGGGGGGBGGG",
+    "GGGGBBBBBBBBBBBBGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG"
+};
+
+MenuButtonIcon clipboardIcon = {
+    ImageSlice::createImageFromStrings(
+        clipboardIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 255}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        clipboardIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}}
+        }
+    )
+};
+
+const int BtnWidth = 22;
 
 }
 
@@ -153,10 +282,10 @@ struct ControlBar::Layout {
         separator2Pos = separator2Start + SeparatorWidth / 2;
 
         clipboardButtonEnd = separator2Start;
-        clipboardButtonStart = clipboardButtonEnd - MenuButton::Width;
+        clipboardButtonStart = clipboardButtonEnd - BtnWidth;
 
         findButtonEnd = clipboardButtonStart;
-        findButtonStart = findButtonEnd - MenuButton::Width;
+        findButtonStart = findButtonEnd - BtnWidth;
 
         int separator1End = findButtonStart;
         int separator1Start = separator1End - SeparatorWidth;
@@ -169,7 +298,7 @@ struct ControlBar::Layout {
         addrTextEnd = addrTextStart + AddressTextWidth;
 
         goButtonEnd = addrEnd;
-        goButtonStart = goButtonEnd - MenuButton::Width;
+        goButtonStart = goButtonEnd - BtnWidth;
 
         addrBoxStart = addrTextEnd;
         addrBoxEnd = goButtonStart - 1;
@@ -406,9 +535,9 @@ void ControlBar::onStopFind(bool clearSelection) {
 
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
-    goButton_ = MenuButton::create(GoIcon, self, self);
-    findButton_ = MenuButton::create(EmptyIcon, self, self);
-    clipboardButton_ = MenuButton::create(EmptyIcon, self, self);
+    goButton_ = MenuButton::create(goIcon, self, self);
+    findButton_ = MenuButton::create(findIcon, self, self);
+    clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
     qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
     findBar_ = FindBar::create(self, self);
