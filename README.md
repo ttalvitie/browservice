@@ -3,7 +3,11 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 ## Setup
 
-Install the dependencies:
+### Installing dependencies
+
+The commands for installing dependencies on various Linux distributions are provided below. If the command for your distribution is missing, you may need to adapt the list and add missing packages through trial and error until Browservice compiles successfully.
+
+#### Ubuntu 18.04/20.04 Desktop/Server and Debian 10
 
 ```
 sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg-turbo8-dev zlib1g-dev libnss3 libxrandr2 libx11-xcb1 libxcomposite1 libpangocairo-1.0-0 libxcursor1 libxdamage1 libatk-bridge2.0-0 libasound2 libcups2 libxss1 libxi6 xvfb xauth libgbm1 libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer
@@ -16,6 +20,8 @@ sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg
     wget https://www.nic.funet.fi/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.7_all.deb
     sudo dpkg -i ttf-mscorefonts-installer_3.7_all.deb
     ```
+
+### Installing CEF
 
 Obtain a release build of CEF (Chromium Embedded Framework):
 
