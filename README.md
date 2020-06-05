@@ -1,4 +1,4 @@
-# BaaS: Browser as a Service
+# Browservice: Browser as a Service
 Browse the modern Web with old browsers using a proxy that runs the Chromium browser and streams the browser window as images
 
 ## Setup
@@ -9,7 +9,7 @@ Install the dependencies:
 sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg-turbo8-dev zlib1g-dev libnss3 libxrandr2 libx11-xcb1 libxcomposite1 libpangocairo-1.0-0 libxcursor1 libxdamage1 libatk-bridge2.0-0 libasound2 libcups2 libxss1 libxi6 xvfb xauth libgbm1 libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer
 ```
 
-- On Ubuntu, the installation of `ttf-mscorefonts-installer` often fails silently due to problems with the SourceForge mirrors. If the file `/usr/share/fonts/truetype/msttcorefonts/Verdana.ttf` exists, your installation was successful. Otherwise, the texts in the BaaS UI will not work correctly. To rectify this, switch to the Debian package by running the following
+- On Ubuntu, the installation of `ttf-mscorefonts-installer` often fails silently due to problems with the SourceForge mirrors. If the file `/usr/share/fonts/truetype/msttcorefonts/Verdana.ttf` exists, your installation was successful. Otherwise, the texts in the Browservice UI will not work correctly. To rectify this, switch to the Debian package by running the following
 
     ```
     sudo apt remove ttf-mscorefonts-installer
@@ -48,10 +48,10 @@ Xvfb :0 -screen 0 640x480x24 &
 export DISPLAY=:0
 ```
 
-Now you are ready to run BaaS:
+Now you are ready to run Browservice:
 
 ```
-release/bin/baas
+release/bin/browservice
 ```
 
 The server is listening for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).

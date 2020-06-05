@@ -24,7 +24,7 @@ default: release
 
 define BUILDRULES
 
-$(1): $(1)/bin/baas $(CEFFILES_OUT_$(1))
+$(1): $(1)/bin/browservice $(CEFFILES_OUT_$(1))
 	@if [ `stat -c '%U:%G:%a' $(1)/bin/chrome-sandbox` != "root:root:4755" ]; \
 	then \
 	echo; \
@@ -32,9 +32,9 @@ $(1): $(1)/bin/baas $(CEFFILES_OUT_$(1))
 	echo "sudo chown root:root $(1)/bin/chrome-sandbox && sudo chmod 4755 $(1)/bin/chrome-sandbox"; \
 	fi
 
-$(1)/bin/baas: $(OBJS_$(1))
+$(1)/bin/browservice: $(OBJS_$(1))
 	@mkdir -p $(1)/bin
-	$(CXX) $(CFLAGS_$(1)) $(OBJS_$(1)) -o $(1)/bin/baas $(LDFLAGS_$(1))
+	$(CXX) $(CFLAGS_$(1)) $(OBJS_$(1)) -o $(1)/bin/browservice $(LDFLAGS_$(1))
 
 endef
 $(eval $(call BUILDRULES,debug))
@@ -61,6 +61,6 @@ $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,debug,$(f))))
 $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,release,$(f))))
 
 clean:
-	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/baas release/bin/baas $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release)
+	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release)
 
 -include $(DEPS_debug) $(DEPS_release)

@@ -1,6 +1,6 @@
-# Understanding BaaS code
+# Understanding Browservice code
 
-BaaS is written in C++ on top of Chromium Embedded Framework (CEF), using the Poco library for the HTTP server, zlib and libjpeg-turbo for image compression, and Pango and FreeType2 for text rendering. CEF/Chromium does most of the heavy lifting, and as such our code is not really performance critical (one exception to this is the parallel PNG compressor). Thus safety and simplicity is prioritized over efficiency. Some conventions:
+Browservice is written in C++ on top of Chromium Embedded Framework (CEF), using the Poco library for the HTTP server, zlib and libjpeg-turbo for image compression, and Pango and FreeType2 for text rendering. CEF/Chromium does most of the heavy lifting, and as such our code is not really performance critical (one exception to this is the parallel PNG compressor). Thus safety and simplicity is prioritized over efficiency. Some conventions:
 
 - Most objects are reference counted; to handle the boilerplate of enforcing that shared_ptr is used to manage the lifetime and disabling copy and move constructors/assignment operators, we use the SHARED_ONLY_CLASS macro defined in common.hpp.
 

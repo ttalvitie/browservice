@@ -4,7 +4,7 @@
 #include <unistd.h>
 
 TempDir::TempDir(CKey) {
-    char path[] = "/tmp/baastmp_XXXXXX";
+    char path[] = "/tmp/browservicetmp_XXXXXX";
     CHECK(mkdtemp(path) != nullptr);
     path_ = path;
 }
