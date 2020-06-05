@@ -36,13 +36,13 @@ echo "Building CEF DLL wrapper"
 mkdir cef/releasebuild
 pushd cef/releasebuild
 cmake -DCMAKE_BUILD_TYPE=Release $CMAKEFLAGS ..
-make -j4 libcef_dll_wrapper
+make -j2 libcef_dll_wrapper
 popd
 
 mkdir cef/debugbuild
 pushd cef/debugbuild
 cmake -DCMAKE_BUILD_TYPE=Debug $CMAKEFLAGS ..
-make -j4 libcef_dll_wrapper
+make -j2 libcef_dll_wrapper
 popd
 
 echo "CEF DLL wrapper successfully built"
