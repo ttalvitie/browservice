@@ -23,7 +23,7 @@ sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg
 
 ### Installing CEF
 
-Obtain a release build of CEF (Chromium Embedded Framework):
+Obtain a release build of CEF (Chromium Embedded Framework) by running the following in this directory:
 
 ```
 ./download_cef.sh
@@ -35,7 +35,9 @@ Extract CEF and build its DLL wrapper library that we will use:
 ./setup_cef.sh
 ```
 
-Run a release build:
+### Compiling and running Browservice
+
+Run a release build (you may adjust the number in the `-j` argument to set the number of parallel compile jobs):
 
 ```
 make -j5
@@ -47,17 +49,24 @@ The build will ask you to set the SUID permissions for `chrome-sandbox`:
 sudo chown root:root release/bin/chrome-sandbox && sudo chmod 4755 release/bin/chrome-sandbox
 ```
 
-You will need to have an X server running and the `DISPLAY` environment variable pointed to it. One way that works even on headless servers is to use Xvfb:
-
-```
-Xvfb :0 -screen 0 640x480x24 &
-export DISPLAY=:0
-```
-
 Now you are ready to run Browservice:
 
 ```
 release/bin/browservice
 ```
 
-The server is listening for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
+With the default arguments, Browservice listens for local HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
+
+By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow remote computers to connect to the server, you need to adjust the `--http-listen-addr` command line argument; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
+
+```
+release/bin/browservice --http-listen-addr=0.0.0.0:8080
+```
+
+WARNING: Note that binding to `0.0.0.0` may allow unauthorized users to connect to the server. To avoid this, use a more restrictive listen address and/or a firewall.
+
+There many are other useful command line options in Browservice. To get a list of them, run
+
+```
+release/bin/browservice --help
+```
