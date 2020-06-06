@@ -5,7 +5,7 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 ### Installing dependencies
 
-The commands for installing dependencies on various Linux distributions are provided below. If the command for your distribution is missing, you may need to adapt the list and add missing packages through trial and error until Browservice compiles successfully.
+The commands for installing dependencies on various Linux distributions are provided below. If the command for your distribution is missing, you may need to adapt the list and add missing packages through trial and error until the CEF DLL wrapper and Browservice compiles successfully.
 
 #### Ubuntu 18.04/20.04 and Debian 10
 
@@ -22,6 +22,27 @@ sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg
     wget https://www.nic.funet.fi/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.7_all.deb
     sudo dpkg -i ttf-mscorefonts-installer_3.7_all.deb
     ```
+
+#### Fedora 32
+
+```
+sudo dnf install cmake make g++ pkg-config gtk2-devel gtkglext-devel poco-devel libjpeg-turbo-devel Xvfb xauth curl cabextract xorg-x11-font-utils fontconfig
+sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
+```
+
+#### Arch Linux
+
+```
+sudo pacman -S wget cmake make gcc pkgconf gtk2 gtkglext poco python nss at-spi2-atk alsa-lib xorg-server-xvfb xorg-xauth fakeroot
+
+# Install MS core fonts from AUR
+wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-fonts.tar.gz
+tar xf ttf-ms-fonts.tar.gz
+pushd ttf-ms-fonts
+makepkg -si
+popd
+rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
+```
 
 ### Installing CEF
 
