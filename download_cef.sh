@@ -8,7 +8,7 @@ then
     exit 1
 fi
 
-ARCH=`arch`
+ARCH=`uname -m`
 
 if [ "$ARCH" == "x86_64" ]
 then
