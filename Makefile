@@ -50,7 +50,8 @@ $(foreach s,$(SRCS),$(eval $(call OBJRULE,release,$(s))))
 
 gen/html.cpp: $(HTMLS) gen_html_header.py
 	@mkdir -p gen
-	./gen_html_header.py > gen/html.cpp
+	./gen_html_header.py > gen/html.cpp.tmp
+	mv gen/html.cpp.tmp gen/html.cpp
 
 define CEFFILE_RULE
 $(addprefix $(1)/bin/,$(notdir $(2))): $(2)
@@ -61,6 +62,6 @@ $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,debug,$(f))))
 $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,release,$(f))))
 
 clean:
-	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release)
+	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release) gen/html.cpp gen/html.cpp.tmp
 
 -include $(DEPS_debug) $(DEPS_release)
