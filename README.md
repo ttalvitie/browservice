@@ -26,7 +26,7 @@ sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg
 #### Fedora 32
 
 ```
-sudo dnf install cmake make g++ pkg-config gtk2-devel gtkglext-devel poco-devel libjpeg-turbo-devel Xvfb xauth curl cabextract xorg-x11-font-utils fontconfig
+sudo dnf install cmake make g++ pkg-config gtk2-devel gtkglext-devel poco-devel libjpeg-turbo-devel Xvfb xauth curl cabextract xorg-x11-font-utils fontconfig at-spi2-atk libXScrnSaver alsa-lib
 sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
 ```
 
