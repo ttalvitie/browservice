@@ -409,6 +409,7 @@ for(var i = 0; i < nonCharKeyList.length; ++i) {
     nonCharKeys[nonCharKeyList[i]] = true;
 }
 
+var shiftDown = false;
 var controlDown = false;
 
 document.onkeypress = function(event) {
@@ -422,13 +423,13 @@ document.onkeypress = function(event) {
         key > 32 &&
         !(controlDown && ((key >= 65 && key <= 90) || (key >= 97 && key <= 122)))
     ) {
-        if(!controlDown && event.ctrlKey === true) {
-            putEvent("KDN_17");
-            putEvent("KPR_" + key);
-            putEvent("KUP_17");
-        } else {
-            putEvent("KPR_" + key);
-        }
+        var tmpShift = !shiftDown && event.shiftKey === true;
+        var tmpControl = !controlDown && event.ctrlKey === true;
+        if(tmpShift) putEvent("KDN_16");
+        if(tmpControl) putEvent("KDN_17");
+        putEvent("KPR_" + key);
+        if(tmpControl) putEvent("KUP_17");
+        if(tmpShift) putEvent("KUP_16");
     }
     preventDefault(event);
 };
@@ -444,8 +445,17 @@ document.onkeydown = function(event) {
         putEvent("KPR_" + (key + 32));
         preventDefault(event);
     } else if(nonCharKeys[key]) {
+        if(key == 16) shiftDown = true;
         if(key == 17) controlDown = true;
+
+        var tmpShift = !shiftDown && event.shiftKey === true;
+        var tmpControl = !controlDown && event.ctrlKey === true;
+        if(tmpShift) putEvent("KDN_16");
+        if(tmpControl) putEvent("KDN_17");
         putEvent("KDN_" + key);
+        if(tmpControl) putEvent("KUP_17");
+        if(tmpShift) putEvent("KUP_16");
+
         preventDefault(event);
     }
 };
@@ -458,6 +468,7 @@ document.onkeyup = function(event) {
         var key = event.which | 0;
     }
     if(nonCharKeys[key]) {
+        if(key == 16) shiftDown = false;
         if(key == 17) controlDown = false;
         putEvent("KUP_" + key);
         preventDefault(event);
