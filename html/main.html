@@ -409,6 +409,8 @@ for(var i = 0; i < nonCharKeyList.length; ++i) {
     nonCharKeys[nonCharKeyList[i]] = true;
 }
 
+var controlDown = false;
+
 document.onkeypress = function(event) {
     if(!event) {
         event = window.event;
@@ -420,12 +422,16 @@ document.onkeypress = function(event) {
         key > 32 &&
         !(controlDown && ((key >= 65 && key <= 90) || (key >= 97 && key <= 122)))
     ) {
-        putEvent("KPR_" + key);
+        if(!controlDown && event.ctrlKey === true) {
+            putEvent("KDN_17");
+            putEvent("KPR_" + key);
+            putEvent("KUP_17");
+        } else {
+            putEvent("KPR_" + key);
+        }
     }
     preventDefault(event);
 };
-
-var controlDown = false;
 
 document.onkeydown = function(event) {
     if(!event) {
