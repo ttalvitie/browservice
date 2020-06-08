@@ -3,79 +3,87 @@
 namespace {
 
 vector<string> downIconPattern = {
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGBGGBGGBGGGG",
-    "GGGGGGBGBGBGGGGG",
-    "GGGGGGGBBBGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG"
+    "................",
+    "................",
+    "................",
+    "................",
+    "......55555.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "...4555###3553..",
+    "....4#######2...",
+    ".....4#####2....",
+    "......4###2.....",
+    ".......4#2......",
+    "........3.......",
+    "................",
+    "................",
+    "................"
 };
 
 vector<string> upIconPattern = {
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGBBBGGGGGG",
-    "GGGGGGBGBGBGGGGG",
-    "GGGGGBGGBGGBGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG"
+    "................",
+    "................",
+    "................",
+    "................",
+    "........4.......",
+    ".......5#3......",
+    "......5###3.....",
+    ".....5#####3....",
+    "....5#######3...",
+    "...4334###3333..",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......5###3.....",
+    "......53333.....",
+    "................",
+    "................",
+    "................"
 };
 
 vector<string> closeIconPattern = {
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGBGGGGGBGGGG",
-    "GGGGGGBGGGBGGGGG",
-    "GGGGGGGBGBGGGGGG",
-    "GGGGGGGGBGGGGGGG",
-    "GGGGGGGBGBGGGGGG",
-    "GGGGGGBGGGBGGGGG",
-    "GGGGGBGGGGGBGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGG"
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    ".....3.....3....",
+    "....3#2...3#2...",
+    "...3###2.3###2..",
+    "....2###3###1...",
+    ".....2#####1....",
+    "......3###2.....",
+    ".....3#####2....",
+    "....3###2###2...",
+    "...3###1.2###2..",
+    "....2#1...2#1...",
+    ".....2.....2....",
+    "................",
+    "................",
+    "................"
 };
 
 map<char, array<uint8_t, 3>> activeArrowColors = {
-    {'G', {192, 192, 192}},
-    {'B', {255, 255, 0}}
+    {'.', {192, 192, 192}},
+    {'#', {232, 232, 0}},
+    {'5', {156, 156, 0}},
+    {'4', {128, 128, 0}},
+    {'3', {108, 108, 0}},
+    {'2', {96, 96, 0}}
 };
 
 map<char, array<uint8_t, 3>> passiveArrowColors = {
-    {'G', {192, 192, 192}},
-    {'B', {0, 0, 0}}
+    {'.', {192, 192, 192}},
+    {'#', {176, 176, 176}},
+    {'5', {144, 144, 144}},
+    {'4', {128, 128, 128}},
+    {'3', {108, 108, 108}},
+    {'2', {96, 96, 96}}
 };
 
 MenuButtonIcon downIcon = {
@@ -104,15 +112,21 @@ MenuButtonIcon closeIcon = {
     ImageSlice::createImageFromStrings(
         closeIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {255, 0, 0}}
+            {'.', {192, 192, 192}},
+            {'#', {255, 128, 128}},
+            {'1', {96, 48, 48}},
+            {'2', {128, 64, 64}},
+            {'3', {160, 80, 80}}
         }
     ),
     ImageSlice::createImageFromStrings(
         closeIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}}
+            {'.', {192, 192, 192}},
+            {'#', {176, 176, 176}},
+            {'1', {72, 72, 72}},
+            {'2', {96, 96, 96}},
+            {'3', {120, 120, 120}}
         }
     )
 };
