@@ -145,40 +145,60 @@ MenuButtonIcon goIcon = {
 };
 
 vector<string> findIconPattern = {
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGBBBGGGGGGGGG",
-    "GGGGGGBGGGBGGGGGGGG",
-    "GGGGGBGGGGGBGGGGGGG",
-    "GGGGGBGGGGGBGGGGGGG",
-    "GGGGGBGGGGGBGGGGGGG",
-    "GGGGGGBGGGBGGGGGGGG",
-    "GGGGGGGBBBGBGGGGGGG",
-    "GGGGGGGGGGGGBGGGGGG",
-    "GGGGGGGGGGGGGBGGGGG",
-    "GGGGGGGGGGGGGGBGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG"
+    "...................",
+    "...................",
+    "...................",
+    ".....AAA....AAA....",
+    ".....A3B....A3B....",
+    "....ABBBMMMMMBBB...",
+    "....ARQPBXXBRQPB...",
+    "....ARQPBXXBRQPB...",
+    "...A3RQPBBBBRQP1B..",
+    "..ABBBBBB..BBBBBBB.",
+    "..A4321B....A4321B.",
+    "..A4321B....A4321B.",
+    "..A4321B....A4321B.",
+    "..A4321B....A4321B.",
+    "..A4321B....A4321B.",
+    "..ARQP1B....ARQP1B.",
+    "..ABBBBB....ABBBBB.",
+    "...................",
+    "..................."
 };
 
 MenuButtonIcon findIcon = {
     ImageSlice::createImageFromStrings(
         findIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 255}}
+            {'.', {192, 192, 192}},
+            {'A', {0, 0, 96}},
+            {'M', {0, 0, 64}},
+            {'B', {0, 0, 0}},
+            {'1', {68, 68, 164}},
+            {'P', {82, 82, 170}},
+            {'2', {96, 96, 176}},
+            {'Q', {110, 110, 182}},
+            {'3', {124, 124, 188}},
+            {'R', {138, 138, 194}},
+            {'4', {152, 152, 200}},
+            {'X', {80, 80, 160}}
         }
     ),
     ImageSlice::createImageFromStrings(
         findIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}}
+            {'.', {192, 192, 192}},
+            {'A', {64, 64, 64}},
+            {'M', {48, 48, 48}},
+            {'B', {0, 0, 0}},
+            {'1', {108, 108, 108}},
+            {'P', {122, 122, 122}},
+            {'2', {136, 136, 136}},
+            {'Q', {150, 150, 150}},
+            {'3', {164, 164, 164}},
+            {'R', {176, 176, 176}},
+            {'4', {188, 188, 188}},
+            {'X', {116, 116, 116}}
         }
     )
 };
