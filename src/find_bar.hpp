@@ -29,6 +29,7 @@ public:
     void close();
     void activate();
     void findNext();
+    void setFindResult(bool found);
 
     // TextFieldEventHandler:
     virtual void onTextFieldTextChanged() override;
@@ -59,6 +60,7 @@ private:
     shared_ptr<MenuButton> closeButton_;
 
     bool isOpen_;
+    bool findResult_;
     optional<string> text_;
     bool lastDirForward_;
 };

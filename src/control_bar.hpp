@@ -54,6 +54,7 @@ public:
 
     void openFindBar();
     void findNext();
+    void setFindResult(bool found);
 
     void activateAddress();
 

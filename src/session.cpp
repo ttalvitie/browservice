@@ -37,7 +37,8 @@ class Session::Client :
     public CefLifeSpanHandler,
     public CefLoadHandler,
     public CefDisplayHandler,
-    public CefRequestHandler
+    public CefRequestHandler,
+    public CefFindHandler
 {
 public:
     Client(shared_ptr<Session> session) {
@@ -46,6 +47,7 @@ public:
             session->rootWidget_->browserArea()->createCefRenderHandler();
         downloadHandler_ =
             session->downloadManager_->createCefDownloadHandler();
+        lastFindID_ = -1;
     }
 
     // CefClient:
@@ -66,6 +68,9 @@ public:
     }
     virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() override {
         return downloadHandler_;
+    }
+    virtual CefRefPtr<CefFindHandler> GetFindHandler() override {
+        return this;
     }
 
     // CefLifeSpanHandler:
@@ -193,11 +198,30 @@ public:
         return nullptr;
     }
 
+    // CefFindHandler:
+    virtual void OnFindResult(
+        CefRefPtr<CefBrowser> browser,
+        int identifier,
+        int count,
+        const CefRect& selectionRect,
+        int activeMatchOrdinal,
+        bool finalUpdate
+    ) {
+        requireUIThread();
+
+        if(identifier > lastFindID_) {
+            session_->rootWidget_->controlBar()->setFindResult(count > 0);
+            lastFindID_ = identifier;
+        }
+    }
+
 private:
     shared_ptr<Session> session_;
 
     CefRefPtr<CefRenderHandler> renderHandler_;
     CefRefPtr<CefDownloadHandler> downloadHandler_;
+
+    int lastFindID_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };

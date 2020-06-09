@@ -167,6 +167,7 @@ void FindBar::open() {
 
     if(!isOpen_) {
         isOpen_ = true;
+        findResult_ = true;
         text_.reset();
         textField_->setText("");
         lastDirForward_ = true;
@@ -193,6 +194,15 @@ void FindBar::findNext() {
 
     if(isOpen_) {
         find_(textField_->text(), lastDirForward_);
+    }
+}
+
+void FindBar::setFindResult(bool found) {
+    requireUIThread();
+
+    if(isOpen_ && findResult_ != found) {
+        findResult_ = found;
+        signalViewDirty_();
     }
 }
 
@@ -262,6 +272,7 @@ bool FindBar::updateText_(string text) {
             postTask(eventHandler_, &FindBarEventHandler::onStopFind, true);
             text_.reset();
         }
+        setFindResult(true);
         return true;
     } else {
         if(text_ && *text_ == text) {
@@ -318,19 +329,28 @@ void FindBar::widgetViewportUpdated_() {
 void FindBar::widgetRender_() {
     requireUIThread();
 
-    // Text field border and background
-    ImageSlice viewport =
-        getViewport().subRect(0, Width - 3 * BtnWidth, 0, Height);
-    int width = viewport.width();
-    viewport.fill(0, width - 1, 0, 1, 128);
-    viewport.fill(0, 1, 1, Height - 1, 128);
-    viewport.fill(0, width, Height - 1, Height, 255);
-    viewport.fill(width - 1, width, 0, Height - 1, 255);
-    viewport.fill(1, width - 2, 1, 2, 0);
-    viewport.fill(1, 2, 2, Height - 2, 0);
-    viewport.fill(1, width - 1, Height - 2, Height - 1, 192);
-    viewport.fill(width - 2, width - 1, 1, Height - 2, 192);
-    viewport.fill(2, width - 2, 2, Height - 2, 255);
+    if(isOpen_) {
+        ImageSlice viewport =
+            getViewport().subRect(0, Width - 3 * BtnWidth, 0, Height);
+        int width = viewport.width();
+
+        // Text field border
+        viewport.fill(0, width - 1, 0, 1, 128);
+        viewport.fill(0, 1, 1, Height - 1, 128);
+        viewport.fill(0, width, Height - 1, Height, 255);
+        viewport.fill(width - 1, width, 0, Height - 1, 255);
+        viewport.fill(1, width - 2, 1, 2, 0);
+        viewport.fill(1, 2, 2, Height - 2, 0);
+        viewport.fill(1, width - 1, Height - 2, Height - 1, 192);
+        viewport.fill(width - 2, width - 1, 1, Height - 2, 192);
+
+        // Text field background
+        if(findResult_) {
+            viewport.fill(2, width - 2, 2, Height - 2, 255);
+        } else {
+            viewport.fill(2, width - 2, 2, Height - 2, 255, 176, 176);
+        }
+    }
 }
 
 vector<shared_ptr<Widget>> FindBar::widgetListChildren_() {

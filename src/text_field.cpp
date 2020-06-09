@@ -196,8 +196,6 @@ void TextField::widgetRender_() {
 
     ImageSlice viewport = getViewport();
 
-    viewport.fill(0, viewport.width(), 0, viewport.height(), 255);
-
     textLayout_->render(viewport);
 
     int caretStartY = viewport.height() - 14;
@@ -217,14 +215,17 @@ void TextField::widgetRender_() {
         for(int y = 0; y < fillSlice.height(); ++y) {
             uint8_t* ptr = fillSlice.getPixelPtr(0, y);
             for(int x = 0; x < fillSlice.width(); ++x) {
-                if(*ptr >= 128) {
-                    *(ptr + 0) = 128;
-                    *(ptr + 1) = 0;
-                    *(ptr + 2) = 0;
+                uint8_t& r = *(ptr + 0);
+                uint8_t& g = *(ptr + 1);
+                uint8_t& b = *(ptr + 2);
+                if(r == 0 && g == 0 && b == 0) {
+                    r = 255;
+                    g = 255;
+                    b = 255;
                 } else {
-                    *(ptr + 0) = 255;
-                    *(ptr + 1) = 255;
-                    *(ptr + 2) = 255;
+                    r = 128;
+                    g = 0;
+                    b = 0;
                 }
                 ptr += 4;
             }

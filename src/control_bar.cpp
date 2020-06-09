@@ -461,6 +461,14 @@ void ControlBar::findNext() {
     }
 }
 
+void ControlBar::setFindResult(bool found) {
+    requireUIThread();
+
+    if(findBarVisible_) {
+        findBar_->setFindResult(found);
+    }
+}
+
 void ControlBar::activateAddress() {
     requireUIThread();
     addrField_->activate();
