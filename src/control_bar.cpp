@@ -204,40 +204,62 @@ MenuButtonIcon findIcon = {
 };
 
 vector<string> clipboardIconPattern = {
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGBBBBBBBBBBBBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBGGGGGGGGGGBGGG",
-    "GGGGBBBBBBBBBBBBGGG",
-    "GGGGGGGGGGGGGGGGGGG",
-    "GGGGGGGGGGGGGGGGGGG"
+    "...................",
+    "...................",
+    "...eeeeeeBBeeeeee..",
+    "..e#####BzyB#####E.",
+    "..e####BzyyYB####E.",
+    "..e#pppBYYYYBppp#E.",
+    "..e#pWWBBBBBBWWP#E.",
+    "..e#pWWWWWWWWWWP#E.",
+    "..e#pWWWWWWWWWWP#E.",
+    "..e#pWWWWWWWWWWP#E.",
+    "..e#pWWWWWWWWWWP#E.",
+    "..e#pWWWWWWqqqqB#E.",
+    "..e#pWWWWWWqwwB##E.",
+    "..e#pWWWWWWqwB###E.",
+    "..e#pWWWWWWqB####E.",
+    "..e#pPPPPPPB#####E.",
+    "..e##############E.",
+    "...EEEEEEEEEEEEEE..",
+    "..................."
 };
 
 MenuButtonIcon clipboardIcon = {
     ImageSlice::createImageFromStrings(
         clipboardIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 255}}
+            {'.', {192, 192, 192}},
+            {'W', {255, 255, 255}},
+            {'w', {240, 240, 240}},
+            {'B', {0, 0, 0}},
+            {'e', {96, 48, 24}},
+            {'E', {64, 32, 16}},
+            {'p', {96, 64, 32}},
+            {'q', {80, 80, 80}},
+            {'P', {32, 32, 32}},
+            {'Y', {224, 224, 0}},
+            {'y', {240, 240, 0}},
+            {'z', {255, 255, 0}},
+            {'#', {232, 156, 118}}
         }
     ),
     ImageSlice::createImageFromStrings(
         clipboardIconPattern,
         {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}}
+            {'.', {192, 192, 192}},
+            {'W', {255, 255, 255}},
+            {'w', {240, 240, 240}},
+            {'B', {0, 0, 0}},
+            {'e', {64, 64, 64}},
+            {'E', {16, 16, 16}},
+            {'p', {96, 96, 96}},
+            {'q', {96, 96, 96}},
+            {'P', {32, 32, 32}},
+            {'Y', {224, 224, 224}},
+            {'y', {240, 240, 240}},
+            {'z', {255, 255, 255}},
+            {'#', {192, 192, 192}}
         }
     )
 };
