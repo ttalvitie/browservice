@@ -8,6 +8,7 @@
 #include "root_widget.hpp"
 
 #include "include/cef_client.h"
+#include "include/cef_parser.h"
 
 namespace {
 
@@ -171,6 +172,51 @@ public:
         session_->updateSecurityStatus_();
     }
 
+    virtual void OnLoadError(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        ErrorCode errorCode,
+        const CefString& errorText,
+        const CefString& failedUrl
+    ) {
+        requireUIThread();
+
+        // Do not show error for file downloads
+        if(errorCode == ERR_ABORTED) {
+            return;
+        }
+
+        stringstream ss;
+        ss << "<html><head><title>Load error</title></head>";
+        ss << "<body><h2>";
+        ss << "Loading URL " << string(failedUrl) << " failed";
+        ss << " with error " << string(errorText);
+
+        // Add random data to avoid collisions with actual URLs in ignoredURL_
+        mt19937 rng(random_device{}());
+        ss << "<!--";
+        for(int i = 0; i < 16; ++i) {
+            ss << (char)uniform_int_distribution<int>('A', 'Z')(rng);
+        }
+        ss << "-->";
+
+        ss << "</h2></body></html>";
+        string errorHTML = ss.str();
+
+        string dataURL = "data:text/html;base64,";
+        dataURL += string(CefURIEncode(
+            CefBase64Encode(errorHTML.data(), errorHTML.size()),
+            false
+        ));
+
+        if(frame->IsMain()) {
+            // Ensure that address bar is not updated to show the data URL
+            ignoredURL_ = dataURL;
+        }
+
+        frame->LoadURL(dataURL);
+    }
+
     // CefDisplayHandler:
     virtual void OnAddressChange(
         CefRefPtr<CefBrowser> browser,
@@ -178,7 +224,10 @@ public:
         const CefString& url
     ) override {
         requireUIThread();
-        session_->rootWidget_->controlBar()->setAddress(url);
+
+        if(!ignoredURL_ || string(url) != *ignoredURL_) {
+            session_->rootWidget_->controlBar()->setAddress(url);
+        }
         session_->updateSecurityStatus_();
     }
 
@@ -222,6 +271,8 @@ private:
     CefRefPtr<CefDownloadHandler> downloadHandler_;
 
     int lastFindID_;
+
+    optional<string> ignoredURL_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };
