@@ -117,9 +117,8 @@ int main(int argc, char* argv[]) {
         CefSettings settings;
         settings.windowless_rendering_enabled = true;
         settings.command_line_args_disabled = true;
-        if(!globals->config->userAgent.empty()) {
-            CefString(&settings.user_agent).FromString(globals->config->userAgent);
-        }
+        CefString(&settings.cache_path).FromString(globals->config->dataDir);
+        CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
         CefInitialize(mainArgs, settings, app, nullptr);
 

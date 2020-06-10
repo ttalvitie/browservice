@@ -21,5 +21,6 @@ public:
     const int defaultQuality;
     const bool useDedicatedXvfb;
     const string startPage;
+    const string dataDir;
 };
 

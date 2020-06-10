@@ -3,7 +3,8 @@
     CONF_FOREACH_OPT_ITEM(userAgent) \
     CONF_FOREACH_OPT_ITEM(defaultQuality) \
     CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
-    CONF_FOREACH_OPT_ITEM(startPage)
+    CONF_FOREACH_OPT_ITEM(startPage) \
+    CONF_FOREACH_OPT_ITEM(dataDir)
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";
@@ -96,5 +97,19 @@ CONF_DEF_OPT_INFO(startPage) {
     }
     bool validate(string val) {
         return !val.empty();
+    }
+};
+
+CONF_DEF_OPT_INFO(dataDir) {
+    const char* name = "data-dir";
+    const char* valSpec = "PATH";
+    string desc() {
+        return "absolute path to a directory that will be used to store data such as cookies and cache; if empty, the browser runs in incognito mode";
+    }
+    string defaultValStr() {
+        return "default empty";
+    }
+    string defaultVal() {
+        return "";
     }
 };
