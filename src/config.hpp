@@ -19,6 +19,7 @@ public:
     const string httpListenAddr;
     const string userAgent;
     const int defaultQuality;
-    bool useDedicatedXvfb;
+    const bool useDedicatedXvfb;
+    const string startPage;
 };
 

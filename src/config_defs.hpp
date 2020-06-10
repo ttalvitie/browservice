@@ -2,7 +2,8 @@
     CONF_FOREACH_OPT_ITEM(httpListenAddr) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
     CONF_FOREACH_OPT_ITEM(defaultQuality) \
-    CONF_FOREACH_OPT_ITEM(useDedicatedXvfb)
+    CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
+    CONF_FOREACH_OPT_ITEM(startPage)
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";
@@ -81,5 +82,19 @@ CONF_DEF_OPT_INFO(useDedicatedXvfb) {
     }
     bool defaultVal() {
         return true;
+    }
+};
+
+CONF_DEF_OPT_INFO(startPage) {
+    const char* name = "start-page";
+    const char* valSpec = "URL";
+    string desc() {
+        return "URL of the initial page for each new session";
+    }
+    string defaultVal() {
+        return "about:blank";
+    }
+    bool validate(string val) {
+        return !val.empty();
     }
 };

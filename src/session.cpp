@@ -1,6 +1,7 @@
 #include "session.hpp"
 
 #include "event.hpp"
+#include "globals.hpp"
 #include "html.hpp"
 #include "image_compressor.hpp"
 #include "key.hpp"
@@ -711,7 +712,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
         if(!CefBrowserHost::CreateBrowser(
             windowInfo,
             client,
-            "https://cs.helsinki.fi/u/totalvit/baaslinks.html",
+            globals->config->startPage,
             browserSettings,
             nullptr,
             nullptr
