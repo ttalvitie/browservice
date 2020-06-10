@@ -12,7 +12,7 @@ TextField::TextField(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
 
@@ -33,7 +33,7 @@ TextField::TextField(CKey,
 }
 
 void TextField::setText(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     unsetCaret_();
     textLayout_->setText(move(text));
@@ -43,29 +43,29 @@ void TextField::setText(string text) {
 }
 
 string TextField::text() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->text();
 }
 
 void TextField::activate() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     takeFocus();
     setCaret_(0, (int)textLayout_->text().size());
 }
 
 bool TextField::hasFocus() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return hasFocus_;
 }
 
 void TextField::setRemoveCaretOnSubmit(bool value) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     removeCaretOnSubmit_ = value;
 }
 
 void TextField::setAllowEmptySubmit(bool value) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     allowEmptySubmit_ = value;
 }
 
@@ -100,13 +100,13 @@ void TextField::setCaret_(int start, int end) {
 }
 
 void TextField::scheduleBlinkCaret_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     caretBlinkTimeout_->clear(false);
 
     weak_ptr<TextField> selfWeak = shared_from_this();
     caretBlinkTimeout_->set([selfWeak]() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(shared_ptr<TextField> self = selfWeak.lock()) {
             if(self->caretActive_) {
@@ -172,7 +172,7 @@ void TextField::pasteFromClipboard_() {
     if(caretActive_) {
         weak_ptr<TextField> selfWeak = shared_from_this();
         globals->xWindow->pasteFromClipboard([selfWeak](string text) {
-            requireUIThread();
+            REQUIRE_UI_THREAD();
             if(shared_ptr<TextField> self = selfWeak.lock()) {
                 self->typeText_(text.data(), text.size());
             }
@@ -193,12 +193,12 @@ void TextField::copyToClipboard_() {
 }
 
 void TextField::widgetViewportUpdated_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     textLayout_->setWidth(getViewport().width());
 }
 
 void TextField::widgetRender_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
 
@@ -244,7 +244,7 @@ void TextField::widgetRender_() {
 }
 
 void TextField::widgetMouseDownEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button == 0) {
         if(caretActive_) {
@@ -258,7 +258,7 @@ void TextField::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void TextField::widgetMouseUpEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button == 0) {
         leftMouseButtonDown_ = false;
@@ -266,12 +266,12 @@ void TextField::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void TextField::widgetMouseDoubleClickEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     setCaret_(0, (int)textLayout_->text().size());
 }
 
 void TextField::widgetMouseWheelEvent_(int x, int y, int delta) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     postTask(
         eventHandler_,
@@ -281,7 +281,7 @@ void TextField::widgetMouseWheelEvent_(int x, int y, int delta) {
 }
 
 void TextField::widgetMouseMoveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(leftMouseButtonDown_ && caretActive_) {
         int idx = textLayout_->xCoordToIndex(x);
@@ -290,7 +290,7 @@ void TextField::widgetMouseMoveEvent_(int x, int y) {
 }
 
 void TextField::widgetKeyDownEvent_(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(key == keys::Shift) {
@@ -358,7 +358,7 @@ void TextField::widgetKeyDownEvent_(int key) {
 }
 
 void TextField::widgetKeyUpEvent_(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(key == keys::Down || key == keys::Up) {
@@ -378,12 +378,12 @@ void TextField::widgetKeyUpEvent_(int key) {
 }
 
 void TextField::widgetGainFocusEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     hasFocus_ = true;
 }
 
 void TextField::widgetLoseFocusEvent_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     hasFocus_ = false;
 

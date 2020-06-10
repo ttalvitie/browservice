@@ -13,7 +13,7 @@
 namespace {
 
 void serveWhiteJPEGPixel(shared_ptr<HTTPRequest> request) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     // 1x1 white JPEG
     vector<uint8_t> data = {
@@ -47,7 +47,7 @@ void serveWhiteJPEGPixel(shared_ptr<HTTPRequest> request) {
 }
 
 ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs, bool allowPNG) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     allowPNG_ = allowPNG;
 
@@ -85,7 +85,7 @@ void ImageCompressor::setQuality(int quality) {
 }
 
 void ImageCompressor::updateImage(ImageSlice image) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(!image.isEmpty());
 
     image_ = image;
@@ -94,7 +94,7 @@ void ImageCompressor::updateImage(ImageSlice image) {
 }
 
 void ImageCompressor::sendCompressedImageNow(shared_ptr<HTTPRequest> httpRequest) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     sendTimeout_->clear(true);
 
@@ -105,7 +105,7 @@ void ImageCompressor::sendCompressedImageNow(shared_ptr<HTTPRequest> httpRequest
 }
 
 void ImageCompressor::sendCompressedImageWait(shared_ptr<HTTPRequest> httpRequest) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     sendTimeout_->clear(true);
 
@@ -114,14 +114,14 @@ void ImageCompressor::sendCompressedImageWait(shared_ptr<HTTPRequest> httpReques
     } else {
         shared_ptr<ImageCompressor> self = shared_from_this();
         sendTimeout_->set([self, httpRequest]() {
-            requireUIThread();
+            REQUIRE_UI_THREAD();
             self->sendCompressedImageNow(httpRequest);
         });
     }
 }
 
 void ImageCompressor::flush() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     sendTimeout_->clear(true);
 }
 
@@ -145,7 +145,7 @@ ImageCompressor::CompressedImage ImageCompressor::compressPNG_(
     }
 
     return [png, length](shared_ptr<HTTPRequest> request) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         request->sendResponse(
             200,
@@ -174,7 +174,7 @@ ImageCompressor::CompressedImage ImageCompressor::compressJPEG_(
         quality
     ));
     return [jpeg](shared_ptr<HTTPRequest> request) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         request->sendResponse(
             200,
@@ -221,7 +221,7 @@ void ImageCompressor::pump_() {
 }
 
 void ImageCompressor::compressTaskDone_(CompressedImage compressedImage) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(compressionInProgress_);
 
     compressionInProgress_ = false;

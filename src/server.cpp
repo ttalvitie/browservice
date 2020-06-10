@@ -32,14 +32,14 @@ string htmlEscapeString(string src) {
 }
 
 Server::Server(CKey, weak_ptr<ServerEventHandler> eventHandler) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
     state_ = Running;
     // Setup is finished in afterConstruct_
 }
 
 void Server::shutdown() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(state_ == Running) {
         state_ = ShutdownPending;
@@ -55,7 +55,7 @@ void Server::shutdown() {
 }
 
 void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     string method = request->method();
     string path = request->path();
@@ -101,12 +101,12 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
 }
 
 void Server::onHTTPServerShutdownComplete() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     checkShutdownStatus_();
 }
 
 void Server::onSessionClosed(uint64_t id) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     auto it = sessions_.find(id);
     CHECK(it != sessions_.end());
@@ -116,12 +116,12 @@ void Server::onSessionClosed(uint64_t id) {
 }
 
 bool Server::onIsServerFullQuery() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return (int)sessions_.size() >= globals->config->sessionLimit;
 }
 
 void Server::onPopupSessionOpen(shared_ptr<Session> session) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     CHECK(sessions_.emplace(session->id(), session).second);
 

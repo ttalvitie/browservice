@@ -290,19 +290,19 @@ struct TextLayout::Impl {
 };
 
 TextRenderContext::TextRenderContext(CKey) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_ = make_unique<Impl>();
 }
 
 TextRenderContext::~TextRenderContext() {}
 
 TextLayout::TextLayout(CKey, shared_ptr<TextRenderContext> ctx) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_ = make_unique<Impl>(ctx);
 }
 
 TextLayout::TextLayout(CKey) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(globals);
 
     impl_ = make_unique<Impl>(globals->textRenderContext);
@@ -311,44 +311,44 @@ TextLayout::TextLayout(CKey) {
 TextLayout::~TextLayout() {}
 
 void TextLayout::setText(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->setText(move(text));
 }
 
 string TextLayout::text() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->text;
 }
 
 int TextLayout::width() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->getExtents().width;
 }
 
 int TextLayout::height() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->getExtents().height;
 }
 
 int TextLayout::xCoordToIndex(int x) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->xCoordToIndex(x);
 }
 
 int TextLayout::indexToXCoord(int idx) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->indexToXCoord(idx);
 }
 
 int TextLayout::visualMoveIdx(int idx, bool forward) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->visualMoveIdx(idx, forward);
 }
 
 void TextLayout::render(
     ImageSlice dest, int x, int y, uint8_t r, uint8_t g, uint8_t b
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->render(dest, x, y, r, g, b);
 }
 
@@ -359,7 +359,7 @@ void TextLayout::render(
 }
 
 OverflowTextLayout::OverflowTextLayout(CKey, shared_ptr<TextRenderContext> ctx) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     textLayout_ = TextLayout::create(ctx);
     width_ = 0;
@@ -367,7 +367,7 @@ OverflowTextLayout::OverflowTextLayout(CKey, shared_ptr<TextRenderContext> ctx) 
 }
 
 OverflowTextLayout::OverflowTextLayout(CKey) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     textLayout_ = TextLayout::create();
     width_ = 0;
@@ -375,7 +375,7 @@ OverflowTextLayout::OverflowTextLayout(CKey) {
 }
 
 void OverflowTextLayout::setText(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     textLayout_->setText(move(text));
     clampOffset_();
@@ -386,7 +386,7 @@ string OverflowTextLayout::text() {
 }
 
 void OverflowTextLayout::setWidth(int width) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(width >= 0);
 
     width_ = width;
@@ -394,34 +394,34 @@ void OverflowTextLayout::setWidth(int width) {
 }
 
 int OverflowTextLayout::width() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return width_;
 }
 
 int OverflowTextLayout::textWidth() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->width();
 }
 
 int OverflowTextLayout::textHeight() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->height();
 }
 
 void OverflowTextLayout::setOffset(int offset) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     offset_ = offset;
     clampOffset_();
 }
 
 int OverflowTextLayout::offset() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return offset_;
 }
 
 void OverflowTextLayout::makeVisible(int idx) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     int x = textLayout_->indexToXCoord(idx);
 
@@ -432,29 +432,29 @@ void OverflowTextLayout::makeVisible(int idx) {
 }
 
 int OverflowTextLayout::xCoordToIndex(int x) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->xCoordToIndex(x + offset_);
 }
 
 int OverflowTextLayout::indexToXCoord(int idx) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->indexToXCoord(idx) - offset_;
 }
 
 int OverflowTextLayout::visualMoveIdx(int idx, bool forward) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return textLayout_->visualMoveIdx(idx, forward);
 }
 
 void OverflowTextLayout::render(ImageSlice dest, uint8_t r, uint8_t g, uint8_t b) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice subDest = dest.subRect(0, width_, 0, dest.height());
     textLayout_->render(subDest, -offset_, 0, r, g, b);
 }
 
 void OverflowTextLayout::render(ImageSlice dest, uint8_t rgb) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice subDest = dest.subRect(0, width_, 0, dest.height());
     textLayout_->render(subDest, -offset_, 0, rgb);

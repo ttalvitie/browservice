@@ -103,7 +103,7 @@ bool processEvent(
     string::const_iterator begin,
     string::const_iterator end
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(begin < end && *(end - 1) == '/');
 
     string name;

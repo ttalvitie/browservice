@@ -405,7 +405,7 @@ ControlBar::ControlBar(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
 
@@ -433,7 +433,7 @@ ControlBar::ControlBar(CKey,
 }
 
 void ControlBar::setSecurityStatus(SecurityStatus value) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(securityStatus_ != value) {
         securityStatus_ = value;
@@ -442,12 +442,12 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 }
 
 void ControlBar::setAddress(string addr) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     addrField_->setText(move(addr));
 }
 
 void ControlBar::setLoading(bool loading) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(loading != loading_) {
         loading_ = loading;
@@ -456,7 +456,7 @@ void ControlBar::setLoading(bool loading) {
 }
 
 void ControlBar::setPendingDownloadCount(int count) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(count >= 0);
 
     if(count != pendingDownloadCount_) {
@@ -476,7 +476,7 @@ void ControlBar::setPendingDownloadCount(int count) {
 }
 
 void ControlBar::setDownloadProgress(vector<int> progress) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(progress != downloadProgress_) {
         downloadProgress_ = move(progress);
@@ -486,7 +486,7 @@ void ControlBar::setDownloadProgress(vector<int> progress) {
 }
 
 void ControlBar::openFindBar() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     findBarVisible_ = true;
     findBar_->open();
@@ -496,7 +496,7 @@ void ControlBar::openFindBar() {
 }
 
 void ControlBar::findNext() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(findBarVisible_) {
         findBar_->findNext();
@@ -504,7 +504,7 @@ void ControlBar::findNext() {
 }
 
 void ControlBar::setFindResult(bool found) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(findBarVisible_) {
         findBar_->setFindResult(found);
@@ -512,17 +512,17 @@ void ControlBar::setFindResult(bool found) {
 }
 
 void ControlBar::activateAddress() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     addrField_->activate();
 }
 
 void ControlBar::onTextFieldSubmitted(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     postTask(eventHandler_, &ControlBarEventHandler::onAddressSubmitted, text);
 }
 
 void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button.lock() == goButton_) {
         postTask(
@@ -545,17 +545,17 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 }
 
 void ControlBar::onQualityChanged(int quality) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
 }
 
 void ControlBar::onButtonPressed() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     postTask(eventHandler_, &ControlBarEventHandler::onPendingDownloadAccepted);
 }
 
 void ControlBar::onFindBarClose() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(findBarVisible_) {
         findBarVisible_ = false;
@@ -565,7 +565,7 @@ void ControlBar::onFindBarClose() {
 }
 
 void ControlBar::onFind(string text, bool forward, bool findNext) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(findBarVisible_) {
         postTask(
@@ -579,7 +579,7 @@ void ControlBar::onFind(string text, bool forward, bool findNext) {
 }
 
 void ControlBar::onStopFind(bool clearSelection) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     postTask(eventHandler_, &ControlBarEventHandler::onStopFind, clearSelection);
 }
 
@@ -604,7 +604,7 @@ ControlBar::Layout ControlBar::layout_() {
 }
 
 void ControlBar::widgetViewportUpdated_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
     Layout layout = layout_();
@@ -641,7 +641,7 @@ void ControlBar::widgetViewportUpdated_() {
 }
 
 void ControlBar::widgetRender_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     animationTimeout_->clear(false);
 
@@ -772,7 +772,7 @@ void ControlBar::widgetRender_() {
 }
 
 vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     vector<shared_ptr<Widget>> children = {
         addrField_,
         goButton_,

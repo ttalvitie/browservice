@@ -3,7 +3,7 @@
 #include "key.hpp"
 
 Widget::Widget(weak_ptr<WidgetParent> parent) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     parent_ = parent;
     viewDirty_ = false;
@@ -19,7 +19,7 @@ Widget::Widget(weak_ptr<WidgetParent> parent) {
 }
 
 void Widget::setViewport(ImageSlice viewport) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     viewport_ = viewport;
     widgetViewportUpdated_();
@@ -27,12 +27,12 @@ void Widget::setViewport(ImageSlice viewport) {
 }
 
 ImageSlice Widget::getViewport() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return viewport_;
 }
 
 void Widget::render() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     viewDirty_ = false;
     widgetRender_();
@@ -44,12 +44,12 @@ void Widget::render() {
 }
 
 int Widget::cursor() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return cursor_;
 }
 
 void Widget::takeFocus() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(focused_ && !focusChild_) return;
 
     if(focused_) {
@@ -67,7 +67,7 @@ void Widget::takeFocus() {
 }
 
 void Widget::sendMouseDownEvent(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -83,7 +83,7 @@ void Widget::sendMouseDownEvent(int x, int y, int button) {
 }
 
 void Widget::sendMouseUpEvent(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -99,7 +99,7 @@ void Widget::sendMouseUpEvent(int x, int y, int button) {
 }
 
 void Widget::sendMouseDoubleClickEvent(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -108,7 +108,7 @@ void Widget::sendMouseDoubleClickEvent(int x, int y) {
 }
 
 void Widget::sendMouseWheelEvent(int x, int y, int delta) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -118,7 +118,7 @@ void Widget::sendMouseWheelEvent(int x, int y, int delta) {
 }
 
 void Widget::sendMouseMoveEvent(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(!mouseOver_ && x == lastMouseX_ && y == lastMouseY_) {
         return;
@@ -132,7 +132,7 @@ void Widget::sendMouseMoveEvent(int x, int y) {
 }
 
 void Widget::sendMouseEnterEvent(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -141,7 +141,7 @@ void Widget::sendMouseEnterEvent(int x, int y) {
 }
 
 void Widget::sendMouseLeaveEvent(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -155,7 +155,7 @@ void Widget::sendMouseLeaveEvent(int x, int y) {
 }
 
 void Widget::sendKeyDownEvent(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(
@@ -177,7 +177,7 @@ void Widget::sendKeyDownEvent(int key) {
 }
 
 void Widget::sendKeyUpEvent(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(!keysDown_.count(key)) {
@@ -188,7 +188,7 @@ void Widget::sendKeyUpEvent(int key) {
 }
 
 void Widget::sendGainFocusEvent(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastMouseX_ = x;
     lastMouseY_ = y;
@@ -197,7 +197,7 @@ void Widget::sendGainFocusEvent(int x, int y) {
 }
 
 void Widget::sendLoseFocusEvent() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(focused_) {
         clearEventState_(lastMouseX_, lastMouseY_);
@@ -208,17 +208,17 @@ void Widget::sendLoseFocusEvent() {
 }
 
 void Widget::onWidgetViewDirty() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     signalViewDirty_();
 }
 
 void Widget::onWidgetCursorChanged() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     updateCursor_();
 }
 
 void Widget::onWidgetTakeFocus(Widget* child) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     shared_ptr<Widget> childShared;
     for(shared_ptr<Widget> candidate : widgetListChildren_()) {
@@ -243,7 +243,7 @@ void Widget::onWidgetTakeFocus(Widget* child) {
 }
 
 void Widget::onGlobalHotkeyPressed(GlobalHotkey key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(shared_ptr<WidgetParent> parent = parent_.lock()) {
         parent->onGlobalHotkeyPressed(key);
@@ -251,7 +251,7 @@ void Widget::onGlobalHotkeyPressed(GlobalHotkey key) {
 }
 
 void Widget::signalViewDirty_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(!viewDirty_) {
         viewDirty_ = true;
@@ -262,7 +262,7 @@ void Widget::signalViewDirty_() {
 }
 
 void Widget::setCursor_(int newCursor) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(newCursor >= 0 && newCursor < CursorTypeCount);
 
     myCursor_ = newCursor;
@@ -270,17 +270,17 @@ void Widget::setCursor_(int newCursor) {
 }
 
 bool Widget::isMouseOver_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return mouseOver_;
 }
 
 bool Widget::isFocused_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return focused_;
 }
 
 pair<int, int> Widget::getLastMousePos_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return {lastMouseX_, lastMouseY_};
 }
 

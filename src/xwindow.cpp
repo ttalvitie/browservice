@@ -75,7 +75,7 @@ public:
     }
 
     void pasteFromClipboard(function<void(string)> callback) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(mode_ != Closed);
 
         if(mode_ == Pasting) {
@@ -122,7 +122,7 @@ public:
     }
 
     void copyToClipboard(string text) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(mode_ != Closed);
 
         if(mode_ == Copying) {
@@ -174,7 +174,7 @@ private:
     }
 
     void pasteTimedOut_() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(mode_ == Pasting);
 
         mode_ = Idle;
@@ -182,7 +182,7 @@ private:
     }
 
     void pasteResponseReceived_(string text) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(mode_ == Pasting) {
             mode_ = Idle;
@@ -195,7 +195,7 @@ private:
     }
 
     void copyCleared_() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(mode_ == Copying) {
             mode_ = Idle;
@@ -358,7 +358,7 @@ private:
 };
 
 XWindow::XWindow(CKey) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_ = Impl::create();
 }
 
@@ -367,11 +367,11 @@ XWindow::~XWindow() {
 }
 
 void XWindow::pasteFromClipboard(function<void(string)> callback) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->pasteFromClipboard(callback);
 }
 
 void XWindow::copyToClipboard(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->copyToClipboard(text);
 }

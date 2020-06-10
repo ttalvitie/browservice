@@ -9,7 +9,7 @@ MenuButton::MenuButton(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     icon_ = icon;
 
@@ -33,7 +33,7 @@ void MenuButton::mouseMove_(int x, int y) {
 }
 
 void MenuButton::widgetRender_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
 
@@ -59,7 +59,7 @@ void MenuButton::widgetRender_() {
 }
 
 void MenuButton::widgetMouseDownEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button == 0) {
         mouseDown_ = true;
@@ -68,7 +68,7 @@ void MenuButton::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void MenuButton::widgetMouseUpEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button == 0) {
         if(mouseDown_ && mouseOver_) {
@@ -86,17 +86,17 @@ void MenuButton::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void MenuButton::widgetMouseMoveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     mouseMove_(x, y);
 }
 
 void MenuButton::widgetMouseEnterEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     mouseMove_(x, y);
 }
 
 void MenuButton::widgetMouseLeaveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(mouseOver_) {
         mouseOver_ = false;
@@ -105,7 +105,7 @@ void MenuButton::widgetMouseLeaveEvent_(int x, int y) {
 }
 
 void MenuButton::widgetKeyDownEvent_(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(key == keys::Enter) {
         postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEnterKeyDown);

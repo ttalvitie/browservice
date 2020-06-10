@@ -201,23 +201,24 @@ string toString(const T& obj) {
     return ss.str();
 }
 
-// The function requireUIThread is a version of CEF_REQUIRE_UI_THREAD that is
+// The macro REQUIRE_UI_THREAD is a version of CEF_REQUIRE_UI_THREAD that is
 // allowed to be called in any thread unless specifically enabled by
 // setRequireUIThreadEnabled. It should be enabled only when the control is in
 // the CEF event loop.
 #ifdef NDEBUG
-inline void setRequireUIThreadEnabled(bool value) {}
-inline void requireUIThread() {}
+    inline void setRequireUIThreadEnabled(bool value) {}
+    #define REQUIRE_UI_THREAD() do {} while(false)
 #else
-inline void setRequireUIThreadEnabled(bool value) {
     extern atomic<bool> requireUIThreadEnabled_;
-    requireUIThreadEnabled_.store(value);
-}
 
-inline void requireUIThread() {
-    extern atomic<bool> requireUIThreadEnabled_;
-    if(requireUIThreadEnabled_.load()) {
-        CEF_REQUIRE_UI_THREAD();
+    inline void setRequireUIThreadEnabled(bool value) {
+        requireUIThreadEnabled_.store(value);
     }
-}
+
+    #define REQUIRE_UI_THREAD() \
+        do { \
+            if(requireUIThreadEnabled_.load()) { \
+                CEF_REQUIRE_UI_THREAD(); \
+            } \
+        } while(false)
 #endif

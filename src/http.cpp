@@ -179,22 +179,22 @@ HTTPRequest::HTTPRequest(CKey, unique_ptr<Impl> impl)
 {}
 
 string HTTPRequest::method() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->method();
 }
 
 string HTTPRequest::path() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->path();
 }
 
 string HTTPRequest::userAgent() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->userAgent();
 }
 
 string HTTPRequest::getFormParam(string name) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return impl_->getFormParam(name);
 }
 
@@ -206,7 +206,7 @@ void HTTPRequest::sendResponse(
     bool noCache,
     vector<pair<string, string>> extraHeaders
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->sendResponse(
         status, contentType, contentLength, body, noCache, move(extraHeaders)
     );
@@ -218,7 +218,7 @@ void HTTPRequest::sendTextResponse(
     bool noCache,
     vector<pair<string, string>> extraHeaders
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_->sendTextResponse(status, move(text), noCache, move(extraHeaders));
 }
 
@@ -249,7 +249,7 @@ public:
     }
 
     void shutdown() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         
         if(state_ != Running) {
             return;
@@ -284,7 +284,7 @@ public:
     }
 
     bool isShutdownComplete() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         return state_ == ShutdownComplete;
     }
 
@@ -303,7 +303,7 @@ HTTPServer::HTTPServer(CKey,
     weak_ptr<HTTPServerEventHandler> eventHandler,
     const std::string& listenSockAddr
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     impl_ = Impl::create(eventHandler, listenSockAddr);
 }
 

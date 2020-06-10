@@ -155,7 +155,7 @@ FindBar::FindBar(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
 
@@ -163,7 +163,7 @@ FindBar::FindBar(CKey,
 }
 
 void FindBar::open() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(!isOpen_) {
         isOpen_ = true;
@@ -175,7 +175,7 @@ void FindBar::open() {
 }
 
 void FindBar::close() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(isOpen_) {
         isOpen_ = false;
@@ -185,12 +185,12 @@ void FindBar::close() {
 }
 
 void FindBar::activate() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     textField_->activate();
 }
 
 void FindBar::findNext() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(isOpen_) {
         find_(textField_->text(), lastDirForward_);
@@ -198,7 +198,7 @@ void FindBar::findNext() {
 }
 
 void FindBar::setFindResult(bool found) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(isOpen_ && findResult_ != found) {
         findResult_ = found;
@@ -207,26 +207,26 @@ void FindBar::setFindResult(bool found) {
 }
 
 void FindBar::onTextFieldTextChanged() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!isOpen_) return;
 
     updateText_(textField_->text());
 }
 
 void FindBar::onTextFieldSubmitted(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!isOpen_) return;
 
     find_(text, lastDirForward_);
 }
 
 void FindBar::onTextFieldEscKeyDown() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     close();
 }
 
 void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button.lock() == closeButton_) {
         close();
@@ -243,7 +243,7 @@ void FindBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 }
 
 void FindBar::onMenuButtonEnterKeyDown() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(isOpen_) {
         find_(textField_->text(), lastDirForward_);
@@ -251,7 +251,7 @@ void FindBar::onMenuButtonEnterKeyDown() {
 }
 
 void FindBar::onMenuButtonEscKeyDown() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     close();
 }
 
@@ -308,7 +308,7 @@ void FindBar::find_(string text, bool forward) {
 }
 
 void FindBar::widgetViewportUpdated_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
 
@@ -327,7 +327,7 @@ void FindBar::widgetViewportUpdated_() {
 }
 
 void FindBar::widgetRender_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(isOpen_) {
         ImageSlice viewport =

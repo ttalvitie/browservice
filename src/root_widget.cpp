@@ -11,7 +11,7 @@ RootWidget::RootWidget(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     allowPNG_ = allowPNG;
 
@@ -22,12 +22,12 @@ RootWidget::RootWidget(CKey,
 }
 
 shared_ptr<ControlBar> RootWidget::controlBar() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return controlBar_;
 }
 
 shared_ptr<BrowserArea> RootWidget::browserArea() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return browserArea_;
 }
 
@@ -40,7 +40,7 @@ void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {
 }
 
 void RootWidget::widgetViewportUpdated_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice controlBarViewport, browserAreaViewport;
     tie(controlBarViewport, browserAreaViewport) =
@@ -51,6 +51,6 @@ void RootWidget::widgetViewportUpdated_() {
 }
 
 vector<shared_ptr<Widget>> RootWidget::widgetListChildren_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return {controlBar_, browserArea_};
 }

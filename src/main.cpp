@@ -32,7 +32,7 @@ public:
     }
 
     void shutdown() {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(server_) {
             server_->shutdown();
@@ -55,7 +55,7 @@ public:
 
     // CefBrowserProcessHandler:
     virtual void OnContextInitialized() override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(!server_);
 
         server_ = Server::create(serverEventHandler_);

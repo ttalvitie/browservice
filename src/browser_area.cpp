@@ -94,7 +94,7 @@ public:
 
     // CefRenderHandler:
     virtual void GetViewRect(CefRefPtr<CefBrowser>, CefRect& rect) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         ImageSlice viewport = browserArea_->getViewport();
         int width = max(min(viewport.width(), 4096), 64);
@@ -104,7 +104,7 @@ public:
     }
 
     virtual bool GetScreenInfo(CefRefPtr<CefBrowser> browser, CefScreenInfo& info) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         CefRect rect;
         GetViewRect(browser, rect);
@@ -117,7 +117,7 @@ public:
     }
 
     virtual void OnPopupShow(CefRefPtr<CefBrowser> browser, bool show) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         browserArea_->popupOpen_ = show;
 
@@ -129,7 +129,7 @@ public:
     }
 
     virtual void OnPopupSize(CefRefPtr<CefBrowser> browser, const CefRect& rect) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         browserArea_->popupRect_ = Rect(
             rect.x,
@@ -152,7 +152,7 @@ public:
         int bufWidth,
         int bufHeight
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         ImageSlice viewport = browserArea_->getViewport();
 
@@ -231,7 +231,7 @@ public:
         CefRenderHandler::CursorType type,
         const CefCursorInfo& customCursorInfo
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         int cursor = NormalCursor;
         if(type == CT_HAND) cursor = HandCursor;
@@ -252,7 +252,7 @@ BrowserArea::BrowserArea(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
     popupOpen_ = false;
     eventModifiers_ = 0;
@@ -265,7 +265,7 @@ CefRefPtr<CefRenderHandler> BrowserArea::createCefRenderHandler() {
 }
 
 void BrowserArea::setBrowser(CefRefPtr<CefBrowser> browser) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     browser_ = browser;
 
@@ -275,7 +275,7 @@ void BrowserArea::setBrowser(CefRefPtr<CefBrowser> browser) {
 }
 
 void BrowserArea::refreshStatusEvents() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->SendFocusEvent(isFocused_());
@@ -287,7 +287,7 @@ void BrowserArea::refreshStatusEvents() {
 }
 
 void BrowserArea::widgetViewportUpdated_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(browser_) {
         browser_->GetHost()->WasResized();
@@ -297,7 +297,7 @@ void BrowserArea::widgetViewportUpdated_() {
 }
 
 void BrowserArea::widgetMouseDownEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     CefBrowserHost::MouseButtonType buttonType;
     uint32_t buttonFlag;
@@ -312,7 +312,7 @@ void BrowserArea::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void BrowserArea::widgetMouseUpEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     CefBrowserHost::MouseButtonType buttonType;
     uint32_t buttonFlag;
@@ -327,7 +327,7 @@ void BrowserArea::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void BrowserArea::widgetMouseDoubleClickEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
@@ -335,7 +335,7 @@ void BrowserArea::widgetMouseDoubleClickEvent_(int x, int y) {
 }
 
 void BrowserArea::widgetMouseWheelEvent_(int x, int y, int delta) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
@@ -343,7 +343,7 @@ void BrowserArea::widgetMouseWheelEvent_(int x, int y, int delta) {
 }
 
 void BrowserArea::widgetMouseMoveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
@@ -351,7 +351,7 @@ void BrowserArea::widgetMouseMoveEvent_(int x, int y) {
 }
 
 void BrowserArea::widgetMouseEnterEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
@@ -359,7 +359,7 @@ void BrowserArea::widgetMouseEnterEvent_(int x, int y) {
 }
 
 void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
@@ -367,7 +367,7 @@ void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
 }
 
 void BrowserArea::widgetKeyDownEvent_(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(browser_) {
@@ -397,7 +397,7 @@ void BrowserArea::widgetKeyDownEvent_(int key) {
 }
 
 void BrowserArea::widgetKeyUpEvent_(int key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(isValidKey(key));
 
     if(browser_) {
@@ -410,14 +410,14 @@ void BrowserArea::widgetKeyUpEvent_(int key) {
 }
 
 void BrowserArea::widgetGainFocusEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->SendFocusEvent(true);
 }
 
 void BrowserArea::widgetLoseFocusEvent_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->SendFocusEvent(false);

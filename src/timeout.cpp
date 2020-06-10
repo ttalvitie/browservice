@@ -3,7 +3,7 @@
 #include "include/wrapper/cef_closure_task.h"
 
 Timeout::Timeout(CKey, int64_t delayMs) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     delayMs_ = max(delayMs, (int64_t)1);
     active_ = false;
@@ -11,7 +11,7 @@ Timeout::Timeout(CKey, int64_t delayMs) {
 }
 
 void Timeout::set(Func func) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     CHECK(!active_);
 
     active_ = true;
@@ -35,7 +35,7 @@ void Timeout::set(Func func) {
 }
 
 void Timeout::clear(bool runFunc) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(!active_) {
         return;
@@ -52,12 +52,12 @@ void Timeout::clear(bool runFunc) {
 }
 
 bool Timeout::isActive() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return active_;
 }
 
 void Timeout::delayedTask_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     CHECK(delayedTaskScheduled_);
     delayedTaskScheduled_ = false;

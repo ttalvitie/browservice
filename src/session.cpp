@@ -90,7 +90,7 @@ public:
         CefRefPtr<CefDictionaryValue>&,
         bool*
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         shared_ptr<SessionEventHandler> eventHandler =
             session_->eventHandler_.lock();
@@ -127,7 +127,7 @@ public:
     }
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Pending);
 
         LOG(INFO) << "CEF browser for session " << session_->id_ << " created";
@@ -142,7 +142,7 @@ public:
     }
 
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Open || session_->state_ == Closing);
 
         session_->state_ = Closed;
@@ -162,7 +162,7 @@ public:
         CefRefPtr<CefFrame> frame,
         TransitionType transitionType
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(frame->IsMain()) {
             // Make sure that the loaded page gets the correct idea about the
@@ -177,7 +177,7 @@ public:
         bool canGoBack,
         bool canGoForward
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
         session_->rootWidget_->controlBar()->setLoading(isLoading);
         session_->updateSecurityStatus_();
     }
@@ -189,7 +189,7 @@ public:
         const CefString& errorText,
         const CefString& failedURL
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         bool certError =
             errorCode == ERR_ABORTED &&
@@ -245,7 +245,7 @@ public:
         CefRefPtr<CefFrame> frame,
         const CefString& url
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(!ignoredURL_ || string(url) != *ignoredURL_) {
             session_->rootWidget_->controlBar()->setAddress(url);
@@ -276,7 +276,7 @@ public:
         CefRefPtr<CefSSLInfo> sslInfo,
         CefRefPtr<CefRequestCallback> callback
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         lastCertificateErrorURL_ = string(requestURL);
         return false;
@@ -291,7 +291,7 @@ public:
         int activeMatchOrdinal,
         bool finalUpdate
     ) override {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         if(identifier > lastFindID_) {
             session_->rootWidget_->controlBar()->setFindResult(count > 0);
@@ -318,7 +318,7 @@ Session::Session(CKey,
     bool allowPNG,
     bool isPopup
 ) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
 
@@ -382,7 +382,7 @@ Session::~Session() {
 }
 
 void Session::close() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(state_ == Open) {
         LOG(INFO) << "Closing session " << id_ << " requested";
@@ -400,7 +400,7 @@ void Session::close() {
 }
 
 void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(state_ == Closing || state_ == Closed) {
         request->sendTextResponse(503, "ERROR: Browser session has been closed");
@@ -570,12 +570,12 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
 }
 
 uint64_t Session::id() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     return id_;
 }
 
 void Session::onWidgetViewDirty() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self]() {
@@ -585,7 +585,7 @@ void Session::onWidgetViewDirty() {
 }
 
 void Session::onWidgetCursorChanged() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self]() {
@@ -596,7 +596,7 @@ void Session::onWidgetCursorChanged() {
 }
 
 void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     shared_ptr<Session> self = shared_from_this();
     postTask([self, key]() {
@@ -613,7 +613,7 @@ void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
 }
 
 void Session::onAddressSubmitted(string url) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(!browser_) return;
 
@@ -627,31 +627,31 @@ void Session::onAddressSubmitted(string url) {
 }
 
 void Session::onQualityChanged(int quality) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     imageCompressor_->setQuality(quality);
 }
 
 void Session::onPendingDownloadAccepted() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     downloadManager_->acceptPendingDownload();
 }
 
 void Session::onFind(string text, bool forward, bool findNext) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->Find(0, text, forward, false, findNext);
 }
 
 void Session::onStopFind(bool clearSelection) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->StopFinding(clearSelection);
 }
 
 void Session::onClipboardButtonPressed() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     addIframe_([](shared_ptr<HTTPRequest> request) {
         request->sendHTMLResponse(200, writeClipboardIframeHTML, {});
@@ -659,26 +659,26 @@ void Session::onClipboardButtonPressed() {
 }
 
 void Session::onBrowserAreaViewDirty() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
 }
 
 void Session::onPendingDownloadCountChanged(int count) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     rootWidget_->controlBar()->setPendingDownloadCount(count);
 }
 
 void Session::onDownloadProgressChanged(vector<int> progress) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     rootWidget_->controlBar()->setDownloadProgress(move(progress));
 }
 
 void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     weak_ptr<Session> selfWeak = shared_from_this();
     addIframe_([file, selfWeak](shared_ptr<HTTPRequest> request) {
-        requireUIThread();
+        REQUIRE_UI_THREAD();
 
         shared_ptr<Session> self = selfWeak.lock();
         if(!self) return;
@@ -691,7 +691,7 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
         CHECK(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
 
         timeout->set([selfWeak, downloadIdx]() {
-            requireUIThread();
+            REQUIRE_UI_THREAD();
             if(shared_ptr<Session> self = selfWeak.lock()) {
                 self->downloads_.erase(downloadIdx);
             }
@@ -736,7 +736,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
 }
 
 void Session::updateInactivityTimeout_(bool shortened) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     inactivityTimeoutLong_->clear(false);
     inactivityTimeoutShort_->clear(false);
@@ -747,7 +747,7 @@ void Session::updateInactivityTimeout_(bool shortened) {
 
         weak_ptr<Session> self = shared_from_this();
         timeout->set([self, shortened]() {
-            requireUIThread();
+            REQUIRE_UI_THREAD();
             if(shared_ptr<Session> session = self.lock()) {
                 if(session->state_ == Pending || session->state_ == Open) {
                     LOG(INFO)
@@ -761,7 +761,7 @@ void Session::updateInactivityTimeout_(bool shortened) {
 }
 
 void Session::updateSecurityStatus_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     lastSecurityStatusUpdateTime_ = steady_clock::now();
 
@@ -794,7 +794,7 @@ void Session::updateSecurityStatus_() {
 }
 
 void Session::updateRootViewportSize_(int width, int height) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     width = max(min(width, 4096), 64);
     height = max(min(height, 4096), 64);

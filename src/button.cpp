@@ -7,7 +7,7 @@ Button::Button(CKey,
 )
     : Widget(widgetParent)
 {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     eventHandler_ = eventHandler;
     enabled_ = false;
@@ -15,7 +15,7 @@ Button::Button(CKey,
 }
 
 void Button::setEnabled(bool enabled) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(enabled != enabled_) {
         enabled_ = enabled;
@@ -26,14 +26,14 @@ void Button::setEnabled(bool enabled) {
 }
 
 void Button::setText(string text) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     textLayout_->setText(move(text));
     signalViewDirty_();
 }
 
 void Button::widgetRender_() {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     ImageSlice viewport = getViewport();
 
@@ -71,7 +71,7 @@ void Button::widgetRender_() {
 }
 
 void Button::widgetMouseDownEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     mouseDown_ = true;
     pressed_ = true;
@@ -79,7 +79,7 @@ void Button::widgetMouseDownEvent_(int x, int y, int button) {
 }
 
 void Button::widgetMouseUpEvent_(int x, int y, int button) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
 
     if(button == 0) {
         widgetMouseMoveEvent_(x, y);
@@ -95,7 +95,7 @@ void Button::widgetMouseUpEvent_(int x, int y, int button) {
 }
 
 void Button::widgetMouseMoveEvent_(int x, int y) {
-    requireUIThread();
+    REQUIRE_UI_THREAD();
     
     if(mouseDown_) {
         ImageSlice viewport = getViewport();
