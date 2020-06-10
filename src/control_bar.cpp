@@ -585,6 +585,8 @@ void ControlBar::onStopFind(bool clearSelection) {
 
 void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
+    addrField_->setAllowEmptySubmit(false);
+
     goButton_ = MenuButton::create(goIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);

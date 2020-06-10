@@ -19,6 +19,7 @@ TextField::TextField(CKey,
     textLayout_ = OverflowTextLayout::create();
 
     removeCaretOnSubmit_ = true;
+    allowEmptySubmit_ = true;
 
     hasFocus_ = false;
     leftMouseButtonDown_ = false;
@@ -61,6 +62,11 @@ bool TextField::hasFocus() {
 void TextField::setRemoveCaretOnSubmit(bool value) {
     requireUIThread();
     removeCaretOnSubmit_ = value;
+}
+
+void TextField::setAllowEmptySubmit(bool value) {
+    requireUIThread();
+    allowEmptySubmit_ = value;
 }
 
 void TextField::unsetCaret_() {
@@ -339,13 +345,15 @@ void TextField::widgetKeyDownEvent_(int key) {
     }
 
     if(key == keys::Enter && caretActive_) {
-        if(removeCaretOnSubmit_) {
-            unsetCaret_();
-        }
         string text = textLayout_->text();
-        postTask(
-            eventHandler_, &TextFieldEventHandler::onTextFieldSubmitted, text
-        );
+        if(!text.empty() || allowEmptySubmit_) {
+            if(removeCaretOnSubmit_) {
+                unsetCaret_();
+            }
+            postTask(
+                eventHandler_, &TextFieldEventHandler::onTextFieldSubmitted, text
+            );
+        }
     }
 }
 

@@ -607,10 +607,12 @@ void Session::onAddressSubmitted(string url) {
 
     if(!browser_) return;
 
-    CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
-    if(frame) {
-        frame->LoadURL(url);
-        rootWidget_->browserArea()->takeFocus();
+    if(!url.empty()) {
+        CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
+        if(frame) {
+            frame->LoadURL(url);
+            rootWidget_->browserArea()->takeFocus();
+        }
     }
 }
 

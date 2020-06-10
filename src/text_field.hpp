@@ -38,6 +38,7 @@ public:
     bool hasFocus();
 
     void setRemoveCaretOnSubmit(bool value);
+    void setAllowEmptySubmit(bool value);
 
 private:
     void unsetCaret_();
@@ -69,6 +70,7 @@ private:
     shared_ptr<OverflowTextLayout> textLayout_;
 
     bool removeCaretOnSubmit_;
+    bool allowEmptySubmit_;
 
     bool hasFocus_;
     bool leftMouseButtonDown_;
