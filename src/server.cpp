@@ -61,12 +61,18 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        shared_ptr<Session> session = Session::create(
-            shared_from_this(), hasPNGSupport(request->userAgent())
-        );
-        sessions_[session->id()] = session;
+        if(onIsServerFullQuery()) {
+            request->sendTextResponse(
+                503, "ERROR: Maximum number of concurrent sessions exceeded"
+            );
+        } else {
+            shared_ptr<Session> session = Session::create(
+                shared_from_this(), hasPNGSupport(request->userAgent())
+            );
+            sessions_[session->id()] = session;
 
-        request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
+            request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
+        }
         return;
     }
 
@@ -107,6 +113,11 @@ void Server::onSessionClosed(uint64_t id) {
     sessions_.erase(it);
 
     checkShutdownStatus_();
+}
+
+bool Server::onIsServerFullQuery() {
+    requireUIThread();
+    return (int)sessions_.size() >= globals->config->sessionLimit;
 }
 
 void Server::onPopupSessionOpen(shared_ptr<Session> session) {

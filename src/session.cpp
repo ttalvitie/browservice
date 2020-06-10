@@ -92,18 +92,27 @@ public:
     ) override {
         requireUIThread();
 
-        browserSettings.background_color = (cef_color_t)-1;
-        windowInfo.SetAsWindowless(kNullWindowHandle);
+        shared_ptr<SessionEventHandler> eventHandler =
+            session_->eventHandler_.lock();
+        if(!eventHandler) {
+            return true;
+        }
 
         LOG(INFO) << "Session " << session_->id() << " opening popup";
+
+        if(eventHandler->onIsServerFullQuery()) {
+            LOG(INFO) << "Aborting popup creation due to session limit";
+            return true;
+        }
+
+        browserSettings.background_color = (cef_color_t)-1;
+        windowInfo.SetAsWindowless(kNullWindowHandle);
 
         shared_ptr<Session> popupSession =
             Session::create(session_->eventHandler_, session_->allowPNG_, true);
         client = new Client(popupSession);
 
-        if(auto eventHandler = session_->eventHandler_.lock()) {
-            eventHandler->onPopupSessionOpen(popupSession);
-        }
+        eventHandler->onPopupSessionOpen(popupSession);
 
         uint64_t popupSessionID = popupSession->id();
         session_->addIframe_([popupSessionID](shared_ptr<HTTPRequest> request) {

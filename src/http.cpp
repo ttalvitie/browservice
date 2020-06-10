@@ -1,5 +1,7 @@
 #include "http.hpp"
 
+#include "globals.hpp"
+
 #include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPServer.h>
 #include <Poco/Net/HTTPServerResponse.h>
@@ -229,6 +231,7 @@ public:
     )
         : eventHandler_(eventHandler),
           state_(Running),
+          threadPool_(2, 2 * globals->config->sessionLimit + 16),
           socketAddress_(listenSockAddr),
           serverSocket_(socketAddress_),
           httpServer_(

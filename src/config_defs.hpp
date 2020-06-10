@@ -4,7 +4,8 @@
     CONF_FOREACH_OPT_ITEM(defaultQuality) \
     CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
     CONF_FOREACH_OPT_ITEM(startPage) \
-    CONF_FOREACH_OPT_ITEM(dataDir)
+    CONF_FOREACH_OPT_ITEM(dataDir) \
+    CONF_FOREACH_OPT_ITEM(sessionLimit)
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";
@@ -111,5 +112,19 @@ CONF_DEF_OPT_INFO(dataDir) {
     }
     string defaultVal() {
         return "";
+    }
+};
+
+CONF_DEF_OPT_INFO(sessionLimit) {
+    const char* name = "session-limit";
+    const char* valSpec = "COUNT";
+    string desc() {
+        return "maximum number of sessions (browser windows) that can be open at the same time";
+    }
+    int defaultVal() {
+        return 32;
+    }
+    bool validate(int val) {
+        return val >= 1;
     }
 };

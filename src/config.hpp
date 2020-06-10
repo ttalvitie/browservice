@@ -22,5 +22,6 @@ public:
     const bool useDedicatedXvfb;
     const string startPage;
     const string dataDir;
+    const int sessionLimit;
 };
 
