@@ -177,20 +177,31 @@ public:
         CefRefPtr<CefFrame> frame,
         ErrorCode errorCode,
         const CefString& errorText,
-        const CefString& failedUrl
-    ) {
+        const CefString& failedURL
+    ) override {
         requireUIThread();
 
+        bool certError =
+            errorCode == ERR_ABORTED &&
+            lastCertificateErrorURL_ &&
+            *lastCertificateErrorURL_ == string(failedURL) &&
+            frame->IsMain();
+
         // Do not show error for file downloads
-        if(errorCode == ERR_ABORTED) {
+        if(!certError && errorCode == ERR_ABORTED) {
             return;
         }
 
         stringstream ss;
         ss << "<html><head><title>Load error</title></head>";
         ss << "<body><h2>";
-        ss << "Loading URL " << string(failedUrl) << " failed";
-        ss << " with error " << string(errorText);
+
+        ss << "Loading URL " << string(failedURL) << " failed";
+        if(certError) {
+            ss << " due to a certificate error";
+        } else {
+            ss << " with error " << string(errorText);
+        }
 
         // Add random data to avoid collisions with actual URLs in ignoredURL_
         mt19937 rng(random_device{}());
@@ -210,8 +221,9 @@ public:
         ));
 
         if(frame->IsMain()) {
-            // Ensure that address bar is not updated to show the data URL
+            // Make the addres bar show the failed URL instead of the data URL
             ignoredURL_ = dataURL;
+            session_->rootWidget_->controlBar()->setAddress(failedURL);
         }
 
         frame->LoadURL(dataURL);
@@ -247,6 +259,19 @@ public:
         return nullptr;
     }
 
+    virtual bool OnCertificateError(
+        CefRefPtr<CefBrowser> browser,
+        cef_errorcode_t certError,
+        const CefString& requestURL,
+        CefRefPtr<CefSSLInfo> sslInfo,
+        CefRefPtr<CefRequestCallback> callback
+    ) override {
+        requireUIThread();
+
+        lastCertificateErrorURL_ = string(requestURL);
+        return false;
+    }
+
     // CefFindHandler:
     virtual void OnFindResult(
         CefRefPtr<CefBrowser> browser,
@@ -255,7 +280,7 @@ public:
         const CefRect& selectionRect,
         int activeMatchOrdinal,
         bool finalUpdate
-    ) {
+    ) override {
         requireUIThread();
 
         if(identifier > lastFindID_) {
@@ -273,6 +298,7 @@ private:
     int lastFindID_;
 
     optional<string> ignoredURL_;
+    optional<string> lastCertificateErrorURL_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };
