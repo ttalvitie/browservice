@@ -293,7 +293,7 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        if(identifier > lastFindID_) {
+        if(identifier >= lastFindID_) {
             session_->rootWidget_->controlBar()->setFindResult(count > 0);
             lastFindID_ = identifier;
         }
