@@ -1,10 +1,12 @@
 # Understanding Browservice code
 
-Browservice is written in C++ on top of Chromium Embedded Framework (CEF), using the Poco library for the HTTP server, zlib and libjpeg-turbo for image compression, Pango and FreeType2 for text rendering and XCB for clipboard handling. A simple custom GUI Widget system (used for the browser control bar) and a multithreaded PNG compressor (for reduced compression latency) have been implemented for this project.
+The server side of Browservice is written in C++ on top of Chromium Embedded Framework (CEF), using the Poco library for the HTTP server, zlib and libjpeg-turbo for image compression, Pango and FreeType2 for text rendering and XCB for clipboard handling. A simple custom GUI Widget system (used for the browser control bar) and a multithreaded PNG compressor (for reduced compression latency) have been implemented for this project.
 
-CEF/Chromium does most of the heavy lifting, and thus our code is not really performance critical (one exception to this is the parallel PNG compressor). Thus safety and simplicity is prioritized over efficiency in most of the code.
+The client side is implemented in HTML and JavaScript. As compatibility with old browsers is a priority for the project, great care is taken to test that the essential features work for all of the supported client browsers (listed in README.md). Testing is done manually; to help with this, TODO contains a checklist of features that need to work. It is impractical to thoroughly test all supported client browsers for all minor changes, and thus the amount of testing must be proportional to the assessed risk of breaking compatibility. Contributors cannot be expected to test all the client browsers before submitting a pull request.
 
-Some conventions:
+CEF/Chromium and the client browser do most of the heavy lifting, and thus our code is not really performance critical (one exception to this is the parallel PNG compressor). Thus safety, simplicity and compatibility is prioritized over efficiency in most of the code.
+
+Some conventions and notes about the server-side code:
 
 - Most objects are reference counted; to handle the boilerplate of enforcing that shared_ptr is used to manage the lifetime and disabling copy and move constructors/assignment operators, we use the SHARED_ONLY_CLASS macro defined in common.hpp.
 
@@ -30,3 +32,8 @@ Some conventions:
 
 - We try to keep error handling as simple as possible: most errors simply result in aborting the program (typically through the CHECK macro of CEF). For errors that may happen in normal use, we try to recover from the error and optionally log an error through the CEF logging system. We follow the CEF/Chrome convention of not using exceptions; however, we must keep in mind that Poco might throw exceptions.
 
+- All the assets are compiled into the binary:
+
+  - GUI icons are given simply as strings in the C++ code.
+
+  - HTML templates (in the html directory) are compiled into C++ functions (in gen/html.cpp) by the Makefile using the Python script gen_html_header.py that implements a very simple templating language (%-VAR-% is replaced by the value of VAR in the struct specified for each function in html.hpp).
