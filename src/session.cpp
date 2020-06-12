@@ -165,6 +165,8 @@ public:
         REQUIRE_UI_THREAD();
 
         if(frame->IsMain()) {
+            session_->rootWidget_->browserArea()->clearError();
+
             // Make sure that the loaded page gets the correct idea about the
             // focus and mouse over status
             session_->rootWidget_->browserArea()->refreshStatusEvents();
@@ -191,52 +193,32 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        bool certError =
-            errorCode == ERR_ABORTED &&
-            lastCertificateErrorURL_ &&
-            *lastCertificateErrorURL_ == string(failedURL) &&
-            frame->IsMain();
-
-        // Do not show error for file downloads
-        if(!certError && errorCode == ERR_ABORTED) {
+        if(!frame->IsMain()) {
             return;
         }
 
-        stringstream ss;
-        ss << "<html><head><title>Load error</title></head>";
-        ss << "<body><h2>";
+        if(
+            errorCode == ERR_ABORTED &&
+            lastCertificateErrorURL_ &&
+            *lastCertificateErrorURL_ == string(failedURL)
+        ) {
+            string html =
+                "<html><head><title>Certificate error</title></head>"
+                "<body><p style=\"color: rgb(96, 0, 0);\">"
+                "Loading URL failed due to a certificate error"
+                "</p></body></html>";
 
-        ss << "Loading URL " << string(failedURL) << " failed";
-        if(certError) {
-            ss << " due to a certificate error";
-        } else {
-            ss << " with error " << string(errorText);
-        }
-
-        // Add random data to avoid collisions with actual URLs in ignoredURL_
-        mt19937 rng(random_device{}());
-        ss << "<!--";
-        for(int i = 0; i < 16; ++i) {
-            ss << (char)uniform_int_distribution<int>('A', 'Z')(rng);
-        }
-        ss << "-->";
-
-        ss << "</h2></body></html>";
-        string errorHTML = ss.str();
-
-        string dataURL = "data:text/html;base64,";
-        dataURL += string(CefURIEncode(
-            CefBase64Encode(errorHTML.data(), errorHTML.size()),
-            false
-        ));
-
-        if(frame->IsMain()) {
-            // Make the addres bar show the failed URL instead of the data URL
-            ignoredURL_ = dataURL;
+            string dataURL = "data:text/html;base64,";
+            dataURL += string(CefURIEncode(
+                CefBase64Encode(html.data(), html.size()),
+                false
+            ));
+            frame->LoadURL(dataURL);
+        } else if(errorCode != ERR_ABORTED) {
+            string msg = "Loading URL failed due to error: " + string(errorText);
+            session_->rootWidget_->browserArea()->showError(msg);
             session_->rootWidget_->controlBar()->setAddress(failedURL);
         }
-
-        frame->LoadURL(dataURL);
     }
 
     // CefDisplayHandler:
@@ -247,9 +229,7 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        if(!ignoredURL_ || string(url) != *ignoredURL_) {
-            session_->rootWidget_->controlBar()->setAddress(url);
-        }
+        session_->rootWidget_->controlBar()->setAddress(url);
         session_->updateSecurityStatus_();
     }
 
@@ -307,7 +287,6 @@ private:
 
     int lastFindID_;
 
-    optional<string> ignoredURL_;
     optional<string> lastCertificateErrorURL_;
 
     IMPLEMENT_REFCOUNTING(Client);

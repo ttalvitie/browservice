@@ -1,6 +1,7 @@
 #include "browser_area.hpp"
 
 #include "key.hpp"
+#include "text.hpp"
 
 #include "include/cef_render_handler.h"
 
@@ -155,63 +156,71 @@ public:
         REQUIRE_UI_THREAD();
 
         ImageSlice viewport = browserArea_->getViewport();
-
-        int offsetX = 0;
-        int offsetY = 0;
-
-        Rect bounds(0, viewport.width(), 0, viewport.height());
-        Rect cutout;
-
-        if(type == PET_VIEW) {
-            if(browserArea_->popupOpen_) {
-                cutout = browserArea_->popupRect_;
-            }
-        } else if(type == PET_POPUP && browserArea_->popupOpen_) {
-            offsetX = browserArea_->popupRect_.startX;
-            offsetY = browserArea_->popupRect_.startY;
-
-            bounds = Rect::intersection(bounds, browserArea_->popupRect_);
-            bounds = Rect::translate(bounds, -offsetX, -offsetY);
-        } else {
-            return;
-        }
-
         bool updated = false;
-        auto copyRange = [&](int y, int ax, int bx) {
-            if(ax >= bx) {
+
+        if(browserArea_->errorActive_) {
+            viewport.fill(0, viewport.width(), 0, viewport.height(), 255);
+            browserArea_->errorLayout_->render(
+                viewport.splitY(20).first, 7, 0, 96, 0, 0
+            );
+            updated = true;
+        } else {
+            int offsetX = 0;
+            int offsetY = 0;
+
+            Rect bounds(0, viewport.width(), 0, viewport.height());
+            Rect cutout;
+
+            if(type == PET_VIEW) {
+                if(browserArea_->popupOpen_) {
+                    cutout = browserArea_->popupRect_;
+                }
+            } else if(type == PET_POPUP && browserArea_->popupOpen_) {
+                offsetX = browserArea_->popupRect_.startX;
+                offsetY = browserArea_->popupRect_.startY;
+
+                bounds = Rect::intersection(bounds, browserArea_->popupRect_);
+                bounds = Rect::translate(bounds, -offsetX, -offsetY);
+            } else {
                 return;
             }
 
-            uint8_t* src = &((uint8_t*)buffer)[4 * (y * bufWidth + ax)];
-            uint8_t* dest = viewport.getPixelPtr(ax + offsetX, y + offsetY);
-            int byteCount = 4 * (bx - ax);
-
-            if(updated) {
-                memcpy(dest, src, byteCount);
-            } else {
-                if(memcmp(src, dest, byteCount)) {
-                    updated = true;
-                    memcpy(dest, src, byteCount);
+            auto copyRange = [&](int y, int ax, int bx) {
+                if(ax >= bx) {
+                    return;
                 }
-            }
-        };
 
-        for(const CefRect& dirtyRect : dirtyRects) {
-            Rect rect = Rect(
-                dirtyRect.x,
-                dirtyRect.x + dirtyRect.width,
-                dirtyRect.y,
-                dirtyRect.y + dirtyRect.height
-            );
-            rect = Rect::intersection(rect, bounds);
+                uint8_t* src = &((uint8_t*)buffer)[4 * (y * bufWidth + ax)];
+                uint8_t* dest = viewport.getPixelPtr(ax + offsetX, y + offsetY);
+                int byteCount = 4 * (bx - ax);
 
-            if(!rect.isEmpty()) {
-                for(int y = rect.startY; y < rect.endY; ++y) {
-                    if(y >= cutout.startY && y < cutout.endY) {
-                        copyRange(y, rect.startX, min(rect.endX, cutout.startX));
-                        copyRange(y, max(rect.startX, cutout.endX), rect.endX);
-                    } else {
-                        copyRange(y, rect.startX, rect.endX);
+                if(updated) {
+                    memcpy(dest, src, byteCount);
+                } else {
+                    if(memcmp(src, dest, byteCount)) {
+                        updated = true;
+                        memcpy(dest, src, byteCount);
+                    }
+                }
+            };
+
+            for(const CefRect& dirtyRect : dirtyRects) {
+                Rect rect = Rect(
+                    dirtyRect.x,
+                    dirtyRect.x + dirtyRect.width,
+                    dirtyRect.y,
+                    dirtyRect.y + dirtyRect.height
+                );
+                rect = Rect::intersection(rect, bounds);
+
+                if(!rect.isEmpty()) {
+                    for(int y = rect.startY; y < rect.endY; ++y) {
+                        if(y >= cutout.startY && y < cutout.endY) {
+                            copyRange(y, rect.startX, min(rect.endX, cutout.startX));
+                            copyRange(y, max(rect.startX, cutout.endX), rect.endX);
+                        } else {
+                            copyRange(y, rect.startX, rect.endX);
+                        }
                     }
                 }
             }
@@ -256,6 +265,8 @@ BrowserArea::BrowserArea(CKey,
     eventHandler_ = eventHandler;
     popupOpen_ = false;
     eventModifiers_ = 0;
+    errorActive_ = false;
+    errorLayout_ = TextLayout::create();
 }
 
 BrowserArea::~BrowserArea() {}
@@ -284,6 +295,30 @@ void BrowserArea::refreshStatusEvents() {
     tie(x, y) = getLastMousePos_();
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
     browser_->GetHost()->SendMouseMoveEvent(event, !isMouseOver_());
+}
+
+void BrowserArea::showError(string message) {
+    REQUIRE_UI_THREAD();
+
+    errorActive_ = true;
+    errorLayout_->setText(message);
+
+    if(browser_) {
+        browser_->GetHost()->Invalidate(PET_VIEW);
+        browser_->GetHost()->Invalidate(PET_POPUP);
+    }
+}
+
+void BrowserArea::clearError() {
+    REQUIRE_UI_THREAD();
+
+    errorActive_ = false;
+    errorLayout_->setText("");
+
+    if(browser_) {
+        browser_->GetHost()->Invalidate(PET_VIEW);
+        browser_->GetHost()->Invalidate(PET_POPUP);
+    }
 }
 
 void BrowserArea::widgetViewportUpdated_() {

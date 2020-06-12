@@ -8,6 +8,8 @@ public:
     virtual void onBrowserAreaViewDirty() = 0;
 };
 
+class TextLayout;
+
 class CefBrowser;
 class CefRenderHandler;
 
@@ -40,6 +42,11 @@ public:
     // called when loading a new page
     void refreshStatusEvents();
 
+    // After calling showError and before clearError, the browser area switches
+    // to a special mode in which it only shows the given error message.
+    void showError(string message);
+    void clearError();
+
 private:
     class RenderHandler;
 
@@ -64,4 +71,7 @@ private:
     Rect popupRect_;
 
     uint32_t eventModifiers_;
+
+    bool errorActive_;
+    shared_ptr<TextLayout> errorLayout_;
 };
