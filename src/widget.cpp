@@ -170,6 +170,13 @@ void Widget::sendKeyDownEvent(int key) {
         onGlobalHotkeyPressed(GlobalHotkey::Address);
     } else if(key == keys::F3) {
         onGlobalHotkeyPressed(GlobalHotkey::FindNext);
+    } else if(key == keys::F5) {
+        onGlobalHotkeyPressed(GlobalHotkey::Refresh);
+    } else if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'r' || key == (int)'R')
+    ) {
+        onGlobalHotkeyPressed(GlobalHotkey::Refresh);
     } else {
         keysDown_.insert(key);
         forwardKeyDownEvent_(key);

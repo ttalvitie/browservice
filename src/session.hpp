@@ -105,6 +105,9 @@ private:
 
     void addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe);
 
+    // -1 = back, 0 = refresh, 1 = forward
+    void navigate_(int direction);
+
     weak_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
@@ -144,6 +147,7 @@ private:
     shared_ptr<Timeout> inactivityTimeoutShort_;
 
     steady_clock::time_point lastSecurityStatusUpdateTime_;
+    steady_clock::time_point lastNavigateOperationTime_;
 
     bool allowPNG_;
     shared_ptr<ImageCompressor> imageCompressor_;

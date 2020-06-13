@@ -10,7 +10,8 @@ static constexpr int CursorTypeCount = 3;
 enum class GlobalHotkey {
     Address,
     Find,
-    FindNext
+    FindNext,
+    Refresh
 };
 
 class Widget;

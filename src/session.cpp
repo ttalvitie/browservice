@@ -40,7 +40,8 @@ class Session::Client :
     public CefLoadHandler,
     public CefDisplayHandler,
     public CefRequestHandler,
-    public CefFindHandler
+    public CefFindHandler,
+    public CefKeyboardHandler
 {
 public:
     Client(shared_ptr<Session> session) {
@@ -73,6 +74,9 @@ public:
         return downloadHandler_;
     }
     virtual CefRefPtr<CefFindHandler> GetFindHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override {
         return this;
     }
 
@@ -283,6 +287,25 @@ public:
         }
     }
 
+    // CefKeyboardHandler:
+    virtual bool OnPreKeyEvent(
+        CefRefPtr<CefBrowser> browser,
+        const CefKeyEvent& event,
+        CefEventHandle osEvent,
+        bool* isKeyboardShortcut
+    ) override {
+        if(
+            event.windows_key_code == -keys::Backspace &&
+            !event.focus_on_editable_field
+        ) {
+            session_->navigate_(
+                (event.modifiers & EVENTFLAG_SHIFT_DOWN) ? 1 : -1
+            );
+            return true;
+        }
+        return false;
+    }
+
 private:
     shared_ptr<Session> session_;
 
@@ -339,6 +362,7 @@ Session::Session(CKey,
     allowPNG_ = allowPNG;
 
     lastSecurityStatusUpdateTime_ = steady_clock::now();
+    lastNavigateOperationTime_ = steady_clock::now();
 
     imageCompressor_ = ImageCompressor::create(2000, allowPNG_);
 
@@ -371,6 +395,7 @@ void Session::close() {
     if(state_ == Open) {
         LOG(INFO) << "Closing session " << id_ << " requested";
         state_ = Closing;
+        CHECK(browser_);
         browser_->GetHost()->CloseBrowser(true);
         imageCompressor_->flush();
     } else if(state_ == Pending) {
@@ -499,7 +524,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             if(curMainIdx_ > 1 && !prevNextClicked_) {
                 // This is not first main page load and no prev/next clicked,
                 // so this must be a refresh
-                browser_->Reload();
+                navigate_(0);
             }
             prevNextClicked_ = false;
 
@@ -524,9 +549,9 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
         updateInactivityTimeout_();
 
-        if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
+        if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
-            browser_->GoBack();
+            navigate_(-1);
         }
 
         if(prePrevVisited_) {
@@ -541,9 +566,9 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
         updateInactivityTimeout_();
 
-        if(curMainIdx_ > 0 && browser_ && !prevNextClicked_) {
+        if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
-            browser_->GoForward();
+            navigate_(1);
         }
 
         request->sendHTMLResponse(200, writeNextHTML, {id_});
@@ -592,6 +617,9 @@ void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
         }
         if(key == GlobalHotkey::FindNext) {
             self->rootWidget_->controlBar()->findNext();
+        }
+        if(key == GlobalHotkey::Refresh) {
+            self->navigate_(0);
         }
     });
 }
@@ -866,4 +894,29 @@ void Session::setHeightSignal_(int newHeightSignal) {
 void Session::addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe) {
     iframeQueue_.push(iframe);
     setWidthSignal_(WidthSignalNewIframe);
+}
+
+void Session::navigate_(int direction) {
+    CHECK(direction >= -1 && direction <= 1);
+
+    // If two navigation operations are too close together, they probably are
+    // double-reported
+    if(duration_cast<milliseconds>(
+        steady_clock::now() - lastNavigateOperationTime_
+    ).count() <= 200) {
+        return;
+    }
+    lastNavigateOperationTime_ = steady_clock::now();
+
+    if(browser_) {
+        if(direction == -1) {
+            browser_->GoBack();
+        }
+        if(direction == 0) {
+            browser_->Reload();
+        }
+        if(direction == 1) {
+            browser_->GoForward();
+        }
+    }
 }
