@@ -1,5 +1,6 @@
 #include "session.hpp"
 
+#include "data_url.hpp"
 #include "event.hpp"
 #include "globals.hpp"
 #include "html.hpp"
@@ -9,7 +10,6 @@
 #include "root_widget.hpp"
 
 #include "include/cef_client.h"
-#include "include/cef_parser.h"
 
 namespace {
 
@@ -50,6 +50,7 @@ public:
         downloadHandler_ =
             session->downloadManager_->createCefDownloadHandler();
         lastFindID_ = -1;
+        certificateErrorPageSignKey_ = generateDataURLSignKey();
     }
 
     // CefClient:
@@ -165,7 +166,13 @@ public:
         REQUIRE_UI_THREAD();
 
         if(frame->IsMain()) {
-            session_->rootWidget_->browserArea()->clearError();
+            if(readSignedDataURL(frame->GetURL(), certificateErrorPageSignKey_)) {
+                session_->rootWidget_->browserArea()->showError(
+                    "Loading URL failed due to a certificate error"
+                );
+            } else {
+                session_->rootWidget_->browserArea()->clearError();
+            }
 
             // Make sure that the loaded page gets the correct idea about the
             // focus and mouse over status
@@ -202,18 +209,9 @@ public:
             lastCertificateErrorURL_ &&
             *lastCertificateErrorURL_ == string(failedURL)
         ) {
-            string html =
-                "<html><head><title>Certificate error</title></head>"
-                "<body><p style=\"color: rgb(96, 0, 0);\">"
-                "Loading URL failed due to a certificate error"
-                "</p></body></html>";
-
-            string dataURL = "data:text/html;base64,";
-            dataURL += string(CefURIEncode(
-                CefBase64Encode(html.data(), html.size()),
-                false
-            ));
-            frame->LoadURL(dataURL);
+            frame->LoadURL(
+                createSignedDataURL(failedURL, certificateErrorPageSignKey_)
+            );
         } else if(errorCode != ERR_ABORTED) {
             string msg = "Loading URL failed due to error: " + string(errorText);
             session_->rootWidget_->browserArea()->showError(msg);
@@ -229,7 +227,13 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        session_->rootWidget_->controlBar()->setAddress(url);
+        optional<string> errorURL =
+            readSignedDataURL(url, certificateErrorPageSignKey_);
+        if(errorURL) {
+            session_->rootWidget_->controlBar()->setAddress(*errorURL);
+        } else {
+            session_->rootWidget_->controlBar()->setAddress(url);
+        }
         session_->updateSecurityStatus_();
     }
 
@@ -288,6 +292,7 @@ private:
     int lastFindID_;
 
     optional<string> lastCertificateErrorURL_;
+    string certificateErrorPageSignKey_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };

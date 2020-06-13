@@ -5,6 +5,7 @@
 #include <atomic>
 #include <cctype>
 #include <chrono>
+#include <climits>
 #include <cstdlib>
 #include <fstream>
 #include <functional>

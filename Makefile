@@ -4,7 +4,7 @@ CFLAGS_debug := $(CFLAGS_COMMON) -g -O0
 CFLAGS_debug_png := $(CFLAGS_COMMON) -g -O3
 CFLAGS_release := $(CFLAGS_COMMON) -O3 -DNDEBUG -fdata-sections -ffunction-sections -fno-ident -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 CFLAGS_release_png := $(CFLAGS_release)
-LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-rpath,. -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so -lPocoFoundation -lPocoNet `pkg-config --libs pangoft2` -ljpeg -lz -lxcb
+LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-rpath,. -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so -lPocoFoundation -lPocoNet -lPocoCrypto `pkg-config --libs pangoft2` -ljpeg -lz -lxcb
 LDFLAGS_debug := $(LDFLAGS_COMMON) cef/debugbuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 LDFLAGS_release := $(LDFLAGS_COMMON) -Wl,-O1 -Wl,--as-needed -Wl,--gc-sections cef/releasebuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 SRCS := $(shell find src -name '*.cpp') gen/html.cpp
