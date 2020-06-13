@@ -229,14 +229,18 @@ function setupImg(img, nextImg, elem) {
             mouseMoveEventAdded = true;
         }
 
-        var width = document.body.clientWidth;
-        var height = document.body.clientHeight;
+        var width = document.body.clientWidth | 0;
+        var height = document.body.clientHeight | 0;
+        if(width == 0 || height == 0) {
+            width = window.innerWidth | 0;
+            height = window.innerHeight | 0;
+        }
         if(bodyOverflowHiddenNotSupported) {
             width -= 1;
             height -= 2;
         }
-        width = Math.max(width | 0, 1);
-        height = Math.max(height | 0, 1);
+        width = Math.max(width, 1);
+        height = Math.max(height, 1);
 
         var immediate = ((imgLoaded || imgIdx == 0) ? 1 : 0);
         imgLoaded = true;
