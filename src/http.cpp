@@ -2,6 +2,8 @@
 
 #include "globals.hpp"
 
+#include "include/cef_parser.h"
+
 #include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPServer.h>
 #include <Poco/Net/HTTPServerResponse.h>
@@ -57,6 +59,35 @@ public:
             }
         }
         return form_->get(name, "");
+    }
+
+    optional<string> getBasicAuthCredentials() {
+        CHECK(!responseSent_);
+        optional<string> empty;
+
+        if(!request_.hasCredentials()) {
+            return empty;
+        }
+
+        string scheme, authInfo;
+        request_.getCredentials(scheme, authInfo);
+
+        for(char& c : scheme) {
+            c = tolower(c);
+        }
+        if(scheme != "basic") {
+            return empty;
+        }
+
+        CefRefPtr<CefBinaryValue> bin = CefBase64Decode(authInfo);
+        if(!bin) {
+            return empty;
+        }
+
+        vector<char> buf(bin->GetSize());
+        bin->GetData(buf.data(), buf.size(), 0);
+
+        return string(buf.begin(), buf.end());
     }
 
     void sendResponse(
@@ -196,6 +227,11 @@ string HTTPRequest::userAgent() {
 string HTTPRequest::getFormParam(string name) {
     REQUIRE_UI_THREAD();
     return impl_->getFormParam(name);
+}
+
+optional<string> HTTPRequest::getBasicAuthCredentials() {
+    REQUIRE_UI_THREAD();
+    return impl_->getBasicAuthCredentials();
 }
 
 void HTTPRequest::sendResponse(

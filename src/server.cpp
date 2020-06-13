@@ -57,6 +57,22 @@ void Server::shutdown() {
 void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_UI_THREAD();
 
+    if(!globals->config->httpAuth.empty()) {
+        optional<string> credentials = request->getBasicAuthCredentials();
+        if(!credentials || *credentials != globals->config->httpAuth) {
+            request->sendTextResponse(
+                401,
+                "Unauthorized",
+                true,
+                {{
+                    "WWW-Authenticate",
+                    "Basic realm=\"Browservice\", charset=\"UTF-8\""
+                }}
+            );
+            return;
+        }
+    }
+
     string method = request->method();
     string path = request->path();
 

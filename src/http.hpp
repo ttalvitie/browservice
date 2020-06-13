@@ -24,6 +24,8 @@ public:
 
     string getFormParam(string name);
 
+    optional<string> getBasicAuthCredentials();
+
     // The body function may be called from a different thread. The given
     // content length should match the number of bytes written by body.
     void sendResponse(

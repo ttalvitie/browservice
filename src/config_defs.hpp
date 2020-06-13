@@ -5,7 +5,8 @@
     CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
-    CONF_FOREACH_OPT_ITEM(sessionLimit)
+    CONF_FOREACH_OPT_ITEM(sessionLimit) \
+    CONF_FOREACH_OPT_ITEM(httpAuth)
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";
@@ -126,5 +127,22 @@ CONF_DEF_OPT_INFO(sessionLimit) {
     }
     bool validate(int val) {
         return val >= 1;
+    }
+};
+
+CONF_DEF_OPT_INFO(httpAuth) {
+    const char* name = "http-auth";
+    const char* valSpec = "USER:PASSWORD";
+    string desc() {
+        return "if nonempty, the client is required to authenticate using HTTP basic authentication with given username and password";
+    }
+    string defaultValStr() {
+        return "default empty";
+    }
+    string defaultVal() {
+        return "";
+    }
+    bool validate(string val) {
+        return val.empty() || val.find(':') != val.npos;
     }
 };

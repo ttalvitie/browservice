@@ -23,5 +23,6 @@ public:
     const string startPage;
     const string dataDir;
     const int sessionLimit;
+    const string httpAuth;
 };
 
