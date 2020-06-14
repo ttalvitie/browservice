@@ -16,7 +16,7 @@ fi
 
 ARCH=`uname -m`
 
-if [ "$ARCH" == "x86_64" ]
+if [ "$ARCH" == "x86_64" ] || [[ "$ARCH" =~ ^i[3-7]86$ ]]
 then
     CMAKEFLAGS=""
 elif [ "$ARCH" == "armv7l" ]
