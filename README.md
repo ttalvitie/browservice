@@ -10,7 +10,7 @@ The commands for installing dependencies on various Linux distributions are prov
 #### Ubuntu 18.04/20.04 and Debian 10
 
 ```
-sudo apt install cmake g++ pkg-config libx11-dev libxcb1-dev libpoco-dev libjpeg-dev zlib1g-dev libnss3 libxrandr2 libx11-xcb1 libxcomposite1 libpangocairo-1.0-0 libxcursor1 libxdamage1 libatk-bridge2.0-0 libasound2 libcups2 libxss1 libxi6 xvfb xauth libgbm1 libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer
+sudo apt install cmake g++ pkg-config libxcb1-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1
 ```
 
 - On Debian, in order to be able to install the `ttf-mscorefonts-installer` package, you need to add the `contrib` APT source by adding `contrib` to the end of each `deb` and `deb-src` line in `/etc/apt/sources.list` and running `sudo apt update`.
@@ -33,7 +33,7 @@ sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore
 #### Arch Linux
 
 ```
-sudo pacman -S wget cmake make gcc pkgconf gtk2 gtkglext poco python nss at-spi2-atk alsa-lib xorg-server-xvfb xorg-xauth fakeroot
+sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite
 
 # Install MS core fonts from AUR
 wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-fonts.tar.gz
