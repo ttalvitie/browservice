@@ -56,6 +56,9 @@ var bodyOverflowHiddenNotSupported = false;
 var useBackspaceCaptureHack = false;
 (function() {
     var ua = window.navigator.userAgent.toLowerCase();
+    if(ua.indexOf("chrome") != -1 || ua.indexOf("chromium") != -1) {
+        useOnMouseWheel = true;
+    }
     var msie = ua.indexOf("msie ");
     if(msie > 0) {
         var ver = parseInt(ua.substring(msie + 5, ua.indexOf(".", msie)), 10);
@@ -63,8 +66,8 @@ var useBackspaceCaptureHack = false;
             ua.indexOf("windows 3.1") != -1 ||
             ua.indexOf("win16") != -1 ||
             ua.indexOf("windows 16-bit") != -1;
+        useOnMouseWheel = true;
         if(ver <= 8) {
-            useOnMouseWheel = true;
             fixMousePosition = true;
             leftMouseButtonIs1 = true;
         }

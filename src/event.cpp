@@ -48,7 +48,7 @@ bool processParsedEvent(
         int y = args[1];
         int delta = args[2];
         clampCoords(x, y);
-        delta = max(-1000, min(1000, delta));
+        delta = max(-180, min(180, delta));
         widget->sendMouseWheelEvent(x, y, delta);
         return true;
     }
