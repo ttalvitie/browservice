@@ -315,6 +315,9 @@ window.onresize = function() {
     newEventNotify();
 };
 
+var shiftDown = false;
+var controlDown = false;
+
 document.onmousedown = function(event) {
     if(!event) event = window.event;
     updateMousePos(event);
@@ -323,7 +326,13 @@ document.onmousedown = function(event) {
         if(leftMouseButtonIs1 && button == 1) {
             button = 0;
         }
+        var tmpShift = !shiftDown && event.shiftKey === true;
+        var tmpControl = !controlDown && event.ctrlKey === true;
+        if(tmpShift) putEvent("KDN_16");
+        if(tmpControl) putEvent("KDN_17");
         putEvent("MDN_" + mouseX + "_" + mouseY + "_" + button);
+        if(tmpControl) putEvent("KUP_17");
+        if(tmpShift) putEvent("KUP_16");
     }
     window.focus();
     preventDefault(event);
@@ -412,9 +421,6 @@ var nonCharKeys = {};
 for(var i = 0; i < nonCharKeyList.length; ++i) {
     nonCharKeys[nonCharKeyList[i]] = true;
 }
-
-var shiftDown = false;
-var controlDown = false;
 
 document.onkeypress = function(event) {
     if(!event) {

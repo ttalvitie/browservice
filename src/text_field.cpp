@@ -250,7 +250,11 @@ void TextField::widgetMouseDownEvent_(int x, int y, int button) {
         if(caretActive_) {
             leftMouseButtonDown_ = true;
             int idx = textLayout_->xCoordToIndex(x);
-            setCaret_(idx, idx);
+            if(shiftKeyDown_) {
+                setCaret_(caretStart_, idx);
+            } else {
+                setCaret_(idx, idx);
+            }
         } else {
             setCaret_(0, (int)textLayout_->text().size());
         }
