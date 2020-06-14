@@ -49,6 +49,7 @@ var retryInterval = 3000;
 var maxRetries = 10;
 var minIframeLoadInterval = 2000;
 
+var useOnDOMMouseScroll = false;
 var useOnMouseWheel = false;
 var fixMousePosition = false;
 var leftMouseButtonIs1 = false;
@@ -58,6 +59,9 @@ var useBackspaceCaptureHack = false;
     var ua = window.navigator.userAgent.toLowerCase();
     if(ua.indexOf("chrome") != -1 || ua.indexOf("chromium") != -1) {
         useOnMouseWheel = true;
+    }
+    if(ua.indexOf("firefox") != -1) {
+        useOnDOMMouseScroll = true;
     }
     var msie = ua.indexOf("msie ");
     if(msie > 0) {
@@ -370,7 +374,17 @@ document.onmousemove = function(event) {
     }
 };
 
-if(useOnMouseWheel) {
+if(useOnDOMMouseScroll) {
+    document.addEventListener(
+        "DOMMouseScroll",
+        function(event) {
+            var delta = -120 * (event.detail | 0);
+            putEvent("MWH_" + mouseX + "_" + mouseY + "_" + delta);
+            event.preventDefault();
+        },
+        false
+    );
+} else if(useOnMouseWheel) {
     document.onmousewheel = function(event) {
         if(!event) event = window.event;
         putEvent("MWH_" + mouseX + "_" + mouseY + "_" + (event.wheelDelta | 0));
