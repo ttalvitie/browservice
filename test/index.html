@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Browservice test procedure</title>
+<style>
+body {
+    max-width: 600px;
+}
+ul.main-list > li {
+    margin-bottom: 10px;
+}
+#mousebox {
+    width: 120px;
+    height: 40px;
+    line-height: 40px;
+    border: 1px black solid;
+    text-align: center;
+    vertical-align: middle;
+}
+div.emptybox {
+    display: inline-block;
+    width: 40px;
+    height: 14px;
+    border: 1px black solid;
+}
+</style>
+<script type="text/javascript">
+var iframeLoadNowTimeoutFunc;
+var imageReloadTimeoutFunc;
+var imagePostLoadTimeoutFunc = function() {};
+var hackInputFocusTimeoutFunc;
+
+window.onload = function() {
+
+var mousebox = document.getElementById("mousebox");
+mousebox.onmousedown = function(event) {
+    if(event.button == 0) {
+        mousebox.innerText = "Left";
+    }
+    if(event.button == 2) {
+        mousebox.innerText = "Right";
+    }
+};
+mousebox.onmouseup = function(event) {
+    mousebox.innerText = "";
+};
+
+};
+</script>
+</head>
+<body>
+<h1>Browservice test procedure</h1>
+<ul class="main-list">
+<li>Click the native browser URL field and then the Browservice Address text field. After this, the current URL should be selected (that is, have blue background) in the Address text field.
+<li>Hover the mouse over each of the elements below. The cursor should change to match the given description (you may have to move the pointer around a bit on top of the element).
+<ul>
+<li><div class="emptybox"></div>: pointer/arrow
+<li>element: text selector cursor (vertical line)
+<li><a href="">element</a>: link cursor (hand pointing with index finger)
+</ul>
+<li>Click the box below with left mouse button and then the right mouse button. The box should contain the word "Left"/"Right" only when the left/right mouse button is pressed.
+<div id="mousebox"></div>
+<li>Click inside the browser viewport and try scrolling the page with the Up/Down arrow keys, PageUp/PageDown keys and Home/End keys. The keys should scroll the page.
+<li>Locate the handle in the scrollbar in the right edge of the browser. Moving the mouse up and down with the left mouse button pressed on the handle should scroll the page.
+<li>Click the textarea below to activate it and test writing text to it, checking that all the operations listed below work as expected:<br>
+<textarea rows="5" cols="50"></textarea>
+<ul>
+<li>Typing letters, both upper and lowercase with both Shift and CapsLock
+<li>Special characters such as ! and @
+<li>Line breaks (with Enter/Return key)
+<li>Backspace and Delete
+<li>Arrow keys to move around
+<li>Ctrl+A to select all the text
+<li>Home and End go to the beginning/end of the line
+<li>PageUp and PageDown should move a few lines up or down (make sure there is enough text)
+<li>Pressing arrow keys while holding Shift should move one end of the selection range
+<li>Clicking text while holding Shift should move one end of the selection range
+</ul>
+<li>Click on the Address text field, and test that all the operations in the previous phase work in it as well, except for the ones requiring multiline text (that is, line breaks, Up/Down arrow keys and PageUp/PageDown keys).
+<li>Select the below text, copy it with Ctrl+C, click the textarea below it and paste the text with Ctrl+V. The text should appear in the text field.<br>
+COPY THIS TEXT<br>
+INCLUDING THIS LINE<br>
+<textarea rows="3" cols="50"></textarea>
+<li>Click the clipboard icon in the control bar. A window should open (you may need to allow the popup from the native browser and retry)
+<ul>
+<li>Click "Get clipboard" to get the clipboard. The text you copied earlier should appear in the textarea in the window.
+<li>Change the text in the textarea and click "Set clipboard". Close the window, click the textarea below and press Ctrl+V. The changed text should appear.<br>
+<textarea rows="3" cols="50"></textarea>
+</ul>
+<li>Press Ctrl+F. This should open a Find bar as the rightmost control in the control bar. The text field in the Find bar should get focus automatically; keystrokes sent to it should appear as text in the text field. If Ctrl+F does not work (for example, if it opens the native browser Find functionality), then it should work with Ctrl+Shift+F instead.
+<li>Press Ctrl+L. This should activate the Address text field, selecting all of the current text; keystrokes sent to it should appear as text in the text field. If this does not work, then it should work with Ctrl+Shift+L instead.
+<li>Click <a href="page1.html" target="_blank">this link</a>. A new window should open with "Page 1" inside it. Click the link on each page you get until reaching "Page 5".
+<ul>
+<li>Now, the browser history should consist of pages from 1 to 5 in that order. Try going backward and forward in the history both using keyboard shortcuts (Backspace for backward and Shift+Backspace for forward) and the native browser buttons. The browser should behave expectedly by moving back and forward in pages 1-5.
+<li>Observe the "The page has been open for ..." counter. The counter should increase steadily without flickering.
+<li>Refreshing the page with the native browser button and the keyboard shortcuts F5 and Ctrl+R. On each refresh, the counter should reset to 0 seconds.
+<li>Change the contents of the Address field to be `google.com` and press Enter. The browser should navigate to the Google search page.
+<li>Close the window.
+</ul>
+<li>Click <a href="file.bin">this link</a>. A Download button should appear in the control bar. Press it. After this, your browser should get a native file download of a file with name "file.bin". Download it, and check that its size is exactly 64 kilobytes (65536 bytes).
+<li>Cycle through the full range of available qualities using the Quality selector in the control bar. The range should include numbers from 10 to 100 and PNG as the highest value. The page should be visible and somewhat legible on all quality values. On 16-bit versions of Internet Explorer that do not support PNG, the PNG option should be missing.
+<li>Check that the YouTube video below starts playing when clicked, and that you can pause, seek and start playing again. While playing and mouse is moved outside the video, the video controls should disappear. Fullscreen mode does not need to work.<br>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/omLgv9lJ9jE" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+</ul>
+</body>
+</html>

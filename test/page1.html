@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Browservice testbed</title>
+<script type="text/javascript">
+var iframeLoadNowTimeoutFunc;
+var imageReloadTimeoutFunc;
+var imagePostLoadTimeoutFunc = function() {};
+var hackInputFocusTimeoutFunc;
+
+window.onload = function() {
+    var seconds = 0;
+    var counter = document.getElementById("counter");
+    setInterval(function() {
+        ++seconds;
+        counter.innerText = seconds + " second" + (seconds == 1 ? "" : "s")
+    }, 1000);
+}
+</script>
+</head>
+<body>
+<h1>Page 1</h1>
+<p><a href="page2.html">Open page 2</a></p>
+<p>The page has been open for <span id="counter">0 seconds</span></span></p>
+</body>
+</html>
