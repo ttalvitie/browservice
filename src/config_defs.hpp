@@ -134,7 +134,7 @@ CONF_DEF_OPT_INFO(httpAuth) {
     const char* name = "http-auth";
     const char* valSpec = "USER:PASSWORD";
     string desc() {
-        return "if nonempty, the client is required to authenticate using HTTP basic authentication with given username and password";
+        return "if nonempty, the client is required to authenticate using HTTP basic authentication with given username and password; if the special value 'env' is specified, the value is read from the environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS";
     }
     string defaultValStr() {
         return "default empty";
@@ -142,7 +142,30 @@ CONF_DEF_OPT_INFO(httpAuth) {
     string defaultVal() {
         return "";
     }
-    bool validate(string val) {
-        return val.empty() || val.find(':') != val.npos;
+    optional<string> parse(string str) {
+        optional<string> empty;
+
+        if(str.empty()) {
+            return string();
+        } else {
+            string value;
+            if(str == "env") {
+                const char* valuePtr = getenv("BROWSERVICE_HTTP_AUTH_CREDENTIALS");
+                if(valuePtr == nullptr) {
+                    LOG(ERROR) << "Environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS missing";
+                    return empty;
+                }
+                value = valuePtr;
+            } else {
+                value = str;
+            }
+
+            size_t colonPos = value.find(':');
+            if(colonPos == value.npos || !colonPos || colonPos + 1 == value.size()) {
+                LOG(ERROR) << "Given HTTP authentication credential string is invalid";
+                return empty;
+            }
+            return value;
+        }
     }
 };
