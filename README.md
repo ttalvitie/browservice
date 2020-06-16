@@ -13,11 +13,13 @@ The following OS-browser-combinations have been tested to work (some with limita
 | Windows 95                  | Internet Explorer 4.01 SP2       | [1] [2]     |
 | Windows 95                  | Internet Explorer 5.5 SP2        |             |
 | Windows 95                  | Firefox 1.5.0.12                 |             |
-| Windows 95                  | Opera 10.63                      | [1]         |
+| Windows 95                  | Opera 10.63                      | [1] [3]     |
 
-[1] The mouse cursor flickers between hourglass and the true cursor
+[1] The mouse cursor flickers between hourglass and the true cursor.
 
-[2] Right click works, but it also opens a context menu in the client browser
+[2] Right click works, but it also opens a context menu in the client browser.
+
+[3] The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
 
 ## Setup
 
