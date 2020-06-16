@@ -496,8 +496,13 @@ document.onkeyup = function(event) {
     }
     if(nonCharKeys[key]) {
         if(key == 16) shiftDown = false;
-        if(key == 17) controlDown = false;
-        putEvent("KUP_" + key);
+        if(key == 17 || key == 18) {
+            controlDown = false;
+            putEvent("KUP_17");
+            putEvent("KUP_18");
+        } else {
+            putEvent("KUP_" + key);
+        }
         preventDefault(event);
     }
 };
