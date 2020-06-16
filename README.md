@@ -1,6 +1,24 @@
 # Browservice: Browser as a Service
 Browse the modern Web with old browsers using a proxy that runs the Chromium browser and streams the browser window as images
 
+## Supported client browsers
+
+The following OS-browser-combinations have been tested to work (some with limitations, see below the table for descriptions).
+
+| Operating system            | Browser                          | Limitations |
+| --------------------------- | -------------------------------- | ----------- |
+| Windows for Workgroups 3.11 | Internet Explorer 4.0            | [1] [2]     |
+| Windows for Workgroups 3.11 | Internet Explorer 5.0            | [2]         |
+| OS/2 Warp 4.52              | Firefox 2.0.0.14                 |             |
+| Windows 95                  | Internet Explorer 4.01 SP2       | [1] [2]     |
+| Windows 95                  | Internet Explorer 5.5 SP2        |             |
+| Windows 95                  | Firefox 1.5.0.12                 |             |
+| Windows 95                  | Opera 10.63                      | [1]         |
+
+[1] The mouse cursor flickers between hourglass and the true cursor
+
+[2] Right click works, but it also opens a context menu in the client browser
+
 ## Setup
 
 ### Installing dependencies
