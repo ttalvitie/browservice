@@ -321,6 +321,11 @@ void TextField::widgetKeyDownEvent_(int key) {
         setCaret_(shiftKeyDown_ ? caretStart_ : idx, idx);
     }
 
+    if((key == keys::Home || key == keys::End) && caretActive_) {
+        int idx = key == keys::Home ? 0 : (int)textLayout_->text().size();
+        setCaret_(shiftKeyDown_ ? caretStart_ : idx, idx);
+    }
+
     if(key > 0) {
         if(controlKeyDown_ && (key == (int)'c' || key == (int)'C')) {
             copyToClipboard_();
