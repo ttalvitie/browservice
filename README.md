@@ -18,6 +18,7 @@ The following OS-browser-combinations have been tested to work (some with minor 
 | Windows 98 Second Edition   | Internet Explorer 6 SP1    |             |
 | Windows 98 Second Edition   | Firefox 2.0.0.20           |             |
 | Windows 98 Second Edition   | Netscape 7.2               | [5]         |
+| Windows 98 Second Edition   | Netscape Navigator 9.0.0.6 |             |
 
 [1] The mouse cursor flickers between the true cursor and an hourglass.
 
