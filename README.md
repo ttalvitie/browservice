@@ -18,11 +18,20 @@ The following OS-browser-combinations have been tested to work (some with minor 
 | Windows 98 Second Edition    | Internet Explorer 6 SP1    |                 |
 | Windows 98 Second Edition    | Firefox 2.0.0.20           |                 |
 | Windows 98 Second Edition    | Netscape 7.2               | [5]             |
-| Windows 98 Second Edition    | Netscape Navigator 9.0.0.6 |                 |
+| Windows 98 Second Edition    | Netscape 9.0.0.6           |                 |
 | Windows NT 4.0 SP6a          | Internet Explorer 4.0      | [1] [2] [3] [6] |
 | Windows NT 4.0 SP6a          | Internet Explorer 5        |                 |
 | Windows NT 4.0 SP6a          | Internet Explorer 5.5 SP2  |                 |
 | Windows NT 4.0 SP6a          | Internet Explorer 6 SP1    |                 |
+| Windows NT 4.0 SP6a          | Firefox 1.0.1              | [5]             |
+| Windows NT 4.0 SP6a          | Firefox 2.0.0.20           |                 |
+| Windows NT 4.0 SP6a          | Netscape 9.0.0.6           |                 |
+| Windows XP SP3               | Internet Explorer 6 SP3    |                 |
+| Windows XP SP3               | Internet Explorer 8        |                 |
+| Windows XP SP3               | Firefox 1.0.1              | [5]             |
+| Windows XP SP3               | Firefox 52.3.0 ESR         |                 |
+| Windows XP SP3               | Chrome 1.0.154             |                 |
+| Windows XP SP3               | Chrome 49.0.2623           |                 |
 | Debian GNU/Linux 3.1 "Sarge" | Firefox 1.0.4              |                 |
 
 [1] The mouse cursor flickers between the true cursor and an hourglass.
