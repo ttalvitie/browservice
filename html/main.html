@@ -324,6 +324,32 @@ window.onresize = function() {
 
 var shiftDown = false;
 var controlDown = false;
+var altDown = false;
+
+function sanitizeModifiers(event, func) {
+    if(
+        event.shiftKey === false &&
+        event.ctrlKey === false &&
+        event.altKey === false
+    ) {
+        if(shiftDown) putEvent("KUP_16");
+        if(controlDown) putEvent("KUP_17");
+        if(altDown) putEvent("KUP_18");
+        shiftDown = false;
+        controlDown = false;
+        altDown = false;
+    }
+
+    var tmpShift = !shiftDown && event.shiftKey === true;
+    var tmpControl = !controlDown && event.ctrlKey === true;
+    if(tmpShift) putEvent("KDN_16");
+    if(tmpControl) putEvent("KDN_17");
+
+    func();
+
+    if(tmpControl) putEvent("KUP_17");
+    if(tmpShift) putEvent("KUP_16");
+}
 
 document.onmousedown = function(event) {
     if(!event) event = window.event;
@@ -333,13 +359,9 @@ document.onmousedown = function(event) {
         if(leftMouseButtonIs1 && button == 1) {
             button = 0;
         }
-        var tmpShift = !shiftDown && event.shiftKey === true;
-        var tmpControl = !controlDown && event.ctrlKey === true;
-        if(tmpShift) putEvent("KDN_16");
-        if(tmpControl) putEvent("KDN_17");
-        putEvent("MDN_" + mouseX + "_" + mouseY + "_" + button);
-        if(tmpControl) putEvent("KUP_17");
-        if(tmpShift) putEvent("KUP_16");
+        sanitizeModifiers(event, function() {
+            putEvent("MDN_" + mouseX + "_" + mouseY + "_" + button);
+        });
     }
     window.focus();
     preventDefault(event);
@@ -450,13 +472,9 @@ document.onkeypress = function(event) {
         key > 32 &&
         !(controlDown && ((key >= 65 && key <= 90) || (key >= 97 && key <= 122)))
     ) {
-        var tmpShift = !shiftDown && event.shiftKey === true;
-        var tmpControl = !controlDown && event.ctrlKey === true;
-        if(tmpShift) putEvent("KDN_16");
-        if(tmpControl) putEvent("KDN_17");
-        putEvent("KPR_" + key);
-        if(tmpControl) putEvent("KUP_17");
-        if(tmpShift) putEvent("KUP_16");
+        sanitizeModifiers(event, function() {
+            putEvent("KPR_" + key);
+        });
     }
     preventDefault(event);
 };
@@ -474,14 +492,11 @@ document.onkeydown = function(event) {
     } else if(nonCharKeys[key]) {
         if(key == 16) shiftDown = true;
         if(key == 17) controlDown = true;
+        if(key == 18) altDown = true;
 
-        var tmpShift = !shiftDown && event.shiftKey === true;
-        var tmpControl = !controlDown && event.ctrlKey === true;
-        if(tmpShift) putEvent("KDN_16");
-        if(tmpControl) putEvent("KDN_17");
-        putEvent("KDN_" + key);
-        if(tmpControl) putEvent("KUP_17");
-        if(tmpShift) putEvent("KUP_16");
+        sanitizeModifiers(event, function() {
+            putEvent("KDN_" + key);
+        });
 
         preventDefault(event);
     }
@@ -498,6 +513,7 @@ document.onkeyup = function(event) {
         if(key == 16) shiftDown = false;
         if(key == 17 || key == 18) {
             controlDown = false;
+            altDown = false;
             putEvent("KUP_17");
             putEvent("KUP_18");
         } else {
