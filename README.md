@@ -3,27 +3,31 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 ## Supported client browsers
 
-The following OS-browser-combinations have been tested to work (some with limitations, see below the table for descriptions).
+The following OS-browser-combinations have been tested to work (some with minor limitations, see below the table for descriptions).
 
 | Operating system            | Browser                    | Limitations |
 | --------------------------- | -------------------------- | ----------- |
-| Windows for Workgroups 3.11 | Internet Explorer 4        | [1] [2]     |
-| Windows for Workgroups 3.11 | Internet Explorer 5        | [2]         |
+| Windows for Workgroups 3.11 | Internet Explorer 4.0      | [1] [2] [3] |
+| Windows for Workgroups 3.11 | Internet Explorer 5        | [2] [3]     |
 | OS/2 Warp 4.52              | Firefox 2.0.0.14           |             |
-| Windows 95                  | Internet Explorer 4.01 SP2 | [1] [2]     |
+| Windows 95                  | Internet Explorer 4.01 SP2 | [1] [2] [3] |
 | Windows 95                  | Internet Explorer 5.5 SP2  |             |
 | Windows 95                  | Firefox 1.5.0.12           |             |
-| Windows 95                  | Opera 10.63                | [1] [3]     |
+| Windows 95                  | Opera 10.63                | [1] [4]     |
 | Windows 98 Second Edition   | Internet Explorer 5        |             |
 | Windows 98 Second Edition   | Internet Explorer 6 SP1    |             |
 | Windows 98 Second Edition   | Firefox 2.0.0.20           |             |
-| Windows 98 Second Edition   | Netscape 7.2               | [3]         |
+| Windows 98 Second Edition   | Netscape 7.2               | [5]         |
 
 [1] The mouse cursor flickers between the true cursor and an hourglass.
 
 [2] Right click works, but it also opens a context menu in the client browser.
 
-[3] The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
+[3] The browser has the following bug that affects Browservice: In some cases where the browser window loses focus (such as when pressing the Ctrl+F key), the keyboard handler may move into an invalid state where some keys are unavailable or the Ctrl key is stuck down. To rectify this, the user has to manually press and release Ctrl.
+
+[4] The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
+
+[5] Typing special characters using the AltGr key does not work in the browser area (you can still paste them from the clipboard).
 
 ## Setup
 
