@@ -5,46 +5,48 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 The following OS-browser-combinations have been tested to work (some with minor limitations, see the descriptions below the table).
 
-| Operating system             | Browser                    | Limitations     |
-| ---------------------------- | -------------------------- | --------------- |
-| Windows for Workgroups 3.11  | Internet Explorer 4.0      | [1] [2] [3]     |
-| Windows for Workgroups 3.11  | Internet Explorer 5        | [2] [3]         |
-| OS/2 Warp 4.52               | Firefox 2.0.0.14           |                 |
-| Windows 95                   | Internet Explorer 4.01 SP2 | [1] [2] [3]     |
-| Windows 95                   | Internet Explorer 5.5 SP2  |                 |
-| Windows 95                   | Firefox 1.5.0.12           |                 |
-| Windows 95                   | Opera 10.63                | [1] [4]         |
-| Windows 98 Second Edition    | Internet Explorer 5        |                 |
-| Windows 98 Second Edition    | Internet Explorer 6 SP1    |                 |
-| Windows 98 Second Edition    | Firefox 2.0.0.20           |                 |
-| Windows 98 Second Edition    | Netscape 7.2               | [5]             |
-| Windows 98 Second Edition    | Netscape 9.0.0.6           |                 |
-| Windows NT 4.0 SP6a          | Internet Explorer 4.0      | [1] [2] [3] [6] |
-| Windows NT 4.0 SP6a          | Internet Explorer 5        |                 |
-| Windows NT 4.0 SP6a          | Internet Explorer 5.5 SP2  |                 |
-| Windows NT 4.0 SP6a          | Internet Explorer 6 SP1    |                 |
-| Windows NT 4.0 SP6a          | Firefox 1.0.1              | [5]             |
-| Windows NT 4.0 SP6a          | Firefox 2.0.0.20           |                 |
-| Windows NT 4.0 SP6a          | Netscape 9.0.0.6           |                 |
-| Windows XP SP3               | Internet Explorer 6 SP3    |                 |
-| Windows XP SP3               | Internet Explorer 8        |                 |
-| Windows XP SP3               | Firefox 1.0.1              | [5]             |
-| Windows XP SP3               | Firefox 52.3.0 ESR         |                 |
-| Windows XP SP3               | Chrome 1.0.154             |                 |
-| Windows XP SP3               | Chrome 49.0.2623           |                 |
-| Debian GNU/Linux 3.1 "Sarge" | Firefox 1.0.4              |                 |
+| Operating system             | Browser                    | Limitations |
+| ---------------------------- | -------------------------- | ----------- |
+| Windows for Workgroups 3.11  | Internet Explorer 4.0      | 1, 2, 3, 4  |
+| Windows for Workgroups 3.11  | Internet Explorer 5        | 1, 3, 4     |
+| OS/2 Warp 4.52               | Firefox 2.0.0.14           |             |
+| Windows 95                   | Internet Explorer 4.01 SP2 | 2, 3, 4     |
+| Windows 95                   | Internet Explorer 5.5 SP2  |             |
+| Windows 95                   | Firefox 1.5.0.12           |             |
+| Windows 95                   | Opera 10.63                | 2, 5        |
+| Windows 98 Second Edition    | Internet Explorer 5        |             |
+| Windows 98 Second Edition    | Internet Explorer 6 SP1    |             |
+| Windows 98 Second Edition    | Firefox 2.0.0.20           |             |
+| Windows 98 Second Edition    | Netscape 7.2               | 6           |
+| Windows 98 Second Edition    | Netscape 9.0.0.6           |             |
+| Windows NT 4.0 SP6a          | Internet Explorer 4.0      | 2, 3, 4, 7  |
+| Windows NT 4.0 SP6a          | Internet Explorer 5        |             |
+| Windows NT 4.0 SP6a          | Internet Explorer 5.5 SP2  |             |
+| Windows NT 4.0 SP6a          | Internet Explorer 6 SP1    |             |
+| Windows NT 4.0 SP6a          | Firefox 1.0.1              | 6           |
+| Windows NT 4.0 SP6a          | Firefox 2.0.0.20           |             |
+| Windows NT 4.0 SP6a          | Netscape 9.0.0.6           |             |
+| Windows XP SP3               | Internet Explorer 6 SP3    |             |
+| Windows XP SP3               | Internet Explorer 8        |             |
+| Windows XP SP3               | Firefox 1.0.1              | 6           |
+| Windows XP SP3               | Firefox 52.3.0 ESR         |             |
+| Windows XP SP3               | Chrome 1.0.154             |             |
+| Windows XP SP3               | Chrome 49.0.2623           |             |
+| Debian GNU/Linux 3.1 "Sarge" | Firefox 1.0.4              |             |
 
-[1] The mouse cursor flickers between the true cursor and an hourglass.
+1. PNG is not supported.
 
-[2] Right click works, but it also opens a context menu in the client browser.
+2. The mouse cursor flickers between the true cursor and an hourglass.
 
-[3] The browser has the following bug that affects Browservice: In some cases where the browser window loses focus (such as when pressing the Ctrl+F key), the keyboard handler may move into an invalid state where some keys are unavailable or the Ctrl key is stuck down. To rectify this, the user has to manually press and release Ctrl.
+3. Right click works, but it also opens a context menu in the client browser.
 
-[4] The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
+4. The browser has the following bug that affects Browservice: In some cases where the browser window loses focus (such as when pressing the Ctrl+F key), the keyboard handler may move into an invalid state where some keys are unavailable or the Ctrl key is stuck down. To rectify this, the user has to manually press and release Ctrl.
 
-[5] Typing special characters using the AltGr key does not work in the browser area (you can still paste them from the clipboard).
+5. The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
 
-[6] The names of downloaded files are garbled.
+6. Typing special characters using the AltGr key does not work in the browser area (you can still paste them from the clipboard).
+
+7. The names of downloaded files are garbled.
 
 ## Setup
 
