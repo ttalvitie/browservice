@@ -3,7 +3,7 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 ## Supported client browsers
 
-The following OS-browser-combinations have been tested to work (some with minor limitations, see the descriptions below the table).
+The following OS-browser-combinations have been confirmed to work (some with minor limitations, see the descriptions for the numbers below the table).
 
 | Operating system             | Browser                    | Limitations |
 | ---------------------------- | -------------------------- | ----------- |
