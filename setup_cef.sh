@@ -22,6 +22,9 @@ then
 elif [ "$ARCH" == "armv7l" ]
 then
     CMAKEFLAGS="-DPROJECT_ARCH=arm"
+elif [ "$ARCH" == "aarch64" ]
+then
+    CMAKEFLAGS="-DPROJECT_ARCH=arm64"
 else
     echo "Unsupported architecture"
     exit 1

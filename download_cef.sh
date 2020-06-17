@@ -22,6 +22,10 @@ elif [ "$ARCH" == "armv7l" ]
 then
     wget "http://opensource.spotify.com/cefbuilds/cef_binary_83.3.12%2Bg0889ff0%2Bchromium-83.0.4103.97_linuxarm.tar.bz2" -O cef_unverified.tar.bz2
     SHA1="055b6d478c85d88969510d210ded2ec7dd9fd1f6"
+elif [ "$ARCH" == "aarch64" ]
+then
+    wget "http://opensource.spotify.com/cefbuilds/cef_binary_83.3.12%2Bg0889ff0%2Bchromium-83.0.4103.97_linuxarm64.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="965d0c5b9470d5361ea52daff91c9f41d2a08630"
 else
     echo "Unsupported architecture"
     exit 1
