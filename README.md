@@ -3,22 +3,27 @@ Browse the modern Web with old browsers using a proxy that runs the Chromium bro
 
 ## Supported client browsers
 
-The following OS-browser-combinations have been tested to work (some with minor limitations, see below the table for descriptions).
+The following OS-browser-combinations have been tested to work (some with minor limitations, see the descriptions below the table).
 
-| Operating system            | Browser                    | Limitations |
-| --------------------------- | -------------------------- | ----------- |
-| Windows for Workgroups 3.11 | Internet Explorer 4.0      | [1] [2] [3] |
-| Windows for Workgroups 3.11 | Internet Explorer 5        | [2] [3]     |
-| OS/2 Warp 4.52              | Firefox 2.0.0.14           |             |
-| Windows 95                  | Internet Explorer 4.01 SP2 | [1] [2] [3] |
-| Windows 95                  | Internet Explorer 5.5 SP2  |             |
-| Windows 95                  | Firefox 1.5.0.12           |             |
-| Windows 95                  | Opera 10.63                | [1] [4]     |
-| Windows 98 Second Edition   | Internet Explorer 5        |             |
-| Windows 98 Second Edition   | Internet Explorer 6 SP1    |             |
-| Windows 98 Second Edition   | Firefox 2.0.0.20           |             |
-| Windows 98 Second Edition   | Netscape 7.2               | [5]         |
-| Windows 98 Second Edition   | Netscape Navigator 9.0.0.6 |             |
+| Operating system             | Browser                    | Limitations     |
+| ---------------------------- | -------------------------- | --------------- |
+| Windows for Workgroups 3.11  | Internet Explorer 4.0      | [1] [2] [3]     |
+| Windows for Workgroups 3.11  | Internet Explorer 5        | [2] [3]         |
+| OS/2 Warp 4.52               | Firefox 2.0.0.14           |                 |
+| Windows 95                   | Internet Explorer 4.01 SP2 | [1] [2] [3]     |
+| Windows 95                   | Internet Explorer 5.5 SP2  |                 |
+| Windows 95                   | Firefox 1.5.0.12           |                 |
+| Windows 95                   | Opera 10.63                | [1] [4]         |
+| Windows 98 Second Edition    | Internet Explorer 5        |                 |
+| Windows 98 Second Edition    | Internet Explorer 6 SP1    |                 |
+| Windows 98 Second Edition    | Firefox 2.0.0.20           |                 |
+| Windows 98 Second Edition    | Netscape 7.2               | [5]             |
+| Windows 98 Second Edition    | Netscape Navigator 9.0.0.6 |                 |
+| Windows NT 4.0 SP6a          | Internet Explorer 4.0      | [1] [2] [3] [6] |
+| Windows NT 4.0 SP6a          | Internet Explorer 5        |                 |
+| Windows NT 4.0 SP6a          | Internet Explorer 5.5 SP2  |                 |
+| Windows NT 4.0 SP6a          | Internet Explorer 6 SP1    |                 |
+| Debian GNU/Linux 3.1 "Sarge" | Firefox 1.0.4              |                 |
 
 [1] The mouse cursor flickers between the true cursor and an hourglass.
 
@@ -29,6 +34,8 @@ The following OS-browser-combinations have been tested to work (some with minor 
 [4] The client browser back/forward buttons do not work (you can still use Backspace and Shift+Backspace).
 
 [5] Typing special characters using the AltGr key does not work in the browser area (you can still paste them from the clipboard).
+
+[6] The names of downloaded files are garbled.
 
 ## Setup
 
