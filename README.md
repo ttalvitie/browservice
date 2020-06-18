@@ -1,14 +1,16 @@
 # Browservice: Browser as a Service
 
-A web proxy server that makes it possible to browse the modern web on historical browsers. It works by rendering the browser viewport into images; the client browser shows these images using JavaScript and forwards input events back to the proxy.
+A web proxy server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
 ![Screenshot of IE6 showing an Instagram page through Browservice](fig/nt4_ie6_instagram.png)
+
+[See more screenshots](#screenshots)
 
 ## How does it work?
 
 The Browservice server uses [CEF (Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef) to run a Chromium browser instance that renders the browser view into an off-screen buffer. The browser view, combined with a control UI bar, is then compressed as a PNG or JPEG image and served to the client using an embedded HTTP server. The client browser runs a JavaScript application that requests and shows the images. It also listens for keyboard and mouse events from the user and forwards them to the proxy by including them in the URLs of the image requests.
 
-Initially, this approach of sending the whole browser view as a new image every time it changes might sound quite inefficient. However, it is surprisingly usable if the network connection between the proxy server and the client is fast (such as 100 Mbit/s Ethernet LAN). Early 00s hardware (~1 GHz CPU clock) can often surpass 10 FPS when watching video. The performance is also tolerable on older machines if the JPEG compression level is set low and the browser window is small.
+Initially, this approach of sending the whole browser view as a new image every time it changes might sound quite inefficient. However, it is surprisingly usable if the network connection between the proxy server and the client is fast (such as 100 Mbit/s Ethernet LAN). Early 00s hardware (~1 GHz CPU clock) can often surpass 10 FPS in video streaming. The performance is also tolerable on older machines if a low JPEG compression level is used and the browser window is small.
 
 The current features of Browservice include the following:
 
@@ -21,6 +23,7 @@ The current features of Browservice include the following:
 - File downloads (with confirmation button on the control bar for security)
 - Text search within the current page
 - Image compression quality selectable on the fly (JPEG compression levels or PNG)
+- Native Back/Forward/Refresh buttons on the client forwarded to the browser
 - Custom multithreaded implementation of PNG compression (standalone library; you just need `src/png.hpp` and `src/png.cpp`)
 
 The following features are currently missing but could be implemented in future versions:
@@ -32,7 +35,7 @@ The following features are currently missing but could be implemented in future 
 
 ## Background
 
-In retrocomputing, the modern web is inaccessible, because up-to-date web browsers are not available for old operating systems, and old browsers do not support modern web standards. Furthermore, old operating systems and browsers should not be connected directly to the Internet as they typically have unpatched security vulnerabilities. Browservice circumvents these issues by offloading the web rendering to a proxy server running an up-to-date web browser; the actual client browser connecting to the proxy only needs to show the images sent by the proxy server and forward the user input back to the proxy.
+In retrocomputing, the modern web is inaccessible, because up-to-date web browsers are not available for old operating systems, and old browsers do not support modern web standards. Furthermore, old operating systems and browsers should not be connected directly to the Internet because they typically have unpatched security vulnerabilities. Browservice circumvents these issues by offloading the web rendering to a proxy server running an up-to-date web browser; the actual client browser connecting to the proxy only needs to show the images sent by the proxy server and forward the user input back to the proxy.
 
 This idea of using a proxy to render the browser view into images has been used before by [WRP (Web Rendering proxy)](https://github.com/tenox7/wrp). Browservice differs from WRP in that it uses JavaScript on the client browser to animate the browser view and gather user input events, while in WRP, the user has to use web forms and image maps to provide the input, and the page has to be reloaded for every update in the view. Thus Browservice gives the user a more immersive web browsing experience, but also requires a newer client browser and more powerful hardware. While WRP can run on browsers as old as NCSA Mosaic 2.0, the [earliest supported client browsers](#supported-client-browsers) for Browservice are from late 90s and early 00s.
 
@@ -81,15 +84,15 @@ The following historical OS-browser-combinations have been confirmed to work as 
 6. Typing special characters using the AltGr key does not work in the browser area (you can still paste them from the clipboard).
 7. The names of downloaded files are garbled.
 
-The client support has been tested using the procedure of the `test` directory. It would be interesting to hear about your experiences on different platforms. Browservice is expected to work on Internet Explorer or Firefox on old m68k and PowerPC Macs, but due to lack of access, these have not been tested.
+The client support has been tested using the procedure documented in the `test` directory. It would be interesting to hear about your experiences on different platforms. Browservice is expected to work on Internet Explorer or Firefox on old m68k and PowerPC Macs, but due to lack of access, these have not been tested.
 
 ## Setup
 
-A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers).
+A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Intenet Explorer available for the system is typically the fastest.
 
 Only the proxy server needs an Internet connection; the client only needs to be able to connect to the proxy server. It is advisable not to expose the client directly to the Internet. One possible network setup is to have two interfaces on the proxy server: one for Internet and another for the local connection to the client. If both machines are virtual machines, host-only adapters can be used for the local connection between the proxy server and the client.
 
-Here is one example of a mobile Browservice setup: The proxy server is running on a Raspberry Pi 4 (fitted with a fan and a battery) that connects to the Internet using Wi-Fi. The client is an IBM ThinkPad T40 running Windows NT 4.0 and Internet Explorer 6. The client connects to the proxy server through a direct patch cable between the Ethernet ports of the machines; the Ethernet interfaces are configured with static IPs in the same private subnet.
+Here is one example of a mobile hardware Browservice setup that has shown to be working well: The proxy server is running on a Raspberry Pi 4 (fitted with a fan and a battery) that connects to the Internet using Wi-Fi. The client is an IBM ThinkPad T40 running Windows NT 4.0 and Internet Explorer 6. The client connects to the proxy server through a direct patch cable between the Ethernet ports of the machines; the Ethernet interfaces are configured with static IPs in the same private subnet.
 
 TODO: picture of the setup
 
@@ -136,7 +139,7 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ### Compiling Browservice
 
-Download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, we provide two scripts. To download a release build of CEF, run the following in the extracted Browservice release root directory:
+On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF, run the following in the extracted Browservice release root directory to download and verify CEF:
 
 ```
 ./download_cef.sh
@@ -154,30 +157,69 @@ Now, compile a release build of Browservice (you may adjust the number in the `-
 make -j5
 ```
 
-After the build has completed, it will ask you to set the SUID permissions for `chrome-sandbox` to enable some sandbox features of Chromium:
+After the build has completed, it will ask you to set the SUID permissions for `chrome-sandbox` binary to enable the sandbox features of Chromium:
 
 ```
 sudo chown root:root release/bin/chrome-sandbox && sudo chmod 4755 release/bin/chrome-sandbox
 ```
 
-Now you can run Browservice:
+Now you can start the Browservice proxy:
 
 ```
 release/bin/browservice
 ```
 
-With the default arguments, Browservice listens for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
+With the default arguments, the Browservice proxy listens for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
-By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow remote computers to connect to the server, you need to adjust the `--http-listen-addr` command line argument; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
+By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow remote computers to connect to the server, you need to adjust the `--http-listen-addr` command line option; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
 
 ```
 release/bin/browservice --http-listen-addr=0.0.0.0:8080
 ```
 
-WARNING: Note that binding to `0.0.0.0` may allow unauthorized users to connect to the server. To avoid this, use a more restrictive listen address and/or a firewall.
+WARNING: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. To avoid this, use a more restrictive listen address and/or a firewall.
+
+The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
 
 There many are other useful command line options in Browservice. To get a list of them, run:
 
 ```
 release/bin/browservice --help
 ```
+
+## Client usage
+
+To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
+
+After this, you can browse the web as you typically would, as long as you remember to use the in-page Browservice "Address" text field instead of the native browser address field. In some client browsers, you can disable the native browser controls to free up screen space and avoid confusion.
+
+Some notes that might be useful:
+
+- If the page offers a file for download, you need to explicitly accept it by clicking the Download button that appears in the control bar (after making sure that you trust the page). Browservice then downloads the file into a temporary directory on the proxy server, after which it forwards the file to the client browser.
+
+- If the page opens a popup window, Browservice automatically opens a new client browser window for it. However, creating this window might be blocked by the popup blocker of the client browser, and you may need to explicitly allow it or change the blocker settings.
+
+- You can use Ctrl+C and Ctrl+V to copy and paste text between different Browservice windows (including the control bar). However, this clipboard is not automatically shared with the client system. To access the clipboard from the client, click the clipboard icon in the control bar to open a window that contains a text field and buttons for loading the clipboard into the text field and saving the contents of the text field into the clipboard. Note that it is a security risk to load text copied from an untrusted page into the native text field.
+
+- The most common browser hotkeys (Backspace, Shift+Backspace, Ctrl+F, Ctrl+L, Ctrl+A, Ctrl+R, F5, PgUp/PgDown, Home/End) work with Browservice. However, some client browsers capture these keys instead of sending them to Browservice. For some Ctrl-based shortcuts, you can get around this by adding Shift into the combination, for example using Ctrl+Shift+F instead of Ctrl+F.
+
+- If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
+
+## Screenshots
+
+![Screenshot of Internet Explorer 6 on Windows NT 4.0 showing Hacker News](fig/nt4_ie6_hackernews.png)
+Browsing Hacker News using Windows NT 4.0 and Internet Explorer 6.
+
+![Screenshot of Internet Explorer 4.0 on Windows for Workgroups 3.11 showing Hacker News](fig/w311_ie4_cloud.png)
+Managing Google Cloud virtual machines using Windows for Workgroups 3.11 and Internet Explorer 4.0.
+
+![Screenshot of Internet Explorer 5 on Windows 98 SE showing a YouTube video](fig/w98_ie5_legend.png)
+Watching the *Legend of Microsoft Windows 98* on YouTube using Windows 98 SE and Internet Explorer 5. The audio is played directly by the proxy server.
+
+![Screenshot of Firefox 2 on OS/2 Warp 4.52 showing a Wikipedia page](fig/os2_firefox2_wikipedia.png)
+Reading up on the history of OS/2 from Wikipedia using OS/2 Warp 4.52 and Firefox 2.0.0.14.
+
+![Screenshot of Opera 10.63 on Windows 95 showing a driver download page](fig/w95_opera1063_drivers.png)
+Downloading ThinkPad drivers using Windows 95 and Opera 10.63 with the help of the Find feature.
+
+> *Browservice is 100% AJAX-free software, handmade in Finland*
