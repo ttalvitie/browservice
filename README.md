@@ -1,10 +1,10 @@
 # Browservice: Browser as a Service
 
-A web proxy server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
+A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
 ![Screenshot of IE6 showing an Instagram page through Browservice](fig/nt4_ie6_instagram.png)
 
-[<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650" height="413">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
+[<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
 
 [See more screenshots](#screenshots)
 
@@ -31,9 +31,11 @@ The current features of Browservice include the following:
 The following features are currently missing but could be implemented in future versions:
 
 - Streaming audio to client (currently audio is played locally by the proxy server)
+- Less hackish keyboard handling (different browsers send very different JavaScript key events)
 - Integration with web search engines
 - Bookmarks
 - File uploads
+- Page zooming
 
 ## Background
 
@@ -43,7 +45,7 @@ This idea of using a proxy to render the browser view into images has been used 
 
 ### Security
 
-It is always a security risk to work with untrusted data (such as web page content) with outdated software. If we assume that the proxy server is kept up to date, Browservice significantly reduces the attack surface, because the untrusted data reaches the client only as images that were compressed by Browservice or file downloads or clipboard data that were explicitly requested by the user. Despite the reduced attack surface, security is not guaranteed, and you should make sure to really know what you are doing before using Browservice for security-critical web browsing.
+It is always a security risk to work with untrusted data (such as web page content) with outdated software. If we assume that the proxy server is kept up to date, Browservice significantly reduces the attack surface, because the untrusted data reaches the client only as images that were compressed by Browservice or file downloads or clipboard data that were explicitly requested by the user. Not even the URLs of the accessed pages are sent to the client browser as text because the address bar is rendered on the server side (Browservice is not a real HTTP proxy). Despite the reduced attack surface, security is not guaranteed, and you should make sure to really know what you are doing before using Browservice for security-critical web browsing.
 
 ## Supported client browsers
 
@@ -90,7 +92,9 @@ The client support has been tested using the procedure documented in the `test` 
 
 ## Setup
 
-A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Intenet Explorer available for the system is typically the fastest.
+A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead.
+
+For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Internet Explorer available for the system is typically the fastest.
 
 Only the proxy server needs an Internet connection; the client only needs to be able to connect to the proxy server. It is advisable not to expose the client directly to the Internet. One possible network setup is to have two interfaces on the proxy server: one for Internet and another for the local connection to the client. If both machines are virtual machines, host-only adapters can be used for the local connection between the proxy server and the client.
 
@@ -139,7 +143,7 @@ popd
 rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 ```
 
-### Compiling Browservice
+### Compiling and running Browservice
 
 On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF, run the following in the extracted Browservice release root directory to download and verify CEF:
 
@@ -159,7 +163,7 @@ Now, compile a release build of Browservice (you may adjust the number in the `-
 make -j5
 ```
 
-After the build has completed, it will ask you to set the SUID permissions for `chrome-sandbox` binary to enable the sandbox features of Chromium:
+After the build has completed, it will ask you to set the SUID permissions for the `chrome-sandbox` binary to enable the sandbox features of Chromium:
 
 ```
 sudo chown root:root release/bin/chrome-sandbox && sudo chmod 4755 release/bin/chrome-sandbox
@@ -187,7 +191,7 @@ release/bin/browservice --http-listen-addr=0.0.0.0:8080
 
 The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
 
-There many are other useful command line options in Browservice. To get a list of them, run:
+There are many other useful command line options in Browservice. To get a list of them, run:
 
 ```
 release/bin/browservice --help
