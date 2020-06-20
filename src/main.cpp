@@ -8,6 +8,8 @@
 #include "include/wrapper/cef_closure_task.h"
 #include "include/cef_app.h"
 
+#include <X11/Xlib.h>
+
 namespace {
 
 class AppServerEventHandler : public ServerEventHandler {
@@ -112,6 +114,10 @@ int main(int argc, char* argv[]) {
     globals = Globals::create(config);
 
     if(!termSignalReceived) {
+        // Ignore non-fatal X errors
+        XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
+        XSetIOErrorHandler([](Display*) { return 0; });
+
         app = new App;
 
         CefSettings settings;
