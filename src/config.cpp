@@ -2,7 +2,11 @@
 
 #include "quality.hpp"
 
+#include "include/cef_version.h"
+
 #include <Poco/Net/HTTPServer.h>
+
+const char* BrowserviceVersion = "0.9.0.0";
 
 namespace {
 
@@ -212,12 +216,18 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
             CONF_FOREACH_OPT
             #undef CONF_FOREACH_OPT_ITEM
             lines.push_back("  --help                        show this help and exit");
+            lines.push_back("  --version                     show the version and exit");
 
             sort(lines.begin(), lines.end());
             for(const string& line : lines) {
                 cout << line << '\n';
             }
             
+            return {};
+        }
+        if(arg == "--version") {
+            cout << "Browservice " << BrowserviceVersion << ", ";
+            cout << "built with CEF " << CEF_VERSION << "\n";
             return {};
         }
 

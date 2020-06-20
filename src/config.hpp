@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+extern const char* BrowserviceVersion;
+
 class Config {
 SHARED_ONLY_CLASS(Config);
 private:
@@ -11,8 +13,8 @@ private:
 public:
     Config(CKey, Src& src);
 
-    // Returns empty pointer if reading the configuration failed or help was
-    // shown and the program should be terminated
+    // Returns empty pointer if reading the configuration failed or help/version
+    // was shown and the program should be terminated
     static shared_ptr<Config> read(int argc, char* argv[]);
 
 public:
