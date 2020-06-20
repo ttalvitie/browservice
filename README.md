@@ -4,6 +4,8 @@ A web proxy server that enables browsing the modern web on historical browsers. 
 
 ![Screenshot of IE6 showing an Instagram page through Browservice](fig/nt4_ie6_instagram.png)
 
+[<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650" height="413">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
+
 [See more screenshots](#screenshots)
 
 ## How does it work?
@@ -103,7 +105,7 @@ The commands for installing the dependencies of the Browservice proxy on various
 #### Ubuntu 18.04/20.04, Debian 10 and Raspberry Pi OS
 
 ```
-sudo apt install cmake g++ pkg-config libxcb1-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1
+sudo apt install cmake g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1
 ```
 
 - On Debian, in order to be able to install the `ttf-mscorefonts-installer` package, you need to add the `contrib` APT source by adding `contrib` to the end of each `deb` and `deb-src` line in `/etc/apt/sources.list` and running `sudo apt update`.
@@ -126,7 +128,7 @@ sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore
 #### Arch Linux
 
 ```
-sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite
+sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb libx11 python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite
 
 # Install MS core fonts from AUR
 wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-fonts.tar.gz
@@ -177,7 +179,11 @@ By default, the listening socket is bound to `127.0.0.1`, which means that the s
 release/bin/browservice --http-listen-addr=0.0.0.0:8080
 ```
 
-WARNING: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. To avoid this, use a more restrictive listen address and/or a firewall.
+**WARNING**: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. To avoid this, use a more restrictive listen address and/or a firewall.
+
+**WARNING**: The trust between the client and the proxy server has to be mutual, as the client controls a web browser process running on the proxy server. For example, the client can use the `file://` protocol to read files on the proxy server that are accessible to the user running `browservice`.
+
+**WARNING**: The embedded Chromium browser does not update itself. To keep the browser up to date, you should periodically install the newest release of Browservice; on each release, the `download_cef.sh` script is updated to use the newest CEF release.
 
 The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
 
@@ -221,5 +227,8 @@ Reading up on the history of OS/2 from Wikipedia using OS/2 Warp 4.52 and Firefo
 
 ![Screenshot of Opera 10.63 on Windows 95 showing a driver download page](fig/w95_opera1063_drivers.png)
 Downloading ThinkPad drivers using Windows 95 and Opera 10.63 with the help of the Find feature.
+
+![Screenshot of Netscape 9 on Windows NT 4.0 running multiple nested Browservice browsers](fig/nt4_netscape9_recursive.png)
+Using Browservice recursively on Windows NT 4.0 and Netscape Navigator 9.0.0.6.
 
 > *Browservice is 100% AJAX-free software, handmade in Finland*
