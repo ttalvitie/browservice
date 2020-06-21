@@ -100,7 +100,7 @@ Only the proxy server needs an Internet connection; the client only needs to be 
 
 Here is one example of a mobile hardware Browservice setup that has shown to be working well: The proxy server is running on a Raspberry Pi 4 (fitted with a fan and a battery) that connects to the Internet using Wi-Fi. The client is an IBM ThinkPad T40 running Windows NT 4.0 and Internet Explorer 6. The client connects to the proxy server through a direct patch cable between the Ethernet ports of the machines; the Ethernet interfaces are configured with static IPs in the same private subnet.
 
-TODO: picture of the setup
+![Photo of ThinkPad T40 showing a GitHub page, and a Raspberry Pi 4 running the Browservice proxy connected to the laptop with an Ethernet patch cable](fig/raspi4_t40.jpg)
 
 ### Installing dependencies
 
