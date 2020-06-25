@@ -145,7 +145,7 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ### Compiling and running Browservice
 
-On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF, run the following in the extracted Browservice release root directory to download and verify CEF:
+On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF into `cef.tar.bz2`, run the following in the extracted Browservice release root directory to download and verify CEF:
 
 ```
 ./download_cef.sh
@@ -197,7 +197,7 @@ There are many other useful command line options in Browservice. To get a list o
 release/bin/browservice --help
 ```
 
-## Client usage
+## Usage
 
 To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
 
@@ -214,6 +214,8 @@ Some notes that might be useful:
 - The most common browser hotkeys (Backspace, Shift+Backspace, Ctrl+F, Ctrl+L, Ctrl+A, Ctrl+R, F5, PgUp/PgDown, Home/End) work with Browservice. However, some client browsers capture these keys instead of sending them to Browservice. For some Ctrl-based shortcuts, you can get around this by adding Shift into the combination, for example using Ctrl+Shift+F instead of Ctrl+F.
 
 - If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
+
+- By default, Browservice can't play videos that use proprietary audio/video codecs such as H264 and AAC, as the prebuilt CEF distribution [provided by Spotify](http://opensource.spotify.com/cefbuilds/index.html) does not include them. To add the codecs, build the CEF distribution by following the [instructions](https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md) with the options `proprietary_codecs=true ffmpeg_branding=Chrome` appended to the environment variable `GN_DEFINES`. After this, you should repeat the Browservice installation process with one exception: prior to running `setup_cef.sh`, copy the CEF distribution produced by the build to `cef.tar.bz2` instead of using `download_cef.sh` to download it. Note that building CEF takes a lot of time, memory and disk space. Also note that you may have to pay license fees to use the proprietary codecs legally, as they are encumbered by patents.
 
 ## Screenshots
 
