@@ -212,6 +212,7 @@ function sendImgReq(imgLoadIdx) {
     for(var i = 0; i < eventQueue.length; ++i) {
         imgPath += eventQueue[i] + "/";
     }
+    imgElems[imgLoadIdx & 1].src = "//:0";
     imgElems[imgLoadIdx & 1].src = imgPath;
 
     scheduleImgReload(imgLoadIdx, imgLoadRetryInterval);
