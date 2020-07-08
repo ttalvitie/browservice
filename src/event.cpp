@@ -26,6 +26,7 @@ bool processParsedEvent(
         int button = args[2];
         clampCoords(x, y);
         widget->sendMouseDownEvent(x, y, button);
+        widget->sendMouseMoveEvent(x, y);
         return true;
     }
     if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
@@ -34,6 +35,7 @@ bool processParsedEvent(
         int button = args[2];
         clampCoords(x, y);
         widget->sendMouseUpEvent(x, y, button);
+        widget->sendMouseMoveEvent(x, y);
         return true;
     }
     if(name == "MDBL" && argCount == 2) {
