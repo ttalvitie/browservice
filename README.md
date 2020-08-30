@@ -92,7 +92,7 @@ The client support has been tested using the procedure documented in the `test` 
 
 ## Setup
 
-A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead.
+A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead (or WSL 2 on Windows).
 
 For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Internet Explorer available for the system is typically the fastest.
 
