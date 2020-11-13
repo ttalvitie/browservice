@@ -12,8 +12,8 @@ ARCH=`uname -m`
 
 if [ "$ARCH" == "x86_64" ]
 then
-    wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linux64.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="cb80a7786eb94a5f88081339cbca1f44be5d6ff1"
+    wget "https://cef-builds.spotifycdn.com/cef_binary_86.0.21%2Bg6a2c8e7%2Bchromium-86.0.4240.183_linux64.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="bb3ca59e5d27fc69af60d1da2819d7d79fd61133"
 elif [[ "$ARCH" =~ ^i[3-7]86$ ]]
 then
     wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linux32.tar.bz2" -O cef_unverified.tar.bz2
