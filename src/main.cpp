@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "server.hpp"
+#include "vice.hpp"
 #include "xvfb.hpp"
 
 #include <csignal>
@@ -9,8 +10,6 @@
 #include "include/cef_app.h"
 
 #include <X11/Xlib.h>
-
-#include <dlfcn.h>
 
 namespace {
 
@@ -30,7 +29,8 @@ class App :
     public CefBrowserProcessHandler
 {
 public:
-    App() {
+    App(shared_ptr<ViceContext> viceCtx) {
+        viceCtx_ = viceCtx;
         serverEventHandler_ = AppServerEventHandler::create();
         shutdown_ = false;
     }
@@ -62,13 +62,14 @@ public:
         REQUIRE_UI_THREAD();
         CHECK(!server_);
 
-        server_ = Server::create(serverEventHandler_);
+        server_ = Server::create(serverEventHandler_, viceCtx_);
         if(shutdown_) {
             server_->shutdown();
         }
     }
 
 private:
+    shared_ptr<ViceContext> viceCtx_;
     shared_ptr<Server> server_;
     shared_ptr<AppServerEventHandler> serverEventHandler_;
     bool shutdown_;
@@ -102,25 +103,19 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, handleTermSignalSetFlag);
     signal(SIGTERM, handleTermSignalSetFlag);
 
-    void* vice = dlopen("retrowebvice.so", RTLD_NOW | RTLD_LOCAL);
-    if(vice == nullptr) {
-        cerr << "Loading vice plugin failed\n";
-        return 1;
-    }
-    void* sym = dlsym(vice, "vicePlugin_createContext");
-    if(sym == nullptr) {
-        cerr << "Loading vicePlugin_createContext symbol failed\n";
-        return 1;
-    }
-    void* (*vicePlugin_createContext)(uint64_t) = (void* (*)(uint64_t))sym;
-    void* ctx = vicePlugin_createContext(1);
-    if(ctx == nullptr) {
-        cerr << "Call to vicePlugin_createContext failed\n";
+    shared_ptr<Config> config = Config::read(argc, argv);
+    if(!config) {
         return 1;
     }
 
-    shared_ptr<Config> config = Config::read(argc, argv);
-    if(!config) {
+    shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
+    if(!vicePlugin) {
+        cerr << "ERROR: Loading vice plugin '" << config->vicePlugin << "' failed\n";
+        return 1;
+    }
+
+    shared_ptr<ViceContext> viceCtx = ViceContext::init(vicePlugin, config->viceOpts);
+    if(!viceCtx) {
         return 1;
     }
 
@@ -137,7 +132,7 @@ int main(int argc, char* argv[]) {
         XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
         XSetIOErrorHandler([](Display*) { return 0; });
 
-        app = new App;
+        app = new App(viceCtx);
 
         CefSettings settings;
         settings.windowless_rendering_enabled = true;
@@ -168,6 +163,8 @@ int main(int argc, char* argv[]) {
 
     globals.reset();
     xvfb.reset();
+    viceCtx.reset();
+    vicePlugin.reset();
 
     return 0;
 }

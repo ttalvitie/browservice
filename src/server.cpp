@@ -31,7 +31,10 @@ string htmlEscapeString(string src) {
 
 }
 
-Server::Server(CKey, weak_ptr<ServerEventHandler> eventHandler) {
+Server::Server(CKey,
+    weak_ptr<ServerEventHandler> eventHandler,
+    shared_ptr<ViceContext> viceCtx
+) {
     REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
     state_ = Running;

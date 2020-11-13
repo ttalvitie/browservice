@@ -3,6 +3,8 @@
 #include "http.hpp"
 #include "session.hpp"
 
+class ViceContext;
+
 class ServerEventHandler {
 public:
     virtual void onServerShutdownComplete() = 0;
@@ -18,7 +20,10 @@ class Server :
 {
 SHARED_ONLY_CLASS(Server);
 public:
-    Server(CKey, weak_ptr<ServerEventHandler> eventHandler);
+    Server(CKey,
+        weak_ptr<ServerEventHandler> eventHandler,
+        shared_ptr<ViceContext> viceCtx
+    );
 
     // Shutdown the server if it is not already shut down
     void shutdown();

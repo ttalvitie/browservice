@@ -8,7 +8,6 @@ class Config {
 SHARED_ONLY_CLASS(Config);
 private:
     class Src;
-    int dummy_;
 
 public:
     Config(CKey, Src& src);
@@ -18,6 +17,8 @@ public:
     static shared_ptr<Config> read(int argc, char* argv[]);
 
 public:
+    const vector<pair<string, string>> viceOpts;
+    const string vicePlugin;
     const string httpListenAddr;
     const string userAgent;
     const int defaultQuality;

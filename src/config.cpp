@@ -1,5 +1,6 @@
 #include "config.hpp"
 
+#include "vice.hpp"
 #include "quality.hpp"
 
 #include "include/cef_version.h"
@@ -104,14 +105,13 @@ struct OptInfo;
 #define CONF_OPT_INFO(var) \
     OptInfo<CONF_OPT_TYPE(var), &Config::var>()
 
-template <typename T, const T Config::* Var>
-string helpLine(OptInfo<T, Var> info) {
-    const int DescStart = 32;
-    const int DescStartIndented = 34;
-    const int MaxWidth = 90;
+string helpLine(string name, string valSpec, string desc, string defaultValStr) {
+    const int DescStart = 40;
+    const int DescStartIndented = 42;
+    const int MaxWidth = 100;
 
     stringstream ss;
-    ss << "  --" << info.name << "=" << info.valSpec << ' ';
+    ss << "  --" << name << "=" << valSpec << ' ';
     while(ss.tellp() < DescStart) {
         ss << ' ';
     }
@@ -135,7 +135,6 @@ string helpLine(OptInfo<T, Var> info) {
         linePos += (int)atom.size();
     };
 
-    string desc = info.desc();
     int a = 0;
     while(a < (int)desc.size()) {
         int b = a + 1;
@@ -145,9 +144,14 @@ string helpLine(OptInfo<T, Var> info) {
         writeAtom(desc.substr(a, b - a));
         a = b;
     }
-    writeAtom(" [" + info.defaultValStr() + "]");
+    writeAtom(" [" + defaultValStr + "]");
 
     return ss.str();
+}
+
+template <typename T, const T Config::* Var>
+string helpLine(OptInfo<T, Var> info) {
+    return helpLine(info.name, info.valSpec, info.desc(), info.defaultValStr());
 }
 
 }
@@ -155,17 +159,16 @@ string helpLine(OptInfo<T, Var> info) {
 class Config::Src {
 public:
     Src()
-        : dummy_(0)
+        : viceOpts()
           #define CONF_FOREACH_OPT_ITEM(var) \
               ,var(CONF_OPT_INFO(var).defaultVal())
           CONF_FOREACH_OPT
           #undef CONF_FOREACH_OPT_ITEM
     {}
 
-private:
-    int dummy_;
-
 public:
+    vector<pair<string, string>> viceOpts;
+
     #define CONF_FOREACH_OPT_ITEM(var) \
         CONF_OPT_TYPE(var) var;
     CONF_FOREACH_OPT
@@ -173,7 +176,7 @@ public:
 };
 
 Config::Config(CKey, Src& src)
-    : dummy_(0)
+    : viceOpts(move(src.viceOpts))
       #define CONF_FOREACH_OPT_ITEM(var) \
           ,var(move(src.var))
       CONF_FOREACH_OPT
@@ -215,12 +218,23 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
                 lines.push_back(helpLine(CONF_OPT_INFO(var)));
             CONF_FOREACH_OPT
             #undef CONF_FOREACH_OPT_ITEM
-            lines.push_back("  --help                        show this help and exit");
-            lines.push_back("  --version                     show the version and exit");
+            lines.push_back("  --help                               show this help and exit");
+            lines.push_back("  --version                            show the version and exit");
 
             sort(lines.begin(), lines.end());
             for(const string& line : lines) {
                 cout << line << '\n';
+            }
+
+            cout << "\n";
+            cout << "Supported options for the current vice plugin '";
+            cout << src.vicePlugin << "' (selected by --vice-plugin):\n";
+
+            shared_ptr<VicePlugin> plugin = VicePlugin::load(src.vicePlugin);
+            if(plugin) {
+                for(VicePlugin::ConfigHelpItem item : plugin->getConfigHelp()) {
+                    cout << helpLine("vice-opt-" + item.name, item.valSpec, item.desc, item.defaultValStr) << '\n';
+                }
             }
             
             return {};
@@ -238,13 +252,19 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
             }
             if(eqSignPos < (int)arg.size()) {
                 string optName = arg.substr(2, eqSignPos - 2);
+
+                if(!optsSeen.insert(optName).second) {
+                    cerr << "ERROR: Option --" << optName << " specified multiple times\n";
+                    return {};
+                }
+
+                if(optName.size() > (size_t)9 && optName.substr(0, 9) == "vice-opt-") {
+                    src.viceOpts.emplace_back(optName.substr(9), arg.substr(eqSignPos + 1));
+                    continue;
+                }
+
                 auto it = optHandlers.find(optName);
                 if(it != optHandlers.end()) {
-                    if(!optsSeen.insert(optName).second) {
-                        cerr << "ERROR: Option --" << optName << " specified multiple times\n";
-                        return {};
-                    }
-
                     string optVal = arg.substr(eqSignPos + 1);
                     bool result = it->second(optVal);
                     if(!result) {
