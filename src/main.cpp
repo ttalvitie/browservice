@@ -10,6 +10,8 @@
 
 #include <X11/Xlib.h>
 
+#include <dlfcn.h>
+
 namespace {
 
 class AppServerEventHandler : public ServerEventHandler {
@@ -99,6 +101,23 @@ int main(int argc, char* argv[]) {
 
     signal(SIGINT, handleTermSignalSetFlag);
     signal(SIGTERM, handleTermSignalSetFlag);
+
+    void* vice = dlopen("retrowebvice.so", RTLD_NOW | RTLD_LOCAL);
+    if(vice == nullptr) {
+        cerr << "Loading vice plugin failed\n";
+        return 1;
+    }
+    void* sym = dlsym(vice, "vicePlugin_createContext");
+    if(sym == nullptr) {
+        cerr << "Loading vicePlugin_createContext symbol failed\n";
+        return 1;
+    }
+    void* (*vicePlugin_createContext)(uint64_t) = (void* (*)(uint64_t))sym;
+    void* ctx = vicePlugin_createContext(1);
+    if(ctx == nullptr) {
+        cerr << "Call to vicePlugin_createContext failed\n";
+        return 1;
+    }
 
     shared_ptr<Config> config = Config::read(argc, argv);
     if(!config) {
