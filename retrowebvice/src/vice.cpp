@@ -1,33 +1,12 @@
 #include "common.hpp"
 
-// Vice (view service) API definition:
-extern "C" {
-    // API version independent:
-    int vicePlugin_isAPIVersionSupported(uint64_t apiVersion);
-
-    // API version 1000000:
-    void vicePlugin_getConfigHelp(
-        uint64_t apiVersion,
-        void (*itemCallback)(void*, const char*, const char*, const char*, const char*),
-        void* itemCallbackData
-    );
-    void* vicePlugin_initContext(
-        uint64_t apiVersion,
-        const char** optionNames,
-        const char** optionValues,
-        size_t optionCount,
-        void (*initErrorMsgCallback)(void*, const char*),
-        void* initErrorMsgCallbackData
-    );
-}
-
-struct Context {};
+#include "../../vice_plugin_api.hpp"
 
 int vicePlugin_isAPIVersionSupported(uint64_t apiVersion) {
     return (int)(apiVersion == (uint64_t)1000000);
 }
 
-void vicePlugin_getConfigHelp(
+void vicePlugin_getOptionHelp(
     uint64_t apiVersion,
     void (*itemCallback)(void*, const char*, const char*, const char*, const char*),
     void* itemCallbackData
@@ -42,6 +21,13 @@ void vicePlugin_getConfigHelp(
         );
         itemCallback(
             itemCallbackData,
+            "http-listen-addr",
+            "IP:PORT",
+            "bind address and port for the HTTP server",
+            "default: 127.0.0.1:8080"
+        );
+        itemCallback(
+            itemCallbackData,
             "http-auth",
             "USER:PASSWORD",
             "if nonempty, the client is required to authenticate using "
@@ -51,17 +37,12 @@ void vicePlugin_getConfigHelp(
             "BROWSERVICE_HTTP_AUTH_CREDENTIALS",
             "default empty"
         );
-        itemCallback(
-            itemCallbackData,
-            "http-listen-addr",
-            "IP:PORT",
-            "bind address and port for the HTTP server",
-            "default: 127.0.0.1:8080"
-        );
     }
 }
 
-void* vicePlugin_initContext(
+struct VicePlugin_Context {};
+
+VicePlugin_Context* vicePlugin_initContext(
     uint64_t apiVersion,
     const char** optionNames,
     const char** optionValues,
@@ -84,5 +65,5 @@ void* vicePlugin_initContext(
         }
     }
 
-    return new Context;
+    return new VicePlugin_Context();
 }

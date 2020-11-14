@@ -12,33 +12,20 @@ public:
     // Returns an empty pointer if loading the plugin failed.
     static shared_ptr<VicePlugin> load(string filename);
 
-    struct ConfigHelpItem {
+    struct OptionHelpItem {
         string name;
         string valSpec;
         string desc;
         string defaultValStr;
     };
-    vector<ConfigHelpItem> getConfigHelp();
+    vector<OptionHelpItem> getOptionHelp();
 
 private:
-    void* lib;
+    void* lib_;
+    uint64_t apiVersion_;
 
-    uint64_t apiVersion;
-
-    int (*vicePlugin_isAPIVersionSupported)(uint64_t);
-    void (*vicePlugin_getConfigHelp)(
-        uint64_t,
-        void (*)(void*, const char*, const char*, const char*, const char*),
-        void*
-    );
-    void* (*vicePlugin_initContext)(
-        uint64_t,
-        const char**,
-        const char**,
-        size_t,
-        void (*)(void*, const char*),
-        void*
-    );
+    struct APIFuncs;
+    unique_ptr<APIFuncs> apiFuncs_;
 
     friend class ViceContext;
 };

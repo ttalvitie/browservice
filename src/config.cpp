@@ -227,13 +227,24 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
             }
 
             cout << "\n";
-            cout << "Supported options for the current vice plugin '";
-            cout << src.vicePlugin << "' (selected by --vice-plugin):\n";
+            cout
+                << "Supported options for the vice plugin '"
+                << src.vicePlugin << "' selected by --vice-plugin:\n";
 
             shared_ptr<VicePlugin> plugin = VicePlugin::load(src.vicePlugin);
             if(plugin) {
-                for(VicePlugin::ConfigHelpItem item : plugin->getConfigHelp()) {
-                    cout << helpLine("vice-opt-" + item.name, item.valSpec, item.desc, item.defaultValStr) << '\n';
+                vector<string> viceLines;
+                for(VicePlugin::OptionHelpItem item : plugin->getOptionHelp()) {
+                    viceLines.push_back(helpLine(
+                        "vice-opt-" + item.name,
+                        item.valSpec,
+                        item.desc,
+                        item.defaultValStr
+                    ));
+                }
+                sort(viceLines.begin(), viceLines.end());
+                for(const string& line : viceLines) {
+                    cout << line << '\n';
                 }
             }
             

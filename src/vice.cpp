@@ -1,14 +1,29 @@
 #include "vice.hpp"
 
+#include "../vice_plugin_api.hpp"
+
 #include <dlfcn.h>
 
+struct VicePlugin::APIFuncs {
+#define FOREACH_VICE_API_FUNC \
+    FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
+    FOREACH_VICE_API_FUNC_ITEM(getOptionHelp) \
+    FOREACH_VICE_API_FUNC_ITEM(initContext)
+
+#define FOREACH_VICE_API_FUNC_ITEM(name) \
+    decltype(&vicePlugin_ ## name) name;
+
+    FOREACH_VICE_API_FUNC
+#undef FOREACH_VICE_API_FUNC_ITEM
+};
+
 VicePlugin::VicePlugin(CKey, CKey) {
-    lib = nullptr;
+    lib_ = nullptr;
 }
 
 VicePlugin::~VicePlugin() {
-    if(lib != nullptr) {
-        if(dlclose(lib) != 0) {
+    if(lib_ != nullptr) {
+        if(dlclose(lib_) != 0) {
             LOG(WARNING) << "Unloading vice plugin failed";
         }
     }
@@ -17,52 +32,46 @@ VicePlugin::~VicePlugin() {
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     shared_ptr<VicePlugin> plugin = VicePlugin::create(CKey());
 
-    plugin->lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL);
-    if(plugin->lib == nullptr) {
+    plugin->lib_ = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL);
+    if(plugin->lib_ == nullptr) {
         LOG(ERROR) << "Loading vice plugin '" << filename << "' failed";
         return {};
     }
 
+    plugin->apiFuncs_ = make_unique<APIFuncs>();
+
     void* sym;
 
-    sym = dlsym(plugin->lib, "vicePlugin_isAPIVersionSupported");
-    if(sym == nullptr) {
-        LOG(ERROR) << "Loading symbol 'vicePlugin_isAPIVersionSupported' from vice plugin '" << filename << "' failed";
-        return {};
-    }
-    plugin->vicePlugin_isAPIVersionSupported = (decltype(plugin->vicePlugin_isAPIVersionSupported))sym;
+#define FOREACH_VICE_API_FUNC_ITEM(name) \
+    sym = dlsym(plugin->lib_, "vicePlugin_" #name); \
+    if(sym == nullptr) { \
+        LOG(ERROR) \
+            << "Loading symbol 'vicePlugin_" #name "' from vice plugin '" \
+            << filename << "' failed"; \
+        return {}; \
+    } \
+    plugin->apiFuncs_->name = (decltype(plugin->apiFuncs_->name))sym;
 
-    sym = dlsym(plugin->lib, "vicePlugin_getConfigHelp");
-    if(sym == nullptr) {
-        LOG(ERROR) << "Loading symbol 'vicePlugin_getConfigHelp' from vice plugin '" << filename << "' failed";
-        return {};
-    }
-    plugin->vicePlugin_getConfigHelp = (decltype(plugin->vicePlugin_getConfigHelp))sym;
+    FOREACH_VICE_API_FUNC
+#undef FOREACH_VICE_API_FUNC_ITEM
 
-    sym = dlsym(plugin->lib, "vicePlugin_initContext");
-    if(sym == nullptr) {
-        LOG(ERROR) << "Loading symbol 'vicePlugin_initContext' from vice plugin '" << filename << "' failed";
-        return {};
-    }
-    plugin->vicePlugin_initContext = (decltype(plugin->vicePlugin_initContext))sym;
+    plugin->apiVersion_ = 1000000;
 
-    plugin->apiVersion = 1000000;
-
-    if(!plugin->vicePlugin_isAPIVersionSupported(plugin->apiVersion)) {
-        LOG(ERROR) << "Vice plugin '" << filename << "' does not support API version " << plugin->apiVersion;
+    if(!plugin->apiFuncs_->isAPIVersionSupported(plugin->apiVersion_)) {
+        LOG(ERROR) << "Vice plugin '" << filename << "' does not support API version " << plugin->apiVersion_;
         return {};
     }
 
     return plugin;
 }
 
-vector<VicePlugin::ConfigHelpItem> VicePlugin::getConfigHelp() {
-    vector<VicePlugin::ConfigHelpItem> ret;
+vector<VicePlugin::OptionHelpItem> VicePlugin::getOptionHelp() {
+    vector<VicePlugin::OptionHelpItem> ret;
 
-    vicePlugin_getConfigHelp(
-        apiVersion,
+    apiFuncs_->getOptionHelp(
+        apiVersion_,
         [](void* data, const char* name, const char* valSpec, const char* desc, const char* defaultValStr) {
-            vector<VicePlugin::ConfigHelpItem>& ret = *(vector<VicePlugin::ConfigHelpItem>*)data;
+            vector<VicePlugin::OptionHelpItem>& ret = *(vector<VicePlugin::OptionHelpItem>*)data;
             ret.push_back({name, valSpec, desc, defaultValStr});
         },
         (void*)&ret
@@ -101,8 +110,8 @@ shared_ptr<ViceContext> ViceContext::init(
         cerr << "ERROR: Vice plugin initialization failed" << msg << "\n";
     };
 
-    ctx->ctx = plugin->vicePlugin_initContext(
-        plugin->apiVersion,
+    ctx->ctx = plugin->apiFuncs_->initContext(
+        plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
         options.size(),
