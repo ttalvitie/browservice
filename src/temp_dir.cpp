@@ -5,7 +5,7 @@
 
 TempDir::TempDir(CKey) {
     char path[] = "/tmp/browservicetmp_XXXXXX";
-    CHECK(mkdtemp(path) != nullptr);
+    REQUIRE(mkdtemp(path) != nullptr);
     path_ = path;
 }
 

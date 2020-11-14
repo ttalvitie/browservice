@@ -76,7 +76,7 @@ ImageCompressor::ImageCompressor(CKey, int64_t sendTimeoutMs, bool allowPNG) {
 ImageCompressor::~ImageCompressor() {}
 
 void ImageCompressor::setQuality(int quality) {
-    CHECK(quality >= MinQuality && quality <= getMaxQuality(allowPNG_));
+    REQUIRE(quality >= MinQuality && quality <= getMaxQuality(allowPNG_));
     if(quality != quality_) {
         quality_ = quality;
         imageUpdated_ = true;
@@ -86,7 +86,7 @@ void ImageCompressor::setQuality(int quality) {
 
 void ImageCompressor::updateImage(ImageSlice image) {
     REQUIRE_UI_THREAD();
-    CHECK(!image.isEmpty());
+    REQUIRE(!image.isEmpty());
 
     image_ = image;
     imageUpdated_ = true;
@@ -164,7 +164,7 @@ ImageCompressor::CompressedImage ImageCompressor::compressJPEG_(
     ImageSlice image,
     int quality
 ) {
-    CHECK(quality > 0 && quality <= 100);
+    REQUIRE(quality > 0 && quality <= 100);
 
     shared_ptr<JPEGData> jpeg = make_shared<JPEGData>(compressJPEG(
         image.buf(),
@@ -192,7 +192,7 @@ void ImageCompressor::pump_() {
         return;
     }
 
-    CHECK(!image_.isEmpty());
+    REQUIRE(!image_.isEmpty());
 
     compressionInProgress_ = true;
     imageUpdated_ = false;
@@ -222,7 +222,7 @@ void ImageCompressor::pump_() {
 
 void ImageCompressor::compressTaskDone_(CompressedImage compressedImage) {
     REQUIRE_UI_THREAD();
-    CHECK(compressionInProgress_);
+    REQUIRE(compressionInProgress_);
 
     compressionInProgress_ = false;
     compressedImageUpdated_ = true;

@@ -265,7 +265,7 @@ void FindBar::afterConstruct_(shared_ptr<FindBar> self) {
 }
 
 bool FindBar::updateText_(string text) {
-    CHECK(isOpen_);
+    REQUIRE(isOpen_);
 
     if(text.empty()) {
         if(text_) {
@@ -292,7 +292,7 @@ bool FindBar::updateText_(string text) {
 }
 
 void FindBar::find_(string text, bool forward) {
-    CHECK(isOpen_);
+    REQUIRE(isOpen_);
 
     lastDirForward_ = forward;
 

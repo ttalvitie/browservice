@@ -128,16 +128,18 @@ string toString(const T& obj) {
 class LogWriter {
 public:
     LogWriter(const char* severity, const char* file, int line)
+        : LogWriter(severity, string(file) + ":" + toString(line))
+    {}
+    LogWriter(const char* severity, string location)
         : severity_(severity),
-          file_(file),
-          line_(line)
+          location_(move(location))
     {}
 
     template <typename... T>
     void operator()(const T&... args) {
         vector<string> argStrs = {toString(args)...};
         stringstream msg;
-        msg << severity_ << " @ " << file_ << ":" << line_ << " -- ";
+        msg << severity_ << " @ " << location_ << " -- ";
         for(const string& argStr : argStrs) {
             msg << argStr;
         }
@@ -147,10 +149,51 @@ public:
 
 private:
     const char* severity_;
-    const char* file_;
-    int line_;
+    string location_;
 };
 
+// Panic and assertion macros for ending the program in the case of
+// irrecoverable errors. By default the program exits using abort(), but after
+// enablePanicUsingCEFFatalError has been called, the program is exited using
+// the CEF logging system, by invoking LOG(FATAL).
+#define PANIC Panicker(__FILE__, __LINE__)
+#define REQUIRE(cond) \
+    do { if(!(cond)) { PANIC("Requirement '" #cond "' failed"); } } while(false)
+
+class Panicker {
+public:
+    Panicker(const char* file, int line)
+        : Panicker(string(file) + ":" + toString(line))
+    {}
+    Panicker(string location)
+        : location_(move(location))
+    {}
+    ~Panicker() {
+        panic_("");
+    }
+
+    template <typename... T>
+    void operator()(const T&... args) {
+        vector<string> argStrs = {toString(args)...};
+        string msg;
+        for(const string& argStr : argStrs) {
+            msg.append(argStr);
+        }
+        panic_(move(msg));
+    }
+
+private:
+    void panic_(string msg);
+
+    string location_;
+};
+
+// Should only be called after CefInitialize has been successfully run.
+void enablePanicUsingCEFFatalError();
+
+// Boilerplate for defining classes that can only be constructed into
+// shared_ptrs using the 'create' static function and which are checked for
+// leaks at the end of the program on debug builds.
 #ifdef NDEBUG
 #define SHARED_ONLY_CLASS_LEAK_CHECK(ClassName)
 #else
@@ -168,8 +211,7 @@ private:
     ~LeakChecker() {
         size_t leakCount = objectCount_.load();
         if(leakCount) {
-            ERROR_LOG("MEMORY LEAK: ", leakCount, " ", Name, " objects remaining");
-            CHECK(false);
+            PANIC("MEMORY LEAK: ", leakCount, " ", Name, " objects remaining");
         }
     }
     atomic<size_t> objectCount_;

@@ -99,7 +99,7 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
 
     smatch match;
     if(regex_match(path, match, sessionPathRegex)) {
-        CHECK(match.size() == 2);
+        REQUIRE(match.size() == 2);
         optional<uint64_t> sessionID = parseString<uint64_t>(match[1]);
         if(sessionID) {
             auto it = sessions_.find(*sessionID);
@@ -125,7 +125,7 @@ void Server::onSessionClosed(uint64_t id) {
     REQUIRE_UI_THREAD();
 
     auto it = sessions_.find(id);
-    CHECK(it != sessions_.end());
+    REQUIRE(it != sessions_.end());
     sessions_.erase(it);
 
     checkShutdownStatus_();
@@ -139,7 +139,7 @@ bool Server::onIsServerFullQuery() {
 void Server::onPopupSessionOpen(shared_ptr<Session> session) {
     REQUIRE_UI_THREAD();
 
-    CHECK(sessions_.emplace(session->id(), session).second);
+    REQUIRE(sessions_.emplace(session->id(), session).second);
 
     if(state_ == ShutdownPending) {
         session->close();

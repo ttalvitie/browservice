@@ -181,7 +181,7 @@ Config::Config(CKey, Src& src)
 {}
 
 shared_ptr<Config> Config::read(int argc, char* argv[]) {
-    CHECK(argc >= 1);
+    REQUIRE(argc >= 1);
 
     Src src;
 

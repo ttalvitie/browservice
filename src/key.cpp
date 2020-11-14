@@ -40,7 +40,7 @@ vector<int> initSortedValidNonCharKeys() {
         keys::NumLock
     };
     sort(ret.begin(), ret.end());
-    CHECK(ret.back() < 0);
+    REQUIRE(ret.back() < 0);
     return ret;
 }
 
@@ -73,7 +73,7 @@ bool isValidKey(int key) {
 }
 
 UTF8Char keyToUTF8(int key) {
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     auto getBits = [&](int count) {
         int bits = key & ((1 << count) - 1);
@@ -97,7 +97,7 @@ UTF8Char keyToUTF8(int key) {
         ret.data[1] = (uint8_t)(getBits(6) | 0x80);
         ret.data[0] = (uint8_t)(key | 0xE0);
     } else {
-        CHECK(key <= 0x10FFFF);
+        REQUIRE(key <= 0x10FFFF);
         ret.length = 4;
         ret.data[3] = (uint8_t)(getBits(6) | 0x80);
         ret.data[2] = (uint8_t)(getBits(6) | 0x80);

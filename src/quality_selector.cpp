@@ -99,7 +99,7 @@ void QualitySelector::setQuality_(int quality) {
 }
 
 void QualitySelector::updateTextField_() {
-    CHECK(quality_ >= MinQuality && quality_ <= getMaxQuality(allowPNG_));
+    REQUIRE(quality_ >= MinQuality && quality_ <= getMaxQuality(allowPNG_));
 
     if(quality_ == MaxQuality) {
         textField_->setText("PNG");

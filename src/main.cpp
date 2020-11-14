@@ -58,7 +58,7 @@ public:
     // CefBrowserProcessHandler:
     virtual void OnContextInitialized() override {
         REQUIRE_UI_THREAD();
-        CHECK(!server_);
+        REQUIRE(!server_);
 
         server_ = Server::create(serverEventHandler_);
         if(shutdown_) {
@@ -126,7 +126,11 @@ int main(int argc, char* argv[]) {
         CefString(&settings.cache_path).FromString(globals->config->dataDir);
         CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
-        CefInitialize(mainArgs, settings, app, nullptr);
+        if(!CefInitialize(mainArgs, settings, app, nullptr)) {
+            PANIC("Initializing CEF failed");
+        }
+
+        enablePanicUsingCEFFatalError();
 
         signal(SIGINT, handleTermSignalInApp);
         signal(SIGTERM, handleTermSignalInApp);

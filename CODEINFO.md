@@ -14,7 +14,7 @@ Some conventions and notes about the server-side code:
 
   - To help avoid reference cycles, in debug builds we check at the end of the program that all `SHARED_ONLY_CLASS` objects have been destructed.
 
-- The `CHECK` macro of CEF is used abundantly to check assumptions made in the code. These checks are enabled also for release builds, just to be safe.
+- The `REQUIRE` macro defined in `common.hpp` is used abundantly to check assumptions made in the code. These checks are enabled also for release builds, just to be safe.
 
 - Typically the service-centric objects (such as `Server`, `Session`, `HTTPServer` and UI widgets) form a tree structure, in which the parents have `shared_ptr`s to their children and call their member functions directly. Information flow to the opposite direction, where a child notifies or queries its parent, is typically implemented by having the parent implement an event handler interface of the child and giving the child a weak pointer to the parent. To avoid re-entrancy issues (where a function indirectly calls itself recursively by accident and does not take this possibility into account), the child should call the event handler functions using `postTask` in `common.hpp` so that they are called from the event loop; exceptions to this (either for performance reasons or avoiding race conditions) are documented in the event handler classes.
 

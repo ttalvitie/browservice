@@ -17,7 +17,7 @@ int getDefaultQuality(bool allowPNG) {
     if(!allowPNG && ret == MaxQuality) {
         --ret;
     }
-    CHECK(ret >= MinQuality && ret <= getMaxQuality(allowPNG));
+    REQUIRE(ret >= MinQuality && ret <= getMaxQuality(allowPNG));
     return ret;
 }
 

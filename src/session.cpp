@@ -133,7 +133,7 @@ public:
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
         REQUIRE_UI_THREAD();
-        CHECK(session_->state_ == Pending);
+        REQUIRE(session_->state_ == Pending);
 
         INFO_LOG("CEF browser for session ", session_->id_, " created");
 
@@ -148,7 +148,7 @@ public:
 
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
         REQUIRE_UI_THREAD();
-        CHECK(session_->state_ == Open || session_->state_ == Closing);
+        REQUIRE(session_->state_ == Open || session_->state_ == Closing);
 
         session_->state_ = Closed;
         session_->browser_ = nullptr;
@@ -395,7 +395,7 @@ void Session::close() {
     if(state_ == Open) {
         INFO_LOG("Closing session ", id_, " requested");
         state_ = Closing;
-        CHECK(browser_);
+        REQUIRE(browser_);
         browser_->GetHost()->CloseBrowser(true);
         imageCompressor_->flush();
     } else if(state_ == Pending) {
@@ -430,7 +430,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        CHECK(match.size() >= 8);
+        REQUIRE(match.size() >= 8);
         optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
         optional<uint64_t> imgIdx = parseString<uint64_t>(match[2]);
         optional<int> immediate = parseString<int>(match[3]);
@@ -458,7 +458,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, iframePathRegex)) {
-        CHECK(match.size() == 2);
+        REQUIRE(match.size() == 2);
         optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
         if(mainIdx) {
             if(*mainIdx != curMainIdx_) {
@@ -482,7 +482,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, downloadPathRegex)) {
-        CHECK(match.size() == 2);
+        REQUIRE(match.size() == 2);
         optional<uint64_t> downloadIdx = parseString<uint64_t>(match[1]);
         if(downloadIdx) {
             auto it = downloads_.find(*downloadIdx);
@@ -496,7 +496,7 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, closePathRegex)) {
-        CHECK(match.size() == 2);
+        REQUIRE(match.size() == 2);
         optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
         if(mainIdx) {
             if(*mainIdx != curMainIdx_) {
@@ -600,7 +600,7 @@ void Session::onWidgetCursorChanged() {
     shared_ptr<Session> self = shared_from_this();
     postTask([self]() {
         int cursor = self->rootWidget_->cursor();
-        CHECK(cursor >= 0 && cursor < CursorTypeCount);
+        REQUIRE(cursor >= 0 && cursor < CursorTypeCount);
         self->setHeightSignal_(cursor);
     });
 }
@@ -701,7 +701,7 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
         // forward the client to the actual download page
         uint64_t downloadIdx = ++self->curDownloadIdx_;
         shared_ptr<Timeout> timeout = Timeout::create(10000);
-        CHECK(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
+        REQUIRE(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
 
         timeout->set([selfWeak, downloadIdx]() {
             REQUIRE_UI_THREAD();
@@ -824,8 +824,8 @@ void Session::updateRootViewportSize_(int width, int height) {
 }
 
 void Session::sendViewportToCompressor_() {
-    CHECK(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
-    CHECK(heightSignal_ >= 0 && heightSignal_ < HeightSignalModulus);
+    REQUIRE(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
+    REQUIRE(heightSignal_ >= 0 && heightSignal_ < HeightSignalModulus);
 
     int width = paddedRootViewport_.width();
     while(width % WidthSignalModulus != widthSignal_) {
@@ -902,7 +902,7 @@ void Session::addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe) {
 }
 
 void Session::navigate_(int direction) {
-    CHECK(direction >= -1 && direction <= 1);
+    REQUIRE(direction >= -1 && direction <= 1);
 
     // If two navigation operations are too close together, they probably are
     // double-reported

@@ -83,7 +83,7 @@ ImageSlice securityStatusIcon(SecurityStatus status) {
     } else if(status == SecurityStatus::Insecure) {
         return insecureIcon;
     }
-    CHECK(false);
+    REQUIRE(false);
     return insecureIcon;
 }
 
@@ -457,7 +457,7 @@ void ControlBar::setLoading(bool loading) {
 
 void ControlBar::setPendingDownloadCount(int count) {
     REQUIRE_UI_THREAD();
-    CHECK(count >= 0);
+    REQUIRE(count >= 0);
 
     if(count != pendingDownloadCount_) {
         pendingDownloadCount_ = count;

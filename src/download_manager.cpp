@@ -156,10 +156,10 @@ public:
         CefRefPtr<CefBeforeDownloadCallback> callback
     ) override {
         REQUIRE_UI_THREAD();
-        CHECK(downloadItem->IsValid());
+        REQUIRE(downloadItem->IsValid());
 
         uint32_t id = downloadItem->GetId();
-        CHECK(!downloadManager_->infos_.count(id));
+        REQUIRE(!downloadManager_->infos_.count(id));
         DownloadInfo& info = downloadManager_->infos_[id];
 
         info.fileIdx = downloadManager_->nextFileIdx_++;
@@ -178,7 +178,7 @@ public:
         CefRefPtr<CefDownloadItemCallback> callback
     ) override {
         REQUIRE_UI_THREAD();
-        CHECK(downloadItem->IsValid());
+        REQUIRE(downloadItem->IsValid());
 
         uint32_t id = downloadItem->GetId();
         if(!downloadManager_->infos_.count(id)) {
@@ -192,7 +192,7 @@ public:
 
         if(downloadItem->IsComplete()) {
             int64_t length = downloadItem->GetReceivedBytes();
-            CHECK(length >= 0);
+            REQUIRE(length >= 0);
 
             shared_ptr<CompletedDownload> file = CompletedDownload::create(
                 downloadManager_->tempDir_,
@@ -255,12 +255,12 @@ void DownloadManager::acceptPendingDownload() {
         pending_.pop();
         pendingDownloadCountChanged_();
 
-        CHECK(infos_.count(id));
+        REQUIRE(infos_.count(id));
         DownloadInfo& info = infos_[id];
         
         string path = getFilePath_(info.fileIdx);
 
-        CHECK(info.startCallback);
+        REQUIRE(info.startCallback);
         info.startCallback->Continue(path, false);
         info.startCallback = nullptr;
 

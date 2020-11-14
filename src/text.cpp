@@ -9,12 +9,12 @@
 namespace {
 
 int jumpUTF8Chars(const string& str, int idx, int count) {
-    CHECK(idx >= 0 && idx <= (int)str.size());
-    CHECK(count >= 0);
+    REQUIRE(idx >= 0 && idx <= (int)str.size());
+    REQUIRE(count >= 0);
     while(count --> 0) {
-        CHECK(idx < (int)str.size());
+        REQUIRE(idx < (int)str.size());
         if((int)str[idx] & 0x80) {
-            CHECK((int)str[idx] & 0x40);
+            REQUIRE((int)str[idx] & 0x40);
             // Multibyte character
             int bytes;
             if(!((int)str[idx] & 0x20)) {
@@ -23,21 +23,21 @@ int jumpUTF8Chars(const string& str, int idx, int count) {
                 bytes = 3;
             } else {
                 bytes = 4;
-                CHECK(!((int)str[idx] & 0x8));
+                REQUIRE(!((int)str[idx] & 0x8));
             }
-            CHECK(idx + bytes <= (int)str.size());
+            REQUIRE(idx + bytes <= (int)str.size());
             ++idx;
             for(int i = 0; i < bytes - 1; ++i) {
-                CHECK(((int)str[idx++] & 0xC0) == 0x80);
+                REQUIRE(((int)str[idx++] & 0xC0) == 0x80);
             }
         } else {
             // One-byte character
             ++idx;
         }
     }
-    CHECK(idx <= (int)str.size());
+    REQUIRE(idx <= (int)str.size());
     if(idx != (int)str.size()) {
-        CHECK(((int)str[idx] & 0xC0) != 0x80);
+        REQUIRE(((int)str[idx] & 0xC0) != 0x80);
     }
     return idx;
 }
@@ -53,14 +53,14 @@ public:
             oldValue_ = oldValuePtr;
         }
 
-        CHECK(!setenv("FREETYPE_PROPERTIES", "truetype:interpreter-version=35", true));
+        REQUIRE(!setenv("FREETYPE_PROPERTIES", "truetype:interpreter-version=35", true));
     }
 
     ~FreeType2SetEnv() {
         if(hasOldValue_) {
-            CHECK(!setenv("FREETYPE_PROPERTIES", oldValue_.c_str(), true));
+            REQUIRE(!setenv("FREETYPE_PROPERTIES", oldValue_.c_str(), true));
         } else {
-            CHECK(!unsetenv("FREETYPE_PROPERTIES"));
+            REQUIRE(!unsetenv("FREETYPE_PROPERTIES"));
         }
     }
 
@@ -81,7 +81,7 @@ struct TextRenderContext::Impl {
         FreeType2SetEnv setEnv;
 
         fontMap = pango_ft2_font_map_new();
-        CHECK(fontMap != nullptr);
+        REQUIRE(fontMap != nullptr);
 
         pango_ft2_font_map_set_default_substitute(
             (PangoFT2FontMap*)fontMap,
@@ -102,13 +102,13 @@ struct TextRenderContext::Impl {
         pango_ft2_font_map_set_resolution((PangoFT2FontMap*)fontMap, 72, 72);
 
         pangoCtx = pango_font_map_create_context(fontMap);
-        CHECK(pangoCtx != nullptr);
+        REQUIRE(pangoCtx != nullptr);
 
         pango_context_set_base_dir(pangoCtx, PANGO_DIRECTION_LTR);
         pango_context_set_language(pangoCtx, pango_language_from_string("en-US"));
 
         fontDesc = pango_font_description_from_string("Verdana 11");
-        CHECK(fontDesc != nullptr);
+        REQUIRE(fontDesc != nullptr);
     }
 
     ~Impl() {
@@ -132,11 +132,11 @@ struct Graymap {
         width = pWidth;
         height = pHeight;
 
-        CHECK(width >= 1);
-        CHECK(height >= 1);
+        REQUIRE(width >= 1);
+        REQUIRE(height >= 1);
 
         const int Limit = INT_MAX / 9;
-        CHECK(width < Limit / height);
+        REQUIRE(width < Limit / height);
 
         buffer.resize(width * height);
         ftBitmap.rows = height;
@@ -165,7 +165,7 @@ struct TextLayout::Impl {
 
     Impl(shared_ptr<TextRenderContext> ctx) : ctx(ctx) {
         layout = pango_layout_new(ctx->impl_->pangoCtx);
-        CHECK(layout != nullptr);
+        REQUIRE(layout != nullptr);
 
         pango_layout_set_font_description(layout, ctx->impl_->fontDesc);
         pango_layout_set_auto_dir(layout, FALSE);
@@ -184,25 +184,25 @@ struct TextLayout::Impl {
         pango_layout_set_text(layout, newText.data(), newText.size());
 
         // Check that Pango agrees that the text is valid UTF-8
-        CHECK(!strcmp(pango_layout_get_text(layout), newText.c_str()));
+        REQUIRE(!strcmp(pango_layout_get_text(layout), newText.c_str()));
 
         text = move(newText);
     }
 
     int xCoordToIndex(int x) {
         PangoLayoutLine* line = pango_layout_get_line_readonly(layout, 0);
-        CHECK(line != nullptr);
+        REQUIRE(line != nullptr);
 
         int idx, trailing;
         pango_layout_line_x_to_index(line, x * PANGO_SCALE, &idx, &trailing);
         idx = jumpUTF8Chars(text, idx, trailing);
-        CHECK(idx >= 0 && idx <= (int)text.size());
+        REQUIRE(idx >= 0 && idx <= (int)text.size());
 
         return idx;
     }
 
     int indexToXCoord(int idx) {
-        CHECK(idx >= 0 && idx <= (int)text.size());
+        REQUIRE(idx >= 0 && idx <= (int)text.size());
 
         PangoRectangle rect;
         pango_layout_get_cursor_pos(layout, idx, &rect, nullptr);
@@ -210,7 +210,7 @@ struct TextLayout::Impl {
     }
 
     int visualMoveIdx(int idx, bool forward) {
-        CHECK(idx >= 0 && idx <= (int)text.size());
+        REQUIRE(idx >= 0 && idx <= (int)text.size());
 
         int trailing;
         pango_layout_move_cursor_visually(
@@ -228,7 +228,7 @@ struct TextLayout::Impl {
         } else if(idx == G_MAXINT) {
             idx = (int)text.size();
         } else {
-            CHECK(idx >= 0 && idx <= (int)text.size());
+            REQUIRE(idx >= 0 && idx <= (int)text.size());
             idx = jumpUTF8Chars(text, idx, trailing);
         }
 
@@ -303,7 +303,7 @@ TextLayout::TextLayout(CKey, shared_ptr<TextRenderContext> ctx) {
 
 TextLayout::TextLayout(CKey) {
     REQUIRE_UI_THREAD();
-    CHECK(globals);
+    REQUIRE(globals);
 
     impl_ = make_unique<Impl>(globals->textRenderContext);
 }
@@ -387,7 +387,7 @@ string OverflowTextLayout::text() {
 
 void OverflowTextLayout::setWidth(int width) {
     REQUIRE_UI_THREAD();
-    CHECK(width >= 0);
+    REQUIRE(width >= 0);
 
     width_ = width;
     clampOffset_();
