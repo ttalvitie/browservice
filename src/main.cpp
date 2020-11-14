@@ -19,7 +19,7 @@ public:
     AppServerEventHandler(CKey) {}
 
     virtual void onServerShutdownComplete() override {
-        LOG(INFO) << "Quitting CEF message loop";
+        INFO_LOG("Quitting CEF message loop");
         CefQuitMessageLoop();
     }
 };
@@ -60,7 +60,7 @@ public:
     // CefBrowserProcessHandler:
     virtual void OnContextInitialized() override {
         REQUIRE_UI_THREAD();
-        CHECK(!server_);
+        REQUIRE(!server_);
 
         server_ = Server::create(serverEventHandler_, viceCtx_);
         if(shutdown_) {
@@ -81,12 +81,12 @@ CefRefPtr<App> app;
 bool termSignalReceived = false;
 
 void handleTermSignalSetFlag(int signalID) {
-    LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
+    INFO_LOG("Got signal ", signalID, ", initiating shutdown");
     termSignalReceived = true;
 }
 
 void handleTermSignalInApp(int signalID) {
-    LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
+    INFO_LOG("Got signal ", signalID, ", initiating shutdown");
     CefPostTask(TID_UI, base::Bind(&App::shutdown, app));
 }
 
@@ -140,7 +140,11 @@ int main(int argc, char* argv[]) {
         CefString(&settings.cache_path).FromString(globals->config->dataDir);
         CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
-        CefInitialize(mainArgs, settings, app, nullptr);
+        if(!CefInitialize(mainArgs, settings, app, nullptr)) {
+            PANIC("Initializing CEF failed");
+        }
+
+        enablePanicUsingCEFFatalError();
 
         signal(SIGINT, handleTermSignalInApp);
         signal(SIGTERM, handleTermSignalInApp);

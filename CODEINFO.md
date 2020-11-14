@@ -14,7 +14,7 @@ Some conventions and notes about the server-side code:
 
   - To help avoid reference cycles, in debug builds we check at the end of the program that all `SHARED_ONLY_CLASS` objects have been destructed.
 
-- The `CHECK` macro of CEF is used abundantly to check assumptions made in the code. These checks are enabled also for release builds, just to be safe.
+- The `REQUIRE` macro defined in `common.hpp` is used abundantly to check assumptions made in the code. These checks are enabled also for release builds, just to be safe.
 
 - Typically the service-centric objects (such as `Server`, `Session`, `HTTPServer` and UI widgets) form a tree structure, in which the parents have `shared_ptr`s to their children and call their member functions directly. Information flow to the opposite direction, where a child notifies or queries its parent, is typically implemented by having the parent implement an event handler interface of the child and giving the child a weak pointer to the parent. To avoid re-entrancy issues (where a function indirectly calls itself recursively by accident and does not take this possibility into account), the child should call the event handler functions using `postTask` in `common.hpp` so that they are called from the event loop; exceptions to this (either for performance reasons or avoiding race conditions) are documented in the event handler classes.
 
@@ -30,6 +30,6 @@ Some conventions and notes about the server-side code:
 
 - Even though most of our code runs in the CEF UI thread, CEF might hold shared pointers to our objects in other threads and thus it is possible that our objects are destructed outside the CEF UI thread. Therefore destructors should not directly call functions of other objects that expect to be called in CEF UI thread (without `postTask`). Typically we keep our destructors as simple as possible.
 
-- We try to keep error handling as simple as possible: most errors simply result in aborting the program (typically through the `CHECK` macro). For errors that may happen in normal use, we try to recover from the error and optionally log an error through the CEF logging system. We follow the CEF/Chrome convention of not using exceptions; however, we must keep in mind that Poco might throw exceptions.
+- We try to keep error handling as simple as possible: most errors simply result in aborting the program (typically through the `CHECK` macro). For errors that may happen in normal use, we try to recover from the error and optionally log a message using the `INFO_LOG`, `WARNING_LOG` and `ERROR_LOG` macros in defined in `common.hpp`. We follow the CEF/Chrome convention of not using exceptions; however, we must keep in mind that Poco might throw exceptions.
 
 - We use code generation for HTML templates (in the `html` directory). They are compiled into C++ functions (in `gen/html.cpp`) by the Makefile using the Python script `gen_html_header.py` that implements a very simple templating language (`%-VAR-%` is replaced by the value of `VAR` in the struct specified for each function in html.hpp without escaping).

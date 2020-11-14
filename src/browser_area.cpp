@@ -34,7 +34,7 @@ pair<CefBrowserHost::MouseButtonType, uint32_t> getMouseButtonInfo(int button) {
 #include "key_codes.hpp"
 
 CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     CefKeyEvent event;
     event.windows_key_code = 0;
@@ -403,7 +403,7 @@ void BrowserArea::widgetMouseLeaveEvent_(int x, int y) {
 
 void BrowserArea::widgetKeyDownEvent_(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(browser_) {
         bool controlDown = (bool)(eventModifiers_ & EVENTFLAG_CONTROL_DOWN);
@@ -433,7 +433,7 @@ void BrowserArea::widgetKeyDownEvent_(int key) {
 
 void BrowserArea::widgetKeyUpEvent_(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(browser_) {
         CefKeyEvent event = createKeyEvent(key, eventModifiers_);

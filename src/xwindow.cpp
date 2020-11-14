@@ -14,20 +14,19 @@ public:
 
         connection_ = xcb_connect(nullptr, nullptr);
         if(connection_ == nullptr || xcb_connection_has_error(connection_)) {
-            LOG(ERROR) << "Opening X display failed";
-            CHECK(false);
+            PANIC("Opening X display failed");
         }
 
         const xcb_setup_t* setup = xcb_get_setup(connection_);
-        CHECK(setup != nullptr);
+        REQUIRE(setup != nullptr);
         screen_ = xcb_setup_roots_iterator(setup).data;
-        CHECK(screen_ != nullptr);
+        REQUIRE(screen_ != nullptr);
 
         uint32_t eventMask =
             XCB_EVENT_MASK_PROPERTY_CHANGE | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
 
         window_ = xcb_generate_id(connection_);
-        CHECK(xcb_request_check(connection_,
+        REQUIRE(xcb_request_check(connection_,
             xcb_create_window_checked(
                 connection_,
                 screen_->root_depth,
@@ -51,11 +50,11 @@ public:
     }
 
     ~Impl() {
-        CHECK(mode_ == Closed);
+        REQUIRE(mode_ == Closed);
     }
 
     void close() {
-        CHECK(mode_ != Closed);
+        REQUIRE(mode_ != Closed);
 
         mode_ = Closed;
         pasteTimeout_->clear(false);
@@ -65,7 +64,7 @@ public:
             copyText_.clear();
         }
 
-        CHECK(xcb_request_check(connection_,
+        REQUIRE(xcb_request_check(connection_,
             xcb_destroy_window_checked(connection_, window_)
         ) == nullptr);
 
@@ -76,7 +75,7 @@ public:
 
     void pasteFromClipboard(function<void(string)> callback) {
         REQUIRE_UI_THREAD();
-        CHECK(mode_ != Closed);
+        REQUIRE(mode_ != Closed);
 
         if(mode_ == Pasting) {
             pasteCallback_ = callback;
@@ -85,7 +84,7 @@ public:
             string text = copyText_;
             postTask([callback, text{move(text)}]() { callback(text); });
         } else {
-            CHECK(mode_ == Idle);
+            REQUIRE(mode_ == Idle);
 
             xcb_get_selection_owner_reply_t* reply = xcb_get_selection_owner_reply(
                 connection_,
@@ -107,7 +106,7 @@ public:
                     self->pasteTimedOut_();
                 });
 
-                CHECK(xcb_request_check(connection_,
+                REQUIRE(xcb_request_check(connection_,
                     xcb_convert_selection_checked(
                         connection_,
                         window_,
@@ -123,7 +122,7 @@ public:
 
     void copyToClipboard(string text) {
         REQUIRE_UI_THREAD();
-        CHECK(mode_ != Closed);
+        REQUIRE(mode_ != Closed);
 
         if(mode_ == Copying) {
             lock_guard<mutex> lock(copyTextMutex_);
@@ -134,7 +133,7 @@ public:
                 pasteCallback_ = [](string) {};
                 mode_ = Idle;
             }
-            CHECK(mode_ == Idle);
+            REQUIRE(mode_ == Idle);
 
             xcb_generic_error_t* err = xcb_request_check(connection_,
                 xcb_set_selection_owner_checked(
@@ -167,7 +166,7 @@ private:
             xcb_intern_atom(connection_, 0, name.size(), name.data()),
             nullptr
         );
-        CHECK(reply != nullptr);
+        REQUIRE(reply != nullptr);
         xcb_atom_t result = reply->atom;
         free(reply);
         return result;
@@ -175,7 +174,7 @@ private:
 
     void pasteTimedOut_() {
         REQUIRE_UI_THREAD();
-        CHECK(mode_ == Pasting);
+        REQUIRE(mode_ == Pasting);
 
         mode_ = Idle;
         pasteCallback_ = [](string) {};
@@ -309,7 +308,7 @@ private:
     void runEventHandlerThread_() {
         while(true) {
             xcb_generic_event_t* event = xcb_wait_for_event(connection_);
-            CHECK(event != nullptr);
+            REQUIRE(event != nullptr);
 
             int type = event->response_type & ~0x80;
 

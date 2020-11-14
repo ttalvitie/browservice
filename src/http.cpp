@@ -24,7 +24,7 @@ public:
 
     ~Impl() {
         if(!responseSent_) {
-            LOG(WARNING) << "HTTP response not provided, sending internal server error";
+            WARNING_LOG("HTTP response not provided, sending internal server error");
             sendTextResponse(
                 500,
                 "ERROR: Request handling failure\n",
@@ -37,20 +37,20 @@ public:
     DISABLE_COPY_MOVE(Impl);
 
     string method() {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         return request_.getMethod();
     }
     string path() {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         return request_.getURI();
     }
     string userAgent() {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         return request_.get("User-Agent", "");
     }
 
     string getFormParam(string name) {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         if(!form_) {
             if(method() == "POST") {
                 form_.emplace(request_, request_.stream());
@@ -62,7 +62,7 @@ public:
     }
 
     optional<string> getBasicAuthCredentials() {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         optional<string> empty;
 
         if(!request_.hasCredentials()) {
@@ -98,7 +98,7 @@ public:
         bool noCache,
         vector<pair<string, string>> extraHeaders
     ) {
-        CHECK(!responseSent_);
+        REQUIRE(!responseSent_);
         responseSent_ = true;
         responderPromise_.set_value(
             [
@@ -277,11 +277,11 @@ public:
               new Poco::Net::HTTPServerParams()
           )
     {
-        LOG(INFO) << "HTTP server listening to " << listenSockAddr;
+        INFO_LOG("HTTP server listening to ", listenSockAddr);
         httpServer_.start();
     }
     ~Impl() {
-        CHECK(state_ == ShutdownComplete);
+        REQUIRE(state_ == ShutdownComplete);
     }
 
     void shutdown() {
@@ -290,7 +290,7 @@ public:
         if(state_ != Running) {
             return;
         }
-        LOG(INFO) << "Shutting down HTTP server";
+        INFO_LOG("Shutting down HTTP server");
         state_ = ShutdownPending;
         
         shared_ptr<Impl> self = shared_from_this();
@@ -308,9 +308,9 @@ public:
             self->httpServer_.stopAll(true);
 
             postTask([self{move(self)}]() {
-                CHECK(self->state_ == ShutdownPending);
+                REQUIRE(self->state_ == ShutdownPending);
                 self->state_ = ShutdownComplete;
-                LOG(INFO) << "HTTP server shutdown complete";
+                INFO_LOG("HTTP server shutdown complete");
                 if(auto eventHandler = self->eventHandler_.lock()) {
                     eventHandler->onHTTPServerShutdownComplete();
                 }

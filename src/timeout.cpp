@@ -12,7 +12,7 @@ Timeout::Timeout(CKey, int64_t delayMs) {
 
 void Timeout::set(Func func) {
     REQUIRE_UI_THREAD();
-    CHECK(!active_);
+    REQUIRE(!active_);
 
     active_ = true;
     func_ = func;
@@ -59,7 +59,7 @@ bool Timeout::isActive() {
 void Timeout::delayedTask_() {
     REQUIRE_UI_THREAD();
 
-    CHECK(delayedTaskScheduled_);
+    REQUIRE(delayedTaskScheduled_);
     delayedTaskScheduled_ = false;
 
     if(!active_) {

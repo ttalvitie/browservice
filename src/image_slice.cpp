@@ -7,11 +7,11 @@ ImageSlice ImageSlice::createImage(int width, int height, uint8_t r, uint8_t g, 
 }
 
 ImageSlice ImageSlice::createImage(int width, int height, uint8_t rgb) {
-    CHECK(width >= 0 && height >= 0);
+    REQUIRE(width >= 0 && height >= 0);
     const int Limit = INT_MAX / 9;
-    CHECK(width < Limit && height < Limit);
+    REQUIRE(width < Limit && height < Limit);
     if(height > 0) {
-        CHECK(width < Limit / height);
+        REQUIRE(width < Limit / height);
     }
 
     ImageSlice slice;
@@ -36,7 +36,7 @@ ImageSlice ImageSlice::createImageFromStrings(
     int height = rows.size();
     int width = rows[0].size();
     for(int y = 1; y < height; ++y) {
-        CHECK(rows[y].size() == (size_t)width);
+        REQUIRE(rows[y].size() == (size_t)width);
     }
 
     ImageSlice ret = createImage(width, height, 0);
@@ -45,7 +45,7 @@ ImageSlice ImageSlice::createImageFromStrings(
         for(int x = 0; x < width; ++x) {
             char colorChar = rows[y][x];
             auto it = colors.find(colorChar);
-            CHECK(it != colors.end());
+            REQUIRE(it != colors.end());
             ret.setPixel(x, y, it->second[0], it->second[1], it->second[2]);
         }
     }

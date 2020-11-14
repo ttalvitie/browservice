@@ -43,23 +43,21 @@ void addCookieToXAuthFile(string path, int display, string cookie) {
     string xauthCmd = "xauth -f " + path + " source -";
     FILE* proc = popen(xauthCmd.c_str(), "w");
     if(proc == nullptr) {
-        LOG(ERROR) << "Running xauth failed";
-        CHECK(false);
+        PANIC("Running xauth failed");
     }
 
     string input = "add :" + toString(display) + " . " + cookie + "\n";
 
-    CHECK(fwrite(input.data(), 1, input.size(), proc) == input.size());
+    REQUIRE(fwrite(input.data(), 1, input.size(), proc) == input.size());
     if(pclose(proc) != 0) {
-        LOG(ERROR) << "Running xauth failed (nonzero exit status)";
-        CHECK(false);
+        PANIC("Running xauth failed (nonzero exit status)");
     }
 }
 
 }
 
 Xvfb::Xvfb(CKey) {
-    LOG(INFO) << "Starting Xvfb X server as child process";
+    INFO_LOG("Starting Xvfb X server as child process");
 
     tempDir_ = TempDir::create();
     xAuthPath_ = tempDir_->path() + "/.Xauthority";
@@ -68,27 +66,27 @@ Xvfb::Xvfb(CKey) {
     ofstream fp;
     fp.open(xAuthPath_.c_str(), fp.out | fp.binary);
     fp.close();
-    CHECK(fp.good());
+    REQUIRE(fp.good());
 
     // Add dummy cookie to stop server from accepting all connections
     addCookieToXAuthFile(xAuthPath_, 0, generateCookie());
 
     // Pipe through which Xvfb sends us the display number
     int displayFds[2];
-    CHECK(!pipe(displayFds));
+    REQUIRE(!pipe(displayFds));
     int readDisplayFd = displayFds[0];
     int writeDisplayFd = displayFds[1];
 
     pid_ = fork();
-    CHECK(pid_ != -1);
+    REQUIRE(pid_ != -1);
     if(!pid_) {
         // Xvfb subprocess:
-        CHECK(!close(readDisplayFd));
+        REQUIRE(!close(readDisplayFd));
 
         // Move the X server process to its own process group, as otherwise
         // Ctrl+C sent to the parent would stop the X server before we have
         // time to shut the parent down
-        CHECK(!setpgid(0, 0));
+        REQUIRE(!setpgid(0, 0));
 
         string writeDisplayFdStr = toString(writeDisplayFd);
         execlp(
@@ -101,11 +99,11 @@ Xvfb::Xvfb(CKey) {
         );
 
         // If exec succeeded, this should not be reachable
-        CHECK(false);
+        REQUIRE(false);
     }
 
     // Parent process:
-    CHECK(!close(writeDisplayFd));
+    REQUIRE(!close(writeDisplayFd));
 
     string displayStr;
     const size_t BufSize = 64;
@@ -117,21 +115,20 @@ Xvfb::Xvfb(CKey) {
             break;
         }
         if(readCount < 0) {
-            CHECK(errno == EINTR);
+            REQUIRE(errno == EINTR);
             readCount = 0;
         }
         displayStr.append(buf, readCount);
     }
-    CHECK(!close(readDisplayFd));
+    REQUIRE(!close(readDisplayFd));
 
     optional<int> display = parseDisplay(displayStr);
     if(!display) {
-        LOG(ERROR) << "Starting Xvfb failed";
-        CHECK(false);
+        PANIC("Starting Xvfb failed");
     }
 
     display_ = *display;
-    LOG(INFO) << "Xvfb X server :" << display_ << " successfully started";
+    INFO_LOG("Xvfb X server :", display_, " successfully started");
 
     // Now that we know the display number, we can add the xauth rule we
     // actually use
@@ -148,8 +145,8 @@ Xvfb::~Xvfb() {
 
 void Xvfb::setupEnv() {
     string displayStr = ":" + toString(display_);
-    CHECK(!setenv("DISPLAY", displayStr.c_str(), true));
-    CHECK(!setenv("XAUTHORITY", xAuthPath_.c_str(), true));
+    REQUIRE(!setenv("DISPLAY", displayStr.c_str(), true));
+    REQUIRE(!setenv("XAUTHORITY", xAuthPath_.c_str(), true));
 }
 
 void Xvfb::shutdown() {
@@ -157,18 +154,18 @@ void Xvfb::shutdown() {
         return;
     }
 
-    LOG(INFO) << "Sending SIGTERM to the Xvfb X server child process to shut it down";
+    INFO_LOG("Sending SIGTERM to the Xvfb X server child process to shut it down");
     if(kill(pid_, SIGTERM) != 0) {
-        LOG(WARNING) << "Could not send SIGTERM signal to Xvfb, maybe it has already shut down?";
+        WARNING_LOG("Could not send SIGTERM signal to Xvfb, maybe it has already shut down?");
     }
 
-    LOG(INFO) << "Waiting for Xvfb child process to shut down";
-    CHECK(waitpid(pid_, nullptr, 0) == pid_);
+    INFO_LOG("Waiting for Xvfb child process to shut down");
+    REQUIRE(waitpid(pid_, nullptr, 0) == pid_);
 
-    LOG(INFO) << "Successfully shut down Xvfb X server";
+    INFO_LOG("Successfully shut down Xvfb X server");
 
     if(unlink(xAuthPath_.c_str())) {
-        LOG(WARNING) << "Unlinking file " << xAuthPath_ << " failed";
+        WARNING_LOG("Unlinking file ", xAuthPath_, " failed");
     }
 
     running_ = false;

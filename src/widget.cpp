@@ -38,7 +38,7 @@ void Widget::render() {
     widgetRender_();
 
     for(shared_ptr<Widget> child : widgetListChildren_()) {
-        CHECK(child);
+        REQUIRE(child);
         child->render();
     }
 }
@@ -156,7 +156,7 @@ void Widget::sendMouseLeaveEvent(int x, int y) {
 
 void Widget::sendKeyDownEvent(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(
         keysDown_.count(keys::Control) &&
@@ -185,7 +185,7 @@ void Widget::sendKeyDownEvent(int key) {
 
 void Widget::sendKeyUpEvent(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(!keysDown_.count(key)) {
         return;
@@ -270,7 +270,7 @@ void Widget::signalViewDirty_() {
 
 void Widget::setCursor_(int newCursor) {
     REQUIRE_UI_THREAD();
-    CHECK(newCursor >= 0 && newCursor < CursorTypeCount);
+    REQUIRE(newCursor >= 0 && newCursor < CursorTypeCount);
 
     myCursor_ = newCursor;
     updateCursor_();
@@ -340,7 +340,7 @@ void Widget::clearEventState_(int x, int y) {
 
 shared_ptr<Widget> Widget::childByPoint_(int x, int y) {
     for(shared_ptr<Widget> child : widgetListChildren_()) {
-        CHECK(child);
+        REQUIRE(child);
         if(child->viewport_.containsGlobalPoint(x, y)) {
             return child;
         }

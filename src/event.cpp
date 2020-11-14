@@ -106,7 +106,7 @@ bool processEvent(
     string::const_iterator end
 ) {
     REQUIRE_UI_THREAD();
-    CHECK(begin < end && *(end - 1) == '/');
+    REQUIRE(begin < end && *(end - 1) == '/');
 
     string name;
 

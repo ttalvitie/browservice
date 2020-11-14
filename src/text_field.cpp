@@ -78,8 +78,8 @@ void TextField::unsetCaret_() {
 }
 
 void TextField::setCaret_(int start, int end) {
-    CHECK(start >= 0 && start <= (int)textLayout_->text().size());
-    CHECK(end >= 0 && end <= (int)textLayout_->text().size());
+    REQUIRE(start >= 0 && start <= (int)textLayout_->text().size());
+    REQUIRE(end >= 0 && end <= (int)textLayout_->text().size());
 
     if(
         !caretActive_ ||
@@ -125,7 +125,7 @@ void TextField::typeText_(const char* textPtr, int textLength) {
         unsetCaret_();
 
         string oldText = textLayout_->text();
-        CHECK(idx1 >= 0 && idx2 <= (int)oldText.size());
+        REQUIRE(idx1 >= 0 && idx2 <= (int)oldText.size());
 
         string newText;
         newText.append(oldText, 0, idx1);
@@ -155,7 +155,7 @@ void TextField::eraseRange_() {
         unsetCaret_();
 
         string oldText = textLayout_->text();
-        CHECK(idx1 >= 0 && idx2 <= (int)oldText.size());
+        REQUIRE(idx1 >= 0 && idx2 <= (int)oldText.size());
 
         string newText =
             oldText.substr(0, idx1) +
@@ -186,7 +186,7 @@ void TextField::copyToClipboard_() {
         int idx2 = max(caretStart_, caretEnd_);
         if(idx1 < idx2) {
             string text = textLayout_->text();
-            CHECK(idx1 >= 0 && idx2 <= (int)text.size());
+            REQUIRE(idx1 >= 0 && idx2 <= (int)text.size());
             globals->xWindow->copyToClipboard(text.substr(idx1, idx2 - idx1));
         }
     }
@@ -295,7 +295,7 @@ void TextField::widgetMouseMoveEvent_(int x, int y) {
 
 void TextField::widgetKeyDownEvent_(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(key == keys::Shift) {
         shiftKeyDown_ = true;
@@ -368,7 +368,7 @@ void TextField::widgetKeyDownEvent_(int key) {
 
 void TextField::widgetKeyUpEvent_(int key) {
     REQUIRE_UI_THREAD();
-    CHECK(isValidKey(key));
+    REQUIRE(isValidKey(key));
 
     if(key == keys::Down || key == keys::Up) {
         postTask(

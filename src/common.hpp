@@ -83,6 +83,117 @@ using std::chrono::steady_clock;
 
 using std::this_thread::sleep_for;
 
+template <typename T>
+optional<T> parseString(const string& str) {
+    T ret;
+    stringstream ss(str);
+    ss >> ret;
+    if(ss.fail() || !ss.eof()) {
+        optional<T> empty;
+        return empty;
+    } else {
+        return ret;
+    }
+}
+
+template <typename T>
+optional<T> parseString(
+    string::const_iterator begin,
+    string::const_iterator end
+) {
+    return parseString<T>(string(begin, end));
+}
+
+template <typename T>
+optional<T> parseString(
+    const pair<string::const_iterator, string::const_iterator>& str
+) {
+    return parseString<T>(str.first, str.second);
+}
+
+template <typename T>
+string toString(const T& obj) {
+    stringstream ss;
+    ss << obj;
+    return ss.str();
+}
+
+// Logging macros that log given message along with severity, source file and
+// line information to stderr. Message is formed by calling toString for each
+// argument and concatenating the results.
+#define INFO_LOG LogWriter("INFO", __FILE__, __LINE__)
+#define WARNING_LOG LogWriter("WARNING", __FILE__, __LINE__)
+#define ERROR_LOG LogWriter("ERROR", __FILE__, __LINE__)
+
+class LogWriter {
+public:
+    LogWriter(const char* severity, const char* file, int line)
+        : LogWriter(severity, string(file) + ":" + toString(line))
+    {}
+    LogWriter(const char* severity, string location)
+        : severity_(severity),
+          location_(move(location))
+    {}
+
+    template <typename... T>
+    void operator()(const T&... args) {
+        vector<string> argStrs = {toString(args)...};
+        stringstream msg;
+        msg << severity_ << " @ " << location_ << " -- ";
+        for(const string& argStr : argStrs) {
+            msg << argStr;
+        }
+        msg << "\n";
+        cerr << msg.str();
+    }
+
+private:
+    const char* severity_;
+    string location_;
+};
+
+// Panic and assertion macros for ending the program in the case of
+// irrecoverable errors. By default the program exits using abort(), but after
+// enablePanicUsingCEFFatalError has been called, the program is exited using
+// the CEF logging system, by invoking LOG(FATAL).
+#define PANIC Panicker(__FILE__, __LINE__)
+#define REQUIRE(cond) \
+    do { if(!(cond)) { PANIC("Requirement '" #cond "' failed"); } } while(false)
+
+class Panicker {
+public:
+    Panicker(const char* file, int line)
+        : Panicker(string(file) + ":" + toString(line))
+    {}
+    Panicker(string location)
+        : location_(move(location))
+    {}
+    ~Panicker() {
+        panic_("");
+    }
+
+    template <typename... T>
+    void operator()(const T&... args) {
+        vector<string> argStrs = {toString(args)...};
+        string msg;
+        for(const string& argStr : argStrs) {
+            msg.append(argStr);
+        }
+        panic_(move(msg));
+    }
+
+private:
+    void panic_(string msg);
+
+    string location_;
+};
+
+// Should only be called after CefInitialize has been successfully run.
+void enablePanicUsingCEFFatalError();
+
+// Boilerplate for defining classes that can only be constructed into
+// shared_ptrs using the 'create' static function and which are checked for
+// leaks at the end of the program on debug builds.
 #ifdef NDEBUG
 #define SHARED_ONLY_CLASS_LEAK_CHECK(ClassName)
 #else
@@ -100,8 +211,7 @@ private:
     ~LeakChecker() {
         size_t leakCount = objectCount_.load();
         if(leakCount) {
-            LOG(ERROR) << "MEMORY LEAK: " << leakCount << " " << Name << " objects remaining";
-            CHECK(false);
+            PANIC("MEMORY LEAK: ", leakCount, " ", Name, " objects remaining");
         }
     }
     atomic<size_t> objectCount_;
@@ -165,41 +275,6 @@ void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
             (ptr.get()->*func)(args...);
         }
     });
-}
-
-template <typename T>
-optional<T> parseString(const string& str) {
-    T ret;
-    stringstream ss(str);
-    ss >> ret;
-    if(ss.fail() || !ss.eof()) {
-        optional<T> empty;
-        return empty;
-    } else {
-        return ret;
-    }
-}
-
-template <typename T>
-optional<T> parseString(
-    string::const_iterator begin,
-    string::const_iterator end
-) {
-    return parseString<T>(string(begin, end));
-}
-
-template <typename T>
-optional<T> parseString(
-    const pair<string::const_iterator, string::const_iterator>& str
-) {
-    return parseString<T>(str.first, str.second);
-}
-
-template <typename T>
-string toString(const T& obj) {
-    stringstream ss;
-    ss << obj;
-    return ss.str();
 }
 
 // The macro REQUIRE_UI_THREAD is a version of CEF_REQUIRE_UI_THREAD that is

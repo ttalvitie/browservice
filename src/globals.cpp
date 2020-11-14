@@ -9,7 +9,7 @@ Globals::Globals(CKey, shared_ptr<Config> config)
       xWindow(XWindow::create()),
       textRenderContext(TextRenderContext::create())
 {
-    CHECK(config);
+    REQUIRE(config);
 }
 
 shared_ptr<Globals> globals;

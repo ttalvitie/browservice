@@ -35,7 +35,7 @@ string computeHash(string data) {
     Poco::Crypto::DigestEngine hasher("SHA3-256");
     hasher.update(data);
     string hash = hasher.digestToHex(hasher.digest());
-    CHECK(hash.size() == HexHashLength);
+    REQUIRE(hash.size() == HexHashLength);
     return hash;
 }
 
@@ -51,7 +51,7 @@ string generateDataURLSignKey() {
 }
 
 string createSignedDataURL(string data, string signKey) {
-    CHECK(signKey.size() == HashLength);
+    REQUIRE(signKey.size() == HashLength);
     return DataURLHeader + urlBase64Encode(computeHash(signKey + data) + data);
 }
 
