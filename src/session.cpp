@@ -103,10 +103,10 @@ public:
             return true;
         }
 
-        LOG(INFO) << "Session " << session_->id() << " opening popup";
+        INFO_LOG("Session ", session_->id(), " opening popup");
 
         if(eventHandler->onIsServerFullQuery()) {
-            LOG(INFO) << "Aborting popup creation due to session limit";
+            INFO_LOG("Aborting popup creation due to session limit");
             return true;
         }
 
@@ -135,7 +135,7 @@ public:
         REQUIRE_UI_THREAD();
         CHECK(session_->state_ == Pending);
 
-        LOG(INFO) << "CEF browser for session " << session_->id_ << " created";
+        INFO_LOG("CEF browser for session ", session_->id_, " created");
 
         session_->browser_ = browser;
         session_->state_ = Open;
@@ -155,7 +155,7 @@ public:
         session_->rootWidget_->browserArea()->setBrowser(nullptr);
         session_->imageCompressor_->flush();
 
-        LOG(INFO) << "Session " << session_->id_ << " closed";
+        INFO_LOG("Session ", session_->id_, " closed");
 
         postTask(session_->eventHandler_, &SessionEventHandler::onSessionClosed, session_->id_);
         session_->updateInactivityTimeout_();
@@ -339,7 +339,7 @@ Session::Session(CKey,
     }
     usedSessionIDs.insert(id_);
 
-    LOG(INFO) << "Opening session " << id_;
+    INFO_LOG("Opening session ", id_);
 
     prePrevVisited_ = false;
     preMainVisited_ = false;
@@ -393,15 +393,16 @@ void Session::close() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Open) {
-        LOG(INFO) << "Closing session " << id_ << " requested";
+        INFO_LOG("Closing session ", id_, " requested");
         state_ = Closing;
         CHECK(browser_);
         browser_->GetHost()->CloseBrowser(true);
         imageCompressor_->flush();
     } else if(state_ == Pending) {
-        LOG(INFO)
-            << "Closing session " << id_ << " requested "
-            << "while session is still opening, deferring request";
+        INFO_LOG(
+            "Closing session ", id_,
+            " requested while session is still opening, deferring request"
+        );
 
         // Close the browser as soon as it opens
         closeOnOpen_ = true;
@@ -738,7 +739,7 @@ void Session::afterConstruct_(shared_ptr<Session> self) {
             nullptr,
             nullptr
         )) {
-            LOG(INFO) << "Opening browser for session " << id_ << " failed, closing session";
+            INFO_LOG("Opening browser for session ", id_, " failed, closing session");
             state_ = Closed;
             postTask(eventHandler_, &SessionEventHandler::onSessionClosed, id_);
         }
@@ -762,9 +763,10 @@ void Session::updateInactivityTimeout_(bool shortened) {
             REQUIRE_UI_THREAD();
             if(shared_ptr<Session> session = self.lock()) {
                 if(session->state_ == Pending || session->state_ == Open) {
-                    LOG(INFO)
-                        << "Inactivity timeout for session " << session->id_ << " reached"
-                        << (shortened ? " (shortened due to client close signal)" : "");
+                    INFO_LOG(
+                        "Inactivity timeout for session ", session->id_, " reached",
+                        (shortened ? " (shortened due to client close signal)" : "")
+                    );
                     session->close();
                 }
             }
@@ -847,7 +849,7 @@ void Session::handleEvents_(
 ) {
     uint64_t eventIdx = startIdx;
     if(eventIdx > curEventIdx_) {
-        LOG(WARNING) << eventIdx - curEventIdx_ << " events skipped in session " << id_;
+        WARNING_LOG(eventIdx - curEventIdx_, " events skipped in session ", id_);
         curEventIdx_ = eventIdx;
     }
 
@@ -867,7 +869,10 @@ void Session::handleEvents_(
 
         if(eventIdx == curEventIdx_) {
             if(!processEvent(rootWidget_, eventBegin, eventEnd)) {
-                LOG(WARNING) << "Could not parse event '" << string(eventBegin, eventEnd) << "' in session " << id_;
+                WARNING_LOG(
+                    "Could not parse event '", string(eventBegin, eventEnd),
+                    "' in session ", id_
+                );
             }
             ++eventIdx;
             curEventIdx_ = eventIdx;

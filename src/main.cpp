@@ -18,7 +18,7 @@ public:
     AppServerEventHandler(CKey) {}
 
     virtual void onServerShutdownComplete() override {
-        LOG(INFO) << "Quitting CEF message loop";
+        INFO_LOG("Quitting CEF message loop");
         CefQuitMessageLoop();
     }
 };
@@ -78,12 +78,12 @@ CefRefPtr<App> app;
 bool termSignalReceived = false;
 
 void handleTermSignalSetFlag(int signalID) {
-    LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
+    INFO_LOG("Got signal ", signalID, ", initiating shutdown");
     termSignalReceived = true;
 }
 
 void handleTermSignalInApp(int signalID) {
-    LOG(INFO) << "Got signal " << signalID << ", initiating shutdown";
+    INFO_LOG("Got signal ", signalID, ", initiating shutdown");
     CefPostTask(TID_UI, base::Bind(&App::shutdown, app));
 }
 

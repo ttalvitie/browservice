@@ -43,7 +43,7 @@ void Server::shutdown() {
 
     if(state_ == Running) {
         state_ = ShutdownPending;
-        LOG(INFO) << "Shutting down server";
+        INFO_LOG("Shutting down server");
 
         httpServer_->shutdown();
 
@@ -209,7 +209,7 @@ void Server::checkShutdownStatus_() {
         sessions_.empty()
     ) {
         state_ = ShutdownComplete;
-        LOG(INFO) << "Server shutdown complete";
+        INFO_LOG("Server shutdown complete");
         postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
     }
 }

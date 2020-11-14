@@ -11,7 +11,7 @@ TempDir::TempDir(CKey) {
 
 TempDir::~TempDir() {
     if(rmdir(path_.c_str())) {
-        LOG(WARNING) << "Deleting temporary directory " << path_ << " failed";
+        WARNING_LOG("Deleting temporary directory ", path_, " failed");
     }
 }
 

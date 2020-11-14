@@ -14,7 +14,7 @@ public:
 
         connection_ = xcb_connect(nullptr, nullptr);
         if(connection_ == nullptr || xcb_connection_has_error(connection_)) {
-            LOG(ERROR) << "Opening X display failed";
+            ERROR_LOG("Opening X display failed");
             CHECK(false);
         }
 

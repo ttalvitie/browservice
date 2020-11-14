@@ -91,7 +91,7 @@ CompletedDownload::CompletedDownload(CKey,
 
 CompletedDownload::~CompletedDownload() {
     if(unlink(path_.c_str())) {
-        LOG(WARNING) << "Unlinking file " << path_ << " failed";
+        WARNING_LOG("Unlinking file ", path_, " failed");
     }
 }
 
@@ -109,7 +109,7 @@ void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
         fp.open(self->path_, ifstream::binary);
 
         if(!fp.good()) {
-            LOG(ERROR) << "Opening downloaded file " << self->path_ << " failed";
+            ERROR_LOG("Opening downloaded file ", self->path_, " failed");
             return;
         }
 
@@ -122,7 +122,7 @@ void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
             fp.read(buf, readSize);
 
             if(!fp.good()) {
-                LOG(ERROR) << "Reading downloaded file " << self->path_ << " failed";
+                ERROR_LOG("Reading downloaded file ", self->path_, " failed");
                 return;
             }
 
@@ -284,7 +284,7 @@ string DownloadManager::getFilePath_(int fileIdx) {
 void DownloadManager::unlinkFile_(int fileIdx) {
     string path = getFilePath_(fileIdx);
     if(unlink(path.c_str())) {
-        LOG(WARNING) << "Unlinking file " << path << " failed";
+        WARNING_LOG("Unlinking file ", path, " failed");
     }
 }
 

@@ -152,7 +152,7 @@ CONF_DEF_OPT_INFO(httpAuth) {
             if(str == "env") {
                 const char* valuePtr = getenv("BROWSERVICE_HTTP_AUTH_CREDENTIALS");
                 if(valuePtr == nullptr) {
-                    LOG(ERROR) << "Environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS missing";
+                    ERROR_LOG("Environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS missing");
                     return empty;
                 }
                 value = valuePtr;
@@ -162,7 +162,7 @@ CONF_DEF_OPT_INFO(httpAuth) {
 
             size_t colonPos = value.find(':');
             if(colonPos == value.npos || !colonPos || colonPos + 1 == value.size()) {
-                LOG(ERROR) << "Given HTTP authentication credential string is invalid";
+                ERROR_LOG("Given HTTP authentication credential string is invalid");
                 return empty;
             }
             return value;

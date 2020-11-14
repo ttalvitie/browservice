@@ -24,7 +24,7 @@ public:
 
     ~Impl() {
         if(!responseSent_) {
-            LOG(WARNING) << "HTTP response not provided, sending internal server error";
+            WARNING_LOG("HTTP response not provided, sending internal server error");
             sendTextResponse(
                 500,
                 "ERROR: Request handling failure\n",
@@ -277,7 +277,7 @@ public:
               new Poco::Net::HTTPServerParams()
           )
     {
-        LOG(INFO) << "HTTP server listening to " << listenSockAddr;
+        INFO_LOG("HTTP server listening to ", listenSockAddr);
         httpServer_.start();
     }
     ~Impl() {
@@ -290,7 +290,7 @@ public:
         if(state_ != Running) {
             return;
         }
-        LOG(INFO) << "Shutting down HTTP server";
+        INFO_LOG("Shutting down HTTP server");
         state_ = ShutdownPending;
         
         shared_ptr<Impl> self = shared_from_this();
@@ -310,7 +310,7 @@ public:
             postTask([self{move(self)}]() {
                 CHECK(self->state_ == ShutdownPending);
                 self->state_ = ShutdownComplete;
-                LOG(INFO) << "HTTP server shutdown complete";
+                INFO_LOG("HTTP server shutdown complete");
                 if(auto eventHandler = self->eventHandler_.lock()) {
                     eventHandler->onHTTPServerShutdownComplete();
                 }
