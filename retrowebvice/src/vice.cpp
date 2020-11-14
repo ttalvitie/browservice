@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-#include "../../vice_plugin_api.hpp"
+#include "../../vice_plugin_api.h"
 
 int vicePlugin_isAPIVersionSupported(uint64_t apiVersion) {
     return (int)(apiVersion == (uint64_t)1000000);
@@ -47,11 +47,15 @@ VicePlugin_Context* vicePlugin_initContext(
     const char** optionNames,
     const char** optionValues,
     size_t optionCount,
-    void (*initErrorCallback)(void*, const char*),
-    void* initErrorCallbackData
+    void (*initErrorMsgCallback)(void*, const char*),
+    void* initErrorMsgCallbackData,
+    void (*panicCallback)(void*, const char*, const char*),
+    void* panicCallbackData,
+    void (*logCallback)(void*, int, const char*, const char*),
+    void* logCallbackData
 ) {
     if(apiVersion != (uint64_t)1000000) {
-        initErrorCallback(initErrorCallbackData, "Unsupported API version");
+        initErrorMsgCallback(initErrorMsgCallbackData, "Unsupported API version");
         return nullptr;
     }
 
@@ -60,10 +64,17 @@ VicePlugin_Context* vicePlugin_initContext(
         string value = optionValues[i];
         if(name != "default-quality" && name != "http-auth" && name != "http-listen-addr") {
             string msg = "Unrecognized option '" + name + "'";
-            initErrorCallback(initErrorCallbackData, msg.c_str());
+            initErrorMsgCallback(initErrorMsgCallbackData, msg.c_str());
             return nullptr;
         }
     }
+
+    logCallback(logCallbackData, 0, "asd:5", "Asd");
+    logCallback(logCallbackData, 1, "bsd:5", "Bsd");
+    logCallback(logCallbackData, 2, "csd:5", "Csd");
+    logCallback(logCallbackData, 3, "dsd:5", "Dsd");
+
+    panicCallback(panicCallbackData, "esd:5", "Esd");
 
     return new VicePlugin_Context();
 }

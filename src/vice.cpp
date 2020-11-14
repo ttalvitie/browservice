@@ -1,6 +1,6 @@
 #include "vice.hpp"
 
-#include "../vice_plugin_api.hpp"
+#include "../vice_plugin_api.h"
 
 #include <dlfcn.h>
 
@@ -32,7 +32,8 @@ VicePlugin::~VicePlugin() {
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     shared_ptr<VicePlugin> plugin = VicePlugin::create(CKey());
 
-    plugin->lib_ = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL);
+    plugin->filename_ = filename;
+    plugin->lib_ = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
     if(plugin->lib_ == nullptr) {
         LOG(ERROR) << "Loading vice plugin '" << filename << "' failed";
         return {};
@@ -81,11 +82,10 @@ vector<VicePlugin::OptionHelpItem> VicePlugin::getOptionHelp() {
 }
 
 ViceContext::ViceContext(CKey, CKey) {
-    ctx = nullptr;
+    ctx_ = nullptr;
 }
 
 ViceContext::~ViceContext() {
-    CHECK(ctx == nullptr);
 }
 
 shared_ptr<ViceContext> ViceContext::init(
@@ -93,6 +93,7 @@ shared_ptr<ViceContext> ViceContext::init(
     vector<pair<string, string>> options
 ) {
     shared_ptr<ViceContext> ctx = ViceContext::create(CKey());
+    ctx->plugin_ = plugin;
 
     vector<const char*> optionNames;
     vector<const char*> optionValues;
@@ -107,10 +108,12 @@ shared_ptr<ViceContext> ViceContext::init(
         if(!msg.empty()) {
             msg = ": " + msg;
         }
-        cerr << "ERROR: Vice plugin initialization failed" << msg << "\n";
+        cerr
+            << "ERROR: Vice plugin '" << plugin->filename_ <<
+            "' initialization failed" << msg << "\n";
     };
 
-    ctx->ctx = plugin->apiFuncs_->initContext(
+    ctx->ctx_ = plugin->apiFuncs_->initContext(
         plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
@@ -118,9 +121,34 @@ shared_ptr<ViceContext> ViceContext::init(
         [](void* initErrorMsgCallback, const char* msg) {
             (*(function<void(string)>*)initErrorMsgCallback)(msg);
         },
-        &initErrorMsgCallback
+        &initErrorMsgCallback,
+        [](void* self, const char* location, const char* msg) {
+            Panicker(((ViceContext*)self)->plugin_->filename_ + " " + location)(msg);
+        },
+        ctx.get(),
+        [](void* self, int severity, const char* location, const char* msg) {
+            const char* severityStr;
+            if(severity == 2) {
+                severityStr = "ERROR";
+            } else if(severity == 1) {
+                severityStr = "WARNING";
+            } else {
+                if(severity != 0) {
+                    WARNING_LOG(
+                        "Vice plugin log severity ", severity,
+                        " unknown, defaulting to INFO"
+                    );
+                }
+                severityStr = "INFO";
+            }
+            LogWriter(
+                severityStr,
+                ((ViceContext*)self)->plugin_->filename_ + " " + location
+            )(msg);
+        },
+        ctx.get()
     );
-    if(ctx->ctx == nullptr) {
+    if(ctx->ctx_ == nullptr) {
         if(!initErrorMsgCallbackCalled) {
             initErrorMsgCallback("");
         }

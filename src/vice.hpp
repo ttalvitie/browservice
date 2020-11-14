@@ -21,6 +21,7 @@ public:
     vector<OptionHelpItem> getOptionHelp();
 
 private:
+    string filename_;
     void* lib_;
     uint64_t apiVersion_;
 
@@ -46,5 +47,6 @@ public:
     );
 
 private:
-    void* ctx;
+    shared_ptr<VicePlugin> plugin_;
+    void* ctx_;
 };

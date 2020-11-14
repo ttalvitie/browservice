@@ -79,5 +79,6 @@ retrowebvice/debug/lib/retrowebvice.so: FORCE
 
 clean:
 	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release) gen/html.cpp gen/html.cpp.tmp
+	$(MAKE) -C retrowebvice clean
 
 -include $(DEPS_debug) $(DEPS_release)

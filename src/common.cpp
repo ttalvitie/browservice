@@ -8,7 +8,7 @@ void Panicker::panic_(string msg) {
     stringstream output;
     output << "PANIC @ " << location_;
     if(!msg.empty()) {
-        output << ": " << msg;
+        output << " -- " << msg;
     }
     output << "\n";
 
