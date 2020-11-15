@@ -1,8 +1,8 @@
 #include "common.hpp"
 
 // Dynamically loaded view service (vice) plugin library that shows the browser
-// view to the user and relays back the input events. Used mostly through
-// ViceContext.
+// view to the user and relays back the input events. Can be interacted with
+// using a ViceContext.
 class VicePlugin {
 SHARED_ONLY_CLASS(VicePlugin);
 public:
@@ -31,8 +31,9 @@ private:
     friend class ViceContext;
 };
 
+typedef struct VicePluginAPI_Context VicePluginAPI_Context;
+
 // An initialized VicePlugin context.
-// TODO: correct shutdown
 class ViceContext {
 SHARED_ONLY_CLASS(ViceContext);
 public:
@@ -48,5 +49,5 @@ public:
 
 private:
     shared_ptr<VicePlugin> plugin_;
-    void* ctx_;
+    VicePluginAPI_Context* handle_;
 };

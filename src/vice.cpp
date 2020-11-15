@@ -8,10 +8,11 @@ struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionHelp) \
-    FOREACH_VICE_API_FUNC_ITEM(initContext)
+    FOREACH_VICE_API_FUNC_ITEM(initContext) \
+    FOREACH_VICE_API_FUNC_ITEM(destroyContext)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
-    decltype(&vicePlugin_ ## name) name;
+    decltype(&vicePluginAPI_ ## name) name;
 
     FOREACH_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
@@ -44,10 +45,10 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     void* sym;
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
-    sym = dlsym(plugin->lib_, "vicePlugin_" #name); \
+    sym = dlsym(plugin->lib_, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
         LOG(ERROR) \
-            << "Loading symbol 'vicePlugin_" #name "' from vice plugin '" \
+            << "Loading symbol 'vicePluginAPI_" #name "' from vice plugin '" \
             << filename << "' failed"; \
         return {}; \
     } \
@@ -82,10 +83,13 @@ vector<VicePlugin::OptionHelpItem> VicePlugin::getOptionHelp() {
 }
 
 ViceContext::ViceContext(CKey, CKey) {
-    ctx_ = nullptr;
+    handle_ = nullptr;
 }
 
 ViceContext::~ViceContext() {
+    if(handle_ != nullptr) {
+        plugin_->apiFuncs_->destroyContext(handle_);
+    }
 }
 
 shared_ptr<ViceContext> ViceContext::init(
@@ -113,7 +117,7 @@ shared_ptr<ViceContext> ViceContext::init(
             "' initialization failed" << msg << "\n";
     };
 
-    ctx->ctx_ = plugin->apiFuncs_->initContext(
+    ctx->handle_ = plugin->apiFuncs_->initContext(
         plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
@@ -148,7 +152,7 @@ shared_ptr<ViceContext> ViceContext::init(
         },
         ctx.get()
     );
-    if(ctx->ctx_ == nullptr) {
+    if(ctx->handle_ == nullptr) {
         if(!initErrorMsgCallbackCalled) {
             initErrorMsgCallback("");
         }

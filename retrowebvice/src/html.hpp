@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace retrowebvice {
+
 struct NewSessionHTMLData {
     uint64_t sessionID;
 };
@@ -54,3 +56,5 @@ struct ClipboardHTMLData {
     string escapedText;
 };
 void writeClipboardHTML(ostream& out, const ClipboardHTMLData& data);
+
+}

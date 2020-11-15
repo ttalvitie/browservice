@@ -12,7 +12,7 @@ extern "C" {
  **********************************/
 
 /* General API guidelines:
- *   - The user must use vicePlugin_isAPIVersionSupported to find an API version that both the user
+ *   - The user must use vicePluginAPI_isAPIVersionSupported to find an API version that both the user
  *       and the plugin support. In other plugin API functions, setting the apiVersion argument to
  *       an unsupported version or using API functions that are not part of the chosen API version
  *       results in undefined behavior.
@@ -22,29 +22,30 @@ extern "C" {
  *       function must not retain pointers to their arguments after the function has returned,
  *       unless specifically allowed by the documentation.
  *   - The user must synchronize its calls to the API functions such that two calls concerning the
- *       same VicePlugin_Context are never running concurrently.
+ *       same VicePluginAPI_Context are never running concurrently.
  *   - The plugin may call callbacks given to it in ANY thread. It may also call multiple callback
  *       functions concurrently.
+ *   - The API is pure C; API functions and callbacks should not pass C++ exceptions to the caller.
  */
 
 /********************
  *** Opaque types ***
  ********************/
 
-typedef struct VicePlugin_Context VicePlugin_Context;
+typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
 /********************************************
  *** Functions common to all API versions ***
  ********************************************/
 
 /* Returns 1 if the plugin supports the given API version; otherwise, returns 0. */
-int vicePlugin_isAPIVersionSupported(uint64_t apiVersion);
+int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 
 /*****************************************
  *** Functions for API version 1000000 ***
  *****************************************/
 
-/* For each configuration option supported for vicePlugin_initContext, calls itemCallback in the
+/* For each configuration option supported for vicePluginAPI_initContext, calls itemCallback in the
  * current thread with the documentation for that option:
  *   - name: The name of the option. Convention: lower case, words separated by dashes.
  *   - valSpec: Short description of the value. Convention: upper case, no spaces.
@@ -60,7 +61,7 @@ int vicePlugin_isAPIVersionSupported(uint64_t apiVersion);
  *     "default: 127.0.0.1:8080"
  *   );
  */
-void vicePlugin_getOptionHelp(
+void vicePluginAPI_getOptionHelp(
     uint64_t apiVersion,
     void (*itemCallback)(
         void*,
@@ -84,7 +85,7 @@ void vicePlugin_getOptionHelp(
  *   - location: The source of the error, such as "vice.cpp:132".
  *   - severity: The importance of the log message: 0 for INFO, 1 for WARNING and 2 for ERROR.
  */
-VicePlugin_Context* vicePlugin_initContext(
+VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
     const char** optionNames,
     const char** optionValues,
@@ -96,6 +97,9 @@ VicePlugin_Context* vicePlugin_initContext(
     void (*logCallback)(void*, int severity, const char* location, const char* msg),
     void* logCallbackData
 );
+
+/* Destroy given vice plugin context previously initialized by vicePluginAPI_initContext. */
+void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
 #ifdef __cplusplus
 }
