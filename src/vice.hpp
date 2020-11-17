@@ -40,8 +40,8 @@ public:
     ViceContext(CKey, CKey);
     ~ViceContext();
 
-    // Returns an empty pointer if starting the plugin failed. The reason for the
-    // failure is written to stderr.
+    // Returns an empty pointer if initializing the plugin failed. The reason
+    // for the failure is written to stderr.
     static shared_ptr<ViceContext> init(
         shared_ptr<VicePlugin> plugin,
         vector<pair<string, string>> options

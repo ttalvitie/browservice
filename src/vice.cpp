@@ -103,7 +103,7 @@ shared_ptr<ViceContext> ViceContext::init(
     vector<const char*> optionValues;
     for(const pair<string, string>& opt : options) {
         optionNames.push_back(opt.first.c_str());
-        optionValues.push_back(opt.first.c_str());
+        optionValues.push_back(opt.second.c_str());
     }
 
     bool initErrorMsgCallbackCalled = false;

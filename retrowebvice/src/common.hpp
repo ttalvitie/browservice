@@ -30,4 +30,14 @@ using std::unique_ptr;
 using std::variant;
 using std::vector;
 
+template <typename T>
+string toString(const T& obj) {
+    stringstream ss;
+    ss << obj;
+    return ss.str();
+}
+
+#define STRINGIFY2(x) #x
+#define STRINGIFY(x) STRINGIFY2(x)
+
 }

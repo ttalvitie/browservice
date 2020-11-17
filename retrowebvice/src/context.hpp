@@ -1,6 +1,30 @@
 #include "common.hpp"
 
+#include <Poco/Net/HTTPServer.h>
+
 namespace retrowebvice {
+
+class LogForwarder {
+public:
+    template <typename... T>
+    void operator()(const T&... args) {
+        vector<string> argStrs = {toString(args)...};
+        string msg;
+        for(const string& argStr : argStrs) {
+            msg.append(argStr);
+        }
+        forwarder_(msg);
+    }
+
+private:
+    LogForwarder(function<void(string)> forwarder)
+        : forwarder_(forwarder)
+    {}
+
+    function<void(string)> forwarder_;
+
+    friend class Context;
+};
 
 class Context {
 public:
@@ -20,17 +44,37 @@ public:
 
     ~Context();
 
+    // Panic/log "member macros" that forward to the callbacks provided by the
+    // user of the plugin.
+    #define PANIC panic(__FILE__ ":" STRINGIFY(__LINE__))
+    #define INFO_LOG infoLog(__FILE__ ":" STRINGIFY(__LINE__))
+    #define WARNING_LOG warningLog(__FILE__ ":" STRINGIFY(__LINE__))
+    #define ERROR_LOG errorLog(__FILE__ ":" STRINGIFY(__LINE__))
+
+    LogForwarder panic(string location);
+    LogForwarder infoLog(string location);
+    LogForwarder warningLog(string location);
+    LogForwarder errorLog(string location);
+
     // Returns documentation for supported options in create as
     // (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> supportedOptionDocs();
 
 private:
-    Context() {}
+    Context(
+        function<void(string, string)> panicCallback,
+        function<void(string, string)> infoLogCallback,
+        function<void(string, string)> warningLogCallback,
+        function<void(string, string)> errorLogCallback,
+        Poco::Net::SocketAddress httpListenAddr
+    );
 
     function<void(string, string)> panicCallback_;
     function<void(string, string)> infoLogCallback_;
     function<void(string, string)> warningLogCallback_;
     function<void(string, string)> errorLogCallback_;
+
+    Poco::Net::SocketAddress httpListenAddr_;
 };
 
 }

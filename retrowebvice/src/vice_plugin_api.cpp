@@ -24,9 +24,6 @@ struct VicePluginAPI_Context {
         ABORT_ON_EXCEPTION_IMPL("Unknown exception") \
     }
 
-#define STRINGIFY2(x) #x
-#define STRINGIFY(x) STRINGIFY2(x)
-
 #define PANIC_ON_EXCEPTION_IMPL(callbackPath, what) \
     stringstream msgss; \
     msgss << "Unhandled exception traversing vice plugin API: " << (what); \

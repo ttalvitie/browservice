@@ -2,6 +2,8 @@
 
 namespace retrowebvice {
 
+const string defaultHttpListenAddr = "127.0.0.1:8080";
+
 variant<unique_ptr<Context>, string> Context::create(
     vector<pair<string, string>> options,
     function<void(string, string)> panicCallback,
@@ -9,27 +11,85 @@ variant<unique_ptr<Context>, string> Context::create(
     function<void(string, string)> warningLogCallback,
     function<void(string, string)> errorLogCallback
 ) {
-    unique_ptr<Context> ctx(new Context);
-
-    ctx->panicCallback_ = panicCallback;
-    ctx->infoLogCallback_ = infoLogCallback;
-    ctx->warningLogCallback_ = warningLogCallback;
-    ctx->errorLogCallback_ = errorLogCallback;
+    Poco::Net::SocketAddress httpListenAddr(defaultHttpListenAddr);
 
     for(const pair<string, string>& option : options) {
         const string& name = option.first;
-        //const string& value = option.second;
+        const string& value = option.second;
 
-        if(name != "default-quality" && name != "http-auth" && name != "http-listen-addr") {
+        if(name == "default-quality") {
+            return "Option default-quality supported but not implemented";
+        } else if(name == "http-auth") {
+            return "Option http-auth supported but not implemented";
+        } else if(name == "http-listen-addr") {
+            try {
+                httpListenAddr = Poco::Net::SocketAddress(value);
+                httpListenAddr.toString();
+            } catch(...) {
+                return "Invalid value '" + value + "' for option http-listen-addr";
+            }
+        } else {
             return "Unrecognized option '" + name + "'";
         }
     }
 
-    return move(ctx);
+    return unique_ptr<Context>(
+        new Context(
+            panicCallback,
+            infoLogCallback,
+            warningLogCallback,
+            errorLogCallback,
+            httpListenAddr
+        )
+    );
+}
+
+Context::Context(
+    function<void(string, string)> panicCallback,
+    function<void(string, string)> infoLogCallback,
+    function<void(string, string)> warningLogCallback,
+    function<void(string, string)> errorLogCallback,
+    Poco::Net::SocketAddress httpListenAddr
+)
+    : panicCallback_(panicCallback),
+      infoLogCallback_(infoLogCallback),
+      warningLogCallback_(warningLogCallback),
+      errorLogCallback_(errorLogCallback),
+      httpListenAddr_(httpListenAddr)
+{
+    INFO_LOG("Creating retrowebvice vice plugin context, listening to '", httpListenAddr_, "'");
 }
 
 Context::~Context() {
-    infoLogCallback_("~Context", "Destroying retrowebvice vice plugin context");
+    INFO_LOG("Destroying retrowebvice vice plugin context");
+}
+
+LogForwarder Context::panic(string location) {
+    function<void(string, string)> panicCallback = panicCallback_;
+    return LogForwarder([location, panicCallback](string msg) {
+        panicCallback(location, msg);
+    });
+}
+
+LogForwarder Context::infoLog(string location) {
+    function<void(string, string)> infoLogCallback = infoLogCallback_;
+    return LogForwarder([location, infoLogCallback](string msg) {
+        infoLogCallback(location, msg);
+    });
+}
+
+LogForwarder Context::warningLog(string location) {
+    function<void(string, string)> warningLogCallback = warningLogCallback_;
+    return LogForwarder([location, warningLogCallback](string msg) {
+        warningLogCallback(location, msg);
+    });
+}
+
+LogForwarder Context::errorLog(string location) {
+    function<void(string, string)> errorLogCallback = errorLogCallback_;
+    return LogForwarder([location, errorLogCallback](string msg) {
+        errorLogCallback(location, msg);
+    });
 }
 
 vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
@@ -44,7 +104,7 @@ vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
         "http-listen-addr",
         "IP:PORT",
         "bind address and port for the HTTP server",
-        "default: 127.0.0.1:8080"
+        "default: " + defaultHttpListenAddr
     );
     ret.emplace_back(
         "http-auth",
