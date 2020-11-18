@@ -23,8 +23,12 @@ extern "C" {
  *       unless specifically allowed by the documentation.
  *   - The user must synchronize its calls to the API functions such that two calls concerning the
  *       same VicePluginAPI_Context are never running concurrently.
- *   - The plugin may call callbacks given to it in ANY thread. It may also call multiple callback
- *       functions concurrently.
+ *   - The plugin may call callbacks given to it in ANY thread, unless stated otherwise in the
+ *       API documentation. This means that, for example, the plugin may call multiple callback
+ *       functions concurrently, or call any callback from a thread currently executing any plugin
+ *       API function. The user of the plugin is recommended to use a task queuing mechanism where
+ *       appropriate to process the calls to the callbacks in order to avoid infinite recursions,
+ *       data races and deadlocks.
  *   - The API is pure C; API functions and callbacks should not pass C++ exceptions to the caller.
  */
 
@@ -45,8 +49,8 @@ int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
  *** Functions for API version 1000000 ***
  *****************************************/
 
-/* For each configuration option supported for vicePluginAPI_initContext, calls itemCallback in the
- * current thread with the documentation for that option:
+/* For each configuration option supported for vicePluginAPI_initContext, calls itemCallback
+ * immediately in the current thread with the documentation for that option:
  *   - name: The name of the option. Convention: lower case, words separated by dashes.
  *   - valSpec: Short description of the value. Convention: upper case, no spaces.
  *   - desc: Textual description. Convention: no capitalization in first word.
@@ -75,12 +79,12 @@ void vicePluginAPI_getOptionHelp(
 
 /* Initializes the plugin with given configuration options and utility callbacks, returning the
  * created context on success. In case of failure, NULL is returned and initErrorMsgCallback is
- * called with the error message in the current thread. If creating the context is successful, the
- * other callbacks, panicCallback and logCallback, are retained in the returned context and may be
- * called by the context at any point before the context is destroyed. Both panicCallback and
- * logCallback should attempt to show the given message to the user. A call to panicCallback must
- * not return; instead, it must end the process immediately (for example by calling abort()).
- * Arguments for the callbacks:
+ * called immediately with the error message in the current thread. If creating the context is
+ * successful, the other callbacks, panicCallback and logCallback, are retained in the returned
+ * context and may be called by the context at any point before the context is destroyed. Both
+ * panicCallback and logCallback should attempt to show the given message to the user. A call to
+ * panicCallback must not return; instead, it must end the process immediately (for example by
+ * calling abort()). Arguments for the callbacks:
  *   - msg: Textual description of the event/error.
  *   - location: The source of the error, such as "vice.cpp:132".
  *   - severity: The importance of the log message: 0 for INFO, 1 for WARNING and 2 for ERROR.
@@ -98,7 +102,31 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
     void* logCallbackData
 );
 
-/* Destroy given vice plugin context previously initialized by vicePluginAPI_initContext. */
+/* Start running a previously initialized plugin context. After this, the plugin will start
+ * actually running its functionality: creating and managing interactive sessions, communicating
+ * with the user of the plugin through the provided callbacks and plugin API functions. This
+ * function must return immediately (which means that the plugin must work in a background thread).
+ * To stop the context, call vicePluginAPI_asyncStopContext and wait for it to complete before
+ * destroying the context using vicePluginAPI_destroyContext. A context may be started only once
+ * during its lifetime.
+ */
+void vicePluginAPI_startContext(VicePluginAPI_Context* ctx);
+
+/* Stop a context that is running due to being previously started using vicePluginAPI_startContext.
+ * This function will return immediately, and the plugin context will be stopped in the background.
+ * The callback stopCompleteCallback is called when the plugin context has been successfully
+ * stopped; before that, the plugin context will continue to run.
+ */
+void vicePluginAPI_asyncStopContext(
+    VicePluginAPI_Context* ctx,
+    void (*stopCompleteCallback)(void*),
+    void* stopCompleteCallbackData
+);
+
+/* Destroy given vice plugin context previously initialized by vicePluginAPI_initContext. If the
+ * plugin has been started with vicePluginAPI_startContext, it must first be stopped by calling
+ * vicePluginAPI_asyncStopContext and waiting for it to signal its completion.
+ */
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
 #ifdef __cplusplus

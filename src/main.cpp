@@ -108,13 +108,16 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    INFO_LOG("Loading vice plugin ", config->vicePlugin);
     shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
     if(!vicePlugin) {
         cerr << "ERROR: Loading vice plugin '" << config->vicePlugin << "' failed\n";
         return 1;
     }
 
-    shared_ptr<ViceContext> viceCtx = ViceContext::init(vicePlugin, config->viceOpts);
+    INFO_LOG("Initializing vice plugin ", config->vicePlugin);
+    shared_ptr<ViceContext> viceCtx =
+        ViceContext::init(vicePlugin, config->viceOpts);
     if(!viceCtx) {
         return 1;
     }
@@ -133,6 +136,8 @@ int main(int argc, char* argv[]) {
         XSetIOErrorHandler([](Display*) { return 0; });
 
         app = new App(viceCtx);
+        viceCtx.reset();
+        vicePlugin.reset();
 
         CefSettings settings;
         settings.windowless_rendering_enabled = true;
@@ -167,8 +172,6 @@ int main(int argc, char* argv[]) {
 
     globals.reset();
     xvfb.reset();
-    viceCtx.reset();
-    vicePlugin.reset();
 
     return 0;
 }

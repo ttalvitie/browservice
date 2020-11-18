@@ -38,6 +38,7 @@ Server::Server(CKey,
     REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
     state_ = Running;
+    viceCtx_ = viceCtx;
     // Setup is finished in afterConstruct_
 }
 
@@ -49,6 +50,7 @@ void Server::shutdown() {
         INFO_LOG("Shutting down server");
 
         httpServer_->shutdown();
+        viceCtx_->asyncStop();
 
         map<uint64_t, shared_ptr<Session>> sessions = sessions_;
         for(pair<uint64_t, shared_ptr<Session>> p : sessions) {
@@ -124,6 +126,11 @@ void Server::onHTTPServerShutdownComplete() {
     checkShutdownStatus_();
 }
 
+void Server::onViceContextStopComplete() {
+    REQUIRE_UI_THREAD();
+    checkShutdownStatus_();
+}
+
 void Server::onSessionClosed(uint64_t id) {
     REQUIRE_UI_THREAD();
 
@@ -151,6 +158,8 @@ void Server::onPopupSessionOpen(shared_ptr<Session> session) {
 
 void Server::afterConstruct_(shared_ptr<Server> self) {
     httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);
+
+    viceCtx_->start(self);
 }
 
 void Server::handleClipboardRequest_(shared_ptr<HTTPRequest> request) {
@@ -209,6 +218,7 @@ void Server::checkShutdownStatus_() {
     if(
         state_ == ShutdownPending &&
         httpServer_->isShutdownComplete() &&
+        !viceCtx_->isRunning() &&
         sessions_.empty()
     ) {
         state_ = ShutdownComplete;

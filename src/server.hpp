@@ -2,8 +2,7 @@
 
 #include "http.hpp"
 #include "session.hpp"
-
-class ViceContext;
+#include "vice.hpp"
 
 class ServerEventHandler {
 public:
@@ -15,6 +14,7 @@ public:
 // for onServerShutdownComplete event.
 class Server :
     public HTTPServerEventHandler,
+    public ViceContextEventHandler,
     public SessionEventHandler,
     public enable_shared_from_this<Server>
 {
@@ -31,6 +31,9 @@ public:
     // HTTPServerEventHandler:
     virtual void onHTTPServerRequest(shared_ptr<HTTPRequest> request) override;
     virtual void onHTTPServerShutdownComplete() override;
+
+    // ViceContextEventHandler:
+    virtual void onViceContextStopComplete() override;
 
     // SessionEventHandler:
     virtual void onSessionClosed(uint64_t id) override;
@@ -49,5 +52,6 @@ private:
     enum {Running, ShutdownPending, ShutdownComplete} state_;
 
     shared_ptr<HTTPServer> httpServer_;
+    shared_ptr<ViceContext> viceCtx_;
     map<uint64_t, shared_ptr<Session>> sessions_;
 };

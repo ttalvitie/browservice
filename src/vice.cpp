@@ -9,6 +9,8 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionHelp) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
+    FOREACH_VICE_API_FUNC_ITEM(startContext) \
+    FOREACH_VICE_API_FUNC_ITEM(asyncStopContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
@@ -18,56 +20,57 @@ struct VicePlugin::APIFuncs {
 #undef FOREACH_VICE_API_FUNC_ITEM
 };
 
-VicePlugin::VicePlugin(CKey, CKey) {
-    lib_ = nullptr;
-}
-
-VicePlugin::~VicePlugin() {
-    if(lib_ != nullptr) {
-        if(dlclose(lib_) != 0) {
-            LOG(WARNING) << "Unloading vice plugin failed";
-        }
-    }
-}
-
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
-    shared_ptr<VicePlugin> plugin = VicePlugin::create(CKey());
+    REQUIRE_UI_THREAD();
 
-    plugin->filename_ = filename;
-    plugin->lib_ = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
-    if(plugin->lib_ == nullptr) {
-        LOG(ERROR) << "Loading vice plugin '" << filename << "' failed";
+    void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+    if(lib == nullptr) {
+        ERROR_LOG("Loading vice plugin '", filename, "' failed");
         return {};
     }
 
-    plugin->apiFuncs_ = make_unique<APIFuncs>();
+    unique_ptr<APIFuncs> apiFuncs = make_unique<APIFuncs>();
 
     void* sym;
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
-    sym = dlsym(plugin->lib_, "vicePluginAPI_" #name); \
+    sym = dlsym(lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
-        LOG(ERROR) \
-            << "Loading symbol 'vicePluginAPI_" #name "' from vice plugin '" \
-            << filename << "' failed"; \
+        ERROR_LOG( \
+            "Loading symbol 'vicePluginAPI_" #name "' from vice plugin '", \
+            filename, "' failed" \
+        ); \
+        REQUIRE(dlclose(lib) == 0); \
         return {}; \
     } \
-    plugin->apiFuncs_->name = (decltype(plugin->apiFuncs_->name))sym;
+    apiFuncs->name = (decltype(apiFuncs->name))sym;
 
     FOREACH_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
 
-    plugin->apiVersion_ = 1000000;
+    uint64_t apiVersion = 1000000;
 
-    if(!plugin->apiFuncs_->isAPIVersionSupported(plugin->apiVersion_)) {
-        LOG(ERROR) << "Vice plugin '" << filename << "' does not support API version " << plugin->apiVersion_;
+    if(!apiFuncs->isAPIVersionSupported(apiVersion)) {
+        ERROR_LOG(
+            "Vice plugin '", filename,
+            "' does not support API version ", apiVersion
+        );
+        REQUIRE(dlclose(lib) == 0);
         return {};
     }
 
-    return plugin;
+    return VicePlugin::create(
+        CKey(),
+        filename,
+        lib,
+        apiVersion,
+        move(apiFuncs)
+    );
 }
 
 vector<VicePlugin::OptionHelpItem> VicePlugin::getOptionHelp() {
+    REQUIRE_UI_THREAD();
+
     vector<VicePlugin::OptionHelpItem> ret;
 
     apiFuncs_->getOptionHelp(
@@ -82,22 +85,27 @@ vector<VicePlugin::OptionHelpItem> VicePlugin::getOptionHelp() {
     return ret;
 }
 
-ViceContext::ViceContext(CKey, CKey) {
-    handle_ = nullptr;
+VicePlugin::VicePlugin(CKey, CKey,
+    string filename,
+    void* lib,
+    uint64_t apiVersion,
+    unique_ptr<APIFuncs> apiFuncs
+) {
+    filename_ = filename;
+    lib_ = lib;
+    apiVersion_ = apiVersion;
+    apiFuncs_ = move(apiFuncs);
 }
 
-ViceContext::~ViceContext() {
-    if(handle_ != nullptr) {
-        plugin_->apiFuncs_->destroyContext(handle_);
-    }
+VicePlugin::~VicePlugin() {
+    REQUIRE(dlclose(lib_) == 0);
 }
 
 shared_ptr<ViceContext> ViceContext::init(
     shared_ptr<VicePlugin> plugin,
     vector<pair<string, string>> options
 ) {
-    shared_ptr<ViceContext> ctx = ViceContext::create(CKey());
-    ctx->plugin_ = plugin;
+    REQUIRE_UI_THREAD();
 
     vector<const char*> optionNames;
     vector<const char*> optionValues;
@@ -117,7 +125,7 @@ shared_ptr<ViceContext> ViceContext::init(
             "' initialization failed" << msg << "\n";
     };
 
-    ctx->handle_ = plugin->apiFuncs_->initContext(
+    VicePluginAPI_Context* handle = plugin->apiFuncs_->initContext(
         plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
@@ -126,11 +134,11 @@ shared_ptr<ViceContext> ViceContext::init(
             (*(function<void(string)>*)initErrorMsgCallback)(msg);
         },
         &initErrorMsgCallback,
-        [](void* self, const char* location, const char* msg) {
-            Panicker(((ViceContext*)self)->plugin_->filename_ + " " + location)(msg);
+        [](void* plugin, const char* location, const char* msg) {
+            Panicker(((VicePlugin*)plugin)->filename_ + " " + location)(msg);
         },
-        ctx.get(),
-        [](void* self, int severity, const char* location, const char* msg) {
+        plugin.get(),
+        [](void* plugin, int severity, const char* location, const char* msg) {
             const char* severityStr;
             if(severity == 2) {
                 severityStr = "ERROR";
@@ -147,17 +155,86 @@ shared_ptr<ViceContext> ViceContext::init(
             }
             LogWriter(
                 severityStr,
-                ((ViceContext*)self)->plugin_->filename_ + " " + location
+                ((VicePlugin*)plugin)->filename_ + " " + location
             )(msg);
         },
-        ctx.get()
+        plugin.get()
     );
-    if(ctx->handle_ == nullptr) {
+    if(handle == nullptr) {
         if(!initErrorMsgCallbackCalled) {
             initErrorMsgCallback("");
         }
         return {};
     }
 
-    return ctx;
+    return ViceContext::create(CKey(), plugin, handle);
+}
+
+ViceContext::ViceContext(CKey, CKey,
+    shared_ptr<VicePlugin> plugin,
+    VicePluginAPI_Context* handle
+) {
+    plugin_ = plugin;
+    handle_ = handle;
+    startedBefore_ = false;
+    running_ = false;
+    stopping_ = false;
+}
+
+ViceContext::~ViceContext() {
+    REQUIRE(!running_);
+    plugin_->apiFuncs_->destroyContext(handle_);
+}
+
+void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(!startedBefore_);
+
+    running_ = true;
+    startedBefore_ = true;
+    eventHandler_ = eventHandler;
+    selfLoop_ = shared_from_this();
+
+    INFO_LOG("Starting vice plugin ", plugin_->filename_);
+
+    plugin_->apiFuncs_->startContext(handle_);
+}
+
+void ViceContext::asyncStop() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(running_);
+    REQUIRE(!stopping_);
+
+    stopping_ = true;
+
+    INFO_LOG("Stopping vice plugin ", plugin_->filename_);
+    plugin_->apiFuncs_->asyncStopContext(
+        handle_,
+        [](void* self) {
+            postTask(
+                ((ViceContext*)self)->shared_from_this(),
+                &ViceContext::asyncStopComplete_
+            );
+        },
+        this
+    );
+}
+
+bool ViceContext::isRunning() {
+    REQUIRE_UI_THREAD();
+    return running_;
+}
+
+void ViceContext::asyncStopComplete_() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(running_);
+    REQUIRE(stopping_);
+
+    stopping_ = false;
+    running_ = false;
+    selfLoop_.reset();
+
+    INFO_LOG("Vice plugin ", plugin_->filename_, " stopped successfully");
+
+    postTask(eventHandler_, &ViceContextEventHandler::onViceContextStopComplete);
 }

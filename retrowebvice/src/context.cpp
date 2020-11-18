@@ -55,13 +55,15 @@ Context::Context(
       infoLogCallback_(infoLogCallback),
       warningLogCallback_(warningLogCallback),
       errorLogCallback_(errorLogCallback),
-      httpListenAddr_(httpListenAddr)
-{
-    INFO_LOG("Creating retrowebvice vice plugin context, listening to '", httpListenAddr_, "'");
-}
+      httpListenAddr_(httpListenAddr),
+      startedBefore_(false),
+      running_(false)
+{}
 
 Context::~Context() {
-    INFO_LOG("Destroying retrowebvice vice plugin context");
+    if(running_) {
+        PANIC("Destroying a running plugin context before stopping it");
+    }
 }
 
 LogForwarder Context::panic(string location) {
@@ -117,6 +119,22 @@ vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
         "default empty"
     );
     return ret;
+}
+
+void Context::start() {
+    if(startedBefore_) {
+        PANIC("Starting plugin context that has been started before");
+    }
+    startedBefore_ = true;
+    running_ = true;
+}
+
+void Context::asyncStop(function<void()> stopCompleteCallback) {
+    if(!running_) {
+        PANIC("Stopping plugin that is not running");
+    }
+    running_ = false;
+    stopCompleteCallback();
 }
 
 }

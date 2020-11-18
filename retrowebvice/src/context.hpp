@@ -14,6 +14,10 @@ public:
             msg.append(argStr);
         }
         forwarder_(msg);
+        forwarder_ = [](string) {};
+    }
+    ~LogForwarder() {
+        forwarder_("");
     }
 
 private:
@@ -60,6 +64,9 @@ public:
     // (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> supportedOptionDocs();
 
+    void start();
+    void asyncStop(function<void()> stopCompleteCallback);
+
 private:
     Context(
         function<void(string, string)> panicCallback,
@@ -75,6 +82,9 @@ private:
     function<void(string, string)> errorLogCallback_;
 
     Poco::Net::SocketAddress httpListenAddr_;
+
+    bool startedBefore_;
+    bool running_;
 };
 
 }

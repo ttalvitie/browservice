@@ -130,8 +130,41 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
     } PANIC_ON_EXCEPTION()
 }
 
+#define CHECK_NULL_CTX() \
+    do { \
+        if(ctx == nullptr || ctx->impl == nullptr) { \
+            cerr \
+                << "FATAL @ " << __FUNCTION__  \
+                << ": Plugin API function called with NULL context\n"; \
+            cerr.flush(); \
+            abort(); \
+        } \
+    } while(false)
+
+void vicePluginAPI_startContext(VicePluginAPI_Context* ctx) {
+    CHECK_NULL_CTX();
+    try {
+        ctx->impl->start();
+    } PANIC_ON_EXCEPTION(ctx->)
+}
+
+void vicePluginAPI_asyncStopContext(
+    VicePluginAPI_Context* ctx,
+    void (*stopCompleteCallback)(void*),
+    void* stopCompleteCallbackData
+) {
+    CHECK_NULL_CTX();
+    try {
+        ctx->impl->asyncStop(
+            [stopCompleteCallback, stopCompleteCallbackData]() {
+                stopCompleteCallback(stopCompleteCallbackData);
+            }
+        );
+    } PANIC_ON_EXCEPTION(ctx->)
+}
+
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx) {
-    if(ctx == nullptr) return;
+    CHECK_NULL_CTX();
 
     auto panicCallback = ctx->panicCallback;
     void* panicCallbackData = ctx->panicCallbackData;
