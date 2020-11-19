@@ -10,7 +10,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(getOptionHelp) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
     FOREACH_VICE_API_FUNC_ITEM(startContext) \
-    FOREACH_VICE_API_FUNC_ITEM(asyncStopContext) \
+    FOREACH_VICE_API_FUNC_ITEM(asyncShutdownContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
@@ -25,7 +25,11 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 
     void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
     if(lib == nullptr) {
-        ERROR_LOG("Loading vice plugin '", filename, "' failed");
+        const char* err = dlerror();
+        ERROR_LOG(
+            "Loading vice plugin library '", filename,
+            "' failed: ", err != nullptr ? err : "Unknown error"
+        );
         return {};
     }
 
@@ -36,9 +40,10 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     sym = dlsym(lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
+        const char* err = dlerror(); \
         ERROR_LOG( \
-            "Loading symbol 'vicePluginAPI_" #name "' from vice plugin '", \
-            filename, "' failed" \
+            "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
+            filename, " failed:", err != nullptr ? err : "Unknown error" \
         ); \
         REQUIRE(dlclose(lib) == 0); \
         return {}; \
@@ -52,8 +57,8 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 
     if(!apiFuncs->isAPIVersionSupported(apiVersion)) {
         ERROR_LOG(
-            "Vice plugin '", filename,
-            "' does not support API version ", apiVersion
+            "Vice plugin ", filename,
+            " does not support API version ", apiVersion
         );
         REQUIRE(dlclose(lib) == 0);
         return {};
@@ -121,8 +126,8 @@ shared_ptr<ViceContext> ViceContext::init(
             msg = ": " + msg;
         }
         cerr
-            << "ERROR: Vice plugin '" << plugin->filename_ <<
-            "' initialization failed" << msg << "\n";
+            << "ERROR: Vice plugin " << plugin->filename_ <<
+            " initialization failed" << msg << "\n";
     };
 
     VicePluginAPI_Context* handle = plugin->apiFuncs_->initContext(
@@ -178,7 +183,7 @@ ViceContext::ViceContext(CKey, CKey,
     handle_ = handle;
     startedBefore_ = false;
     running_ = false;
-    stopping_ = false;
+    shuttingDown_ = false;
 }
 
 ViceContext::~ViceContext() {
@@ -200,20 +205,20 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     plugin_->apiFuncs_->startContext(handle_);
 }
 
-void ViceContext::asyncStop() {
+void ViceContext::asyncShutdown() {
     REQUIRE_UI_THREAD();
     REQUIRE(running_);
-    REQUIRE(!stopping_);
+    REQUIRE(!shuttingDown_);
 
-    stopping_ = true;
+    shuttingDown_ = true;
 
-    INFO_LOG("Stopping vice plugin ", plugin_->filename_);
-    plugin_->apiFuncs_->asyncStopContext(
+    INFO_LOG("Shutting down vice plugin ", plugin_->filename_);
+    plugin_->apiFuncs_->asyncShutdownContext(
         handle_,
         [](void* self) {
             postTask(
                 ((ViceContext*)self)->shared_from_this(),
-                &ViceContext::asyncStopComplete_
+                &ViceContext::asyncShutdownComplete_
             );
         },
         this
@@ -225,16 +230,16 @@ bool ViceContext::isRunning() {
     return running_;
 }
 
-void ViceContext::asyncStopComplete_() {
+void ViceContext::asyncShutdownComplete_() {
     REQUIRE_UI_THREAD();
     REQUIRE(running_);
-    REQUIRE(stopping_);
+    REQUIRE(shuttingDown_);
 
-    stopping_ = false;
+    shuttingDown_ = false;
     running_ = false;
     selfLoop_.reset();
 
-    INFO_LOG("Vice plugin ", plugin_->filename_, " stopped successfully");
+    INFO_LOG("Vice plugin ", plugin_->filename_, " shut down successfully");
 
-    postTask(eventHandler_, &ViceContextEventHandler::onViceContextStopComplete);
+    postTask(eventHandler_, &ViceContextEventHandler::onViceContextShutdownComplete);
 }

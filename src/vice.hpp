@@ -44,7 +44,7 @@ typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
 class ViceContextEventHandler {
 public:
-    virtual void onViceContextStopComplete() = 0;
+    virtual void onViceContextShutdownComplete() = 0;
 };
 
 // An initialized vice plugin context.
@@ -66,24 +66,24 @@ public:
 
     // To start the context, CEF event loop must be running. The context may be
     // started only once. Before ending CEF event loop, the context must be
-    // stopped by calling asyncStop() and waiting for onViceContextStopComplete
-    // to be called.
+    // shut down by calling asyncShutdown() and waiting for
+    // onViceContextShutdownComplete to be called.
     void start(weak_ptr<ViceContextEventHandler> eventHandler);
-    void asyncStop();
+    void asyncShutdown();
 
     // Returns true if the context is running, that is, either start has not
-    // been called or asyncStop has finished successfully.
+    // been called or asyncShutdown has finished successfully.
     bool isRunning();
 
 private:
-    void asyncStopComplete_();
+    void asyncShutdownComplete_();
 
     shared_ptr<VicePlugin> plugin_;
     VicePluginAPI_Context* handle_;
 
     bool startedBefore_;
     bool running_;
-    bool stopping_;
+    bool shuttingDown_;
     weak_ptr<ViceContextEventHandler> eventHandler_;
 
     // While the context is started, we keep the object alive using a reference

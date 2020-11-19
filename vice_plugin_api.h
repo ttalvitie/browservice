@@ -120,26 +120,29 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
  * actually running its functionality: creating and managing interactive sessions, communicating
  * with the user of the plugin through the provided callbacks and plugin API functions. This
  * function must return immediately (which means that the plugin must work in a background thread).
- * To stop the context, call vicePluginAPI_asyncStopContext and wait for it to complete before
- * destroying the context using vicePluginAPI_destroyContext. A context may be started only once
- * during its lifetime.
+ * To shut down the context, call vicePluginAPI_asyncShutdownContext and wait for it to complete
+ * before destroying the context using vicePluginAPI_destroyContext. A context may be started only
+ * once during its lifetime.
  */
 void vicePluginAPI_startContext(VicePluginAPI_Context* ctx);
 
-/* Stop a context that is running due to being previously started using vicePluginAPI_startContext.
- * This function will return immediately, and the plugin context will be stopped in the background.
- * The callback stopCompleteCallback is called when the plugin context has been successfully
- * stopped; before that, the plugin context will continue to run.
+/* Shut down a context that is running due to being previously started using
+ * vicePluginAPI_startContext. This function will return immediately, and the plugin context will be
+ * shut down in the background. The callback shutdownCompleteCallback is called when the plugin
+ * context has been successfully shut down and is ready to be destroyed. After calling this
+ * function and before shutdownCompleteCallback is called, the user must not call any other plugin
+ * API functions for this context. However, the plugin may still call callbacks as if the plugin was
+ * still running normally prior to calling shutdownCompleteCallback.
  */
-void vicePluginAPI_asyncStopContext(
+void vicePluginAPI_asyncShutdownContext(
     VicePluginAPI_Context* ctx,
-    void (*stopCompleteCallback)(void*),
-    void* stopCompleteCallbackData
+    void (*shutdownCompleteCallback)(void*),
+    void* shutdownCompleteCallbackData
 );
 
 /* Destroy given vice plugin context previously initialized by vicePluginAPI_initContext. If the
- * plugin has been started with vicePluginAPI_startContext, it must first be stopped by calling
- * vicePluginAPI_asyncStopContext and waiting for it to signal its completion.
+ * plugin has been started with vicePluginAPI_startContext, it must first be shut down by calling
+ * vicePluginAPI_asyncShutdownContext and waiting for it to signal its completion.
  */
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 

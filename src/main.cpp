@@ -111,7 +111,7 @@ int main(int argc, char* argv[]) {
     INFO_LOG("Loading vice plugin ", config->vicePlugin);
     shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
     if(!vicePlugin) {
-        cerr << "ERROR: Loading vice plugin '" << config->vicePlugin << "' failed\n";
+        cerr << "ERROR: Loading vice plugin " << config->vicePlugin << " failed\n";
         return 1;
     }
 

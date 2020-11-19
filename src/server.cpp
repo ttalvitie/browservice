@@ -46,11 +46,10 @@ void Server::shutdown() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Running) {
-        state_ = ShutdownPending;
+        state_ = SessionShutdownPending;
         INFO_LOG("Shutting down server");
 
         httpServer_->shutdown();
-        viceCtx_->asyncStop();
 
         map<uint64_t, shared_ptr<Session>> sessions = sessions_;
         for(pair<uint64_t, shared_ptr<Session>> p : sessions) {
@@ -126,7 +125,7 @@ void Server::onHTTPServerShutdownComplete() {
     checkShutdownStatus_();
 }
 
-void Server::onViceContextStopComplete() {
+void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     checkShutdownStatus_();
 }
@@ -148,10 +147,11 @@ bool Server::onIsServerFullQuery() {
 
 void Server::onPopupSessionOpen(shared_ptr<Session> session) {
     REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running || state_ == SessionShutdownPending);
 
     REQUIRE(sessions_.emplace(session->id(), session).second);
 
-    if(state_ == ShutdownPending) {
+    if(state_ == SessionShutdownPending) {
         session->close();
     }
 }
@@ -216,11 +216,18 @@ void Server::handleClipboardRequest_(shared_ptr<HTTPRequest> request) {
 
 void Server::checkShutdownStatus_() {
     if(
-        state_ == ShutdownPending &&
+        state_ == SessionShutdownPending &&
         httpServer_->isShutdownComplete() &&
-        !viceCtx_->isRunning() &&
         sessions_.empty()
     ) {
+        state_ = ViceShutdownPending;
+
+        // We shut down the vice plugin only after closing all sessions to avoid
+        // calling vice plugin API functions after requesting shutdown.
+        viceCtx_->asyncShutdown();
+    }
+
+    if(state_ == ViceShutdownPending && !viceCtx_->isRunning()) {
         state_ = ShutdownComplete;
         INFO_LOG("Server shutdown complete");
         postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);

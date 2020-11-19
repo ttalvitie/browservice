@@ -1,6 +1,4 @@
-#include "common.hpp"
-
-#include <Poco/Net/HTTPServer.h>
+#include "http.hpp"
 
 namespace retrowebvice {
 
@@ -60,12 +58,23 @@ public:
     LogForwarder warningLog(string location);
     LogForwarder errorLog(string location);
 
+    #define REQUIRE(cond) require(__FILE__ ":" STRINGIFY(__LINE__), #cond, (bool)(cond))
+    inline void require(const char* location, const char* condStr, bool cond) {
+        if(!cond) {
+            panic(location)("Requirement '", condStr, "' failed");
+        }
+    }
+
     // Returns documentation for supported options in create as
     // (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> supportedOptionDocs();
 
+    // Functions to be wrapped in plugin API:
     void start();
-    void asyncStop(function<void()> stopCompleteCallback);
+    void asyncShutdown(function<void()> shutdownCompleteCallback);
+
+    // Functions to be called by the internal subsystems:
+    void handleHTTPRequest(HTTPRequest& request);
 
 private:
     Context(
@@ -73,7 +82,8 @@ private:
         function<void(string, string)> infoLogCallback,
         function<void(string, string)> warningLogCallback,
         function<void(string, string)> errorLogCallback,
-        Poco::Net::SocketAddress httpListenAddr
+        SocketAddress httpListenAddr,
+        int httpMaxThreads
     );
 
     function<void(string, string)> panicCallback_;
@@ -81,10 +91,12 @@ private:
     function<void(string, string)> warningLogCallback_;
     function<void(string, string)> errorLogCallback_;
 
-    Poco::Net::SocketAddress httpListenAddr_;
-
     bool startedBefore_;
     bool running_;
+    bool shuttingDown_;
+
+    function<void(Context&)> initHTTPServer_;
+    optional<HTTPServer> httpServer_;
 };
 
 }

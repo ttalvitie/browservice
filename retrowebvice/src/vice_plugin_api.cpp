@@ -148,16 +148,16 @@ void vicePluginAPI_startContext(VicePluginAPI_Context* ctx) {
     } PANIC_ON_EXCEPTION(ctx->)
 }
 
-void vicePluginAPI_asyncStopContext(
+void vicePluginAPI_asyncShutdownContext(
     VicePluginAPI_Context* ctx,
-    void (*stopCompleteCallback)(void*),
-    void* stopCompleteCallbackData
+    void (*shutdownCompleteCallback)(void*),
+    void* shutdownCompleteCallbackData
 ) {
     CHECK_NULL_CTX();
     try {
-        ctx->impl->asyncStop(
-            [stopCompleteCallback, stopCompleteCallbackData]() {
-                stopCompleteCallback(stopCompleteCallbackData);
+        ctx->impl->asyncShutdown(
+            [shutdownCompleteCallback, shutdownCompleteCallbackData]() {
+                shutdownCompleteCallback(shutdownCompleteCallbackData);
             }
         );
     } PANIC_ON_EXCEPTION(ctx->)

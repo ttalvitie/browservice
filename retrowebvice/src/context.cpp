@@ -2,7 +2,8 @@
 
 namespace retrowebvice {
 
-const string defaultHttpListenAddr = "127.0.0.1:8080";
+const string defaultHTTPListenAddr = "127.0.0.1:8080";
+const int defaultHTTPMaxThreads = 100;
 
 variant<unique_ptr<Context>, string> Context::create(
     vector<pair<string, string>> options,
@@ -11,7 +12,9 @@ variant<unique_ptr<Context>, string> Context::create(
     function<void(string, string)> warningLogCallback,
     function<void(string, string)> errorLogCallback
 ) {
-    Poco::Net::SocketAddress httpListenAddr(defaultHttpListenAddr);
+    SocketAddress httpListenAddr =
+        SocketAddress::parse(defaultHTTPListenAddr).value();
+    int httpMaxThreads = defaultHTTPMaxThreads;
 
     for(const pair<string, string>& option : options) {
         const string& name = option.first;
@@ -19,15 +22,20 @@ variant<unique_ptr<Context>, string> Context::create(
 
         if(name == "default-quality") {
             return "Option default-quality supported but not implemented";
-        } else if(name == "http-auth") {
-            return "Option http-auth supported but not implemented";
         } else if(name == "http-listen-addr") {
-            try {
-                httpListenAddr = Poco::Net::SocketAddress(value);
-                httpListenAddr.toString();
-            } catch(...) {
+            optional<SocketAddress> parsed = SocketAddress::parse(value);
+            if(!parsed.has_value()) {
                 return "Invalid value '" + value + "' for option http-listen-addr";
             }
+            httpListenAddr = *parsed;
+        } else if(name == "http-max-threads") {
+            optional<int> parsed = parseString<int>(value);
+            if(!parsed.has_value() || *parsed <= 0) {
+                return "Invalid value '" + value + "' for option http-max-threads";
+            }
+            httpMaxThreads = *parsed;
+        } else if(name == "http-auth") {
+            return "Option http-auth supported but not implemented";
         } else {
             return "Unrecognized option '" + name + "'";
         }
@@ -39,7 +47,8 @@ variant<unique_ptr<Context>, string> Context::create(
             infoLogCallback,
             warningLogCallback,
             errorLogCallback,
-            httpListenAddr
+            httpListenAddr,
+            httpMaxThreads
         )
     );
 }
@@ -49,20 +58,28 @@ Context::Context(
     function<void(string, string)> infoLogCallback,
     function<void(string, string)> warningLogCallback,
     function<void(string, string)> errorLogCallback,
-    Poco::Net::SocketAddress httpListenAddr
+    SocketAddress httpListenAddr,
+    int httpMaxThreads
 )
     : panicCallback_(panicCallback),
       infoLogCallback_(infoLogCallback),
       warningLogCallback_(warningLogCallback),
       errorLogCallback_(errorLogCallback),
-      httpListenAddr_(httpListenAddr),
       startedBefore_(false),
-      running_(false)
+      running_(false),
+      shuttingDown_(false),
+      initHTTPServer_([httpListenAddr, httpMaxThreads](Context& self) {
+          self.REQUIRE(!self.httpServer_);
+          self.httpServer_.emplace(self, httpListenAddr, httpMaxThreads);
+      })
 {}
 
 Context::~Context() {
+    if(shuttingDown_) {
+        PANIC("Destroying a plugin context while its shutdown is still pending");
+    }
     if(running_) {
-        PANIC("Destroying a running plugin context before stopping it");
+        PANIC("Destroying a running plugin context before shutting it down");
     }
 }
 
@@ -106,7 +123,13 @@ vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
         "http-listen-addr",
         "IP:PORT",
         "bind address and port for the HTTP server",
-        "default: " + defaultHttpListenAddr
+        "default: " + defaultHTTPListenAddr
+    );
+    ret.emplace_back(
+        "http-max-threads",
+        "COUNT",
+        "maximum number of HTTP server threads",
+        "default: " + toString(defaultHTTPMaxThreads)
     );
     ret.emplace_back(
         "http-auth",
@@ -123,18 +146,55 @@ vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
 
 void Context::start() {
     if(startedBefore_) {
-        PANIC("Starting plugin context that has been started before");
+        PANIC("Requested starting a plugin context that has already been started before");
     }
+
     startedBefore_ = true;
     running_ = true;
+
+    initHTTPServer_(*this);
 }
 
-void Context::asyncStop(function<void()> stopCompleteCallback) {
-    if(!running_) {
-        PANIC("Stopping plugin that is not running");
+void Context::asyncShutdown(function<void()> shutdownCompleteCallback) {
+    if(shuttingDown_) {
+        PANIC("Requested shutting down a plugin context that is already shutting down");
     }
-    running_ = false;
-    stopCompleteCallback();
+    if(!running_) {
+        PANIC("Requested shutting down a plugin context that is not running");
+    }
+
+    shuttingDown_ = true;
+
+    REQUIRE(httpServer_);
+    httpServer_->asyncShutdown([this, shutdownCompleteCallback]() {
+        // NOTE: Not synchronized.
+        // However, no races because HTTP requests and API calls have stopped
+        // at this point.
+        REQUIRE(running_);
+        REQUIRE(shuttingDown_);
+        running_ = false;
+        shuttingDown_ = false;
+
+        shutdownCompleteCallback();
+    });
+}
+
+void Context::handleHTTPRequest(HTTPRequest& request) {
+    // NOTE: Not synchronized (called from HTTP server worker thread).
+
+    // No race, as running_ is only written to when shutdown is complete, which
+    // is not possible while this function is executing.
+    REQUIRE(running_);
+
+    request.sendTextResponse(
+        200,
+        string("retrowebvice.so HTTP server is working!\n") +
+        "Method: " + request.method() + "\n" +
+        "Path: " + request.path() + "\n" +
+        "User agent: " + request.userAgent() + "\n" +
+        "Form param 'x': " + request.getFormParam("x") + "\n" +
+        "Form param 'y': " + request.getFormParam("y") + "\n"
+    );
 }
 
 }

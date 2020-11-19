@@ -33,7 +33,7 @@ public:
     virtual void onHTTPServerShutdownComplete() override;
 
     // ViceContextEventHandler:
-    virtual void onViceContextStopComplete() override;
+    virtual void onViceContextShutdownComplete() override;
 
     // SessionEventHandler:
     virtual void onSessionClosed(uint64_t id) override;
@@ -49,7 +49,7 @@ private:
 
     weak_ptr<ServerEventHandler> eventHandler_;
 
-    enum {Running, ShutdownPending, ShutdownComplete} state_;
+    enum {Running, SessionShutdownPending, ViceShutdownPending, ShutdownComplete} state_;
 
     shared_ptr<HTTPServer> httpServer_;
     shared_ptr<ViceContext> viceCtx_;
