@@ -12,24 +12,38 @@ extern "C" {
  **********************************/
 
 /* General API guidelines:
+ *
  *   - The user must use vicePluginAPI_isAPIVersionSupported to find an API version that both the user
- *       and the plugin support. In other plugin API functions, setting the apiVersion argument to
- *       an unsupported version or using API functions that are not part of the chosen API version
- *       results in undefined behavior.
+ *     and the plugin support. In other plugin API functions, setting the apiVersion argument to
+ *     an unsupported version or using API functions that are not part of the chosen API version
+ *     results in undefined behavior.
+ *
  *   - Every callback argument to an API function is followed by a data argument of type void*. The
- *       plugin must pass this data argument as the first argument when calling the callback.
- *   - The implementation of a plugin API function or a callback functions passed to a plugin API
- *       function must not retain pointers to their arguments after the function has returned,
- *       unless specifically allowed by the documentation.
- *   - The user must synchronize its calls to the API functions such that two calls concerning the
- *       same VicePluginAPI_Context are never running concurrently.
- *   - The plugin may call callbacks given to it in ANY thread, unless stated otherwise in the
- *       API documentation. This means that, for example, the plugin may call multiple callback
- *       functions concurrently, or call any callback from a thread currently executing any plugin
- *       API function. The user of the plugin is recommended to use a task queuing mechanism where
- *       appropriate to process the calls to the callbacks in order to avoid infinite recursions,
- *       data races and deadlocks.
- *   - The API is pure C; API functions and callbacks should not pass C++ exceptions to the caller.
+ *     plugin must pass this data argument as the first argument when calling the callback.
+ *
+ *   - The implementation of a plugin API function or a callback function passed to a plugin API
+ *     function must not retain pointers to their arguments after the function has returned,
+ *     unless specifically allowed by the documentation.
+ *
+ *   - To make implementing new plugins easier, the burden of avoiding concurrency issues is shifted
+ *     to the user of the API by the means of the following rules:
+ *
+ *       - The user must synchronize its calls to the API functions such that two calls concerning
+ *         the same VicePluginAPI_Context are never running concurrently.
+ *
+ *       - The user may never call API functions from a thread currently executing a callback
+ *         function called by the plugin.
+ *
+ *       - The plugin may call callbacks given to it in ANY thread, unless stated otherwise in the
+ *         API documentation. This means that, for example, the plugin may call multiple callback
+ *         functions concurrently, or call any callback from a thread currently executing any
+ *         plugin API function.
+ *
+ *     To ensure that the rules are followed and issues such as data races, deadlocks and infinite
+ *     recursion are avoided, the user of the plugin is recommended to implement its callbacks such
+ *     that the resulting actions are deferred using a task queuing mechanism where possible.
+ *
+ *   - The API is pure C; API functions and callbacks must not pass C++ exceptions to the caller.
  */
 
 /********************
