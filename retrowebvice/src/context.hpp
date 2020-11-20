@@ -83,7 +83,8 @@ private:
         function<void(string, string)> warningLogCallback,
         function<void(string, string)> errorLogCallback,
         SocketAddress httpListenAddr,
-        int httpMaxThreads
+        int httpMaxThreads,
+        string httpAuthCredentials
     );
 
     function<void(string, string)> panicCallback_;
@@ -97,6 +98,8 @@ private:
 
     function<void(Context&)> initHTTPServer_;
     optional<HTTPServer> httpServer_;
+
+    string httpAuthCredentials_;
 };
 
 }

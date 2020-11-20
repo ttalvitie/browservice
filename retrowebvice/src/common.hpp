@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cctype>
 #include <chrono>
 #include <cstdint>
 #include <cstdlib>
@@ -25,6 +26,7 @@ using std::exception;
 using std::function;
 using std::get;
 using std::get_if;
+using std::make_pair;
 using std::make_shared;
 using std::make_unique;
 using std::optional;

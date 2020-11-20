@@ -2,8 +2,50 @@
 
 namespace retrowebvice {
 
+namespace {
+
 const string defaultHTTPListenAddr = "127.0.0.1:8080";
 const int defaultHTTPMaxThreads = 100;
+
+// Returns (true, value) or (false, error message).
+pair<bool, string> parseHTTPAuthOption(string optValue) {
+    if(optValue.empty()) {
+        return make_pair(true, string());
+    } else {
+        string value;
+        if(optValue == "env") {
+            const char* valuePtr = getenv("HTTP_AUTH_CREDENTIALS");
+            if(valuePtr == nullptr) {
+                return make_pair(
+                    false,
+                    "Option http-auth set to 'env' but environment "
+                    "variable HTTP_AUTH_CREDENTIALS is missing"
+                );
+            }
+            value = valuePtr;
+        } else {
+            value = optValue;
+        }
+
+        size_t colonPos = value.find(':');
+        if(colonPos == value.npos || !colonPos || colonPos + 1 == value.size()) {
+            return make_pair(false, "Invalid value for option http-auth");
+        }
+        return make_pair(true, value);
+    }
+}
+
+bool passwordsEqual(const void* a, const void* b, size_t size) {
+    const unsigned char* x = (const unsigned char*)a;
+    const unsigned char* y = (const unsigned char*)b;
+    volatile unsigned char agg = 0;
+    for(volatile size_t i = 0; i < size; ++i) {
+        agg |= x[i] ^ y[i];
+    }
+    return !agg;
+}
+
+}
 
 variant<unique_ptr<Context>, string> Context::create(
     vector<pair<string, string>> options,
@@ -15,6 +57,7 @@ variant<unique_ptr<Context>, string> Context::create(
     SocketAddress httpListenAddr =
         SocketAddress::parse(defaultHTTPListenAddr).value();
     int httpMaxThreads = defaultHTTPMaxThreads;
+    string httpAuthCredentials;
 
     for(const pair<string, string>& option : options) {
         const string& name = option.first;
@@ -35,7 +78,12 @@ variant<unique_ptr<Context>, string> Context::create(
             }
             httpMaxThreads = *parsed;
         } else if(name == "http-auth") {
-            return "Option http-auth supported but not implemented";
+            pair<bool, string> result = parseHTTPAuthOption(value);
+            if(result.first) {
+                httpAuthCredentials = result.second;
+            } else {
+                return result.second;
+            }
         } else {
             return "Unrecognized option '" + name + "'";
         }
@@ -48,7 +96,8 @@ variant<unique_ptr<Context>, string> Context::create(
             warningLogCallback,
             errorLogCallback,
             httpListenAddr,
-            httpMaxThreads
+            httpMaxThreads,
+            move(httpAuthCredentials)
         )
     );
 }
@@ -59,7 +108,8 @@ Context::Context(
     function<void(string, string)> warningLogCallback,
     function<void(string, string)> errorLogCallback,
     SocketAddress httpListenAddr,
-    int httpMaxThreads
+    int httpMaxThreads,
+    string httpAuthCredentials
 )
     : panicCallback_(panicCallback),
       infoLogCallback_(infoLogCallback),
@@ -71,7 +121,8 @@ Context::Context(
       initHTTPServer_([httpListenAddr, httpMaxThreads](Context& self) {
           self.REQUIRE(!self.httpServer_);
           self.httpServer_.emplace(self, httpListenAddr, httpMaxThreads);
-      })
+      }),
+      httpAuthCredentials_(move(httpAuthCredentials))
 {}
 
 Context::~Context() {
@@ -138,7 +189,7 @@ vector<tuple<string, string, string, string>> Context::supportedOptionDocs() {
         "HTTP basic authentication with given username and "
         "password; if the special value 'env' is specified, the "
         "value is read from the environment variable "
-        "BROWSERVICE_HTTP_AUTH_CREDENTIALS",
+        "HTTP_AUTH_CREDENTIALS",
         "default empty"
     );
     return ret;
@@ -185,6 +236,30 @@ void Context::handleHTTPRequest(HTTPRequest& request) {
     // No race, as running_ is only written to when shutdown is complete, which
     // is not possible while this function is executing.
     REQUIRE(running_);
+
+    if(!httpAuthCredentials_.empty()) {
+        optional<string> credentials = request.getBasicAuthCredentials();
+        if(
+            !credentials ||
+            credentials->size() != httpAuthCredentials_.size() ||
+            !passwordsEqual(
+                (const void*)credentials->data(),
+                (const void*)httpAuthCredentials_.data(),
+                httpAuthCredentials_.size()
+            )
+        ) {
+            request.sendTextResponse(
+                401,
+                "Unauthorized",
+                true,
+                {{
+                    "WWW-Authenticate",
+                    "Basic realm=\"Restricted\", charset=\"UTF-8\""
+                }}
+            );
+            return;
+        }
+    }
 
     request.sendTextResponse(
         200,

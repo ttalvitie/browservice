@@ -2,6 +2,8 @@
 
 #include "context.hpp"
 
+#include <Poco/Base64Decoder.h>
+
 #include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <Poco/Net/HTTPServer.h>
@@ -71,8 +73,6 @@ public:
     }
 
     string getFormParam(string name) {
-        ctx_.REQUIRE(!responseSent_);
-
         if(!formParsed_) {
             formParsed_ = true;
             try {
@@ -103,20 +103,22 @@ public:
     }
 
     optional<string> getBasicAuthCredentials() {
-        ctx_.REQUIRE(!responseSent_);
-
         optional<string> empty;
 
-        ctx_.PANIC("getBasicAuthCredentials NOT IMPLEMENTED TODO");
-        return empty;
+        string scheme, authInfoBase64;
 
-/*        
-        if(!request_.hasCredentials()) {
+        try {
+            if(!request_.hasCredentials()) {
+                return empty;
+            }
+            request_.getCredentials(scheme, authInfoBase64);
+        } catch(const Poco::Exception& e) {
+            ctx_.WARNING_LOG(
+                "Reading HTTP auth credentials with Poco failed with exception ",
+                "(defaulting to none): ", e.displayText()
+            );
             return empty;
         }
-
-        string scheme, authInfo;
-        request_.getCredentials(scheme, authInfo);
 
         for(char& c : scheme) {
             c = tolower(c);
@@ -125,15 +127,30 @@ public:
             return empty;
         }
 
-        CefRefPtr<CefBinaryValue> bin = CefBase64Decode(authInfo);
-        if(!bin) {
+        string authInfo;
+
+        try {
+            stringstream authInfoBase64SS(authInfoBase64);
+            Poco::Base64Decoder decoder(authInfoBase64SS);
+
+            size_t BufSize = 1024;
+            char buf[BufSize];
+            while(decoder.good()) {
+                decoder.read(buf, BufSize);
+                if(decoder.bad()) {
+                    return empty;
+                }
+                authInfo.append(buf, decoder.gcount());
+            }
+        } catch(const Poco::Exception& e) {
+            ctx_.WARNING_LOG(
+                "Parsing HTTP basic auth credentials with Poco failed with exception ",
+                "(defaulting to none): ", e.displayText()
+            );
             return empty;
         }
 
-        vector<char> buf(bin->GetSize());
-        bin->GetData(buf.data(), buf.size(), 0);
-
-        return string(buf.begin(), buf.end());*/
+        return authInfo;
     }
 
     void sendResponse(
