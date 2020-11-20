@@ -11,12 +11,25 @@ extern "C" {
  *** Vice Plugin API Definition ***
  **********************************/
 
-/* General API guidelines:
+/* A vice plugin is a shared library that is used by Browservice or any other GUI software to show
+ * its GUI to the user and receive input events from the user. This plugin API is designed to make
+ * it easy to implement new vice plugins that enable the same program to show its the GUI in very
+ * different ways, such as:
+ *   - A HTTP server serving the GUI as a web application
+ *   - Relay server for clients running on obsolete operating systems and hardware
+ *   - A GUI program running in the native graphical environment
  *
- *   - The user must use vicePluginAPI_isAPIVersionSupported to find an API version that both the user
- *     and the plugin support. In other plugin API functions, setting the apiVersion argument to
- *     an unsupported version or using API functions that are not part of the chosen API version
- *     results in undefined behavior.
+ * The GUI consists of multiple windows; the program supplies the plugin with updates to a resizable
+ * 24-bit RGB image view for each window, and the plugin sends the keyboard and mouse events from
+ * the user in each window back to the program. New windows can be initiated and closed by both the
+ * program and the plugin.
+ *
+ * General API guidelines:
+ *
+ *   - The program using the plugin must use vicePluginAPI_isAPIVersionSupported to find an API
+ *     version that both the program and the plugin support. In other plugin API functions, setting
+ *     the apiVersion argument to an unsupported version or using API functions that are not part of
+ *     the chosen API version results in undefined behavior.
  *
  *   - Every callback argument to an API function is followed by a data argument of type void*. The
  *     plugin must pass this data argument as the first argument when calling the callback.
@@ -26,22 +39,22 @@ extern "C" {
  *     unless specifically allowed by the documentation.
  *
  *   - To make implementing new plugins easier, the burden of avoiding concurrency issues is shifted
- *     to the user of the API by the means of the following rules:
+ *     to the program using the API by the means of the following rules:
  *
- *       - The user must synchronize its calls to the API functions such that two calls concerning
- *         the same VicePluginAPI_Context are never running concurrently.
+ *       - The program must synchronize its calls to the API functions such that two calls
+ *         concerning the same VicePluginAPI_Context are never running concurrently.
  *
- *       - The user may never call API functions from a thread currently executing a callback
+ *       - The program may never call API functions from a thread currently executing a callback
  *         function called by the plugin.
  *
- *       - The plugin may call callbacks given to it in ANY thread, unless stated otherwise in the
- *         API documentation. This means that, for example, the plugin may call multiple callback
- *         functions concurrently, or call any callback from a thread currently executing any
- *         plugin API function.
+ *       - The plugin may call callbacks given to it by the program in ANY thread, unless stated
+ *         otherwise in the API documentation. This means that, for example, the plugin may call
+ *         multiple callback functions concurrently, or call any callback from a thread currently
+ *         executing any plugin API function.
  *
  *     To ensure that the rules are followed and issues such as data races, deadlocks and infinite
- *     recursion are avoided, the user of the plugin is recommended to implement its callbacks such
- *     that the resulting actions are deferred using a task queuing mechanism where possible.
+ *     recursion are avoided, the program using the plugin is recommended to implement its callbacks
+ *     such that the resulting actions are deferred using a task queueing mechanism where possible.
  *
  *   - The API is pure C; API functions and callbacks must not pass C++ exceptions to the caller.
  */
@@ -117,8 +130,8 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
 );
 
 /* Start running a previously initialized plugin context. After this, the plugin will start
- * actually running its functionality: creating and managing interactive sessions, communicating
- * with the user of the plugin through the provided callbacks and plugin API functions. This
+ * actually running its functionality: creating and managing interactive windows, communicating
+ * with the program using the plugin through the provided callbacks and plugin API functions. This
  * function must return immediately (which means that the plugin must work in a background thread).
  * To shut down the context, call vicePluginAPI_asyncShutdownContext and wait for it to complete
  * before destroying the context using vicePluginAPI_destroyContext. A context may be started only
@@ -130,9 +143,9 @@ void vicePluginAPI_startContext(VicePluginAPI_Context* ctx);
  * vicePluginAPI_startContext. This function will return immediately, and the plugin context will be
  * shut down in the background. The callback shutdownCompleteCallback is called when the plugin
  * context has been successfully shut down and is ready to be destroyed. After calling this
- * function and before shutdownCompleteCallback is called, the user must not call any other plugin
- * API functions for this context. However, the plugin may still call callbacks as if the plugin was
- * still running normally prior to calling shutdownCompleteCallback.
+ * function and before shutdownCompleteCallback is called, plugin API functions may not be called
+ * for this context. However, the plugin may still call callbacks as if the plugin was still running
+ * normally prior to calling shutdownCompleteCallback.
  */
 void vicePluginAPI_asyncShutdownContext(
     VicePluginAPI_Context* ctx,
