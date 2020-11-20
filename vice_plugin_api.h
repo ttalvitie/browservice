@@ -56,7 +56,8 @@ extern "C" {
  *     recursion are avoided, the program using the plugin is recommended to implement its callbacks
  *     such that the resulting actions are deferred using a task queueing mechanism where possible.
  *
- *   - The API is pure C; API functions and callbacks must not pass C++ exceptions to the caller.
+ *   - This API is pure C; API functions and callbacks must not let C++ exceptions fall through to
+ *     the caller.
  */
 
 /********************
@@ -105,13 +106,14 @@ void vicePluginAPI_getOptionHelp(
 );
 
 /* Initializes the plugin with given configuration options and utility callbacks, returning the
- * created context on success. In case of failure, NULL is returned and initErrorMsgCallback is
- * called immediately with the error message in the current thread. If creating the context is
- * successful, the other callbacks, panicCallback and logCallback, are retained in the returned
- * context and may be called by the context at any point before the context is destroyed. Both
- * panicCallback and logCallback should attempt to show the given message to the user. A call to
- * panicCallback must not return; instead, it must end the process immediately (for example by
- * calling abort()). Arguments for the callbacks:
+ * created context on success. In case of failure, NULL is returned and if initErrorMsg is not NULL,
+ * *initErrorMsg is set to point to a string describing the reason for the failure; the caller must
+ * free the string using free(). If creating the context is successful, the other callbacks,
+ * panicCallback and logCallback, are retained in the returned context and may be called by the
+ * context at any point before the context is destroyed. Both panicCallback and logCallback should
+ * attempt to show the given message to the user. A call to panicCallback must not return; instead,
+ * it must end the process immediately (for example by calling abort()). Arguments for the
+ * callbacks:
  *   - msg: Textual description of the event/error.
  *   - location: The source of the error, such as "vice.cpp:132".
  *   - severity: The importance of the log message: 0 for INFO, 1 for WARNING and 2 for ERROR.
@@ -121,8 +123,7 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
     const char** optionNames,
     const char** optionValues,
     size_t optionCount,
-    void (*initErrorMsgCallback)(void*, const char* msg),
-    void* initErrorMsgCallbackData,
+    char** initErrorMsgOut,
     void (*panicCallback)(void*, const char* location, const char* msg),
     void* panicCallbackData,
     void (*logCallback)(void*, int severity, const char* location, const char* msg),

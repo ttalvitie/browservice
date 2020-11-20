@@ -119,26 +119,13 @@ shared_ptr<ViceContext> ViceContext::init(
         optionValues.push_back(opt.second.c_str());
     }
 
-    bool initErrorMsgCallbackCalled = false;
-    function<void(string)> initErrorMsgCallback = [&](string msg) {
-        initErrorMsgCallbackCalled = true;
-        if(!msg.empty()) {
-            msg = ": " + msg;
-        }
-        cerr
-            << "ERROR: Vice plugin " << plugin->filename_ <<
-            " initialization failed" << msg << "\n";
-    };
-
+    char* initErrorMsg = nullptr;
     VicePluginAPI_Context* handle = plugin->apiFuncs_->initContext(
         plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
         options.size(),
-        [](void* initErrorMsgCallback, const char* msg) {
-            (*(function<void(string)>*)initErrorMsgCallback)(msg);
-        },
-        &initErrorMsgCallback,
+        &initErrorMsg,
         [](void* plugin, const char* location, const char* msg) {
             Panicker(((VicePlugin*)plugin)->filename_ + " " + location)(msg);
         },
@@ -166,9 +153,11 @@ shared_ptr<ViceContext> ViceContext::init(
         plugin.get()
     );
     if(handle == nullptr) {
-        if(!initErrorMsgCallbackCalled) {
-            initErrorMsgCallback("");
-        }
+        REQUIRE(initErrorMsg != nullptr);
+        cerr
+            << "ERROR: Vice plugin " << plugin->filename_ <<
+            " initialization failed: " << initErrorMsg << "\n";
+        free(initErrorMsg);
         return {};
     }
 
