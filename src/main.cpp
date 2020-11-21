@@ -106,11 +106,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    string vicePluginName = "retrojsvice.so";
-    INFO_LOG("Loading vice plugin ", vicePluginName);
-    shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(vicePluginName);
+    INFO_LOG("Loading vice plugin ", config->vicePlugin);
+    shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
     if(!vicePlugin) {
-        cerr << "ERROR: Loading vice plugin " << vicePluginName << " failed\n";
+        cerr << "ERROR: Loading vice plugin " << config->vicePlugin << " failed\n";
         return 1;
     }
 

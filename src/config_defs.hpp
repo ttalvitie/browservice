@@ -1,4 +1,5 @@
 #define CONF_FOREACH_OPT \
+    CONF_FOREACH_OPT_ITEM(vicePlugin) \
     CONF_FOREACH_OPT_ITEM(httpListenAddr) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
     CONF_FOREACH_OPT_ITEM(defaultQuality) \
@@ -7,6 +8,20 @@
     CONF_FOREACH_OPT_ITEM(dataDir) \
     CONF_FOREACH_OPT_ITEM(sessionLimit) \
     CONF_FOREACH_OPT_ITEM(httpAuth)
+
+CONF_DEF_OPT_INFO(vicePlugin) {
+    const char* name = "vice-plugin";
+    const char* valSpec = "FILENAME";
+    string desc() {
+        return "vice plugin to use for the user interface";
+    }
+    string defaultVal() {
+        return "retrojsvice.so";
+    }
+    bool validate(const string& val) {
+        return !val.empty();
+    }
+};
 
 CONF_DEF_OPT_INFO(httpListenAddr) {
     const char* name = "http-listen-addr";

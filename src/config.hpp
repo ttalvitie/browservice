@@ -18,6 +18,7 @@ public:
     static shared_ptr<Config> read(int argc, char* argv[]);
 
 public:
+    const string vicePlugin;
     const string httpListenAddr;
     const string userAgent;
     const int defaultQuality;

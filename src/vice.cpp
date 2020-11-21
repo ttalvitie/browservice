@@ -38,7 +38,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
         const char* err = dlerror(); \
         ERROR_LOG( \
             "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
-            filename, " failed:", err != nullptr ? err : "Unknown error" \
+            filename, " failed: ", err != nullptr ? err : "Unknown error" \
         ); \
         REQUIRE(dlclose(lib) == 0); \
         return {}; \
