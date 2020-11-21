@@ -12,20 +12,20 @@ ARCH=`uname -m`
 
 if [ "$ARCH" == "x86_64" ]
 then
-    wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linux64.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="cb80a7786eb94a5f88081339cbca1f44be5d6ff1"
+    wget "https://cef-builds.spotifycdn.com/cef_binary_87.1.6%2Bg315d248%2Bchromium-87.0.4280.66_linux64.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="d683d27b42237b43004578db84d48d37c6ef4511"
 elif [[ "$ARCH" =~ ^i[3-7]86$ ]]
 then
-    wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linux32.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="a699923b00fb774f4018bad792b04d5b27ae9ce5"
+    wget "https://cef-builds.spotifycdn.com/cef_binary_87.1.6%2Bg315d248%2Bchromium-87.0.4280.66_linux32.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="1502c2cc41c144a70a0bd7c9b1a4347bfc48fd3a"
 elif [ "$ARCH" == "armv7l" ]
 then
-    wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linuxarm.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="727e67d246d5ec91fd417dfbbbd4b0d75976707a"
+    wget "https://cef-builds.spotifycdn.com/cef_binary_87.1.6%2Bg315d248%2Bchromium-87.0.4280.66_linuxarm.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="c5b5e1883cf9e56c7c391d0fcfd33edaff868856"
 elif [ "$ARCH" == "aarch64" ]
 then
-    wget "http://opensource.spotify.com/cefbuilds/cef_binary_84.4.1%2Bgfdc7504%2Bchromium-84.0.4147.105_linuxarm64.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="07bf5bcaea805af7809b3e05db243ad5879faae9"
+    wget "https://cef-builds.spotifycdn.com/cef_binary_87.1.6%2Bg315d248%2Bchromium-87.0.4280.66_linuxarm64.tar.bz2" -O cef_unverified.tar.bz2
+    SHA1="f4db8498f6d5799512277359ebae62b0f7930a52"
 else
     echo "Unsupported architecture"
     exit 1

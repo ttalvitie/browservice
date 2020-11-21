@@ -47,6 +47,9 @@ public:
     void showError(string message);
     void clearError();
 
+    // Notify the browser area that the browser has changed the cursor type.
+    void setCursor(int cursor);
+
 private:
     class RenderHandler;
 

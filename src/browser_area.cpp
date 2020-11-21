@@ -234,21 +234,6 @@ public:
         }
     }
 
-    virtual void OnCursorChange(
-        CefRefPtr<CefBrowser> browser,
-        CefCursorHandle cursorHandle,
-        CefRenderHandler::CursorType type,
-        const CefCursorInfo& customCursorInfo
-    ) override {
-        REQUIRE_UI_THREAD();
-
-        int cursor = NormalCursor;
-        if(type == CT_HAND) cursor = HandCursor;
-        if(type == CT_IBEAM) cursor = TextCursor;
-
-        browserArea_->setCursor_(cursor);
-    }
-
 private:
     shared_ptr<BrowserArea> browserArea_;
 
@@ -319,6 +304,11 @@ void BrowserArea::clearError() {
         browser_->GetHost()->Invalidate(PET_VIEW);
         browser_->GetHost()->Invalidate(PET_POPUP);
     }
+}
+
+void BrowserArea::setCursor(int cursor) {
+    REQUIRE_UI_THREAD();
+    setCursor_(cursor);
 }
 
 void BrowserArea::widgetViewportUpdated_() {

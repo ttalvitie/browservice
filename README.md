@@ -109,7 +109,7 @@ The commands for installing the dependencies of the Browservice proxy on various
 #### Ubuntu 18.04/20.04, Debian 10 and Raspberry Pi OS
 
 ```
-sudo apt install cmake g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1
+sudo apt install wget cmake g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0
 ```
 
 - On Debian, in order to be able to install the `ttf-mscorefonts-installer` package, you need to add the `contrib` APT source by adding `contrib` to the end of each `deb` and `deb-src` line in `/etc/apt/sources.list` and running `sudo apt update`.
@@ -122,17 +122,17 @@ sudo apt install cmake g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg
     sudo dpkg -i ttf-mscorefonts-installer_3.7_all.deb
     ```
 
-#### Fedora 32
+#### Fedora 33
 
 ```
-sudo dnf install cmake make g++ pkg-config poco-devel libjpeg-turbo-devel pango-devel Xvfb xauth at-spi2-atk alsa-lib libXScrnSaver libXrandr libgbm libXcomposite libXcursor curl cabextract xorg-x11-font-utils
+sudo dnf install wget tar bzip2 cmake make g++ pkg-config poco-devel libjpeg-turbo-devel pango-devel Xvfb xauth at-spi2-atk alsa-lib libXScrnSaver libXrandr libgbm libXcomposite libXcursor curl cabextract xorg-x11-font-utils nss cups-libs
 sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
 ```
 
 #### Arch Linux
 
 ```
-sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb libx11 python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite
+sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb libx11 python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite libxkbcommon
 
 # Install MS core fonts from AUR
 wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-fonts.tar.gz

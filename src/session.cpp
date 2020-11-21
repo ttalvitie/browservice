@@ -241,6 +241,22 @@ public:
         session_->updateSecurityStatus_();
     }
 
+    virtual bool OnCursorChange(
+        CefRefPtr<CefBrowser> browser,
+        CefCursorHandle cursorHandle,
+        cef_cursor_type_t type,
+        const CefCursorInfo& customCursorInfo
+    ) override {
+        REQUIRE_UI_THREAD();
+
+        int cursor = NormalCursor;
+        if(type == CT_HAND) cursor = HandCursor;
+        if(type == CT_IBEAM) cursor = TextCursor;
+
+        session_->rootWidget_->browserArea()->setCursor(cursor);
+        return true;
+    }
+
     // CefRequestHandler:
     virtual CefRefPtr<CefResourceRequestHandler> GetResourceRequestHandler(
         CefRefPtr<CefBrowser> browser,

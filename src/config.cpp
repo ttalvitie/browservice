@@ -6,7 +6,7 @@
 
 #include <Poco/Net/HTTPServer.h>
 
-const char* BrowserviceVersion = "0.9.1.1";
+const char* BrowserviceVersion = "0.9.1.2";
 
 namespace {
 
