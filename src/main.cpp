@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "server.hpp"
+#include "vice.hpp"
 #include "xvfb.hpp"
 
 #include <csignal>
@@ -102,6 +103,14 @@ int main(int argc, char* argv[]) {
 
     shared_ptr<Config> config = Config::read(argc, argv);
     if(!config) {
+        return 1;
+    }
+
+    string vicePluginName = "retrojsvice.so";
+    INFO_LOG("Loading vice plugin ", vicePluginName);
+    shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(vicePluginName);
+    if(!vicePlugin) {
+        cerr << "ERROR: Loading vice plugin " << vicePluginName << " failed\n";
         return 1;
     }
 
