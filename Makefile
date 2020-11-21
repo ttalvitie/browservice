@@ -4,7 +4,7 @@ CFLAGS_debug := $(CFLAGS_COMMON) -g -O0
 CFLAGS_debug_png := $(CFLAGS_COMMON) -g -O3
 CFLAGS_release := $(CFLAGS_COMMON) -O3 -DNDEBUG -fdata-sections -ffunction-sections -fno-ident -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
 CFLAGS_release_png := $(CFLAGS_release)
-LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-rpath,. -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so -lPocoFoundation -lPocoNet -lPocoCrypto `pkg-config --libs pangoft2` -ljpeg -lz -lX11 -lxcb
+LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-rpath,. -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so -lPocoFoundation -lPocoNet -lPocoCrypto `pkg-config --libs pangoft2` -ljpeg -lz -lX11 -lxcb -ldl
 LDFLAGS_debug := $(LDFLAGS_COMMON) cef/debugbuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 LDFLAGS_release := $(LDFLAGS_COMMON) -Wl,-O1 -Wl,--as-needed -Wl,--gc-sections cef/releasebuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 SRCS := $(shell find src -name '*.cpp') gen/html.cpp
@@ -18,13 +18,13 @@ CEFFILES_OUT_$(1) := $(addprefix $(1)/bin/,$(notdir $(CEFFILES_IN)))
 endef
 $(foreach b,debug release,$(eval $(call OUTDEFS,$(b))))
 
-.PHONY: debug release clean default
+.PHONY: debug release clean default FORCE
 
 default: release
 
 define BUILDRULES
 
-$(1): $(1)/bin/browservice $(CEFFILES_OUT_$(1))
+$(1): $(1)/bin/browservice $(1)/bin/retrojsvice.so $(CEFFILES_OUT_$(1))
 	@if [ `stat -c '%U:%G:%a' $(1)/bin/chrome-sandbox` != "root:root:4755" ]; \
 	then \
 	echo; \
@@ -61,7 +61,24 @@ endef
 $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,debug,$(f))))
 $(foreach f,$(CEFFILES_IN),$(eval $(call CEFFILE_RULE,release,$(f))))
 
+release/bin/retrojsvice.so: viceplugins/retrojsvice/release/lib/retrojsvice.so
+	@mkdir -p release/bin
+	cp $< $@
+
+debug/bin/retrojsvice.so: viceplugins/retrojsvice/debug/lib/retrojsvice.so
+	@mkdir -p debug/bin
+	cp $< $@
+
+FORCE: ;
+
+viceplugins/retrojsvice/release/lib/retrojsvice.so: FORCE
+	$(MAKE) -C viceplugins/retrojsvice release
+
+viceplugins/retrojsvice/debug/lib/retrojsvice.so: FORCE
+	$(MAKE) -C viceplugins/retrojsvice debug
+
 clean:
-	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release) gen/html.cpp gen/html.cpp.tmp
+	rm -rf $(OBJS_debug) $(OBJS_release) $(DEPS_debug) $(DEPS_release) debug/bin/browservice release/bin/browservice debug/bin/retrojsvice.so release/bin/retrojsvice.so $(CEFFILES_OUT_debug) $(CEFFILES_OUT_release) gen/html.cpp gen/html.cpp.tmp
+	$(MAKE) -C viceplugins/retrojsvice clean
 
 -include $(DEPS_debug) $(DEPS_release)
