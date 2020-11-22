@@ -6,7 +6,9 @@
 
 struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
-    FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported)
+    FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
+    FOREACH_VICE_API_FUNC_ITEM(setLogCallback) \
+    FOREACH_VICE_API_FUNC_ITEM(setPanicCallback)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name;
@@ -14,6 +16,49 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
 };
+
+namespace {
+
+void logCallback(
+    void* filenamePtr,
+    int logLevel,
+    const char* location,
+    const char* msg
+) {
+    const string& filename = *(string*)filenamePtr;
+
+    const char* logLevelStr;
+    if(logLevel == VICE_PLUGIN_API_LOG_LEVEL_ERROR) {
+        logLevelStr = "ERROR";
+    } else if(logLevel == VICE_PLUGIN_API_LOG_LEVEL_WARNING) {
+        logLevelStr = "WARNING";
+    } else {
+        if(logLevel != VICE_PLUGIN_API_LOG_LEVEL_INFO) {
+            WARNING_LOG(
+                "Incoming log message from vice plugin ", filename,
+                "with unknown log level, defaulting to INFO"
+            );
+        }
+        logLevelStr = "INFO";
+    }
+
+    LogWriter(
+        logLevelStr,
+        filename + " " + location
+    )(msg);
+}
+
+void panicCallback(void* filenamePtr, const char* location, const char* msg) {
+    const string& filename = *(string*)filenamePtr;
+    Panicker(filename + " " + location)(msg);
+}
+
+void destructorCallback(void* filenamePtr) {
+    string* filename = (string*)filenamePtr;
+    delete filename;
+}
+
+}
 
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     REQUIRE_UI_THREAD();
@@ -58,6 +103,19 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
         REQUIRE(dlclose(lib) == 0);
         return {};
     }
+
+    apiFuncs->setLogCallback(
+        apiVersion,
+        logCallback,
+        new string(filename),
+        destructorCallback
+    );
+    apiFuncs->setPanicCallback(
+        apiVersion,
+        panicCallback,
+        new string(filename),
+        destructorCallback
+    );
 
     return VicePlugin::create(
         CKey(),
