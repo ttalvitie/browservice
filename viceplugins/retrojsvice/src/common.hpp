@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <cstdlib>
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <memory>
@@ -14,6 +15,7 @@ namespace retrojsvice {
 
 using std::atomic;
 using std::cerr;
+using std::exception;
 using std::function;
 using std::lock_guard;
 using std::make_shared;

@@ -44,12 +44,24 @@ public:
     }
 };
 
+#define API_FUNC_START try {
+#define API_FUNC_END \
+    } catch(const exception& e) { \
+        PANIC("Unhandled exception traversing the vice plugin API: ", e.what()); \
+    } catch(...) { \
+        PANIC("Unhandled exception traversing the vice plugin API"); \
+    }
+
 }
 
 extern "C" {
 
 int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
+API_FUNC_START
+
     return (int)(apiVersion == (uint64_t)1000000);
+
+API_FUNC_END
 }
 
 void vicePluginAPI_setLogCallback(
@@ -58,6 +70,8 @@ void vicePluginAPI_setLogCallback(
     void* data,
     void (*destructorCallback)(void* data)
 ) {
+API_FUNC_START
+
     REQUIRE(apiVersion == (uint64_t)1000000);
 
     if(callback == nullptr) {
@@ -85,6 +99,8 @@ void vicePluginAPI_setLogCallback(
             }
         );
     }
+
+API_FUNC_END
 }
 
 void vicePluginAPI_setPanicCallback(
@@ -93,6 +109,8 @@ void vicePluginAPI_setPanicCallback(
     void* data,
     void (*destructorCallback)(void* data)
 ) {
+API_FUNC_START
+
     REQUIRE(apiVersion == (uint64_t)1000000);
 
     if(callback == nullptr) {
@@ -102,6 +120,8 @@ void vicePluginAPI_setPanicCallback(
             GlobalCallback<decltype(callback)>(callback, data, destructorCallback)
         );
     }
+
+API_FUNC_END
 }
 
 }

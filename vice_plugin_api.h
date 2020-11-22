@@ -25,9 +25,8 @@ extern "C" {
  *
  * The GUI shown by the plugin consists of multiple windows; the program supplies the plugin with
  * updates to a resizable 24-bit RGB image view for each window, and the plugin sends the keyboard
- * and mouse events concerning the windows back to the program. New windows can be initiated both by
- * the plugin and the program. The program may send files to the user through the plugin. The
- * program may also allow the user to access its clipboard through the plugin.
+ * and mouse events concerning the windows back to the program. In addition, passing clipboard text
+ * and file downloads through the plugin is supported by the API.
  *
  * Typical API usage example for API version 1000000:
  *
@@ -45,6 +44,9 @@ extern "C" {
  *   - No function in the API may use pointers given to it as arguments after the function has
  *     returned, unless specifically allowed by the documentation. This applies to functions in the
  *     plugin API as well as callback functions given to the plugin through the API.
+ *
+ *   - This API is pure C; API functions and callbacks must not let C++ exceptions fall through to
+ *     the caller.
  */
 
 /********************************************
