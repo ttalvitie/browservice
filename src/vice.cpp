@@ -19,12 +19,22 @@ struct VicePlugin::APIFuncs {
 
 namespace {
 
+#define API_CALLBACK_START try {
+#define API_CALLBACK_END \
+    } catch(const exception& e) { \
+        PANIC("Unhandled exception traversing the vice plugin API: ", e.what()); \
+    } catch(...) { \
+        PANIC("Unhandled exception traversing the vice plugin API"); \
+    }
+
 void logCallback(
     void* filenamePtr,
     int logLevel,
     const char* location,
     const char* msg
 ) {
+API_CALLBACK_START
+
     const string& filename = *(string*)filenamePtr;
 
     const char* logLevelStr;
@@ -46,16 +56,26 @@ void logCallback(
         logLevelStr,
         filename + " " + location
     )(msg);
+
+API_CALLBACK_END
 }
 
 void panicCallback(void* filenamePtr, const char* location, const char* msg) {
+API_CALLBACK_START
+
     const string& filename = *(string*)filenamePtr;
     Panicker(filename + " " + location)(msg);
+
+API_CALLBACK_END
 }
 
 void destructorCallback(void* filenamePtr) {
+API_CALLBACK_START
+
     string* filename = (string*)filenamePtr;
     delete filename;
+
+API_CALLBACK_END
 }
 
 }

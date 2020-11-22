@@ -39,11 +39,14 @@ extern "C" {
  *
  *  3. TODO
  *
- * General API guidelines:
+ * General API conventions:
  *
  *   - No function in the API may use pointers given to it as arguments after the function has
  *     returned, unless specifically allowed by the documentation. This applies to functions in the
  *     plugin API as well as callback functions given to the plugin through the API.
+ *
+ *   - Most of the API supports only a very simple form of error handling: either recovering from
+ *     the error (and optionally logging a warning) or panicking and terminating the program.
  *
  *   - This API is pure C; API functions and callbacks must not let C++ exceptions fall through to
  *     the caller.

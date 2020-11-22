@@ -7,6 +7,7 @@
 #include <chrono>
 #include <climits>
 #include <cstdlib>
+#include <exception>
 #include <fstream>
 #include <functional>
 #include <future>
@@ -36,6 +37,7 @@ using std::cerr;
 using std::cout;
 using std::declval;
 using std::enable_shared_from_this;
+using std::exception;
 using std::fill;
 using std::forward;
 using std::function;
