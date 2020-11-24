@@ -37,7 +37,13 @@ extern "C" {
  *     vicePluginAPI_setLogCallback and vicePluginAPI_setPanicCallback, allowing the plugin to use
  *     them instead of its default logging and panicking behavior.
  *
- *  3. TODO
+ *  3. The program initializes a plugin context using vicePluginAPI_initContext, supplying it with
+ *     configuration options (name-value-pairs). If the plugin is selectable by the user, then these
+ *     configuration options should also be specified by the user, because the options are
+ *     plugin-specific. The function may also return an error (for example when the configuration
+ *     options are invalid); the program should show this error to the user.
+ *
+ *  ?. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
  * General API conventions:
  *
@@ -67,9 +73,33 @@ int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 #define VICE_PLUGIN_API_LOG_LEVEL_WARNING 10
 #define VICE_PLUGIN_API_LOG_LEVEL_ERROR 20
 
+/*************
+ *** Types ***
+ *************/
+
+/* Opaque type for plugin contexts. */
+typedef struct VicePluginAPI_Context VicePluginAPI_Context;
+
 /*****************************************
  *** Functions for API version 1000000 ***
  *****************************************/
+
+/* Initializes the plugin with configuration options given as name-value-pairs
+ * (optionNames[i], optionValues[i]) for 0 <= i < optionCount, returning the created context on
+ * success. In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is
+ * set to point to a string describing the reason for the failure; the caller must free the string
+ * using free().
+ */
+VicePluginAPI_Context* vicePluginAPI_initContext(
+    uint64_t apiVersion,
+    const char** optionNames,
+    const char** optionValues,
+    size_t optionCount,
+    char** initErrorMsgOut
+);
+
+/* Destroy a vice plugin context that was previously initialized by vicePluginAPI_initContext. */
+void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
 /* The following two functions may be called to allow the plugin to use given callback for logging
  * or panicking instead of the default behavior. After this, the plugin may call the given callback

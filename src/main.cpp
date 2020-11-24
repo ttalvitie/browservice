@@ -113,6 +113,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    INFO_LOG("Initializing vice plugin ", config->vicePlugin);
+    shared_ptr<ViceContext> viceCtx =
+        ViceContext::init(vicePlugin, {pair<string, string>("http-auth", "asd")});
+    if(!viceCtx) {
+        return 1;
+    }
+
     shared_ptr<Xvfb> xvfb;
     if(config->useDedicatedXvfb) {
         xvfb = Xvfb::create();

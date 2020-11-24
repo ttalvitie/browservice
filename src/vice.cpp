@@ -7,6 +7,8 @@
 struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
+    FOREACH_VICE_API_FUNC_ITEM(initContext) \
+    FOREACH_VICE_API_FUNC_ITEM(destroyContext) \
     FOREACH_VICE_API_FUNC_ITEM(setLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setPanicCallback)
 
@@ -160,4 +162,50 @@ VicePlugin::VicePlugin(CKey, CKey,
 
 VicePlugin::~VicePlugin() {
     REQUIRE(dlclose(lib_) == 0);
+}
+
+shared_ptr<ViceContext> ViceContext::init(
+    shared_ptr<VicePlugin> plugin,
+    vector<pair<string, string>> options
+) {
+    REQUIRE_UI_THREAD();
+
+    vector<const char*> optionNames;
+    vector<const char*> optionValues;
+    for(const pair<string, string>& opt : options) {
+        optionNames.push_back(opt.first.c_str());
+        optionValues.push_back(opt.second.c_str());
+    }
+
+    char* initErrorMsg = nullptr;
+    VicePluginAPI_Context* handle = plugin->apiFuncs_->initContext(
+        plugin->apiVersion_,
+        optionNames.data(),
+        optionValues.data(),
+        options.size(),
+        &initErrorMsg
+    );
+
+    if(handle == nullptr) {
+        REQUIRE(initErrorMsg != nullptr);
+        cerr
+            << "ERROR: Vice plugin " << plugin->filename_ <<
+            " initialization failed: " << initErrorMsg << "\n";
+        free(initErrorMsg);
+        return {};
+    }
+
+    return ViceContext::create(CKey(), plugin, handle);
+}
+
+ViceContext::ViceContext(CKey, CKey,
+    shared_ptr<VicePlugin> plugin,
+    VicePluginAPI_Context* handle
+) {
+    plugin_ = plugin;
+    handle_ = handle;
+}
+
+ViceContext::~ViceContext() {
+    plugin_->apiFuncs_->destroyContext(handle_);
 }
