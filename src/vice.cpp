@@ -7,6 +7,7 @@
 struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
+    FOREACH_VICE_API_FUNC_ITEM(getVersionString) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
@@ -163,6 +164,15 @@ VicePlugin::VicePlugin(CKey, CKey,
 
 VicePlugin::~VicePlugin() {
     REQUIRE(dlclose(lib_) == 0);
+}
+
+string VicePlugin::getVersionString() {
+    REQUIRE_UI_THREAD();
+
+    char* raw = apiFuncs_->getVersionString();
+    string val = raw;
+    free(raw);
+    return val;
 }
 
 vector<VicePlugin::OptionDocsItem> VicePlugin::getOptionDocs() {

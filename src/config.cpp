@@ -304,6 +304,11 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
     } else if(mode == Version) {
         cout << "Browservice " << BrowserviceVersion << ", ";
         cout << "built with CEF " << CEF_VERSION << "\n";
+        shared_ptr<VicePlugin> plugin = VicePlugin::load(src.vicePlugin);
+        if(plugin) {
+            string version = plugin->getVersionString();
+            cout << "Vice plugin " << src.vicePlugin << ": " << version << "\n";
+        }
         return {};
     } else {
         REQUIRE(mode == Normal);

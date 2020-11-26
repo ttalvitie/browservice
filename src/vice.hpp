@@ -23,6 +23,8 @@ public:
     );
     ~VicePlugin();
 
+    string getVersionString();
+
     struct OptionDocsItem {
         string name;
         string valSpec;

@@ -65,6 +65,11 @@ extern "C" {
 /* Returns 1 if the plugin supports the given API version; otherwise, returns 0. */
 int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 
+/* Returns a string describing the name and version of the plugin. The caller is responsible for
+ * freeing the string using free().
+ */
+char* vicePluginAPI_getVersionString();
+
 /*****************
  *** Constants ***
  *****************/

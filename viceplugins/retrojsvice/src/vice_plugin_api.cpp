@@ -83,6 +83,14 @@ API_FUNC_START
 API_FUNC_END
 }
 
+char* vicePluginAPI_getVersionString() {
+API_FUNC_START
+
+    return createMallocString("Retrojsvice 0.9.1.2");
+
+API_FUNC_END
+}
+
 VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
     const char** optionNames,
