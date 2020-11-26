@@ -135,6 +135,57 @@ API_FUNC_START
 API_FUNC_END
 }
 
+void vicePluginAPI_getOptionDocs(
+    uint64_t apiVersion,
+    void (*callback)(
+        void* data,
+        const char* name,
+        const char* valSpec,
+        const char* desc,
+        const char* defaultValStr
+    ),
+    void* data
+) {
+API_FUNC_START
+
+    REQUIRE(apiVersion == (uint64_t)1000000);
+
+    callback(
+        data,
+        "default-quality",
+        "QUALITY",
+        "initial image quality for each session (10..100 or PNG)",
+        "default: PNG"
+    );
+    callback(
+        data,
+        "http-listen-addr",
+        "IP:PORT",
+        "bind address and port for the HTTP server",
+        "default: 127.0.0.1:8080"
+    );
+    callback(
+        data,
+        "http-max-threads",
+        "COUNT",
+        "maximum number of HTTP server threads",
+        "default: 100"
+    );
+    callback(
+        data,
+        "http-auth",
+        "USER:PASSWORD",
+        "if nonempty, the client is required to authenticate using "
+        "HTTP basic authentication with given username and "
+        "password; if the special value 'env' is specified, the "
+        "value is read from the environment variable "
+        "HTTP_AUTH_CREDENTIALS",
+        "default empty"
+    );
+
+API_FUNC_END
+}
+
 void vicePluginAPI_setLogCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, int logLevel, const char* location, const char* msg),

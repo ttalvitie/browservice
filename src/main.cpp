@@ -115,7 +115,7 @@ int main(int argc, char* argv[]) {
 
     INFO_LOG("Initializing vice plugin ", config->vicePlugin);
     shared_ptr<ViceContext> viceCtx =
-        ViceContext::init(vicePlugin, {pair<string, string>("http-auth", "asd")});
+        ViceContext::init(vicePlugin, config->viceOpts);
     if(!viceCtx) {
         return 1;
     }

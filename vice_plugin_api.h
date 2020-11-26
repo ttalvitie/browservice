@@ -88,7 +88,8 @@ typedef struct VicePluginAPI_Context VicePluginAPI_Context;
  * (optionNames[i], optionValues[i]) for 0 <= i < optionCount, returning the created context on
  * success. In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is
  * set to point to a string describing the reason for the failure; the caller must free the string
- * using free().
+ * using free(). Documentation of the supported configuration options can be queried using
+ * vicePluginAPI_getOptionDocs.
  */
 VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
@@ -100,6 +101,37 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
 
 /* Destroy a vice plugin context that was previously initialized by vicePluginAPI_initContext. */
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
+
+/* Supplies the documentation for the configuration options supported by vicePluginAPI_initContext
+ * by repeatedly calling given callback in the current thread before returning. Each call gives the
+ * documentation for a single configuration option in its arguments:
+ *   - data: The data argument given to vicePluginAPI_getOptionDocs.
+ *   - name: The name of the option. Convention: lower case, words separated by dashes.
+ *   - valSpec: Short description of the value. Convention: upper case, no spaces.
+ *   - desc: Textual description. Convention: no capitalization of the first letter.
+ *   - defaultValStr: Short description of what happens if the option is omitted. Convention: Start
+ *       with "default".
+ *
+ * Example callback call:
+ *   callback(
+ *     data,
+ *     "http-listen-addr",
+ *     "IP:PORT",
+ *     "bind address and port for the HTTP server",
+ *     "default: 127.0.0.1:8080"
+ *   );
+ */
+void vicePluginAPI_getOptionDocs(
+    uint64_t apiVersion,
+    void (*callback)(
+        void* data,
+        const char* name,
+        const char* valSpec,
+        const char* desc,
+        const char* defaultValStr
+    ),
+    void* data
+);
 
 /* The following two functions may be called to allow the plugin to use given callback for logging
  * or panicking instead of the default behavior. After this, the plugin may call the given callback

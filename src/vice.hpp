@@ -23,6 +23,14 @@ public:
     );
     ~VicePlugin();
 
+    struct OptionDocsItem {
+        string name;
+        string valSpec;
+        string desc;
+        string defaultValStr;
+    };
+    vector<OptionDocsItem> getOptionDocs();
+
 private:
     string filename_;
     void* lib_;

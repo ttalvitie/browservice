@@ -9,6 +9,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext) \
+    FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setPanicCallback)
 
@@ -162,6 +163,30 @@ VicePlugin::VicePlugin(CKey, CKey,
 
 VicePlugin::~VicePlugin() {
     REQUIRE(dlclose(lib_) == 0);
+}
+
+vector<VicePlugin::OptionDocsItem> VicePlugin::getOptionDocs() {
+    REQUIRE_UI_THREAD();
+
+    vector<VicePlugin::OptionDocsItem> ret;
+
+    apiFuncs_->getOptionDocs(
+        apiVersion_,
+        [](
+            void* data,
+            const char* name,
+            const char* valSpec,
+            const char* desc,
+            const char* defaultValStr
+        ) {
+            vector<VicePlugin::OptionDocsItem>& ret =
+                *(vector<VicePlugin::OptionDocsItem>*)data;
+            ret.push_back({name, valSpec, desc, defaultValStr});
+        },
+        (void*)&ret
+    );
+
+    return ret;
 }
 
 shared_ptr<ViceContext> ViceContext::init(
