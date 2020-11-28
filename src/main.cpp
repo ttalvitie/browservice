@@ -29,7 +29,7 @@ class App :
     public CefBrowserProcessHandler
 {
 public:
-    App() {
+    App(shared_ptr<ViceContext> viceCtx) {
         serverEventHandler_ = AppServerEventHandler::create();
         shutdown_ = false;
     }
@@ -120,6 +120,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    vicePlugin.reset();
+
     shared_ptr<Xvfb> xvfb;
     if(config->useDedicatedXvfb) {
         xvfb = Xvfb::create();
@@ -133,7 +135,8 @@ int main(int argc, char* argv[]) {
         XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
         XSetIOErrorHandler([](Display*) { return 0; });
 
-        app = new App;
+        app = new App(viceCtx);
+        viceCtx.reset();
 
         CefSettings settings;
         settings.windowless_rendering_enabled = true;

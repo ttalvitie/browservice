@@ -1,4 +1,4 @@
-#include "common.hpp"
+#include "context.hpp"
 
 #include "../../../vice_plugin_api.h"
 
@@ -73,7 +73,9 @@ void setOutString(char** out, string val) {
 
 extern "C" {
 
-struct VicePluginAPI_Context {};
+struct VicePluginAPI_Context {
+    shared_ptr<Context> impl;
+};
 
 int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
 API_FUNC_START
@@ -102,31 +104,28 @@ API_FUNC_START
 
     REQUIRE(apiVersion == (uint64_t)1000000);
 
-    INFO_LOG("Creating retrojsvice plugin context");
-
+    vector<pair<string, string>> options;
     for(size_t i = 0; i < optionCount; ++i) {
         REQUIRE(optionNames[i] != nullptr);
         REQUIRE(optionValues[i] != nullptr);
 
-        string name = optionNames[i];
-        string value = optionValues[i];
-
-        if(
-            name != "default-quality" &&
-            name != "http-listen-addr" &&
-            name != "http-max-threads" &&
-            name != "http-auth"
-        ) {
-            setOutString(initErrorMsgOut, "Unknown option '" + name + "'");
-            return nullptr;
-        }
-        if(value == "") {
-            setOutString(initErrorMsgOut, "Invalid value '" + value + "' for option '" + name + "'");
-            return nullptr;
-        }
+        options.emplace_back(optionNames[i], optionValues[i]);
     }
 
-    return new VicePluginAPI_Context;
+    variant<shared_ptr<Context>, string> result = Context::init(options);
+
+    shared_ptr<Context> impl;
+    if(shared_ptr<Context>* implPtr = get_if<shared_ptr<Context>>(&result)) {
+        impl = *implPtr;
+    } else {
+        string msg = get<string>(result);
+        setOutString(initErrorMsgOut, msg);
+        return nullptr;
+    }
+
+    VicePluginAPI_Context* ctx = new VicePluginAPI_Context;
+    ctx->impl = impl;
+    return ctx;
 
 API_FUNC_END
 }
@@ -135,9 +134,6 @@ void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx) {
 API_FUNC_START
 
     REQUIRE(ctx != nullptr);
-
-    INFO_LOG("Destroying retrojsvice plugin context");
-
     delete ctx;
 
 API_FUNC_END
