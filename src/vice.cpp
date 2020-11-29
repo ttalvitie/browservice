@@ -10,9 +10,12 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(getVersionString) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext) \
+    FOREACH_VICE_API_FUNC_ITEM(start) \
+    FOREACH_VICE_API_FUNC_ITEM(shutdown) \
+    FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
-    FOREACH_VICE_API_FUNC_ITEM(setLogCallback) \
-    FOREACH_VICE_API_FUNC_ITEM(setPanicCallback)
+    FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
+    FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name;
@@ -128,13 +131,13 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
         return {};
     }
 
-    apiFuncs->setLogCallback(
+    apiFuncs->setGlobalLogCallback(
         apiVersion,
         logCallback,
         new string(filename),
         destructorCallback
     );
-    apiFuncs->setPanicCallback(
+    apiFuncs->setGlobalPanicCallback(
         apiVersion,
         panicCallback,
         new string(filename),
@@ -240,8 +243,75 @@ ViceContext::ViceContext(CKey, CKey,
 ) {
     plugin_ = plugin;
     handle_ = handle;
+
+    state_ = Pending;
+    shutdownPending_ = false;
+    pumpEventsInQueue_.store(false);
 }
 
 ViceContext::~ViceContext() {
+    REQUIRE(state_ == Pending || state_ == ShutdownComplete);
     plugin_->apiFuncs_->destroyContext(handle_);
+}
+
+void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Pending);
+
+    state_ = Running;
+    eventHandler_ = eventHandler;
+    self_ = shared_from_this();
+
+    plugin_->apiFuncs_->start(
+        handle_,
+        [](void* selfPtr) {
+            ViceContext& self = *(ViceContext*)selfPtr;
+            if(!self.pumpEventsInQueue_.exchange(true)) {
+                postTask(self.shared_from_this(), &ViceContext::pumpEvents_);
+            }
+        },
+        this,
+        [](void* selfPtr) {
+            ViceContext& self = *(ViceContext*)selfPtr;
+            self.shutdownComplete_();
+        },
+        this
+    );
+}
+
+void ViceContext::shutdown() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(!shutdownPending_);
+
+    shutdownPending_ = true;
+    plugin_->apiFuncs_->shutdown(handle_);
+}
+
+bool ViceContext::isShutdownComplete() {
+    REQUIRE_UI_THREAD();
+    return state_ == ShutdownComplete;
+}
+
+void ViceContext::pumpEvents_() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+
+    pumpEventsInQueue_.store(false);
+    plugin_->apiFuncs_->pumpEvents(handle_);
+}
+
+void ViceContext::shutdownComplete_() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(shutdownPending_);
+
+    state_ = ShutdownComplete;
+    shutdownPending_ = false;
+    self_.reset();
+
+    postTask(
+        eventHandler_,
+        &ViceContextEventHandler::onViceContextShutdownComplete
+    );
 }

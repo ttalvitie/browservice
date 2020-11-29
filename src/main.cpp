@@ -32,6 +32,7 @@ public:
     App(shared_ptr<ViceContext> viceCtx) {
         serverEventHandler_ = AppServerEventHandler::create();
         shutdown_ = false;
+        viceCtx_ = viceCtx;
     }
 
     void shutdown() {
@@ -61,7 +62,8 @@ public:
         REQUIRE_UI_THREAD();
         REQUIRE(!server_);
 
-        server_ = Server::create(serverEventHandler_);
+        server_ = Server::create(serverEventHandler_, viceCtx_);
+        viceCtx_.reset();
         if(shutdown_) {
             server_->shutdown();
         }
@@ -71,6 +73,7 @@ private:
     shared_ptr<Server> server_;
     shared_ptr<AppServerEventHandler> serverEventHandler_;
     bool shutdown_;
+    shared_ptr<ViceContext> viceCtx_;
 
     IMPLEMENT_REFCOUNTING(App);
 };

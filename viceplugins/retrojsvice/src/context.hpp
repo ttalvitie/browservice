@@ -15,6 +15,21 @@ public:
     // Private constructor.
     Context(CKey, CKey);
     ~Context();
+
+    // Public API functions:
+    void start(
+        function<void()> eventNotifyCallback,
+        function<void()> shutdownCompleteCallback
+    );
+    void shutdown();
+
+    void pumpEvents();
+
+private:
+    enum {Pending, Running, ShutdownComplete} state_;
+    bool shutdownPending_;
+    function<void()> eventNotifyCallback_;
+    function<void()> shutdownCompleteCallback_;
 };
 
 }

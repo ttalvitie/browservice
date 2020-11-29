@@ -139,6 +139,47 @@ API_FUNC_START
 API_FUNC_END
 }
 
+void vicePluginAPI_start(
+    VicePluginAPI_Context* ctx,
+    void (*eventNotifyCallback)(void* data),
+    void* eventNotifyData,
+    void (*shutdownCompleteCallback)(void* data),
+    void* shutdownCompleteData
+) {
+API_FUNC_START
+
+    REQUIRE(ctx != nullptr);
+
+    ctx->impl->start(
+        [eventNotifyCallback, eventNotifyData]() {
+            eventNotifyCallback(eventNotifyData);
+        },
+        [shutdownCompleteCallback, shutdownCompleteData]() {
+            shutdownCompleteCallback(shutdownCompleteData);
+        }
+    );
+
+API_FUNC_END
+}
+
+void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx) {
+API_FUNC_START
+
+    REQUIRE(ctx != nullptr);
+    ctx->impl->shutdown();
+
+API_FUNC_END
+}
+
+void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx) {
+API_FUNC_START
+
+    REQUIRE(ctx != nullptr);
+    ctx->impl->pumpEvents();
+
+API_FUNC_END
+}
+
 void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(
@@ -190,7 +231,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-void vicePluginAPI_setLogCallback(
+void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, int logLevel, const char* location, const char* msg),
     void* data,
@@ -229,7 +270,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-void vicePluginAPI_setPanicCallback(
+void vicePluginAPI_setGlobalPanicCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, const char* location, const char* msg),
     void* data,

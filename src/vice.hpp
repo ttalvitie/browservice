@@ -43,6 +43,11 @@ private:
     friend class ViceContext;
 };
 
+class ViceContextEventHandler {
+public:
+    virtual void onViceContextShutdownComplete() = 0;
+};
+
 typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
 // An initialized vice plugin context.
@@ -63,7 +68,27 @@ public:
     );
     ~ViceContext();
 
+    // Start running the context. Before quitting CEF message loop, call
+    // shutdown and wait for onViceContextShutdownComplete event.
+    void start(weak_ptr<ViceContextEventHandler> eventHandler);
+    void shutdown();
+
+    bool isShutdownComplete();
+
 private:
+    void pumpEvents_();
+    void shutdownComplete_();
+
     shared_ptr<VicePlugin> plugin_;
     VicePluginAPI_Context* handle_;
+
+    enum {Pending, Running, ShutdownComplete} state_;
+    bool shutdownPending_;
+    atomic<bool> pumpEventsInQueue_;
+
+    weak_ptr<ViceContextEventHandler> eventHandler_;
+
+    // For running contexts, we store a shared pointer to self to avoid it being
+    // destructed.
+    shared_ptr<ViceContext> self_;
 };
