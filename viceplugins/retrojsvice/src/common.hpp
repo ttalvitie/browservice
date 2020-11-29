@@ -12,6 +12,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -34,6 +35,8 @@ using std::shared_ptr;
 using std::string;
 using std::stringstream;
 using std::thread;
+using std::tie;
+using std::tuple;
 using std::variant;
 using std::vector;
 

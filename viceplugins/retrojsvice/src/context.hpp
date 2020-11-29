@@ -25,6 +25,9 @@ public:
 
     void pumpEvents();
 
+    // Returns (name, valSpec, desc, defaultValStr)-tuples.
+    static vector<tuple<string, string, string, string>> getOptionDocs();
+
 private:
     enum {Pending, Running, ShutdownComplete} state_;
     bool shutdownPending_;

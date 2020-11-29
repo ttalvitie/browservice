@@ -6,6 +6,8 @@ namespace {
 
 using namespace retrojsvice;
 
+const char* RetrojsviceVersion = "0.9.1.2";
+
 template <typename T>
 class GlobalCallback {
 private:
@@ -88,7 +90,7 @@ API_FUNC_END
 char* vicePluginAPI_getVersionString() {
 API_FUNC_START
 
-    return createMallocString("Retrojsvice 0.9.1.2");
+    return createMallocString(string("Retrojsvice ") + RetrojsviceVersion);
 
 API_FUNC_END
 }
@@ -195,38 +197,20 @@ API_FUNC_START
 
     REQUIRE(apiVersion == (uint64_t)1000000);
 
-    callback(
-        data,
-        "default-quality",
-        "QUALITY",
-        "initial image quality for each session (10..100 or PNG)",
-        "default: PNG"
-    );
-    callback(
-        data,
-        "http-listen-addr",
-        "IP:PORT",
-        "bind address and port for the HTTP server",
-        "default: 127.0.0.1:8080"
-    );
-    callback(
-        data,
-        "http-max-threads",
-        "COUNT",
-        "maximum number of HTTP server threads",
-        "default: 100"
-    );
-    callback(
-        data,
-        "http-auth",
-        "USER:PASSWORD",
-        "if nonempty, the client is required to authenticate using "
-        "HTTP basic authentication with given username and "
-        "password; if the special value 'env' is specified, the "
-        "value is read from the environment variable "
-        "HTTP_AUTH_CREDENTIALS",
-        "default empty"
-    );
+    vector<tuple<string, string, string, string>> docs =
+        Context::getOptionDocs();
+
+    for(const tuple<string, string, string, string>& doc : docs) {
+        string name, valSpec, desc, defaultValStr;
+        tie(name, valSpec, desc, defaultValStr) = doc;
+        callback(
+            data,
+            name.c_str(),
+            valSpec.c_str(),
+            desc.c_str(),
+            defaultValStr.c_str()
+        );
+    }
 
 API_FUNC_END
 }

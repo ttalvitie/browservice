@@ -166,7 +166,6 @@ VicePlugin::VicePlugin(CKey, CKey,
 }
 
 VicePlugin::~VicePlugin() {
-    INFO_LOG("Unloading vice plugin ", filename_);
     REQUIRE(dlclose(lib_) == 0);
 }
 
