@@ -140,12 +140,16 @@ typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
 /* Initializes a new plugin context with configuration options given as name-value-pairs
  * (optionNames[i], optionValues[i]) for 0 <= i < optionCount, returning the created context on
- * success. In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is
- * set to point to a string describing the reason for the failure; the caller must free the string
- * using free(). Documentation of the supported configuration options can be queried using
- * vicePluginAPI_getOptionDocs. The program may attempt create multiple independent contexts for the
- * same plugin; if the plugin does not support this, this function should fail with a descriptive
- * error message if a context has already been created.
+ * success. (Documentation of the supported configuration options can be queried using
+ * vicePluginAPI_getOptionDocs.)
+ *
+ * In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is set to
+ * point to a string describing the reason for the failure; the caller must free the string using
+ * free().
+ *
+ * The program may attempt create multiple independent contexts for the same plugin; if the plugin
+ * does not support this and the program attempts to create a second context, this function should
+ * fail with a descriptive error message.
  */
 VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
@@ -193,12 +197,14 @@ void vicePluginAPI_start(
  */
 void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
 
-/* Allows a running plugin context to progress in its own task queue. May call callbacks registered
- * to the context directly in the current thread before returning. Should be called by the program
- * if eventNotifyCallback (registered in vicePluginAPI_start) has been called after this function
- * was invoked the last time. Note that eventNotifyCallback may be called while this function is
- * running; in that case, this function should be called again. The program may call this function
- * even when not requested by a call to eventNotifyCallback.
+/* Allows a running plugin context to make progress in its own task queue. May call callbacks
+ * registered to the context directly in the current thread before returning.
+ *
+ * This function should be called by the program if eventNotifyCallback (registered in
+ * vicePluginAPI_start) has been called after this function was invoked the last time. Note that
+ * eventNotifyCallback may be called while this function is running; in that case, this function
+ * should be called again. The program may call this function even when eventNotifyCallback has not
+ * been called.
  */
 void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 
