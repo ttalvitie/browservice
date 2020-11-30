@@ -138,12 +138,14 @@ typedef struct VicePluginAPI_Context VicePluginAPI_Context;
  *** Functions for API version 1000000 ***
  *****************************************/
 
-/* Initializes the plugin with configuration options given as name-value-pairs
+/* Initializes a new plugin context with configuration options given as name-value-pairs
  * (optionNames[i], optionValues[i]) for 0 <= i < optionCount, returning the created context on
  * success. In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is
  * set to point to a string describing the reason for the failure; the caller must free the string
  * using free(). Documentation of the supported configuration options can be queried using
- * vicePluginAPI_getOptionDocs.
+ * vicePluginAPI_getOptionDocs. The program may attempt create multiple independent contexts for the
+ * same plugin; if the plugin does not support this, this function should fail with a descriptive
+ * error message if a context has already been created.
  */
 VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
