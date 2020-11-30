@@ -9,6 +9,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -27,9 +28,12 @@ using std::function;
 using std::get;
 using std::get_if;
 using std::lock_guard;
+using std::make_pair;
 using std::make_shared;
 using std::memory_order_relaxed;
 using std::mutex;
+using std::optional;
+using std::ostream;
 using std::pair;
 using std::shared_ptr;
 using std::string;
@@ -43,6 +47,19 @@ using std::vector;
 using std::chrono::milliseconds;
 
 using std::this_thread::sleep_for;
+
+template <typename T>
+optional<T> parseString(const string& str) {
+    T ret;
+    stringstream ss(str);
+    ss >> ret;
+    if(ss.fail() || !ss.eof()) {
+        optional<T> empty;
+        return empty;
+    } else {
+        return ret;
+    }
+}
 
 template <typename T>
 string toString(const T& obj) {
