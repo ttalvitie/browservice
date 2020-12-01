@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-/**********************************
+/***************************************************************************************************
  *** Vice Plugin API Definition ***
  **********************************/
 
@@ -107,7 +107,7 @@ extern "C" {
  *     the caller.
  */
 
-/********************************************
+/***************************************************************************************************
  *** Functions common to all API versions ***
  ********************************************/
 
@@ -119,24 +119,28 @@ int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
  */
 char* vicePluginAPI_getVersionString();
 
-/*****************
- *** Constants ***
- *****************/
+/*************
+ * Constants *
+ *************/
 
 #define VICE_PLUGIN_API_LOG_LEVEL_INFO 0
 #define VICE_PLUGIN_API_LOG_LEVEL_WARNING 10
 #define VICE_PLUGIN_API_LOG_LEVEL_ERROR 20
 
-/*************
- *** Types ***
- *************/
+/*********
+ * Types *
+ *********/
 
 /* Opaque type for plugin contexts. */
 typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
-/*****************************************
+/***************************************************************************************************
  *** Functions for API version 1000000 ***
  *****************************************/
+
+/**************************************
+ * General context handling functions *
+ **************************************/
 
 /* Initializes a new plugin context with configuration options given as name-value-pairs
  * (optionNames[i], optionValues[i]) for 0 <= i < optionCount, returning the created context on
@@ -204,9 +208,14 @@ void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
  * vicePluginAPI_start) has been called after this function was invoked the last time. Note that
  * eventNotifyCallback may be called while this function is running; in that case, this function
  * should be called again. The program may call this function even when eventNotifyCallback has not
- * been called.
+ * been called. It is sufficient to call this function only once even if eventNotifyCallback has
+ * been called multiple times after the previous call.
  */
 void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
+
+/**********************************
+ * Non-context-specific functions *
+ **********************************/
 
 /* Supplies the documentation for the configuration options supported by vicePluginAPI_initContext
  * by repeatedly calling given callback in the current thread before returning. Each call gives the
