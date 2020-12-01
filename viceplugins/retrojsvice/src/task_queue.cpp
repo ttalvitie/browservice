@@ -8,19 +8,16 @@ thread_local shared_ptr<TaskQueue> activeTaskQueue;
 
 }
 
-TaskQueue::TaskQueue(CKey, function<void()> newTasksCallback) {
+TaskQueue::TaskQueue(CKey, weak_ptr<TaskQueueEventHandler> eventHandler) {
     REQUIRE_API_THREAD();
 
-    running_ = true;
-    newTasksCallback_ = newTasksCallback;
-
+    eventHandler_ = eventHandler;
+    state_ = Running;
     runningTasks_ = false;
-    runningLastTask_ = false;
 }
 
 TaskQueue::~TaskQueue() {
-    REQUIRE(tasks_.empty());
-    REQUIRE(!runningTasks_);
+    REQUIRE(state_ == ShutdownComplete);
 }
 
 void TaskQueue::runTasks() {
@@ -30,19 +27,36 @@ void TaskQueue::runTasks() {
     runningTasks_ = true;
 
     vector<function<void()>> tasksToRun;
+    bool shutdownPending;
     {
         lock_guard lock(mutex_);
-        REQUIRE(running_);
+        REQUIRE(state_ != ShutdownComplete);
 
         swap(tasks_, tasksToRun);
+        shutdownPending = state_ == ShutdownPending;
     }
 
-    for(size_t i = 0; i < tasksToRun.size(); ++i) {
-        if(i + 1 == tasksToRun.size()) {
-            runningLastTask_ = true;
+    for(function<void()> task : tasksToRun) {
+        task();
+    }
+
+    bool shutdownComplete = false;
+    if(shutdownPending) {
+        lock_guard lock(mutex_);
+        REQUIRE(state_ == ShutdownPending);
+
+        if(tasks_.empty()) {
+            state_ = ShutdownComplete;
+            shutdownComplete = true;
         }
-        tasksToRun[i]();
-        runningLastTask_ = false;
+    }
+
+    if(shutdownComplete) {
+        INFO_LOG("Task queue shutdown complete");
+
+        if(shared_ptr<TaskQueueEventHandler> eventHandler = eventHandler_.lock()) {
+            eventHandler->onTaskQueueShutdownComplete();
+        }
     }
 
     runningTasks_ = false;
@@ -50,13 +64,18 @@ void TaskQueue::runTasks() {
 
 void TaskQueue::shutdown() {
     REQUIRE_API_THREAD();
-    lock_guard lock(mutex_);
 
-    REQUIRE(tasks_.empty());
-    REQUIRE(!runningTasks_ || runningLastTask_);
+    {
+        lock_guard lock(mutex_);
+        REQUIRE(state_ == Running);
 
-    running_ = false;
-    newTasksCallback_ = []() {};
+        state_ = ShutdownPending;
+    }
+
+    INFO_LOG("Shutting down task queue");
+
+    // Make sure runTasks will be called
+    postTask([]() {});
 }
 
 shared_ptr<TaskQueue> TaskQueue::getActiveQueue() {
@@ -78,19 +97,26 @@ ActiveTaskQueueLock::~ActiveTaskQueueLock() {
 void postTask(function<void()> func) {
     REQUIRE(activeTaskQueue);
 
-    function<void()> runAfterPost = []() {};
+    bool needsRunTasks = false;
 
     {
         lock_guard lock(activeTaskQueue->mutex_);
-        REQUIRE(activeTaskQueue->running_);
+        REQUIRE(activeTaskQueue->state_ != TaskQueue::ShutdownComplete);
 
         if(activeTaskQueue->tasks_.empty()) {
-            runAfterPost = activeTaskQueue->newTasksCallback_;
+            needsRunTasks = true;
         }
         activeTaskQueue->tasks_.push_back(func);
     }
 
-    runAfterPost();
+    if(needsRunTasks) {
+        if(
+            shared_ptr<TaskQueueEventHandler> eventHandler =
+                activeTaskQueue->eventHandler_.lock()
+        ) {
+            eventHandler->onTaskQueueNeedsRunTasks();
+        }
+    }
 }
 
 }

@@ -1,7 +1,5 @@
 #include "context.hpp"
 
-#include "task_queue.hpp"
-
 namespace retrojsvice {
 
 namespace {
@@ -170,7 +168,7 @@ Context::Context(CKey, CKey,
     INFO_LOG("Creating retrojsvice plugin context");
 
     state_ = Pending;
-    shutdownPending_ = false;
+    shutdownPhase_ = NoPendingShutdown;
     inAPICall_.store(false);
 }
 
@@ -201,8 +199,11 @@ void Context::start(
 
     INFO_LOG("Starting plugin");
 
+    eventNotifyCallback_ = eventNotifyCallback;
+    shutdownCompleteCallback_ = shutdownCompleteCallback;
+
     state_ = Running;
-    taskQueue_ = TaskQueue::create(eventNotifyCallback);
+    taskQueue_ = TaskQueue::create(shared_from_this());
 
     RunningAPILock runningApiLock(move(apiLock));
 
@@ -211,23 +212,21 @@ void Context::start(
         httpListenAddr_,
         httpMaxThreads_
     );
-
-    shutdownCompleteCallback_ = shutdownCompleteCallback;
 }
 
 void Context::shutdown() {
     RunningAPILock apiLock(this);
 
     if(state_ != Running) {
-        PANIC("Requesting shutdown of a plugin that is not running");
+        PANIC("Requested shutdown of a plugin that is not running");
     }
-    if(shutdownPending_) {
-        PANIC("Requesting shutdown of a plugin that is already shutting down");
+    if(shutdownPhase_ != NoPendingShutdown) {
+        PANIC("Requested shutdown of a plugin that is already shutting down");
     }
 
     INFO_LOG("Shutting down plugin");
 
-    shutdownPending_ = true;
+    shutdownPhase_ = WaitHTTPServer;
 
     REQUIRE(httpServer_);
     httpServer_->shutdown();
@@ -277,14 +276,27 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
 void Context::onHTTPServerShutdownComplete() {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
-    REQUIRE(shutdownPending_);
+    REQUIRE(shutdownPhase_ == WaitHTTPServer);
 
-    INFO_LOG("Plugin shutdown complete");
+    shutdownPhase_ = WaitTaskQueue;
+
+    REQUIRE(taskQueue_);
+    taskQueue_->shutdown();
+}
+
+void Context::onTaskQueueNeedsRunTasks() {
+    eventNotifyCallback_();
+}
+
+void Context::onTaskQueueShutdownComplete() {
+    REQUIRE_API_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(shutdownPhase_ == WaitTaskQueue);
 
     state_ = ShutdownComplete;
-    shutdownPending_ = false;
+    shutdownPhase_ = NoPendingShutdown;
 
-    taskQueue_->shutdown();
+    INFO_LOG("Plugin shutdown complete");
 
     shutdownCompleteCallback_();
 }

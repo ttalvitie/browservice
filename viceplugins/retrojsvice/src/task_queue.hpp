@@ -4,6 +4,17 @@
 
 namespace retrojsvice {
 
+class TaskQueueEventHandler {
+public:
+    // May be called from any thread at any time to signal that
+    // TaskQueue::runTasks needs to be called.
+    virtual void onTaskQueueNeedsRunTasks() = 0;
+
+    // Called to signal that shutdown has completed, which means that no more
+    // tasks may be posted and the task queue may be destructed.
+    virtual void onTaskQueueShutdownComplete() = 0;
+};
+
 // A queue used to defer tasks to be run later in the API thread. Normally, the
 // queue is used as follows:
 // A Context sets its TaskQueue as the active task queue for the current thread
@@ -15,20 +26,25 @@ namespace retrojsvice {
 // When starting a background thread that needs to call postTask, one should
 // call getActiveTaskQueue in the API thread, copy the returned shared pointer
 // to the started thread and set it as active there using ActiveTaskQueueLock.
+//
+// Before destruction, the task queue must be shut down by calling shutdown and
+// waiting for the onTaskQueueShutdownComplete event. 
 class TaskQueue {
 SHARED_ONLY_CLASS(TaskQueue);
 public:
     // Creates a new TaskQueue that will call newTasksCallback (possibly in a
     // background thread) if runTasks needs to be called.
-    TaskQueue(CKey, function<void()> newTasksCallback);
+    TaskQueue(CKey, weak_ptr<TaskQueueEventHandler> eventHandler);
 
     ~TaskQueue();
 
     void runTasks();
 
-    // Shut down the queue. Panics if there are tasks in the queue or being run
-    // by runTasks (apart from possibly the task calling this function). All
-    // attempts to post new tasks to the queue or call runTasks will panic.
+    // Start shutting down the queue. The shutdown will complete the next time
+    // the queue is completely empty. Upon completion, the
+    // onTaskQueueShutdownComplete event handler will be called. All
+    // attempts to post new tasks to the queue or call runTasks after this will
+    // panic.
     void shutdown();
 
     // Returns the active task queue for the current thread; panics if there is
@@ -36,13 +52,13 @@ public:
     static shared_ptr<TaskQueue> getActiveQueue();
 
 private:
+    weak_ptr<TaskQueueEventHandler> eventHandler_;
+
     mutex mutex_;
-    bool running_;
-    function<void()> newTasksCallback_;
+    enum {Running, ShutdownPending, ShutdownComplete} state_;
     vector<function<void()>> tasks_;
 
     bool runningTasks_;
-    bool runningLastTask_;
 
     friend void postTask(function<void()> func);
 };
