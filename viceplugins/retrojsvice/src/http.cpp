@@ -14,21 +14,84 @@ namespace retrojsvice {
 
 namespace {
 
+// We use a AliveToken to track that all the relevant Poco HTTP server
+// background threads actually shut down before reporting successful shutdown.
+class AliveToken {
+public:
+    static AliveToken create() {
+        return AliveToken();
+    }
+
+private:
+    AliveToken() : inner_(make_shared<Inner>()) {}
+
+    struct Inner {};
+    shared_ptr<Inner> inner_;
+
+    friend class AliveTokenWatcher;
+};
+
+class AliveTokenWatcher {
+public:
+    AliveTokenWatcher(AliveToken aliveToken) : inner_(aliveToken.inner_) {}
+
+    bool isTokenAlive() {
+        return !inner_.expired();
+    }
+
+private:
+    weak_ptr<AliveToken::Inner> inner_;
+};
+
+class HTTPRequestHandler : public Poco::Net::HTTPRequestHandler {
+public:
+    HTTPRequestHandler(
+        weak_ptr<HTTPServerEventHandler> eventHandler,
+        shared_ptr<TaskQueue> taskQueue,
+        AliveToken aliveToken
+    )
+        : eventHandler_(eventHandler),
+          taskQueue_(taskQueue),
+          aliveToken_(aliveToken)
+    {}
+
+    virtual void handleRequest(
+        Poco::Net::HTTPServerRequest& request,
+        Poco::Net::HTTPServerResponse& response
+    ) override {
+        ActiveTaskQueueLock activeTaskQueueLock(taskQueue_);
+
+        INFO_LOG("Got HTTP request");
+    }
+
+private:
+    weak_ptr<HTTPServerEventHandler> eventHandler_;
+    shared_ptr<TaskQueue> taskQueue_;
+    AliveToken aliveToken_;
+};
+
 class HTTPRequestHandlerFactory : public Poco::Net::HTTPRequestHandlerFactory {
 public:
-    HTTPRequestHandlerFactory(weak_ptr<HTTPServerEventHandler> eventHandler)
-        : eventHandler_(eventHandler)
+    HTTPRequestHandlerFactory(
+        weak_ptr<HTTPServerEventHandler> eventHandler,
+        shared_ptr<TaskQueue> taskQueue,
+        AliveToken aliveToken
+    )
+        : eventHandler_(eventHandler),
+          taskQueue_(taskQueue),
+          aliveToken_(aliveToken)
     {}
 
     virtual Poco::Net::HTTPRequestHandler* createRequestHandler(
         const Poco::Net::HTTPServerRequest& request
     ) override {
-        PANIC("Not implemented");
-        return nullptr;
+        return new HTTPRequestHandler(eventHandler_, taskQueue_, aliveToken_);
     }
 
 private:
     weak_ptr<HTTPServerEventHandler> eventHandler_;
+    shared_ptr<TaskQueue> taskQueue_;
+    AliveToken aliveToken_;
 };
 
 }
@@ -68,17 +131,22 @@ public:
     )
         : eventHandler_(eventHandler),
           state_(Running),
+          aliveToken_(AliveToken::create()),
           threadPool_(1, maxThreads),
           socketAddress_(listenAddr.impl_->addr),
-          serverSocket_(socketAddress_),
-          httpServer_(
-              new HTTPRequestHandlerFactory(eventHandler),
-              threadPool_,
-              serverSocket_,
-              new Poco::Net::HTTPServerParams()
-          )
+          serverSocket_(socketAddress_)
     {
-        httpServer_.start();
+        httpServer_.emplace(
+            new HTTPRequestHandlerFactory(
+                eventHandler,
+                TaskQueue::getActiveQueue(),
+                aliveToken_
+            ),
+            threadPool_,
+            serverSocket_,
+            new Poco::Net::HTTPServerParams()
+        );
+        httpServer_->start();
     }
     ~Impl() {
         REQUIRE(state_ == ShutdownComplete);
@@ -95,17 +163,35 @@ public:
         thread([self, taskQueue]() {
             ActiveTaskQueueLock activeTaskQueueLock(taskQueue);
 
-            // Do not accept new connections
-            self->httpServer_.stop();
+            try {
+                // Do not accept new connections
+                self->httpServer_->stop();
 
-            // 1s grace time for current connections before abort
-            for(int i = 0; i < 10; ++i) {
-                if(self->httpServer_.currentConnections() == 0) {
-                    break;
+                // 1s grace time for current connections before abort
+                for(int i = 0; i < 10; ++i) {
+                    if(self->httpServer_->currentConnections() == 0) {
+                        break;
+                    }
+                    sleep_for(milliseconds(100));
                 }
+                self->httpServer_->stopAll(true);
+
+                self->httpServer_.reset();
+            } catch(const Poco::Exception& e) {
+                PANIC(
+                    "Shutting down Poco HTTP server failed with exception: ",
+                    e.displayText()
+                );
+            }
+
+            // Just to be safe, use our alive token to wait for possibly
+            // lingering Poco HTTP server background threads to actually shut
+            // down so that we can be sure that we won't get any calls to the
+            // HTTP request handler after shutdown.
+            AliveTokenWatcher watcher(move(self->aliveToken_));
+            while(watcher.isTokenAlive()) {
                 sleep_for(milliseconds(100));
             }
-            self->httpServer_.stopAll(true);
 
             postTask([self]() {
                 REQUIRE_API_THREAD();
@@ -131,10 +217,12 @@ private:
 
     enum {Running, ShutdownPending, ShutdownComplete} state_;
 
+    AliveToken aliveToken_;
+
     Poco::ThreadPool threadPool_;
     Poco::Net::SocketAddress socketAddress_;
     Poco::Net::ServerSocket serverSocket_;
-    Poco::Net::HTTPServer httpServer_;
+    optional<Poco::Net::HTTPServer> httpServer_;
 };
 
 HTTPServer::HTTPServer(CKey,
