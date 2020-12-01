@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "http.hpp"
 
 namespace retrojsvice {
 
@@ -8,7 +8,10 @@ class TaskQueue;
 
 // The implementation of the vice plugin context, exposed through the C API in
 // vice_plugin_api.cpp.
-class Context : public enable_shared_from_this<Context> {
+class Context :
+    public HTTPServerEventHandler,
+    public enable_shared_from_this<Context>
+{
 SHARED_ONLY_CLASS(Context);
 public:
     // Returns either a successfully constructed context or an error message.
@@ -17,7 +20,11 @@ public:
     );
 
     // Private constructor.
-    Context(CKey, CKey);
+    Context(CKey, CKey,
+        SocketAddress httpListenAddr,
+        int httpMaxThreads,
+        string httpAuthCredentials
+    );
     ~Context();
 
     // Public API functions:
@@ -32,14 +39,21 @@ public:
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 
+    // HTTPServerEventHandler:
+    virtual void onHTTPServerShutdownComplete() override;
+
 private:
-    void shutdownComplete_();
+    SocketAddress httpListenAddr_;
+    int httpMaxThreads_;
+    string httpAuthCredentials_;
 
     enum {Pending, Running, ShutdownComplete} state_;
     bool shutdownPending_;
     atomic<bool> inAPICall_;
 
     shared_ptr<TaskQueue> taskQueue_;
+
+    shared_ptr<HTTPServer> httpServer_;
 
     function<void()> shutdownCompleteCallback_;
 

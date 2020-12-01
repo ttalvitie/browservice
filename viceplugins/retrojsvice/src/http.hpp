@@ -17,9 +17,35 @@ private:
     struct Impl;
     shared_ptr<Impl> impl_;
 
+    friend class HTTPServer;
     friend ostream& operator<<(ostream& out, SocketAddress addr);
 };
 
 ostream& operator<<(ostream& out, SocketAddress addr);
+
+class HTTPServerEventHandler {
+public:
+    virtual void onHTTPServerShutdownComplete() = 0;
+};
+
+// HTTP server that delegates requests to be handled by given event handler
+// through onHTTPServerRequest. Before destruction, call shutdown and wait for
+// onHTTPServerShutdownComplete event.
+class HTTPServer {
+SHARED_ONLY_CLASS(HTTPServer);
+public:
+    HTTPServer(CKey,
+        weak_ptr<HTTPServerEventHandler> eventHandler,
+        SocketAddress listenAddr,
+        int maxThreads
+    );
+    ~HTTPServer();
+
+    void shutdown();
+
+private:
+    class Impl;
+    shared_ptr<Impl> impl_;
+};
 
 }

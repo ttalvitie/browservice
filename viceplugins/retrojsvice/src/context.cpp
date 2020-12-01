@@ -1,6 +1,5 @@
 #include "context.hpp"
 
-#include "http.hpp"
 #include "task_queue.hpp"
 
 namespace retrojsvice {
@@ -151,17 +150,23 @@ variant<shared_ptr<Context>, string> Context::init(
         }
     }
 
-    INFO_LOG(
-        "Context configured: ",
-        "HTTP listen addr '", httpListenAddr, "', ",
-        "HTTP max threads '", httpMaxThreads, "', ",
-        "HTTP auth credentials '", httpAuthCredentials, "'"
+    return Context::create(
+        CKey(),
+        httpListenAddr,
+        httpMaxThreads,
+        httpAuthCredentials
     );
-
-    return Context::create(CKey());
 }
 
-Context::Context(CKey, CKey) {
+Context::Context(CKey, CKey,
+    SocketAddress httpListenAddr,
+    int httpMaxThreads,
+    string httpAuthCredentials
+)
+    : httpListenAddr_(httpListenAddr),
+      httpMaxThreads_(httpMaxThreads),
+      httpAuthCredentials_(httpAuthCredentials)
+{
     INFO_LOG("Creating retrojsvice plugin context");
 
     state_ = Pending;
@@ -197,11 +202,17 @@ void Context::start(
     INFO_LOG("Starting plugin");
 
     state_ = Running;
-    shutdownCompleteCallback_ = shutdownCompleteCallback;
-
     taskQueue_ = TaskQueue::create(eventNotifyCallback);
 
     RunningAPILock runningApiLock(move(apiLock));
+
+    httpServer_ = HTTPServer::create(
+        shared_from_this(),
+        httpListenAddr_,
+        httpMaxThreads_
+    );
+
+    shutdownCompleteCallback_ = shutdownCompleteCallback;
 }
 
 void Context::shutdown() {
@@ -218,15 +229,8 @@ void Context::shutdown() {
 
     shutdownPending_ = true;
 
-    shared_ptr<Context> self = shared_from_this();
-    shared_ptr<TaskQueue> taskQueue = TaskQueue::getActiveQueue();
-    thread([self, taskQueue]() {
-        ActiveTaskQueueLock activeTaskQueueLock(taskQueue);
-
-        sleep_for(milliseconds(3000));
-
-        postTask(self, &Context::shutdownComplete_);
-    }).detach();
+    REQUIRE(httpServer_);
+    httpServer_->shutdown();
 }
 
 void Context::pumpEvents() {
@@ -270,7 +274,7 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     return ret;
 }
 
-void Context::shutdownComplete_() {
+void Context::onHTTPServerShutdownComplete() {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
     REQUIRE(shutdownPending_);
