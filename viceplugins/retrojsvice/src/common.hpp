@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
@@ -22,6 +23,7 @@ namespace retrojsvice {
 
 using std::atomic;
 using std::cerr;
+using std::enable_shared_from_this;
 using std::exception;
 using std::forward;
 using std::function;
@@ -31,6 +33,7 @@ using std::lock_guard;
 using std::make_pair;
 using std::make_shared;
 using std::memory_order_relaxed;
+using std::move;
 using std::mutex;
 using std::optional;
 using std::ostream;
@@ -38,11 +41,13 @@ using std::pair;
 using std::shared_ptr;
 using std::string;
 using std::stringstream;
+using std::swap;
 using std::thread;
 using std::tie;
 using std::tuple;
 using std::variant;
 using std::vector;
+using std::weak_ptr;
 
 using std::chrono::milliseconds;
 
@@ -147,7 +152,6 @@ private:
 void setLogCallback(function<void(LogLevel, const char*, const char*)> callback);
 void setPanicCallback(function<void(const char*, const char*)> callback);
 
-
 // Boilerplate for defining classes that can only be constructed into
 // shared_ptrs using the 'create' static function and which are checked for
 // leaks at the end of the program on debug builds.
@@ -216,5 +220,27 @@ public:
             return ret; \
         } \
         DISABLE_COPY_MOVE(ClassName)
+
+// We call the thread currently executing a plugin API call related to a context
+// the "API thread". While it is not necessarily always the same thread, the
+// plugin API guarantees that at most one API call for the same context is
+// running at a time.
+//
+// Most of the plugin logic runs in the API thread (only blocking and CPU
+// intensive parts are offloaded to background threads); threads can post tasks
+// to be run in the API thread using postTask in task_queue.hpp.
+//
+// The macro REQUIRE_API_THREAD checks that the code is running in the API
+// thread.
+#define REQUIRE_API_THREAD() \
+    do { \
+        if(!inAPIThread_) { \
+            PANIC("REQUIRE_API_THREAD failed"); \
+        } \
+    } while(false)
+
+// This value should only be modified by Context (set to true when entering a
+// plugin API function and to false when exiting the function).
+extern thread_local bool inAPIThread_;
 
 }

@@ -83,4 +83,6 @@ void setPanicCallback(function<void(const char*, const char*)> callback) {
     }
 }
 
+thread_local bool inAPIThread_ = false;
+
 }

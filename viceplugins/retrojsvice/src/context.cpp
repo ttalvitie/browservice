@@ -1,6 +1,7 @@
 #include "context.hpp"
 
 #include "http.hpp"
+#include "task_queue.hpp"
 
 namespace retrojsvice {
 
@@ -38,6 +39,79 @@ pair<bool, string> parseHTTPAuthOption(string optValue) {
 }
 
 }
+
+class Context::APILock {
+public:
+    APILock(Context* ctx) {
+        REQUIRE(ctx != nullptr);
+        ctx_ = ctx;
+
+        if(ctx_->inAPICall_.exchange(true)) {
+            PANIC(
+                "Two API calls concerning the same context running concurrently"
+            );
+        }
+
+        if(inAPIThread_) {
+            PANIC(
+                "Plugin API call made while another API call is running in the "
+                "same thread"
+            );
+        }
+        inAPIThread_ = true;
+    }
+    APILock(APILock&& src) {
+        REQUIRE(src.ctx_ != nullptr);
+        ctx_ = src.ctx_;
+        src.ctx_ = nullptr;
+    }
+    ~APILock() {
+        if(ctx_ != nullptr) {
+            REQUIRE(inAPIThread_);
+            inAPIThread_ = false;
+
+            REQUIRE(ctx_->inAPICall_.exchange(false));
+        }
+    }
+
+    APILock(const APILock&);
+    APILock& operator=(const APILock&);
+    APILock& operator=(APILock&&);
+
+private:
+    Context* ctx_;
+
+    friend class Context::RunningAPILock;
+};
+
+class Context::RunningAPILock {
+public:
+    RunningAPILock(Context* ctx)
+        : RunningAPILock(APILock(ctx))
+    {}
+    RunningAPILock(APILock apiLock)
+        : apiLock_(move(apiLock))
+    {
+        Context* ctx = apiLock_.ctx_;
+
+        if(ctx->state_ == Pending) {
+            PANIC("Unexpected API call for context that has not been started");
+        }
+        if(ctx->state_ == ShutdownComplete) {
+            PANIC("Unexpected API call for context that has already been shut down");
+        }
+        REQUIRE(ctx->state_ == Running);
+
+        REQUIRE(ctx->taskQueue_);
+        activeTaskQueueLock_.emplace(ctx->taskQueue_);
+    }
+
+    DISABLE_COPY_MOVE(RunningAPILock);
+
+private:
+    APILock apiLock_;
+    optional<ActiveTaskQueueLock> activeTaskQueueLock_;
+};
 
 variant<shared_ptr<Context>, string> Context::init(
     vector<pair<string, string>> options
@@ -92,9 +166,12 @@ Context::Context(CKey, CKey) {
 
     state_ = Pending;
     shutdownPending_ = false;
+    inAPICall_.store(false);
 }
 
 Context::~Context() {
+    APILock apiLock(this);
+
     if(state_ == Running) {
         PANIC("Destroying a plugin context that is still running");
     }
@@ -107,6 +184,8 @@ void Context::start(
     function<void()> eventNotifyCallback,
     function<void()> shutdownCompleteCallback
 ) {
+    APILock apiLock(this);
+
     if(state_ == Running) {
         PANIC("Starting a plugin context that is already running");
     }
@@ -118,11 +197,16 @@ void Context::start(
     INFO_LOG("Starting plugin");
 
     state_ = Running;
-    eventNotifyCallback_ = eventNotifyCallback;
     shutdownCompleteCallback_ = shutdownCompleteCallback;
+
+    taskQueue_ = TaskQueue::create(eventNotifyCallback);
+
+    RunningAPILock runningApiLock(move(apiLock));
 }
 
 void Context::shutdown() {
+    RunningAPILock apiLock(this);
+
     if(state_ != Running) {
         PANIC("Requesting shutdown of a plugin that is not running");
     }
@@ -134,22 +218,21 @@ void Context::shutdown() {
 
     shutdownPending_ = true;
 
-    thread([this]() {
+    shared_ptr<Context> self = shared_from_this();
+    shared_ptr<TaskQueue> taskQueue = TaskQueue::getActiveQueue();
+    thread([self, taskQueue]() {
+        ActiveTaskQueueLock activeTaskQueueLock(taskQueue);
+
         sleep_for(milliseconds(3000));
-        eventNotifyCallback_();
+
+        postTask(self, &Context::shutdownComplete_);
     }).detach();
 }
 
 void Context::pumpEvents() {
-    if(shutdownPending_) {
-        REQUIRE(state_ == Running);
+    RunningAPILock apiLock(this);
 
-        INFO_LOG("Plugin shutdown complete");
-
-        state_ = ShutdownComplete;
-        shutdownPending_ = false;
-        shutdownCompleteCallback_();
-    }
+    taskQueue_->runTasks();
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
@@ -185,6 +268,21 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     );
 
     return ret;
+}
+
+void Context::shutdownComplete_() {
+    REQUIRE_API_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(shutdownPending_);
+
+    INFO_LOG("Plugin shutdown complete");
+
+    state_ = ShutdownComplete;
+    shutdownPending_ = false;
+
+    taskQueue_->shutdown();
+
+    shutdownCompleteCallback_();
 }
 
 }
