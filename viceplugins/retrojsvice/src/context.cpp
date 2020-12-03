@@ -273,9 +273,43 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     return ret;
 }
 
+static bool passwordsEqual(const void* a, const void* b, size_t size) {
+    const unsigned char* x = (const unsigned char*)a;
+    const unsigned char* y = (const unsigned char*)b;
+    volatile unsigned char agg = 0;
+    for(volatile size_t i = 0; i < size; ++i) {
+        agg |= x[i] ^ y[i];
+    }
+    return !agg;
+}
+
 void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
+
+    if(!httpAuthCredentials_.empty()) {
+        optional<string> reqCred = request->getBasicAuthCredentials();
+        if(
+            !reqCred ||
+            reqCred->size() != httpAuthCredentials_.size() ||
+            !passwordsEqual(
+                (const void*)reqCred->data(),
+                (const void*)httpAuthCredentials_.data(),
+                httpAuthCredentials_.size()
+            )
+        ) {
+            request->sendTextResponse(
+                401,
+                "Unauthorized",
+                true,
+                {{
+                    "WWW-Authenticate",
+                    "Basic realm=\"Restricted\", charset=\"UTF-8\""
+                }}
+            );
+            return;
+        }
+    }
 
     request->sendTextResponse(
         200,

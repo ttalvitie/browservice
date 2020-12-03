@@ -2,6 +2,8 @@
 
 #include "task_queue.hpp"
 
+#include <Poco/Base64Decoder.h>
+
 #include <Poco/Net/HTMLForm.h>
 #include <Poco/Net/HTTPServer.h>
 #include <Poco/Net/HTTPServerResponse.h>
@@ -125,8 +127,55 @@ public:
 
     optional<string> getBasicAuthCredentials() {
         REQUIRE(request_ != nullptr);
-        PANIC("TODO: not implemented");
-        return {};
+
+        optional<string> empty;
+
+        string scheme, authInfoBase64;
+
+        try {
+            if(!request_->hasCredentials()) {
+                return empty;
+            }
+            request_->getCredentials(scheme, authInfoBase64);
+        } catch(const Poco::Exception& e) {
+            WARNING_LOG(
+                "Reading HTTP auth credentials with Poco failed with exception ",
+                "(defaulting to none): ", e.displayText()
+            );
+            return empty;
+        }
+
+        for(char& c : scheme) {
+            c = tolower(c);
+        }
+        if(scheme != "basic") {
+            return empty;
+        }
+
+        string authInfo;
+
+        try {
+            stringstream authInfoBase64SS(authInfoBase64);
+            Poco::Base64Decoder decoder(authInfoBase64SS);
+
+            size_t BufSize = 1024;
+            char buf[BufSize];
+            while(decoder.good()) {
+                decoder.read(buf, BufSize);
+                if(decoder.bad()) {
+                    return empty;
+                }
+                authInfo.append(buf, decoder.gcount());
+            }
+        } catch(const Poco::Exception& e) {
+            WARNING_LOG(
+                "Parsing HTTP basic auth credentials with Poco failed with exception ",
+                "(defaulting to none): ", e.displayText()
+            );
+            return empty;
+        }
+
+        return authInfo;
     }
 
     void sendResponse(
