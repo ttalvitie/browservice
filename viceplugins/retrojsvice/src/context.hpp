@@ -40,6 +40,7 @@ public:
     static vector<tuple<string, string, string, string>> getOptionDocs();
 
     // HTTPServerEventHandler:
+    virtual void onHTTPServerRequest(shared_ptr<HTTPRequest> request) override;
     virtual void onHTTPServerShutdownComplete() override;
 
     // TaskQueueEventHandler:

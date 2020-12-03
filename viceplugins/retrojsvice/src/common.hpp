@@ -7,6 +7,7 @@
 #include <cstring>
 #include <exception>
 #include <functional>
+#include <future>
 #include <iostream>
 #include <memory>
 #include <mutex>
@@ -27,17 +28,21 @@ using std::enable_shared_from_this;
 using std::exception;
 using std::forward;
 using std::function;
+using std::future;
+using std::future_error;
 using std::get;
 using std::get_if;
 using std::lock_guard;
 using std::make_pair;
 using std::make_shared;
+using std::make_unique;
 using std::memory_order_relaxed;
 using std::move;
 using std::mutex;
 using std::optional;
 using std::ostream;
 using std::pair;
+using std::promise;
 using std::shared_ptr;
 using std::string;
 using std::stringstream;
@@ -45,6 +50,7 @@ using std::swap;
 using std::thread;
 using std::tie;
 using std::tuple;
+using std::unique_ptr;
 using std::variant;
 using std::vector;
 using std::weak_ptr;

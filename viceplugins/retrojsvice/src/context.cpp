@@ -273,6 +273,19 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     return ret;
 }
 
+void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
+    REQUIRE_API_THREAD();
+    REQUIRE(state_ == Running);
+
+    request->sendTextResponse(
+        200,
+        "Welcome to retrojsvice HTTP server!\n"
+        "Method: " + request->method() + "\n"
+        "Path: " + request->path() + "\n"
+        "User agent: " + request->userAgent() + "\n"
+    );
+}
+
 void Context::onHTTPServerShutdownComplete() {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
