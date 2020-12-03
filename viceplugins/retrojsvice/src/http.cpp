@@ -58,6 +58,7 @@ public:
           method_(request.getMethod()),
           path_(request.getURI()),
           userAgent_(request.get("User-Agent", "")),
+          formParsed_(false),
           responderPromise_(move(responderPromise))
     {
         REQUIRE(request_ != nullptr);
@@ -92,7 +93,33 @@ public:
 
     string getFormParam(string name) {
         REQUIRE(request_ != nullptr);
-        PANIC("TODO: not implemented");
+
+        if(!formParsed_) {
+            formParsed_ = true;
+            try {
+                if(method() == "POST") {
+                    form_.emplace(*request_, request_->stream());
+                } else {
+                    form_.emplace();
+                }
+            } catch(const Poco::Exception& e) {
+                WARNING_LOG(
+                    "Parsing HTML form with Poco failed with exception ",
+                    "(defaulting to empty): ", e.displayText()
+                );
+            }
+        }
+
+        if(form_) {
+            try {
+                return form_->get(name, "");
+            } catch(const Poco::Exception& e) {
+                WARNING_LOG(
+                    "Reading HTML form with Poco failed with exception ",
+                    "(defaulting to empty): ", e.displayText()
+                );
+            }
+        }
         return "";
     }
 
@@ -173,6 +200,9 @@ private:
     string method_;
     string path_;
     string userAgent_;
+
+    bool formParsed_;
+    optional<Poco::Net::HTMLForm> form_;
 
     promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise_;
 };

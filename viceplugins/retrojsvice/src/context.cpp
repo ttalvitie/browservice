@@ -283,6 +283,8 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         "Method: " + request->method() + "\n"
         "Path: " + request->path() + "\n"
         "User agent: " + request->userAgent() + "\n"
+        "Form param 'abc': " + request->getFormParam("abc") + "\n"
+        "Form param 'xyz': " + request->getFormParam("xyz") + "\n"
     );
 }
 
