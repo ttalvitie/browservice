@@ -213,6 +213,18 @@ void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
  */
 void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 
+/***********************************
+ * Callback registration functions *
+ ***********************************/
+
+/* The following functions may be called for a context initialized with vicePluginAPI_initContext
+ * before starting the context with vicePluginAPI_start. The callbacks registered through these
+ * functions are only called by the plugin from vicePluginAPI_pumpEvents; the callbacks themselves
+ * may not call any plugin API functions.
+ */
+
+/* TODO */
+
 /**********************************
  * Non-context-specific functions *
  **********************************/
@@ -266,7 +278,7 @@ void vicePluginAPI_getOptionDocs(
  *
  * If destructorCallback is not NULL, the plugin should call it with the given data argument if
  * it knows it will no longer use the callback (for example when the plugin is unloaded or the
- * callback is reset with another call to vicePluginAPI_set*Callback).
+ * callback is reset with another call to vicePluginAPI_setGlobal*Callback).
  *
  * The plugin may also choose to ignore the given callback completely. One valid implementation
  * for both of the functions is:
