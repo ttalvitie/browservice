@@ -76,6 +76,10 @@ public:
     bool isShutdownComplete();
 
 private:
+    void afterConstruct_(shared_ptr<ViceContext> self);
+
+    static shared_ptr<ViceContext> getContext_(void* callbackData);
+
     void pumpEvents_();
     void shutdownComplete_();
 
@@ -91,4 +95,6 @@ private:
     // For running contexts, we store a shared pointer to self to avoid it being
     // destructed.
     shared_ptr<ViceContext> self_;
+
+    void* callbackData_;
 };

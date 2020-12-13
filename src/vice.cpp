@@ -13,6 +13,8 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(start) \
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
+    FOREACH_VICE_API_FUNC_ITEM(setWindowCallbacks) \
+    FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -26,8 +28,8 @@ struct VicePlugin::APIFuncs {
 
 namespace {
 
-#define API_CALLBACK_START try {
-#define API_CALLBACK_END \
+#define API_CALLBACK_HANDLE_EXCEPTIONS_START try {
+#define API_CALLBACK_HANDLE_EXCEPTIONS_END \
     } catch(const exception& e) { \
         PANIC("Unhandled exception traversing the vice plugin API: ", e.what()); \
     } catch(...) { \
@@ -40,7 +42,7 @@ void logCallback(
     const char* location,
     const char* msg
 ) {
-API_CALLBACK_START
+API_CALLBACK_HANDLE_EXCEPTIONS_START
 
     const string& filename = *(string*)filenamePtr;
 
@@ -64,25 +66,25 @@ API_CALLBACK_START
         filename + " " + location
     )(msg);
 
-API_CALLBACK_END
+API_CALLBACK_HANDLE_EXCEPTIONS_END
 }
 
 void panicCallback(void* filenamePtr, const char* location, const char* msg) {
-API_CALLBACK_START
+API_CALLBACK_HANDLE_EXCEPTIONS_START
 
     const string& filename = *(string*)filenamePtr;
     Panicker(filename + " " + location)(msg);
 
-API_CALLBACK_END
+API_CALLBACK_HANDLE_EXCEPTIONS_END
 }
 
 void destructorCallback(void* filenamePtr) {
-API_CALLBACK_START
+API_CALLBACK_HANDLE_EXCEPTIONS_START
 
     string* filename = (string*)filenamePtr;
     delete filename;
 
-API_CALLBACK_END
+API_CALLBACK_HANDLE_EXCEPTIONS_END
 }
 
 }
@@ -192,15 +194,49 @@ vector<VicePlugin::OptionDocsItem> VicePlugin::getOptionDocs() {
             const char* desc,
             const char* defaultValStr
         ) {
+        API_CALLBACK_HANDLE_EXCEPTIONS_START
+
             vector<VicePlugin::OptionDocsItem>& ret =
                 *(vector<VicePlugin::OptionDocsItem>*)data;
             ret.push_back({name, valSpec, desc, defaultValStr});
+
+        API_CALLBACK_HANDLE_EXCEPTIONS_END
         },
         (void*)&ret
     );
 
     return ret;
 }
+
+namespace {
+
+thread_local ViceContext* threadActivePumpEventsContext = nullptr;
+
+}
+
+// Convenience macro for passing callbacks to the plugin in ViceContext,
+// handling appropriate checks and resolving the callback data back to a
+// reference to the ViceContext object
+#define CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(argDef, ...) \
+    [](void* callbackData, auto ...args) { \
+    API_CALLBACK_HANDLE_EXCEPTIONS_START \
+        shared_ptr<ViceContext> self = getContext_(callbackData); \
+        return ([&self]argDef { __VA_ARGS__ })(args...); \
+    API_CALLBACK_HANDLE_EXCEPTIONS_END \
+    }, \
+    callbackData_
+
+#define CTX_CALLBACK(argDef, ...) \
+    CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(argDef, { \
+        if(threadActivePumpEventsContext != self.get()) { \
+            PANIC( \
+                "Vice plugin unexpectedly called a callback in a thread that " \
+                "is not currently executing vicePluginAPI_pumpEvents" \
+            ); \
+        } \
+        REQUIRE_UI_THREAD(); \
+        { __VA_ARGS__ } \
+    })
 
 shared_ptr<ViceContext> ViceContext::init(
     shared_ptr<VicePlugin> plugin,
@@ -246,6 +282,8 @@ ViceContext::ViceContext(CKey, CKey,
     state_ = Pending;
     shutdownPending_ = false;
     pumpEventsInQueue_.store(false);
+
+    // Initialization is completed in afterConstruct_
 }
 
 ViceContext::~ViceContext() {
@@ -263,18 +301,14 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
 
     plugin_->apiFuncs_->start(
         handle_,
-        [](void* selfPtr) {
-            ViceContext& self = *(ViceContext*)selfPtr;
-            if(!self.pumpEventsInQueue_.exchange(true)) {
-                postTask(self.shared_from_this(), &ViceContext::pumpEvents_);
+        CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK((), {
+            if(!self->pumpEventsInQueue_.exchange(true)) {
+                postTask(self, &ViceContext::pumpEvents_);
             }
-        },
-        this,
-        [](void* selfPtr) {
-            ViceContext& self = *(ViceContext*)selfPtr;
-            self.shutdownComplete_();
-        },
-        this
+        }),
+        CTX_CALLBACK((), {
+            self->shutdownComplete_();
+        })
     );
 }
 
@@ -292,12 +326,49 @@ bool ViceContext::isShutdownComplete() {
     return state_ == ShutdownComplete;
 }
 
+void ViceContext::afterConstruct_(shared_ptr<ViceContext> self) {
+    // For release builds, we simply use a raw pointer to this object as the
+    // callback data. For debug data, we leak a weak pointer to this object on
+    // purpose so that we can catch misbehaving plugins calling callbacks after
+    // shutdown (see function getContext_).
+#ifdef NDEBUG
+    callbackData_ = this;
+#else
+    callbackData_ = new weak_ptr<ViceContext>(self);
+#endif
+}
+
+shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {
+    if(callbackData == nullptr) {
+        PANIC("Vice plugin sent unexpected NULL pointer as callback data");
+    }
+
+#ifdef NDEBUG
+    return ((ViceContext*)callbackData)->shared_from_this();
+#else
+    if(shared_ptr<ViceContext> self = ((weak_ptr<ViceContext>*)callbackData)->lock()) {
+        if(self->state_ == ShutdownComplete) {
+            PANIC("Vice plugin called a callback for a context that has shut down");
+        }
+        REQUIRE(self->state_ == Running);
+        return self;
+    } else {
+        PANIC("Vice plugin called a callback for a context that has been destroyed");
+        abort();
+    }
+#endif
+}
+
 void ViceContext::pumpEvents_() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
 
     pumpEventsInQueue_.store(false);
+
+    threadActivePumpEventsContext = this;
     plugin_->apiFuncs_->pumpEvents(handle_);
+    threadActivePumpEventsContext = nullptr;
 }
 
 void ViceContext::shutdownComplete_() {
