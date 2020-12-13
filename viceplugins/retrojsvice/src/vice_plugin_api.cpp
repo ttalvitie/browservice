@@ -141,67 +141,56 @@ API_FUNC_START
 API_FUNC_END
 }
 
+// Convenience macros for creating implementations of API functions that forward
+// their arguments to corresponding member functions of the Context
+#define WRAP_CTX_API(funcName, ...) \
+    { \
+    API_FUNC_START \
+        REQUIRE(ctx != nullptr); \
+        return ctx->impl->funcName(__VA_ARGS__); \
+    API_FUNC_END \
+    }
+
+#define WRAP_CALLBACK(name) \
+    [name ## Callback, name ## Data](auto ...args) { \
+        return name ## Callback(name ## Data, args...); \
+    }
+
 void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
     void (*eventNotifyCallback)(void* data),
     void* eventNotifyData,
     void (*shutdownCompleteCallback)(void* data),
     void* shutdownCompleteData
-) {
-API_FUNC_START
+)
+WRAP_CTX_API(start,
+    WRAP_CALLBACK(eventNotify),
+    WRAP_CALLBACK(shutdownComplete)
+)
 
-    REQUIRE(ctx != nullptr);
+void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx)
+WRAP_CTX_API(shutdown)
 
-    ctx->impl->start(
-        [eventNotifyCallback, eventNotifyData]() {
-            eventNotifyCallback(eventNotifyData);
-        },
-        [shutdownCompleteCallback, shutdownCompleteData]() {
-            shutdownCompleteCallback(shutdownCompleteData);
-        }
-    );
-
-API_FUNC_END
-}
-
-void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx) {
-API_FUNC_START
-
-    REQUIRE(ctx != nullptr);
-    ctx->impl->shutdown();
-
-API_FUNC_END
-}
-
-void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx) {
-API_FUNC_START
-
-    REQUIRE(ctx != nullptr);
-    ctx->impl->pumpEvents();
-
-API_FUNC_END
-}
+void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
+WRAP_CTX_API(pumpEvents)
 
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(uint64_t),
-    void (*closeWindowCallback)(uint64_t),
-    void (*resizeWindowCallback)(uint64_t, int, int)
-) {
-API_FUNC_START
+    int (*createWindowCallback)(void* data, uint64_t handle),
+    void* createWindowData,
+    void (*closeWindowCallback)(void* data, uint64_t handle),
+    void* closeWindowData,
+    void (*resizeWindowCallback)(void* data, uint64_t handle, int width, int height),
+    void* resizeWindowData
+)
+WRAP_CTX_API(setWindowCallbacks,
+    WRAP_CALLBACK(createWindow),
+    WRAP_CALLBACK(closeWindow),
+    WRAP_CALLBACK(resizeWindow)
+)
 
-    PANIC("Not implemented");
-
-API_FUNC_END
-}
-
-void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle) {
-API_FUNC_START
-
-    PANIC("Not implemented");
-
-API_FUNC_END
-}
+void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle)
+WRAP_CTX_API(closeWindow, handle)
 
 void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,

@@ -238,6 +238,22 @@ void Context::pumpEvents() {
     taskQueue_->runTasks();
 }
 
+void Context::setWindowCallbacks(
+    function<int(uint64_t)> createWindowCallback,
+    function<void(uint64_t)> closeWindowCallback,
+    function<void(uint64_t, int, int)> resizeWindowCallback
+) {
+    RunningAPILock apiLock(this);
+
+    PANIC("Not implemented");
+}
+
+void Context::closeWindow(uint64_t handle) {
+    RunningAPILock apiLock(this);
+
+    PANIC("Not implemented");
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

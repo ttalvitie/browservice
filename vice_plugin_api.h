@@ -240,9 +240,12 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  */
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(uint64_t),
-    void (*closeWindowCallback)(uint64_t),
-    void (*resizeWindowCallback)(uint64_t, int, int)
+    int (*createWindowCallback)(void* data, uint64_t handle),
+    void* createWindowData,
+    void (*closeWindowCallback)(void* data, uint64_t handle),
+    void* closeWindowData,
+    void (*resizeWindowCallback)(void* data, uint64_t handle, int width, int height),
+    void* resizeWindowData
 );
 
 /**********************************************

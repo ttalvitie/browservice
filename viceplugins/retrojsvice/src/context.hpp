@@ -36,6 +36,14 @@ public:
 
     void pumpEvents();
 
+    void setWindowCallbacks(
+        function<int(uint64_t)> createWindowCallback,
+        function<void(uint64_t)> closeWindowCallback,
+        function<void(uint64_t, int, int)> resizeWindowCallback
+    );
+
+    void closeWindow(uint64_t handle);
+
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 
