@@ -47,7 +47,7 @@ extern "C" {
  *  4. The program registers callbacks for the plugin context to use after it has been started (see
  *     below) using the vicePluginAPI_set*Callback(s) functions. The program should call at least
  *     vicePluginAPI_setWindowCallbacks to enable window management (otherwise the plugin does
- *     nothing) (TODO).
+ *     nothing).
  *
  *  5. The program starts the operation of the plugin context by calling vicePluginAPI_start.
  *     After this, the program and plugin communicate as follows:
@@ -170,8 +170,7 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
  */
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
-/* Start running the actually running given plugin context. This function may be called only once
- * per context.
+/* Start running given plugin context. This function may be called only once per context.
  *
  * A running plugin may call eventNotifyCallback from any thread at any time (even from an API
  * function invoked by the program). When receiving such call, the program must ensure that
@@ -223,7 +222,42 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * may not call any plugin API functions.
  */
 
-/* TODO */
+/* Registers basic window handling callbacks:
+ *
+ * createWindowCallback(handle): Called by the plugin to request the creation of a new window with
+ * given handle (any nonzero uint64_t not in use by an existing window in this context). If the
+ * callback returns a nonzero value, the window is created and it begins its existence immediately.
+ * If the program chooses to deny the creation of the window for any reason (such as a limit on the
+ * number of windows or the program state) by returning zero, the window is never created.
+ *
+ * closeWindowCallback(handle): Called by the plugin to close an existing window. The window stops
+ * existing immediately and thus it must not be used in any subsequent API calls.
+ *
+ * resizeWindowCallback(handle, width, height): Called by the plugin to request that the window size
+ * should be width x height, where width > 0 and height > 0. While the program is not required to
+ * obey the request in subsequent window updates, it should attempt to follow the request as closely
+ * as possible as soon as possible.
+ */
+void vicePluginAPI_setWindowCallbacks(
+    VicePluginAPI_Context* ctx,
+    int (*createWindowCallback)(uint64_t),
+    void (*closeWindowCallback)(uint64_t),
+    void (*resizeWindowCallback)(uint64_t, int, int)
+);
+
+/**********************************************
+ * API functions to use with running contexts *
+ **********************************************/
+
+/* The following functions may be called for contexts that are running, i.e. contexts that have been
+ * started with vicePluginAPI_start and have not yet shut down (the plugin has not called
+ * shutdownCompleteCallback yet).
+ */
+
+/* Closes an existing window with given handle. The window stops existing immediately and thus it
+ * must not be used in any subsequent API calls.
+ */
+void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle);
 
 /**********************************
  * Non-context-specific functions *

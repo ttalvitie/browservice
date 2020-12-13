@@ -182,6 +182,27 @@ API_FUNC_START
 API_FUNC_END
 }
 
+void vicePluginAPI_setWindowCallbacks(
+    VicePluginAPI_Context* ctx,
+    int (*createWindowCallback)(uint64_t),
+    void (*closeWindowCallback)(uint64_t),
+    void (*resizeWindowCallback)(uint64_t, int, int)
+) {
+API_FUNC_START
+
+    PANIC("Not implemented");
+
+API_FUNC_END
+}
+
+void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle) {
+API_FUNC_START
+
+    PANIC("Not implemented");
+
+API_FUNC_END
+}
+
 void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(
