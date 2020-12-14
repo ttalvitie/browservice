@@ -161,15 +161,29 @@ Context::Context(CKey, CKey,
     int httpMaxThreads,
     string httpAuthCredentials
 )
-    : httpListenAddr_(httpListenAddr),
-      httpMaxThreads_(httpMaxThreads),
-      httpAuthCredentials_(httpAuthCredentials)
+    : httpListenAddr_(httpListenAddr)
 {
     INFO_LOG("Creating retrojsvice plugin context");
+
+    httpMaxThreads_ = httpMaxThreads;
+    httpAuthCredentials_ = httpAuthCredentials;
 
     state_ = Pending;
     shutdownPhase_ = NoPendingShutdown;
     inAPICall_.store(false);
+
+    callbackData_ = nullptr;
+
+    // Default callbacks:
+
+    // These callbacks are always set in start
+    eventNotifyCallback_ = [](void*) { PANIC(); };
+    shutdownCompleteCallback_ = [](void*) { PANIC(); };
+
+    // By default, allow no windows to be created
+    createWindowCallback_ = [](void*, uint64_t) { return 0; };
+    closeWindowCallback_ = [](void*, uint64_t) { PANIC(); };
+    resizeWindowCallback_ = [](void*, uint64_t, int, int) { PANIC(); };
 }
 
 Context::~Context() {
@@ -184,8 +198,9 @@ Context::~Context() {
 }
 
 void Context::start(
-    function<void()> eventNotifyCallback,
-    function<void()> shutdownCompleteCallback
+    void (*eventNotifyCallback)(void*),
+    void (*shutdownCompleteCallback)(void*),
+    void* callbackData
 ) {
     APILock apiLock(this);
 
@@ -197,7 +212,12 @@ void Context::start(
     }
     REQUIRE(state_ == Pending);
 
+    REQUIRE(eventNotifyCallback != nullptr);
+    REQUIRE(shutdownCompleteCallback != nullptr);
+
     INFO_LOG("Starting plugin");
+
+    callbackData_ = callbackData;
 
     eventNotifyCallback_ = eventNotifyCallback;
     shutdownCompleteCallback_ = shutdownCompleteCallback;
@@ -217,9 +237,6 @@ void Context::start(
 void Context::shutdown() {
     RunningAPILock apiLock(this);
 
-    if(state_ != Running) {
-        PANIC("Requested shutdown of a plugin that is not running");
-    }
     if(shutdownPhase_ != NoPendingShutdown) {
         PANIC("Requested shutdown of a plugin that is already shutting down");
     }
@@ -239,13 +256,21 @@ void Context::pumpEvents() {
 }
 
 void Context::setWindowCallbacks(
-    function<int(uint64_t)> createWindowCallback,
-    function<void(uint64_t)> closeWindowCallback,
-    function<void(uint64_t, int, int)> resizeWindowCallback
+    int (*createWindowCallback)(void*, uint64_t handle),
+    void (*closeWindowCallback)(void*, uint64_t handle),
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 ) {
-    RunningAPILock apiLock(this);
+    APILock apiLock(this);
 
-    PANIC("Not implemented");
+    REQUIRE(state_ == Pending);
+
+    REQUIRE(createWindowCallback != nullptr);
+    REQUIRE(closeWindowCallback != nullptr);
+    REQUIRE(resizeWindowCallback != nullptr);
+
+    createWindowCallback_ = createWindowCallback;
+    closeWindowCallback_ = closeWindowCallback;
+    resizeWindowCallback_ = resizeWindowCallback;
 }
 
 void Context::closeWindow(uint64_t handle) {
@@ -350,7 +375,7 @@ void Context::onHTTPServerShutdownComplete() {
 }
 
 void Context::onTaskQueueNeedsRunTasks() {
-    eventNotifyCallback_();
+    eventNotifyCallback_(callbackData_);
 }
 
 void Context::onTaskQueueShutdownComplete() {
@@ -363,7 +388,7 @@ void Context::onTaskQueueShutdownComplete() {
 
     INFO_LOG("Plugin shutdown complete");
 
-    shutdownCompleteCallback_();
+    shutdownCompleteCallback_(callbackData_);
 }
 
 }

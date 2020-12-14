@@ -223,8 +223,7 @@ thread_local ViceContext* threadActivePumpEventsContext = nullptr;
         shared_ptr<ViceContext> self = getContext_(callbackData); \
         return ([&self]argDef { __VA_ARGS__ })(args...); \
     API_CALLBACK_HANDLE_EXCEPTIONS_END \
-    }, \
-    callbackData_
+    }
 
 #define CTX_CALLBACK(argDef, ...) \
     CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(argDef, { \
@@ -282,8 +281,6 @@ ViceContext::ViceContext(CKey, CKey,
     state_ = Pending;
     shutdownPending_ = false;
     pumpEventsInQueue_.store(false);
-
-    // Initialization is completed in afterConstruct_
 }
 
 ViceContext::~ViceContext() {
@@ -299,6 +296,16 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     eventHandler_ = eventHandler;
     self_ = shared_from_this();
 
+    // For release builds, we simply use a raw pointer to this object as the
+    // callback data. For debug builds, we leak a weak pointer to this object on
+    // purpose so that we can catch misbehaving plugins calling callbacks after
+    // shutdown (see function getContext_).
+#ifdef NDEBUG
+    void* callbackData = (void*)this;
+#else
+    void* callbackData = (void*)(new weak_ptr<ViceContext>(shared_from_this()));
+#endif
+
     plugin_->apiFuncs_->start(
         handle_,
         CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK((), {
@@ -308,7 +315,8 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         }),
         CTX_CALLBACK((), {
             self->shutdownComplete_();
-        })
+        }),
+        callbackData
     );
 }
 
@@ -324,18 +332,6 @@ void ViceContext::shutdown() {
 bool ViceContext::isShutdownComplete() {
     REQUIRE_UI_THREAD();
     return state_ == ShutdownComplete;
-}
-
-void ViceContext::afterConstruct_(shared_ptr<ViceContext> self) {
-    // For release builds, we simply use a raw pointer to this object as the
-    // callback data. For debug data, we leak a weak pointer to this object on
-    // purpose so that we can catch misbehaving plugins calling callbacks after
-    // shutdown (see function getContext_).
-#ifdef NDEBUG
-    callbackData_ = this;
-#else
-    callbackData_ = new weak_ptr<ViceContext>(self);
-#endif
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

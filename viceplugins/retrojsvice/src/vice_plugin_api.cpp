@@ -141,7 +141,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-// Convenience macros for creating implementations of API functions that forward
+// Convenience macro for creating implementations of API functions that forward
 // their arguments to corresponding member functions of the Context
 #define WRAP_CTX_API(funcName, ...) \
     { \
@@ -151,22 +151,13 @@ API_FUNC_END
     API_FUNC_END \
     }
 
-#define WRAP_CALLBACK(name) \
-    [name ## Callback, name ## Data](auto ...args) { \
-        return name ## Callback(name ## Data, args...); \
-    }
-
 void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
-    void (*eventNotifyCallback)(void* data),
-    void* eventNotifyData,
-    void (*shutdownCompleteCallback)(void* data),
-    void* shutdownCompleteData
+    void (*eventNotifyCallback)(void*),
+    void (*shutdownCompleteCallback)(void*),
+    void* callbackData
 )
-WRAP_CTX_API(start,
-    WRAP_CALLBACK(eventNotify),
-    WRAP_CALLBACK(shutdownComplete)
-)
+WRAP_CTX_API(start, eventNotifyCallback, shutdownCompleteCallback, callbackData)
 
 void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(shutdown)
@@ -176,17 +167,14 @@ WRAP_CTX_API(pumpEvents)
 
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(void* data, uint64_t handle),
-    void* createWindowData,
-    void (*closeWindowCallback)(void* data, uint64_t handle),
-    void* closeWindowData,
-    void (*resizeWindowCallback)(void* data, uint64_t handle, int width, int height),
-    void* resizeWindowData
+    int (*createWindowCallback)(void*, uint64_t handle),
+    void (*closeWindowCallback)(void*, uint64_t handle),
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 )
 WRAP_CTX_API(setWindowCallbacks,
-    WRAP_CALLBACK(createWindow),
-    WRAP_CALLBACK(closeWindow),
-    WRAP_CALLBACK(resizeWindow)
+    createWindowCallback,
+    closeWindowCallback,
+    resizeWindowCallback
 )
 
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle)
@@ -206,6 +194,7 @@ void vicePluginAPI_getOptionDocs(
 API_FUNC_START
 
     REQUIRE(apiVersion == (uint64_t)1000000);
+    REQUIRE(callback != nullptr);
 
     vector<tuple<string, string, string, string>> docs =
         Context::getOptionDocs();

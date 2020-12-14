@@ -69,15 +69,13 @@ extern "C" {
  *
  *  7. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
- * General API conventions:
+ * General API conventions and rules:
  *
- *   - No function in the API may retain and use pointers given to it as arguments after the
- *     function has returned, unless specifically allowed by the documentation. This applies to
- *     functions in the plugin API as well as callback functions given to the plugin through the
- *     API.
- *
- *   - Each callback argument in the API is followed by a void* data argument, which is always
- *     passed as the first argument when calling the callback.
+ *   - The program and plugin communicate bidirectionally using function calls. The program directly
+ *     calls the API functions of the plugin, and the plugin calls callback function pointers
+ *     supplied by the program. In all its calls to the callback functions, the plugin passes a void
+ *     data pointer given by the program as the first argument. The program may use this pointer to
+ *     access its own data structures instead of using global variables.
  *
  *   - To avoid reentrancy issues,
  *
@@ -86,9 +84,14 @@ extern "C" {
  *
  *       * implementations of the callbacks may not directly call plugin API functions
  *
- *     unless specifically allowed by the documentation (as is the case for example in
+ *     except in cases specifically allowed by the documentation (for example in
  *     vicePluginAPI_pumpEvents). To get around this restriction, a task queue should be used to
  *     defer the calls.
+ *
+ *   - No function in the API may retain and use pointers given to it as arguments after the
+ *     function has returned, unless specifically allowed by the documentation. This applies to
+ *     functions in the plugin API as well as callback functions given to the plugin through the
+ *     API.
  *
  *   - Most of the API supports only a very simple form of error handling on the plugin side: either
  *     recovering from the error (and optionally logging a warning) or panicking and terminating the
@@ -184,13 +187,16 @@ void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
  * by the program using vicePluginAPI_shutdown) is complete; after this, the context is no longer
  * running. This means that it will not call any further callbacks and the program is not allowed
  * call any other API functions for the context except for vicePluginAPI_destroyContext.
+ *
+ * The callbackData argument is passed as the first argument to each callback call made by the
+ * running context, that is, calls to eventNotifyCallback, shutdownCompleteCallback and all the
+ * callback functions registered to the context using vicePluginAPI_set*Callback(s).
  */
 void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
-    void (*eventNotifyCallback)(void* data),
-    void* eventNotifyData,
-    void (*shutdownCompleteCallback)(void* data),
-    void* shutdownCompleteData
+    void (*eventNotifyCallback)(void*),
+    void (*shutdownCompleteCallback)(void*),
+    void* callbackData
 );
 
 /* Request shutdown of a running plugin context. This function may be called only once per context.
@@ -219,7 +225,8 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 /* The following functions may be called for a context initialized with vicePluginAPI_initContext
  * before starting the context with vicePluginAPI_start. The callbacks registered through these
  * functions are only called by the plugin from vicePluginAPI_pumpEvents; the callbacks themselves
- * may not call any plugin API functions.
+ * may not call any plugin API functions. When calling the callbacks, the plugin always passes the
+ * callbackData pointer specified in vicePluginAPI_start as the first argument.
  */
 
 /* Registers basic window handling callbacks:
@@ -240,12 +247,9 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  */
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(void* data, uint64_t handle),
-    void* createWindowData,
-    void (*closeWindowCallback)(void* data, uint64_t handle),
-    void* closeWindowData,
-    void (*resizeWindowCallback)(void* data, uint64_t handle, int width, int height),
-    void* resizeWindowData
+    int (*createWindowCallback)(void*, uint64_t handle),
+    void (*closeWindowCallback)(void*, uint64_t handle),
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 );
 
 /**********************************************
@@ -269,6 +273,7 @@ void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle);
 /* Supplies the documentation for the configuration options supported by vicePluginAPI_initContext
  * by repeatedly calling given callback in the current thread before returning. Each call gives the
  * documentation for a single configuration option in its arguments:
+ *   - data: The data argument given to vicePluginAPI_getOptionDocs.
  *   - name: The name of the option. Convention: lower case, words separated by dashes.
  *   - valSpec: Short description of the value. Convention: upper case, no spaces.
  *   - desc: Textual description. Convention: no capitalization of the first letter.
@@ -305,6 +310,7 @@ void vicePluginAPI_getOptionDocs(
  * manner (for example using abort()).
  *
  * Arguments for callback:
+ *   - data: The data argument given to vicePluginAPI_setGlobal*Callback.
  *   - logLevel: The severity of the log event. Allowed values: VICE_PLUGIN_API_LOG_LEVEL_INFO,
  *       VICE_PLUGIN_API_LOG_LEVEL_WARNING and VICE_PLUGIN_API_LOG_LEVEL_ERROR.
  *   - location: String describing the source of the event. Example: "viceplugin.cpp:142".

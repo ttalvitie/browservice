@@ -29,17 +29,18 @@ public:
 
     // Public API functions:
     void start(
-        function<void()> eventNotifyCallback,
-        function<void()> shutdownCompleteCallback
+        void (*eventNotifyCallback)(void*),
+        void (*shutdownCompleteCallback)(void*),
+        void* callbackData
     );
     void shutdown();
 
     void pumpEvents();
 
     void setWindowCallbacks(
-        function<int(uint64_t)> createWindowCallback,
-        function<void(uint64_t)> closeWindowCallback,
-        function<void(uint64_t, int, int)> resizeWindowCallback
+        int (*createWindowCallback)(void*, uint64_t handle),
+        void (*closeWindowCallback)(void*, uint64_t handle),
+        void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
     );
 
     void closeWindow(uint64_t handle);
@@ -64,8 +65,14 @@ private:
     enum {NoPendingShutdown, WaitHTTPServer, WaitTaskQueue} shutdownPhase_;
     atomic<bool> inAPICall_;
 
-    function<void()> eventNotifyCallback_;
-    function<void()> shutdownCompleteCallback_;
+    void* callbackData_;
+
+    void (*eventNotifyCallback_)(void*);
+    void (*shutdownCompleteCallback_)(void*);
+
+    int (*createWindowCallback_)(void*, uint64_t handle);
+    void (*closeWindowCallback_)(void*, uint64_t handle);
+    void (*resizeWindowCallback_)(void*, uint64_t handle, int width, int height);
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;

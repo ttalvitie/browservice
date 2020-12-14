@@ -76,8 +76,6 @@ public:
     bool isShutdownComplete();
 
 private:
-    void afterConstruct_(shared_ptr<ViceContext> self);
-
     static shared_ptr<ViceContext> getContext_(void* callbackData);
 
     void pumpEvents_();
