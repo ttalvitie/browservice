@@ -255,14 +255,23 @@ void Context::pumpEvents() {
     taskQueue_->runTasks();
 }
 
+#define SET_CALLBACK_CHECKS() \
+    APILock apiLock(this); \
+    do { \
+        if(state_ != Pending) { \
+            PANIC( \
+                "Program is setting callbacks for a plugin context that has " \
+                "already been started" \
+            ); \
+        } \
+    } while(false)
+
 void Context::setWindowCallbacks(
     int (*createWindowCallback)(void*, uint64_t handle),
     void (*closeWindowCallback)(void*, uint64_t handle),
     void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 ) {
-    APILock apiLock(this);
-
-    REQUIRE(state_ == Pending);
+    SET_CALLBACK_CHECKS();
 
     REQUIRE(createWindowCallback != nullptr);
     REQUIRE(closeWindowCallback != nullptr);
