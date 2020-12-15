@@ -4,12 +4,14 @@
 #include <atomic>
 #include <cctype>
 #include <chrono>
+#include <condition_variable>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <functional>
 #include <future>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -25,6 +27,7 @@ namespace retrojsvice {
 
 using std::atomic;
 using std::cerr;
+using std::condition_variable;
 using std::enable_shared_from_this;
 using std::exception;
 using std::forward;
@@ -38,7 +41,9 @@ using std::make_pair;
 using std::make_shared;
 using std::make_unique;
 using std::memory_order_relaxed;
+using std::map;
 using std::move;
+using std::multimap;
 using std::mutex;
 using std::optional;
 using std::ostream;
@@ -51,12 +56,14 @@ using std::swap;
 using std::thread;
 using std::tie;
 using std::tuple;
+using std::unique_lock;
 using std::unique_ptr;
 using std::variant;
 using std::vector;
 using std::weak_ptr;
 
 using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 
 using std::this_thread::sleep_for;
 

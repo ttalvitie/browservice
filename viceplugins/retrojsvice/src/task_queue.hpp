@@ -19,13 +19,14 @@ public:
 // queue is used as follows:
 // A Context sets its TaskQueue as the active task queue for the current thread
 // for the duration of an API function call using ActiveTaskQueueLock. This
-// means that all the tasks posted using postTask in that thread will be posted
-// to that queue. The posted tasks will be run in the API thread when
-// Context::pumpEvents invokes the runTasks member function.
+// means that all the tasks posted using postTask and postDelayedTask in that
+// thread will be posted to that queue. The posted tasks will be run in the API
+// thread when Context::pumpEvents invokes the runTasks member function.
 //
-// When starting a background thread that needs to call postTask, one should
-// call getActiveTaskQueue in the API thread, copy the returned shared pointer
-// to the started thread and set it as active there using ActiveTaskQueueLock.
+// When starting a background thread that needs to call postTask or
+// postDelayedTask, one should call getActiveTaskQueue in the API thread, copy
+// the returned shared pointer to the started thread and set it as active there
+// using ActiveTaskQueueLock.
 //
 // Before destruction, the task queue must be shut down by calling shutdown and
 // waiting for the onTaskQueueShutdownComplete event. 
@@ -52,15 +53,28 @@ public:
     static shared_ptr<TaskQueue> getActiveQueue();
 
 private:
+    void afterConstruct_(shared_ptr<TaskQueue> self);
+
+    void needsRunTasks_();
+
     weak_ptr<TaskQueueEventHandler> eventHandler_;
 
     mutex mutex_;
     enum {Running, ShutdownPending, ShutdownComplete} state_;
+    bool runTasksPending_;
     vector<function<void()>> tasks_;
+    multimap<steady_clock::time_point, function<void()>> delayedTasks_;
+
+    thread delayThread_;
+    condition_variable delayThreadCv_;
 
     bool runningTasks_;
 
     friend void postTask(function<void()> func);
+    friend void postDelayedTask(
+        steady_clock::duration delay,
+        function<void()> func
+    );
 };
 
 // RAII object that sets given task queue as active for the current thread;
@@ -86,6 +100,34 @@ void postTask(shared_ptr<T> ptr, void (T::*func)(Args...), Args... args) {
 template <typename T, typename... Args>
 void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
     postTask([weakPtr, func, args...]() {
+        if(shared_ptr<T> ptr = weakPtr.lock()) {
+            (ptr.get()->*func)(args...);
+        }
+    });
+}
+
+void postDelayedTask(steady_clock::duration delay, function<void()> func);
+
+template <typename T, typename... Args>
+void postDelayedTask(
+    steady_clock::duration delay,
+    shared_ptr<T> ptr,
+    void (T::*func)(Args...),
+    Args... args
+) {
+    postDelayedTask(delay, [ptr, func, args...]() {
+        (ptr.get()->*func)(args...);
+    });
+}
+
+template <typename T, typename... Args>
+void postDelayedTask(
+    steady_clock::duration delay,
+    weak_ptr<T> weakPtr,
+    void (T::*func)(Args...),
+    Args... args
+) {
+    postDelayedTask(delay, [weakPtr, func, args...]() {
         if(shared_ptr<T> ptr = weakPtr.lock()) {
             (ptr.get()->*func)(args...);
         }
