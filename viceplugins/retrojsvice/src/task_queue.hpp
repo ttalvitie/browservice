@@ -15,6 +15,8 @@ public:
     virtual void onTaskQueueShutdownComplete() = 0;
 };
 
+class DelayedTaskTag;
+
 // A queue used to defer tasks to be run later in the API thread. Normally, the
 // queue is used as follows:
 // A Context sets its TaskQueue as the active task queue for the current thread
@@ -63,7 +65,10 @@ private:
     enum {Running, ShutdownPending, ShutdownComplete} state_;
     bool runTasksPending_;
     vector<function<void()>> tasks_;
-    multimap<steady_clock::time_point, function<void()>> delayedTasks_;
+    multimap<
+        steady_clock::time_point,
+        pair<weak_ptr<DelayedTaskTag>, function<void()>>
+    > delayedTasks_;
 
     thread delayThread_;
     condition_variable delayThreadCv_;
@@ -71,7 +76,8 @@ private:
     bool runningTasks_;
 
     friend void postTask(function<void()> func);
-    friend void postDelayedTask(
+    friend class DelayedTaskTag;
+    friend shared_ptr<DelayedTaskTag> postDelayedTask(
         steady_clock::duration delay,
         function<void()> func
     );
@@ -106,28 +112,56 @@ void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
     });
 }
 
-void postDelayedTask(steady_clock::duration delay, function<void()> func);
+// Object returned by postDelayedTask. If the object is destructed and the delay
+// for the task has not yet been reached, the task will be cancelled.
+class DelayedTaskTag {
+SHARED_ONLY_CLASS(DelayedTaskTag);
+public:
+    // Private constructor
+    DelayedTaskTag(CKey, CKey);
+
+    ~DelayedTaskTag();
+
+private:
+    shared_ptr<TaskQueue> taskQueue_;
+    bool inQueue_;
+    multimap<
+        steady_clock::time_point,
+        pair<weak_ptr<DelayedTaskTag>, function<void()>>
+    >::iterator iter_;
+
+    friend class TaskQueue;
+    friend shared_ptr<DelayedTaskTag> postDelayedTask(
+        steady_clock::duration delay,
+        function<void()> func
+    );
+};
+
+shared_ptr<DelayedTaskTag> postDelayedTask(
+    steady_clock::duration delay,
+    function<void()> func
+);
 
 template <typename T, typename... Args>
-void postDelayedTask(
+shared_ptr<DelayedTaskTag> postDelayedTask(
     steady_clock::duration delay,
     shared_ptr<T> ptr,
     void (T::*func)(Args...),
     Args... args
 ) {
-    postDelayedTask(delay, [ptr, func, args...]() {
+    return postDelayedTask(delay, [ptr, func, args...]() {
         (ptr.get()->*func)(args...);
     });
 }
 
 template <typename T, typename... Args>
-void postDelayedTask(
+shared_ptr<DelayedTaskTag> postDelayedTask(
     steady_clock::duration delay,
     weak_ptr<T> weakPtr,
     void (T::*func)(Args...),
     Args... args
 ) {
-    postDelayedTask(delay, [weakPtr, func, args...]() {
+    return postDelayedTask(delay, [weakPtr, func, args...]() {
         if(shared_ptr<T> ptr = weakPtr.lock()) {
             (ptr.get()->*func)(args...);
         }

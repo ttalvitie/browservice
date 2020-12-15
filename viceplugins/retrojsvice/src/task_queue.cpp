@@ -30,6 +30,8 @@ void TaskQueue::runTasks() {
     runningTasks_ = true;
 
     vector<function<void()>> tasksToRun;
+    steady_clock::time_point now = steady_clock::now();
+    bool runDelayedTasks;
     bool shutdownPending;
     {
         lock_guard lock(mutex_);
@@ -39,11 +41,9 @@ void TaskQueue::runTasks() {
 
         swap(tasks_, tasksToRun);
 
-        steady_clock::time_point now = steady_clock::now();
-        while(!delayedTasks_.empty() && delayedTasks_.begin()->first <= now) {
-            tasksToRun.push_back(delayedTasks_.begin()->second);
-            delayedTasks_.erase(delayedTasks_.begin());
-        }
+        runDelayedTasks =
+            !delayedTasks_.empty() &&
+            delayedTasks_.begin()->first <= now;
 
         shutdownPending = state_ == ShutdownPending;
     }
@@ -51,6 +51,28 @@ void TaskQueue::runTasks() {
     for(function<void()>& task : tasksToRun) {
         task();
         task = []() {};
+    }
+
+    if(runDelayedTasks) {
+        while(true) {
+            function<void()> task;
+            {
+                lock_guard lock(mutex_);
+                if(delayedTasks_.empty() || delayedTasks_.begin()->first > now) {
+                    break;
+                }
+
+                weak_ptr<DelayedTaskTag> tagWeak;
+                tie(tagWeak, task) = delayedTasks_.begin()->second;
+                delayedTasks_.erase(delayedTasks_.begin());
+
+                shared_ptr<DelayedTaskTag> tag = tagWeak.lock();
+                REQUIRE(tag);
+                REQUIRE(tag->inQueue_);
+                tag->inQueue_ = false;
+            }
+            task();
+        }
     }
 
     bool shutdownComplete = false;
@@ -154,16 +176,48 @@ void postTask(function<void()> func) {
     }
 }
 
-void postDelayedTask(steady_clock::duration delay, function<void()> func) {
+DelayedTaskTag::DelayedTaskTag(CKey, CKey) {}
+
+DelayedTaskTag::~DelayedTaskTag() {
+    {
+        lock_guard lock(taskQueue_->mutex_);
+        if(inQueue_) {
+            REQUIRE(taskQueue_->state_ != TaskQueue::ShutdownComplete);
+            taskQueue_->delayedTasks_.erase(iter_);
+        }
+    }
+
+    taskQueue_->delayThreadCv_.notify_one();
+}
+
+shared_ptr<DelayedTaskTag> postDelayedTask(
+    steady_clock::duration delay,
+    function<void()> func
+) {
     REQUIRE(activeTaskQueue);
 
     steady_clock::time_point time = steady_clock::now() + delay;
 
-    lock_guard lock(activeTaskQueue->mutex_);
-    REQUIRE(activeTaskQueue->state_ != TaskQueue::ShutdownComplete);
+    shared_ptr<DelayedTaskTag> tag;
+    {
+        lock_guard lock(activeTaskQueue->mutex_);
+        REQUIRE(activeTaskQueue->state_ != TaskQueue::ShutdownComplete);
 
-    activeTaskQueue->delayedTasks_.emplace(time, func);
+        tag = DelayedTaskTag::create(DelayedTaskTag::CKey());
+
+        auto iter = activeTaskQueue->delayedTasks_.emplace(
+            time,
+            pair<weak_ptr<DelayedTaskTag>, function<void()>>(tag, func)
+        );
+
+        tag->taskQueue_ = activeTaskQueue;
+        tag->inQueue_ = true;
+        tag->iter_ = iter;
+    }
+
     activeTaskQueue->delayThreadCv_.notify_one();
+
+    return tag;
 }
 
 }
