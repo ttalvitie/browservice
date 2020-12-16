@@ -4,6 +4,8 @@ import os
 import re
 
 print('#include "html.hpp"')
+print()
+print('namespace retrojsvice {')
 
 for filename in os.listdir("html"):
     if not filename.endswith(".html"):
@@ -20,3 +22,6 @@ for filename in os.listdir("html"):
     print('void write{}HTML(ostream& out, const {}HTMLData& data) {{'.format(name, name))
     print('    out << R"DELIM(' + code + ')DELIM";')
     print('}')
+
+print()
+print('}')

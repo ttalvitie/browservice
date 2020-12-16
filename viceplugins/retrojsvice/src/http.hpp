@@ -50,6 +50,32 @@ public:
         vector<pair<string, string>> extraHeaders = {}
     );
 
+    template <typename Data>
+    void sendHTMLResponse(
+        int status,
+        void (*writer)(ostream&, const Data&),
+        const Data& data,
+        bool noCache = true,
+        vector<pair<string, string>> extraHeaders = {}
+    ) {
+        stringstream htmlSS;
+        writer(htmlSS, data);
+
+        string html = htmlSS.str();
+        uint64_t contentLength = html.size();
+
+        sendResponse(
+            status,
+            "text/html; charset=UTF-8",
+            contentLength,
+            [html{move(html)}](ostream& out) {
+                out << html;
+            },
+            noCache,
+            move(extraHeaders)
+        );
+    }
+
 private:
     unique_ptr<Impl> impl_;
 

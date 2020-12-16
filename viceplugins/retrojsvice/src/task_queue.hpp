@@ -10,8 +10,8 @@ public:
     // TaskQueue::runTasks needs to be called.
     virtual void onTaskQueueNeedsRunTasks() = 0;
 
-    // Called to signal that shutdown has completed, which means that no more
-    // tasks may be posted and the task queue may be destructed.
+    // Called directly to signal that shutdown has completed, which means that
+    // no more tasks may be posted and the task queue may be destructed.
     virtual void onTaskQueueShutdownComplete() = 0;
 };
 

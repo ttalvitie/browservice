@@ -332,7 +332,7 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
 
                 return handle;
             } else {
-                INFO_LOG("Window callback stub: Denying window creation open due to limit");
+                INFO_LOG("Window callback stub: Denying window creation due to limit");
                 if(msg != nullptr) {
                     *msg = createMallocString("Session limit exceeded");
                 }

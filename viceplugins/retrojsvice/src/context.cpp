@@ -35,6 +35,8 @@ pair<bool, string> parseHTTPAuthOption(string optValue) {
     }
 }
 
+thread_local bool threadRunningPumpEvents = false;
+
 }
 
 class Context::APILock {
@@ -237,6 +239,8 @@ void Context::start(
         httpListenAddr_,
         httpMaxThreads_
     );
+
+    windowManager_ = WindowManager::create(shared_from_this());
 }
 
 void Context::shutdown() {
@@ -248,16 +252,29 @@ void Context::shutdown() {
 
     INFO_LOG("Shutting down plugin");
 
-    shutdownPhase_ = WaitHTTPServer;
+    shutdownPhase_ = WaitWindowManager;
 
-    REQUIRE(httpServer_);
-    httpServer_->shutdown();
+    shared_ptr<Context> self = shared_from_this();
+    postTask([self]() {
+        REQUIRE(self->shutdownPhase_ == WaitWindowManager);
+        self->windowManager_->close();
+
+        self->shutdownPhase_ = WaitHTTPServer;
+
+        REQUIRE(self->httpServer_);
+        self->httpServer_->shutdown();
+    });
 }
 
 void Context::pumpEvents() {
     RunningAPILock apiLock(this);
 
+    REQUIRE(!threadRunningPumpEvents);
+    threadRunningPumpEvents = true;
+
     taskQueue_->runTasks();
+
+    threadRunningPumpEvents = false;
 }
 
 #define SET_CALLBACK_CHECKS() \
@@ -366,15 +383,7 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         }
     }
 
-    string method = request->method();
-    string path = request->path();
-
-    if(method == "GET" && path == "/") {
-        handleNewWindowRequest_(request);
-        return;
-    }
-
-    request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
+    windowManager_->handleHTTPRequest(request);
 }
 
 void Context::onHTTPServerShutdownComplete() {
@@ -405,31 +414,30 @@ void Context::onTaskQueueShutdownComplete() {
     shutdownCompleteCallback_(callbackData_);
 }
 
-void Context::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {
+variant<uint64_t, string> Context::onWindowManagerCreateWindowRequest() {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+
     char* msgC = nullptr;
     uint64_t handle = createWindowCallback_(callbackData_, &msgC);
 
     if(handle) {
-        INFO_LOG("Creating window ", handle);
-
         REQUIRE(msgC == nullptr);
-        if(windows_.count(handle)) {
-            PANIC("Program supplied a window handle that is already in use");
-        }
-
-        shared_ptr<Window> window = Window::create(handle);
-        REQUIRE(windows_.emplace(handle, window).second);
+        return handle;
     } else {
         REQUIRE(msgC != nullptr);
         string msg = msgC;
         free(msgC);
-
-        INFO_LOG("Window creation denied by program (reason: ", msg, ")");
-
-        request->sendTextResponse(
-            503, "ERROR: Could not create window, reason: " + msg + "\n"
-        );
+        return msg;
     }
+}
+
+void Context::onWindowManagerCloseWindow(uint64_t handle) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+
+    REQUIRE(handle);
+    closeWindowCallback_(callbackData_, handle);
 }
 
 }

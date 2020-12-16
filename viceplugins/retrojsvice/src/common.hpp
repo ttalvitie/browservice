@@ -60,6 +60,7 @@ using std::unique_lock;
 using std::unique_ptr;
 using std::variant;
 using std::vector;
+using std::visit;
 using std::weak_ptr;
 
 using std::chrono::milliseconds;
@@ -86,6 +87,10 @@ string toString(const T& obj) {
     ss << obj;
     return ss.str();
 }
+
+// Helper class for defining visitors for variants
+template<class... T> struct Overloaded : T... { using T::operator()...; };
+template<class... T> Overloaded(T...) -> Overloaded<T...>;
 
 // Logging macros that log given message along with log level, source file and
 // line information to stderr. Message is formed by calling toString for each

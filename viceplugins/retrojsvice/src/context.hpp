@@ -1,7 +1,7 @@
 #pragma once
 
 #include "http.hpp"
-#include "window.hpp"
+#include "window_manager.hpp"
 
 namespace retrojsvice {
 
@@ -10,6 +10,7 @@ namespace retrojsvice {
 class Context :
     public HTTPServerEventHandler,
     public TaskQueueEventHandler,
+    public WindowManagerEventHandler,
     public enable_shared_from_this<Context>
 {
 SHARED_ONLY_CLASS(Context);
@@ -56,15 +57,22 @@ public:
     virtual void onTaskQueueNeedsRunTasks() override;
     virtual void onTaskQueueShutdownComplete() override;
 
-private:
-    void handleNewWindowRequest_(shared_ptr<HTTPRequest> request);
+    // WindowManagerEventHandler;
+    virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() override;
+    virtual void onWindowManagerCloseWindow(uint64_t handle) override;
 
+private:
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;
 
     enum {Pending, Running, ShutdownComplete} state_;
-    enum {NoPendingShutdown, WaitHTTPServer, WaitTaskQueue} shutdownPhase_;
+    enum {
+        NoPendingShutdown,
+        WaitWindowManager,
+        WaitHTTPServer,
+        WaitTaskQueue
+    } shutdownPhase_;
     atomic<bool> inAPICall_;
 
     void* callbackData_;
@@ -78,8 +86,7 @@ private:
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;
-
-    map<uint64_t, shared_ptr<Window>> windows_;
+    shared_ptr<WindowManager> windowManager_;
 
     class APILock;
     class RunningAPILock;
