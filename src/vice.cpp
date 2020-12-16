@@ -1,5 +1,7 @@
 #include "vice.hpp"
 
+#include "globals.hpp"
+
 #include "../vice_plugin_api.h"
 
 #include <dlfcn.h>
@@ -28,12 +30,22 @@ struct VicePlugin::APIFuncs {
 
 namespace {
 
+char* createMallocString(string val) {
+    size_t size = val.size() + 1;
+    char* ret = (char*)malloc(size);
+    REQUIRE(ret != nullptr);
+    memcpy(ret, val.c_str(), size);
+    return ret;
+}
+
 #define API_CALLBACK_HANDLE_EXCEPTIONS_START try {
 #define API_CALLBACK_HANDLE_EXCEPTIONS_END \
     } catch(const exception& e) { \
         PANIC("Unhandled exception traversing the vice plugin API: ", e.what()); \
+        abort(); \
     } catch(...) { \
         PANIC("Unhandled exception traversing the vice plugin API"); \
+        abort(); \
     }
 
 void logCallback(
@@ -217,16 +229,16 @@ thread_local ViceContext* threadActivePumpEventsContext = nullptr;
 // Convenience macro for passing callbacks to the plugin in ViceContext,
 // handling appropriate checks and resolving the callback data back to a
 // reference to the ViceContext object
-#define CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(argDef, ...) \
-    [](void* callbackData, auto ...args) { \
+#define CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(ret, argDef, ...) \
+    [](void* callbackData, auto ...args) -> ret { \
     API_CALLBACK_HANDLE_EXCEPTIONS_START \
         shared_ptr<ViceContext> self = getContext_(callbackData); \
-        return ([&self]argDef { __VA_ARGS__ })(args...); \
+        return ([&self]argDef -> ret { __VA_ARGS__ })(args...); \
     API_CALLBACK_HANDLE_EXCEPTIONS_END \
     }
 
-#define CTX_CALLBACK(argDef, ...) \
-    CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(argDef, { \
+#define CTX_CALLBACK(ret, argDef, ...) \
+    CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(ret, argDef, { \
         if(threadActivePumpEventsContext != self.get()) { \
             PANIC( \
                 "Vice plugin unexpectedly called a callback in a thread that " \
@@ -251,7 +263,7 @@ shared_ptr<ViceContext> ViceContext::init(
     }
 
     char* initErrorMsg = nullptr;
-    VicePluginAPI_Context* handle = plugin->apiFuncs_->initContext(
+    VicePluginAPI_Context* ctx = plugin->apiFuncs_->initContext(
         plugin->apiVersion_,
         optionNames.data(),
         optionValues.data(),
@@ -259,7 +271,7 @@ shared_ptr<ViceContext> ViceContext::init(
         &initErrorMsg
     );
 
-    if(handle == nullptr) {
+    if(ctx == nullptr) {
         REQUIRE(initErrorMsg != nullptr);
         cerr
             << "ERROR: Vice plugin " << plugin->filename_ <<
@@ -268,15 +280,15 @@ shared_ptr<ViceContext> ViceContext::init(
         return {};
     }
 
-    return ViceContext::create(CKey(), plugin, handle);
+    return ViceContext::create(CKey(), plugin, ctx);
 }
 
 ViceContext::ViceContext(CKey, CKey,
     shared_ptr<VicePlugin> plugin,
-    VicePluginAPI_Context* handle
+    VicePluginAPI_Context* ctx
 ) {
     plugin_ = plugin;
-    handle_ = handle;
+    ctx_ = ctx;
 
     state_ = Pending;
     shutdownPending_ = false;
@@ -285,7 +297,7 @@ ViceContext::ViceContext(CKey, CKey,
 
 ViceContext::~ViceContext() {
     REQUIRE(state_ == Pending || state_ == ShutdownComplete);
-    plugin_->apiFuncs_->destroyContext(handle_);
+    plugin_->apiFuncs_->destroyContext(ctx_);
 }
 
 void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
@@ -306,14 +318,50 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     void* callbackData = (void*)(new weak_ptr<ViceContext>(shared_from_this()));
 #endif
 
+    plugin_->apiFuncs_->setWindowCallbacks(
+        ctx_,
+        CTX_CALLBACK(uint64_t, (char** msg), {
+            if((int)self->openWindows_.size() < globals->config->sessionLimit) {
+                uint64_t handle;
+                do {
+                    handle = uniform_int_distribution<uint64_t>(1, -1)(rng);
+                } while(self->openWindows_.count(handle));
+
+                INFO_LOG("Window callback stub: Creating window ", handle);
+                REQUIRE(self->openWindows_.insert(handle).second);
+
+                return handle;
+            } else {
+                INFO_LOG("Window callback stub: Denying window creation open due to limit");
+                if(msg != nullptr) {
+                    *msg = createMallocString("Session limit exceeded");
+                }
+                return 0;
+            }
+        }),
+        CTX_CALLBACK(void, (uint64_t handle), {
+            REQUIRE(handle);
+            REQUIRE(self->openWindows_.count(handle));
+            INFO_LOG("Window callback stub: Closing window ", handle);
+            self->openWindows_.erase(handle);
+        }),
+        CTX_CALLBACK(void, (uint64_t handle, int width, int height), {
+            REQUIRE(handle);
+            REQUIRE(self->openWindows_.count(handle));
+            REQUIRE(width > 0);
+            REQUIRE(height > 0);
+            INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
+        })
+    );
+
     plugin_->apiFuncs_->start(
-        handle_,
-        CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK((), {
+        ctx_,
+        CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(void, (), {
             if(!self->pumpEventsInQueue_.exchange(true)) {
                 postTask(self, &ViceContext::pumpEvents_);
             }
         }),
-        CTX_CALLBACK((), {
+        CTX_CALLBACK(void, (), {
             self->shutdownComplete_();
         }),
         callbackData
@@ -326,7 +374,7 @@ void ViceContext::shutdown() {
     REQUIRE(!shutdownPending_);
 
     shutdownPending_ = true;
-    plugin_->apiFuncs_->shutdown(handle_);
+    plugin_->apiFuncs_->shutdown(ctx_);
 }
 
 bool ViceContext::isShutdownComplete() {
@@ -363,7 +411,7 @@ void ViceContext::pumpEvents_() {
     pumpEventsInQueue_.store(false);
 
     threadActivePumpEventsContext = this;
-    plugin_->apiFuncs_->pumpEvents(handle_);
+    plugin_->apiFuncs_->pumpEvents(ctx_);
     threadActivePumpEventsContext = nullptr;
 }
 

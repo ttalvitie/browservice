@@ -2,6 +2,8 @@
 
 #include "include/wrapper/cef_closure_task.h"
 
+thread_local mt19937 rng(random_device{}());
+
 static atomic<bool> panicUsingCEFFatalError_(false);
 
 void Panicker::panic_(string msg) {

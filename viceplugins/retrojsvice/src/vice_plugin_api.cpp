@@ -46,14 +46,6 @@ public:
     }
 };
 
-char* createMallocString(string val) {
-    size_t size = val.size() + 1;
-    char* ret = (char*)malloc(size);
-    REQUIRE(ret != nullptr);
-    memcpy(ret, val.c_str(), size);
-    return ret;
-}
-
 void setOutString(char** out, string val) {
     if(out != nullptr) {
         *out = createMallocString(val);
@@ -167,7 +159,7 @@ WRAP_CTX_API(pumpEvents)
 
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(void*, uint64_t handle),
+    uint64_t (*createWindowCallback)(void*, char** msg),
     void (*closeWindowCallback)(void*, uint64_t handle),
     void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 )

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "http.hpp"
-#include "task_queue.hpp"
+#include "window.hpp"
 
 namespace retrojsvice {
 
@@ -38,7 +38,7 @@ public:
     void pumpEvents();
 
     void setWindowCallbacks(
-        int (*createWindowCallback)(void*, uint64_t handle),
+        uint64_t (*createWindowCallback)(void*, char** msg),
         void (*closeWindowCallback)(void*, uint64_t handle),
         void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
     );
@@ -57,6 +57,8 @@ public:
     virtual void onTaskQueueShutdownComplete() override;
 
 private:
+    void handleNewWindowRequest_(shared_ptr<HTTPRequest> request);
+
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;
@@ -70,12 +72,14 @@ private:
     void (*eventNotifyCallback_)(void*);
     void (*shutdownCompleteCallback_)(void*);
 
-    int (*createWindowCallback_)(void*, uint64_t handle);
+    uint64_t (*createWindowCallback_)(void*, char** msg);
     void (*closeWindowCallback_)(void*, uint64_t handle);
     void (*resizeWindowCallback_)(void*, uint64_t handle, int width, int height);
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;
+
+    map<uint64_t, shared_ptr<Window>> windows_;
 
     class APILock;
     class RunningAPILock;

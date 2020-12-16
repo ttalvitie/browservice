@@ -83,6 +83,14 @@ void setPanicCallback(function<void(const char*, const char*)> callback) {
     }
 }
 
+char* createMallocString(string val) {
+    size_t size = val.size() + 1;
+    char* ret = (char*)malloc(size);
+    REQUIRE(ret != nullptr);
+    memcpy(ret, val.c_str(), size);
+    return ret;
+}
+
 thread_local bool inAPIThread_ = false;
 
 }

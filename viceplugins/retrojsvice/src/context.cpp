@@ -181,7 +181,12 @@ Context::Context(CKey, CKey,
     shutdownCompleteCallback_ = [](void*) { PANIC(); };
 
     // By default, allow no windows to be created
-    createWindowCallback_ = [](void*, uint64_t) { return 0; };
+    createWindowCallback_ = [](void*, char** msg) -> uint64_t {
+        if(msg != nullptr) {
+            *msg = createMallocString("Backend callback not available");
+        }
+        return 0;
+    };
     closeWindowCallback_ = [](void*, uint64_t) { PANIC(); };
     resizeWindowCallback_ = [](void*, uint64_t, int, int) { PANIC(); };
 }
@@ -267,7 +272,7 @@ void Context::pumpEvents() {
     } while(false)
 
 void Context::setWindowCallbacks(
-    int (*createWindowCallback)(void*, uint64_t handle),
+    uint64_t (*createWindowCallback)(void*, char** msg),
     void (*closeWindowCallback)(void*, uint64_t handle),
     void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 ) {
@@ -361,15 +366,15 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         }
     }
 
-    request->sendTextResponse(
-        200,
-        "Welcome to retrojsvice HTTP server!\n"
-        "Method: " + request->method() + "\n"
-        "Path: " + request->path() + "\n"
-        "User agent: " + request->userAgent() + "\n"
-        "Form param 'abc': " + request->getFormParam("abc") + "\n"
-        "Form param 'xyz': " + request->getFormParam("xyz") + "\n"
-    );
+    string method = request->method();
+    string path = request->path();
+
+    if(method == "GET" && path == "/") {
+        handleNewWindowRequest_(request);
+        return;
+    }
+
+    request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
 void Context::onHTTPServerShutdownComplete() {
@@ -398,6 +403,33 @@ void Context::onTaskQueueShutdownComplete() {
     INFO_LOG("Plugin shutdown complete");
 
     shutdownCompleteCallback_(callbackData_);
+}
+
+void Context::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {
+    char* msgC = nullptr;
+    uint64_t handle = createWindowCallback_(callbackData_, &msgC);
+
+    if(handle) {
+        INFO_LOG("Creating window ", handle);
+
+        REQUIRE(msgC == nullptr);
+        if(windows_.count(handle)) {
+            PANIC("Program supplied a window handle that is already in use");
+        }
+
+        shared_ptr<Window> window = Window::create(handle);
+        REQUIRE(windows_.emplace(handle, window).second);
+    } else {
+        REQUIRE(msgC != nullptr);
+        string msg = msgC;
+        free(msgC);
+
+        INFO_LOG("Window creation denied by program (reason: ", msg, ")");
+
+        request->sendTextResponse(
+            503, "ERROR: Could not create window, reason: " + msg + "\n"
+        );
+    }
 }
 
 }

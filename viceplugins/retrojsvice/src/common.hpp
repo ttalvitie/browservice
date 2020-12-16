@@ -235,6 +235,8 @@ public:
         } \
         DISABLE_COPY_MOVE(ClassName)
 
+char* createMallocString(string val);
+
 // We call the thread currently executing a plugin API call related to a context
 // the "API thread". While it is not necessarily always the same thread, the
 // plugin API guarantees that at most one API call for the same context is

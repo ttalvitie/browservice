@@ -231,11 +231,12 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 
 /* Registers basic window handling callbacks:
  *
- * createWindowCallback(handle): Called by the plugin to request the creation of a new window with
- * given handle (any nonzero uint64_t not in use by an existing window in this context). If the
- * callback returns a nonzero value, the window is created and it begins its existence immediately.
- * If the program chooses to deny the creation of the window for any reason (such as a limit on the
- * number of windows or the program state) by returning zero, the window is never created.
+ * createWindowCallback(msg): Called by the plugin to request the creation of a new window. To allow
+ * the creation of the window, the callback must return a handle for the new window (a nonzero
+ * uint64_t value that is not already in use by a window) and ignore msg; the window begins its
+ * existence immediately. To deny the creation of the window, the callback must return 0 and if msg
+ * is not NULL, it must point *msg to a short human-readable string describing the reason for the
+ * denial; the plugin is responsible for freeing the string using free().
  *
  * closeWindowCallback(handle): Called by the plugin to close an existing window. The window stops
  * existing immediately and thus it must not be used in any subsequent API calls.
@@ -247,7 +248,7 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  */
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
-    int (*createWindowCallback)(void*, uint64_t handle),
+    uint64_t (*createWindowCallback)(void*, char** msg),
     void (*closeWindowCallback)(void*, uint64_t handle),
     void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
 );

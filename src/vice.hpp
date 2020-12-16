@@ -82,7 +82,7 @@ private:
     void shutdownComplete_();
 
     shared_ptr<VicePlugin> plugin_;
-    VicePluginAPI_Context* handle_;
+    VicePluginAPI_Context* ctx_;
 
     enum {Pending, Running, ShutdownComplete} state_;
     bool shutdownPending_;
@@ -95,4 +95,6 @@ private:
     shared_ptr<ViceContext> self_;
 
     void* callbackData_;
+
+    set<uint64_t> openWindows_;
 };

@@ -85,6 +85,8 @@ using std::chrono::steady_clock;
 
 using std::this_thread::sleep_for;
 
+extern thread_local mt19937 rng;
+
 template <typename T>
 optional<T> parseString(const string& str) {
     T ret;
