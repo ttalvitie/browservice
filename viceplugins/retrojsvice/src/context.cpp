@@ -252,10 +252,20 @@ void Context::shutdown() {
 
     INFO_LOG("Shutting down plugin");
 
-    shutdownPhase_ = WaitHTTPServer;
+    shutdownPhase_ = WaitWindowManager;
 
-    REQUIRE(httpServer_);
-    httpServer_->shutdown();
+    shared_ptr<Context> self = shared_from_this();
+    postTask([self]() {
+        REQUIRE(self->shutdownPhase_ == WaitWindowManager);
+
+        REQUIRE(self->windowManager_);
+        self->windowManager_->close();
+
+        self->shutdownPhase_ = WaitHTTPServer;
+
+        REQUIRE(self->httpServer_);
+        self->httpServer_->shutdown();
+    });
 }
 
 void Context::pumpEvents() {
@@ -382,9 +392,6 @@ void Context::onHTTPServerShutdownComplete() {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
     REQUIRE(shutdownPhase_ == WaitHTTPServer);
-
-    REQUIRE(windowManager_);
-    windowManager_->close();
 
     shutdownPhase_ = WaitTaskQueue;
 

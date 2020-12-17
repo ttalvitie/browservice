@@ -14,18 +14,25 @@ public:
 class HTTPRequest;
 
 // Must be closed with close() prior to destruction
-class WindowManager {
+class WindowManager :
+    public WindowEventHandler,
+    public enable_shared_from_this<WindowManager>
+{
 SHARED_ONLY_CLASS(WindowManager);
 public:
     WindowManager(CKey, shared_ptr<WindowManagerEventHandler> eventHandler);
     ~WindowManager();
 
     // Immediately closes all windows and prevents new windows from being
-    // created. Calls WindowManagerEventHandler::onCloseWindow directly and
-    // drops shared pointer to event handler.
+    // created; new HTTP requests are dropped immediately. Calls
+    // WindowManagerEventHandler::onCloseWindow directly and drops shared
+    // pointer to event handler.
     void close();
 
     void handleHTTPRequest(shared_ptr<HTTPRequest> request);
+
+    // WindowEventHandler:
+    virtual void onWindowClose(uint64_t handle) override;
 
 private:
     void handleNewWindowRequest_(shared_ptr<HTTPRequest> request);

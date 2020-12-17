@@ -69,6 +69,7 @@ private:
     enum {Pending, Running, ShutdownComplete} state_;
     enum {
         NoPendingShutdown,
+        WaitWindowManager,
         WaitHTTPServer,
         WaitTaskQueue
     } shutdownPhase_;

@@ -20,12 +20,20 @@ WindowManager::~WindowManager() {
 
 void WindowManager::close() {
     REQUIRE_API_THREAD();
-
-    if(closed_) {
-        return;
-    }
+    REQUIRE(!closed_);
 
     closed_ = true;
+
+    while(!windows_.empty()) {
+        uint64_t handle = windows_.begin()->first;
+        shared_ptr<Window> window = windows_.begin()->second;
+
+        INFO_LOG("Closing window ", handle, " due to plugin shutdown");
+
+        window->close();
+        REQUIRE(!windows_.count(handle));
+    }
+
     eventHandler_.reset();
 }
 
@@ -48,6 +56,14 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
+void WindowManager::onWindowClose(uint64_t handle) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+
+    REQUIRE(windows_.erase(handle));
+    eventHandler_->onWindowManagerCloseWindow(handle);
+}
+
 void WindowManager::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {
     REQUIRE(!closed_);
     REQUIRE(eventHandler_);
@@ -64,7 +80,8 @@ void WindowManager::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {
             REQUIRE(handle);
             REQUIRE(!windows_.count(handle));
 
-            shared_ptr<Window> window = Window::create(handle);
+            shared_ptr<Window> window =
+                Window::create(shared_from_this(), handle);
             REQUIRE(windows_.emplace(handle, window).second);
 
             request->sendHTMLResponse(200, writeNewWindowHTML, {handle});
