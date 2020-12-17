@@ -5,6 +5,12 @@
 
 namespace retrojsvice {
 
+namespace {
+
+regex windowPathRegex("/([0-9]+)/.*");
+
+}
+
 WindowManager::WindowManager(CKey,
     shared_ptr<WindowManagerEventHandler> eventHandler
 ) {
@@ -51,6 +57,22 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     if(method == "GET" && path == "/") {
         handleNewWindowRequest_(request);
         return;
+    }
+
+    smatch match;
+    if(regex_match(path, match, windowPathRegex)) {
+        REQUIRE(match.size() == 2);
+        optional<uint64_t> handle = parseString<uint64_t>(match[1]);
+        if(handle) {
+            auto it = windows_.find(*handle);
+            if(it != windows_.end()) {
+                shared_ptr<Window> window = it->second;
+                window->handleHTTPRequest(request);
+            } else {
+                request->sendTextResponse(400, "ERROR: Invalid window ID\n");
+            }
+            return;
+        }
     }
 
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");

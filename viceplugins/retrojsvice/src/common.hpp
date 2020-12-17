@@ -15,6 +15,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <regex>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -49,7 +50,10 @@ using std::optional;
 using std::ostream;
 using std::pair;
 using std::promise;
+using std::regex;
+using std::regex_match;
 using std::shared_ptr;
+using std::smatch;
 using std::string;
 using std::stringstream;
 using std::swap;
@@ -63,6 +67,7 @@ using std::vector;
 using std::visit;
 using std::weak_ptr;
 
+using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
