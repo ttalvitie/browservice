@@ -30,6 +30,8 @@ Window::Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handl
     curEventIdx_ = 0;
 
     lastNavigateOperationTime_ = steady_clock::now();
+
+    // Initialization is completed in afterConstruct_
 }
 
 Window::~Window() {
@@ -50,13 +52,19 @@ void Window::close() {
 
 void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
-    REQUIRE(!closed_);
+
+    if(closed_) {
+        request->sendTextResponse(400, "ERROR: Window has been closed\n");
+        return;
+    }
 
     string method = request->method();
     string path = request->path();
     smatch match;
 
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
+        updateInactivityTimeout_();
+
         if(preMainVisited_) {
             ++curMainIdx_;
 
@@ -87,6 +95,8 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
 
     // Back/forward button emulation dummy pages
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
+        updateInactivityTimeout_();
+
         if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
             navigate_(-1);
@@ -101,6 +111,8 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         return;
     }
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
+        updateInactivityTimeout_();
+
         if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
             navigate_(1);
@@ -109,6 +121,35 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
         request->sendHTMLResponse(200, writeNextHTML, {handle_});
         return;
     }
+
+    request->sendTextResponse(400, "ERROR: Invalid request URI or method");
+}
+
+void Window::afterConstruct_(shared_ptr<Window> self) {
+    updateInactivityTimeout_();
+}
+
+void Window::updateInactivityTimeout_(bool shorten) {
+    REQUIRE_API_THREAD();
+    if(closed_) return;
+
+    inactivityTimeoutTag_ = postDelayedTask(
+        milliseconds(shorten ? 4000 : 30000),
+        weak_ptr<Window>(shared_from_this()),
+        &Window::inactivityTimeoutReached_,
+        shorten
+    );
+}
+
+void Window::inactivityTimeoutReached_(bool shortened) {
+    REQUIRE_API_THREAD();
+    if(closed_) return;
+
+    INFO_LOG(
+        "Closing window ", handle_, " due to inactivity timeout",
+        (shortened ? " (shortened due to client close signal)" : "")
+    );
+    close();
 }
 
 void Window::navigate_(int direction) {

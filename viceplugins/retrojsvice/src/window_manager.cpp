@@ -69,7 +69,7 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
                 shared_ptr<Window> window = it->second;
                 window->handleHTTPRequest(request);
             } else {
-                request->sendTextResponse(400, "ERROR: Invalid window ID\n");
+                request->sendTextResponse(400, "ERROR: Invalid window handle\n");
             }
             return;
         }

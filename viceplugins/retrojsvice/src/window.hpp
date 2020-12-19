@@ -17,7 +17,7 @@ class HTTPRequest;
 
 // Must be closed before destruction (as signaled by the onWindowClose, caused
 // by the Window itself or initiated using Window::close)
-class Window {
+class Window : public enable_shared_from_this<Window> {
 SHARED_ONLY_CLASS(Window);
 public:
     Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handle);
@@ -30,6 +30,11 @@ public:
     void handleHTTPRequest(shared_ptr<HTTPRequest> request);
 
 private:
+    void afterConstruct_(shared_ptr<Window> self);
+
+    void updateInactivityTimeout_(bool shorten = false);
+    void inactivityTimeoutReached_(bool shortened);
+
     void navigate_(int direction);
 
     shared_ptr<WindowEventHandler> eventHandler_;
@@ -53,6 +58,8 @@ private:
     // of this to avoid replaying events; the client may send the same events
     // twice as it cannot know for sure which requests make it through.
     uint64_t curEventIdx_;
+
+    shared_ptr<DelayedTaskTag> inactivityTimeoutTag_;
 
     steady_clock::time_point lastNavigateOperationTime_;
 };
