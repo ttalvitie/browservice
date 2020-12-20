@@ -1,3 +1,4 @@
+#include "image_compressor.hpp"
 #include "task_queue.hpp"
 
 namespace retrojsvice {
@@ -17,7 +18,10 @@ class HTTPRequest;
 
 // Must be closed before destruction (as signaled by the onWindowClose, caused
 // by the Window itself or initiated using Window::close)
-class Window : public enable_shared_from_this<Window> {
+class Window :
+    public ImageCompressorEventHandler,
+    public enable_shared_from_this<Window>
+{
 SHARED_ONLY_CLASS(Window);
 public:
     Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handle);
@@ -29,8 +33,15 @@ public:
 
     void handleHTTPRequest(shared_ptr<HTTPRequest> request);
 
+    // ImageCompressorEventHandler:
+    virtual void onFetchImage(
+        function<void(const uint8_t*, size_t, size_t, size_t)> func
+    ) override;
+
 private:
     void afterConstruct_(shared_ptr<Window> self);
+
+    void animate_();
 
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(bool shortened);
@@ -56,6 +67,9 @@ private:
     shared_ptr<WindowEventHandler> eventHandler_;
     uint64_t handle_;
     bool closed_;
+
+    shared_ptr<ImageCompressor> imageCompressor_;
+    shared_ptr<DelayedTaskTag> animationTag_;
 
     bool prePrevVisited_;
     bool preMainVisited_;

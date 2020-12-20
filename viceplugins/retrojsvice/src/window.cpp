@@ -47,6 +47,8 @@ void Window::close() {
 
     closed_ = true;
 
+    imageCompressor_->flush();
+
     REQUIRE(eventHandler_);
     eventHandler_->onWindowClose(handle_);
 
@@ -107,8 +109,43 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
+void Window::onFetchImage(
+    function<void(const uint8_t*, size_t, size_t, size_t)> func
+) {
+    REQUIRE_API_THREAD();
+
+    uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
+        steady_clock::now() - lastNavigateOperationTime_
+    ).count() >> 5);
+
+    size_t width = 512;
+    size_t height = 256;
+    size_t pitch = 564;
+    vector<uint8_t> data(4 * pitch * height);
+    for(size_t y = 0; y < height; ++y) {
+        for(size_t x = 0; x < width; ++x) {
+            for(size_t c = 0; c < 3; ++c) {
+                data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
+            }
+        }
+    }
+    func(data.data(), width, height, pitch);
+}
+
 void Window::afterConstruct_(shared_ptr<Window> self) {
+    imageCompressor_ = ImageCompressor::create(self, milliseconds(2000), true, 100); // TODO set parameters
+    animate_();
+
     updateInactivityTimeout_();
+}
+
+void Window::animate_() {
+    imageCompressor_->updateNotify();
+    animationTag_ = postDelayedTask(
+        milliseconds(300),
+        weak_ptr<Window>(shared_from_this()),
+        &Window::animate_
+    );
 }
 
 void Window::updateInactivityTimeout_(bool shorten) {
@@ -226,42 +263,6 @@ void Window::handleMainPageRequest_(shared_ptr<HTTPRequest> request) {
     }
 }
 
-namespace {
-
-void serveWhiteJPEGPixel(shared_ptr<HTTPRequest> request) {
-    REQUIRE_API_THREAD();
-
-    // 1x1 white JPEG
-    vector<uint8_t> data = {
-        255, 216, 255, 224, 0, 16, 74, 70, 73, 70, 0, 1, 1, 1, 0, 72, 0, 72,
-        0, 0, 255, 219, 0, 67, 0, 3, 2, 2, 3, 2, 2, 3, 3, 3, 3, 4, 3, 3, 4,
-        5, 8, 5, 5, 4, 4, 5, 10, 7, 7, 6, 8, 12, 10, 12, 12, 11, 10, 11, 11,
-        13, 14, 18, 16, 13, 14, 17, 14, 11, 11, 16, 22, 16, 17, 19, 20, 21,
-        21, 21, 12, 15, 23, 24, 22, 20, 24, 18, 20, 21, 20, 255, 219, 0, 67,
-        1, 3, 4, 4, 5, 4, 5, 9, 5, 5, 9, 20, 13, 11, 13, 20, 20, 20, 20, 20,
-        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
-        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20,
-        20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 20, 255, 192, 0, 17, 8, 0,
-        1, 0, 1, 3, 1, 17, 0, 2, 17, 1, 3, 17, 1, 255, 196, 0, 20, 0, 1, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 255, 196, 0, 20, 16, 1,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 196, 0, 20, 1,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 196, 0, 20,
-        17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 218, 0,
-        12, 3, 1, 0, 2, 17, 3, 17, 0, 63, 0, 84, 193, 255, 217
-    };
-    uint64_t contentLength = data.size();
-    request->sendResponse(
-        200,
-        "image/jpeg",
-        contentLength,
-        [data{move(data)}](ostream& out) {
-            out.write((const char*)data.data(), data.size());
-        }
-    );
-}
-
-}
-
 void Window::handleImageRequest_(
     shared_ptr<HTTPRequest> request,
     uint64_t mainIdx,
@@ -282,11 +283,10 @@ void Window::handleImageRequest_(
 
         INFO_LOG("TODO: set image size to ", width, "x", height);
         if(immediate) {
-            INFO_LOG("TODO: send image immediately");
+            imageCompressor_->sendCompressedImageNow(request);
         } else {
-            INFO_LOG("TODO: send image as it becomes available");
+            imageCompressor_->sendCompressedImageWait(request);
         }
-        serveWhiteJPEGPixel(request);
     }
 }
 
