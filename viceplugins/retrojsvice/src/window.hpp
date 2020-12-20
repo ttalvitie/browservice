@@ -35,7 +35,23 @@ private:
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(bool shortened);
 
+    void handleEvents_(uint64_t startIdx, string eventStr);
+
     void navigate_(int direction);
+
+    void handleMainPageRequest_(shared_ptr<HTTPRequest> request);
+    void handleImageRequest_(
+        shared_ptr<HTTPRequest> request,
+        uint64_t mainIdx,
+        uint64_t imgIdx,
+        int immediate,
+        int width,
+        int height,
+        uint64_t startEventIdx,
+        string eventStr
+    );
+    void handlePrevPageRequest_(shared_ptr<HTTPRequest> request);
+    void handleNextPageRequest_(shared_ptr<HTTPRequest> request);
 
     shared_ptr<WindowEventHandler> eventHandler_;
     uint64_t handle_;
