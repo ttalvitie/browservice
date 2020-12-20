@@ -186,8 +186,26 @@ DelayedTaskTag::~DelayedTaskTag() {
             taskQueue_->delayedTasks_.erase(iter_);
         }
     }
-
     taskQueue_->delayThreadCv_.notify_one();
+}
+
+void DelayedTaskTag::expedite() {
+    REQUIRE_API_THREAD();
+
+    function<void()> func = []() {};
+
+    {
+        lock_guard lock(taskQueue_->mutex_);
+        if(inQueue_) {
+            REQUIRE(taskQueue_->state_ != TaskQueue::ShutdownComplete);
+            func = iter_->second.second;
+            taskQueue_->delayedTasks_.erase(iter_);
+            inQueue_ = false;
+        }
+    }
+    taskQueue_->delayThreadCv_.notify_one();
+
+    func();
 }
 
 shared_ptr<DelayedTaskTag> postDelayedTask(

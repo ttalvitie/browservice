@@ -122,6 +122,10 @@ public:
 
     ~DelayedTaskTag();
 
+    // If the task is still pending, remove it from the queue and run it
+    // immediately. Should only be run from the API thread.
+    void expedite();
+
 private:
     shared_ptr<TaskQueue> taskQueue_;
     bool inQueue_;
