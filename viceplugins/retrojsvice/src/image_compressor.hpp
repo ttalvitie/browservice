@@ -58,6 +58,21 @@ public:
     // image available immediately
     void flush();
 
+    // Functions for changing the signal propagated in the size of the
+    // compressed image. By default both are 1.
+    static constexpr int IframeSignalTrue = 0;
+    static constexpr int IframeSignalFalse = 1;
+    static constexpr int IframeSignalCount = 2;
+
+    void setIframeSignal(int signal);
+
+    static constexpr int CursorSignalHand = 0;
+    static constexpr int CursorSignalNormal = 1;
+    static constexpr int CursorSignalText = 2;
+    static constexpr int CursorSignalCount = 3;
+
+    void setCursorSignal(int signal);
+
 private:
     void afterConstruct_(shared_ptr<ImageCompressor> self);
 
@@ -72,6 +87,9 @@ private:
     steady_clock::duration sendTimeout_;
     bool allowPNG_;
     int quality_;
+
+    int iframeSignal_;
+    int cursorSignal_;
 
     shared_ptr<PNGCompressor> pngCompressor_;
 

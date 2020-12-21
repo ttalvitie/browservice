@@ -141,6 +141,18 @@ void Window::afterConstruct_(shared_ptr<Window> self) {
 
 void Window::animate_() {
     imageCompressor_->updateNotify();
+
+    int cursorType = max((int)(duration_cast<milliseconds>(
+        steady_clock::now() - lastNavigateOperationTime_
+    ).count() >> 10), 0) % 3;
+    imageCompressor_->setCursorSignal(cursorType);
+
+    if(duration_cast<milliseconds>(
+        steady_clock::now() - lastNavigateOperationTime_
+    ).count() > 10000) {
+        imageCompressor_->setIframeSignal(ImageCompressor::IframeSignalTrue);
+    }
+
     animationTag_ = postDelayedTask(
         milliseconds(300),
         weak_ptr<Window>(shared_from_this()),

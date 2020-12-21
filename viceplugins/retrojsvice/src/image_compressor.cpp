@@ -130,6 +130,9 @@ ImageCompressor::ImageCompressor(CKey,
 
     quality_ = quality;
 
+    iframeSignal_ = 1;
+    cursorSignal_ = 1;
+
     int pngThreadCount = (int)thread::hardware_concurrency();
     pngThreadCount = min(pngThreadCount, 4);
     pngThreadCount = max(pngThreadCount, 1);
@@ -206,6 +209,26 @@ void ImageCompressor::flush() {
     }
 }
 
+void ImageCompressor::setIframeSignal(int signal) {
+    REQUIRE_API_THREAD();
+    REQUIRE(signal >= 0 && signal < IframeSignalCount);
+
+    if(iframeSignal_ != signal) {
+        iframeSignal_ = signal;
+        updateNotify();
+    }
+}
+
+void ImageCompressor::setCursorSignal(int signal) {
+    REQUIRE_API_THREAD();
+    REQUIRE(signal >= 0 && signal < CursorSignalCount);
+
+    if(cursorSignal_ != signal) {
+        cursorSignal_ = signal;
+        updateNotify();
+    }
+}
+
 void ImageCompressor::afterConstruct_(shared_ptr<ImageCompressor> self) {
     shared_ptr<TaskQueue> taskQueue = TaskQueue::getActiveQueue();
     compressorThread_ = thread([this, taskQueue]() {
@@ -255,6 +278,14 @@ tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
 
             width = srcWidth;
             height = srcHeight;
+
+            while((int)(width % (size_t)IframeSignalCount) != iframeSignal_) {
+                ++width;
+            }
+            while((int)(height % (size_t)CursorSignalCount) != cursorSignal_) {
+                ++height;
+            }
+
             data.resize(4 * width * height, (uint8_t)255);
 
             const uint8_t* srcLine = srcImage;
