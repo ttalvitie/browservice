@@ -296,7 +296,7 @@ tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
                 line += 4 * width;
             }
         };
-        eventHandler->onFetchImage(func);
+        eventHandler->onImageCompressorFetchImage(func);
         REQUIRE(funcCalled);
     } else {
         data.resize(4, (uint8_t)255);

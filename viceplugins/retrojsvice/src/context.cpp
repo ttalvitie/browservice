@@ -190,7 +190,18 @@ Context::Context(CKey, CKey,
         return 0;
     };
     closeWindowCallback_ = [](void*, uint64_t) { PANIC(); };
-    resizeWindowCallback_ = [](void*, uint64_t, int, int) { PANIC(); };
+
+    // Ignore resizes and always send 1x1 white pixel
+    resizeWindowCallback_ = [](void*, uint64_t, int, int) { };
+    fetchWindowImageCallback_ = [](
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(void*, const uint8_t*, size_t, size_t, size_t),
+        void* putImageFuncData
+    ) {
+        vector<uint8_t> img(4, (uint8_t)255);
+        putImageFunc(putImageFuncData, img.data(), 1, 1, 1);
+    };
 }
 
 Context::~Context() {
@@ -292,24 +303,54 @@ void Context::pumpEvents() {
 
 void Context::setWindowCallbacks(
     uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle),
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
+    void (*closeWindowCallback)(void*, uint64_t handle)
 ) {
     SET_CALLBACK_CHECKS();
 
     REQUIRE(createWindowCallback != nullptr);
     REQUIRE(closeWindowCallback != nullptr);
-    REQUIRE(resizeWindowCallback != nullptr);
 
     createWindowCallback_ = createWindowCallback;
     closeWindowCallback_ = closeWindowCallback;
+}
+
+void Context::setWindowViewCallbacks(
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
+    void (*fetchWindowImageCallback)(
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* putImageFuncData,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* putImageFuncData
+    )
+) {
+    SET_CALLBACK_CHECKS();
+
+    REQUIRE(resizeWindowCallback != nullptr);
+    REQUIRE(fetchWindowImageCallback != nullptr);
+
     resizeWindowCallback_ = resizeWindowCallback;
+    fetchWindowImageCallback_ = fetchWindowImageCallback;
 }
 
 void Context::closeWindow(uint64_t handle) {
     RunningAPILock apiLock(this);
 
     PANIC("Not implemented");
+}
+
+void Context::notifyWindowViewChanged(uint64_t handle) {
+    RunningAPILock apiLock(this);
+
+    shared_ptr<Window> window = windowManager_->tryGetWindow(handle);
+    REQUIRE(window);
+
+    postTask(window, &Window::notifyViewChanged);
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
@@ -437,9 +478,32 @@ variant<uint64_t, string> Context::onWindowManagerCreateWindowRequest() {
 void Context::onWindowManagerCloseWindow(uint64_t handle) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-
     REQUIRE(handle);
+
     closeWindowCallback_(callbackData_, handle);
+}
+
+void Context::onWindowManagerFetchImage(
+    uint64_t handle,
+    function<void(const uint8_t*, size_t, size_t, size_t)> func
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    auto callFunc = [](
+        void* funcPtr,
+        const uint8_t* image,
+        size_t width,
+        size_t height,
+        size_t pitch
+    ) {
+        REQUIRE(funcPtr != nullptr);
+        function<void(const uint8_t*, size_t, size_t, size_t)>& func =
+            *(function<void(const uint8_t*, size_t, size_t, size_t)>*)funcPtr;
+        func(image, width, height, pitch);
+    };
+    fetchWindowImageCallback_(callbackData_, handle, callFunc, (void*)&func);
 }
 
 }

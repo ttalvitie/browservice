@@ -40,11 +40,27 @@ public:
 
     void setWindowCallbacks(
         uint64_t (*createWindowCallback)(void*, char** msg),
-        void (*closeWindowCallback)(void*, uint64_t handle),
-        void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
+        void (*closeWindowCallback)(void*, uint64_t handle)
+    );
+    void setWindowViewCallbacks(
+        void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
+        void (*fetchWindowImageCallback)(
+            void*,
+            uint64_t handle,
+            void (*putImageFunc)(
+                void* putImageFuncData,
+                const uint8_t* image,
+                size_t width,
+                size_t height,
+                size_t pitch
+            ),
+            void* putImageFuncData
+        )
     );
 
     void closeWindow(uint64_t handle);
+
+    void notifyWindowViewChanged(uint64_t handle);
 
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
@@ -60,6 +76,10 @@ public:
     // WindowManagerEventHandler;
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() override;
     virtual void onWindowManagerCloseWindow(uint64_t handle) override;
+    virtual void onWindowManagerFetchImage(
+        uint64_t handle,
+        function<void(const uint8_t*, size_t, size_t, size_t)> func
+    ) override;
 
 private:
     SocketAddress httpListenAddr_;
@@ -82,7 +102,20 @@ private:
 
     uint64_t (*createWindowCallback_)(void*, char** msg);
     void (*closeWindowCallback_)(void*, uint64_t handle);
+
     void (*resizeWindowCallback_)(void*, uint64_t handle, int width, int height);
+    void (*fetchWindowImageCallback_)(
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* putImageFuncData,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* putImageFuncData
+    );
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;

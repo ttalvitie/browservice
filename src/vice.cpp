@@ -16,7 +16,9 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
     FOREACH_VICE_API_FUNC_ITEM(setWindowCallbacks) \
+    FOREACH_VICE_API_FUNC_ITEM(setWindowViewCallbacks) \
     FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
+    FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -344,13 +346,48 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
             REQUIRE(self->openWindows_.count(handle));
             INFO_LOG("Window callback stub: Closing window ", handle);
             self->openWindows_.erase(handle);
-        }),
+        })
+    );
+    plugin_->apiFuncs_->setWindowViewCallbacks(
+        ctx_,
         CTX_CALLBACK(void, (uint64_t handle, int width, int height), {
             REQUIRE(handle);
             REQUIRE(self->openWindows_.count(handle));
             REQUIRE(width > 0);
             REQUIRE(height > 0);
             INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
+        }),
+        CTX_CALLBACK(void, (
+            uint64_t handle,
+            void (*putImageFunc)(
+                void* putImageFuncData,
+                const uint8_t* image,
+                size_t width,
+                size_t height,
+                size_t pitch
+            ),
+            void* putImageFuncData
+        ), {
+            REQUIRE(handle);
+            REQUIRE(self->openWindows_.count(handle));
+
+            uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
+                steady_clock::now().time_since_epoch()
+            ).count() >> 5);
+
+            size_t width = 512;
+            size_t height = 256;
+            size_t pitch = 564;
+            vector<uint8_t> data(4 * pitch * height);
+            for(size_t y = 0; y < height; ++y) {
+                for(size_t x = 0; x < width; ++x) {
+                    for(size_t c = 0; c < 3; ++c) {
+                        data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
+                    }
+                }
+            }
+
+            putImageFunc(putImageFuncData, data.data(), width, height, pitch);
         })
     );
 
@@ -366,6 +403,9 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         }),
         callbackData
     );
+
+    animationTimeout_ = Timeout::create(30);
+    animate_();
 }
 
 void ViceContext::shutdown() {
@@ -375,6 +415,8 @@ void ViceContext::shutdown() {
 
     shutdownPending_ = true;
     plugin_->apiFuncs_->shutdown(ctx_);
+
+    animationTimeout_->clear(false);
 }
 
 bool ViceContext::isShutdownComplete() {
@@ -428,4 +470,18 @@ void ViceContext::shutdownComplete_() {
         eventHandler_,
         &ViceContextEventHandler::onViceContextShutdownComplete
     );
+}
+
+void ViceContext::animate_() {
+    REQUIRE_UI_THREAD();
+    if(state_ != Running || shutdownPending_) return;
+
+    for(uint64_t handle : openWindows_) {
+        plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, handle);
+    }
+
+    shared_ptr<ViceContext> self = shared_from_this();
+    animationTimeout_->set([self]() {
+        self->animate_();
+    });
 }

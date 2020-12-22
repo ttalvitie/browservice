@@ -160,17 +160,39 @@ WRAP_CTX_API(pumpEvents)
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
     uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle),
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
+    void (*closeWindowCallback)(void*, uint64_t handle)
 )
 WRAP_CTX_API(setWindowCallbacks,
     createWindowCallback,
-    closeWindowCallback,
-    resizeWindowCallback
+    closeWindowCallback
+)
+
+void vicePluginAPI_setWindowViewCallbacks(
+    VicePluginAPI_Context* ctx,
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
+    void (*fetchWindowImageCallback)(
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* putImageFuncData,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* putImageFuncData
+    )
+)
+WRAP_CTX_API(setWindowViewCallbacks,
+    resizeWindowCallback,
+    fetchWindowImageCallback
 )
 
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle)
 WRAP_CTX_API(closeWindow, handle)
+
+void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t handle)
+WRAP_CTX_API(notifyWindowViewChanged, handle)
 
 void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,

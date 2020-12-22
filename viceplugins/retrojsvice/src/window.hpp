@@ -12,6 +12,12 @@ public:
     // may be called; the Window also drops the shared pointer to the event
     // handler).
     virtual void onWindowClose(uint64_t handle) = 0;
+
+    // See ImageCompressorEventHandler::onImageCompressorFetchImage
+    virtual void onWindowFetchImage(
+        uint64_t handle,
+        function<void(const uint8_t*, size_t, size_t, size_t)> func
+    ) = 0;
 };
 
 class HTTPRequest;
@@ -33,15 +39,15 @@ public:
 
     void handleHTTPRequest(shared_ptr<HTTPRequest> request);
 
+    void notifyViewChanged();
+
     // ImageCompressorEventHandler:
-    virtual void onFetchImage(
+    virtual void onImageCompressorFetchImage(
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) override;
 
 private:
     void afterConstruct_(shared_ptr<Window> self);
-
-    void animate_();
 
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(bool shortened);

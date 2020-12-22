@@ -78,12 +78,34 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
+shared_ptr<Window> WindowManager::tryGetWindow(uint64_t handle) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(handle);
+    if(it == windows_.end()) {
+        return shared_ptr<Window>();
+    } else {
+        return it->second;
+    }
+}
+
 void WindowManager::onWindowClose(uint64_t handle) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
 
     REQUIRE(windows_.erase(handle));
     eventHandler_->onWindowManagerCloseWindow(handle);
+}
+
+void WindowManager::onWindowFetchImage(
+    uint64_t handle,
+    function<void(const uint8_t*, size_t, size_t, size_t)> func
+) {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerFetchImage(handle, func);
 }
 
 void WindowManager::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {

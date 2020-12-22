@@ -46,8 +46,8 @@ extern "C" {
  *
  *  4. The program registers callbacks for the plugin context to use after it has been started (see
  *     below) using the vicePluginAPI_set*Callback(s) functions. The program should call at least
- *     vicePluginAPI_setWindowCallbacks to enable window management (otherwise the plugin does
- *     nothing).
+ *     vicePluginAPI_setWindowCallbacks and vicePluginAPI_setWindowViewCallbacks to enable window
+ *     management and rendering (otherwise the plugin does nothing).
  *
  *  5. The program starts the operation of the plugin context by calling vicePluginAPI_start.
  *     After this, the program and plugin communicate as follows:
@@ -226,10 +226,11 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * before starting the context with vicePluginAPI_start. The callbacks registered through these
  * functions are only called by the plugin from vicePluginAPI_pumpEvents; the callbacks themselves
  * may not call any plugin API functions. When calling the callbacks, the plugin always passes the
- * callbackData pointer specified in vicePluginAPI_start as the first argument.
+ * callbackData pointer specified in vicePluginAPI_start as the first argument. For callbacks that
+ * are not registered, the plugin uses the default behavior documented for each callback type.
  */
 
-/* Registers basic window handling callbacks:
+/* Registers basic window management callbacks:
  *
  * createWindowCallback(msg): Called by the plugin to request the creation of a new window. To allow
  * the creation of the window, the callback must return a handle for the new window (a nonzero
@@ -241,16 +242,53 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * closeWindowCallback(handle): Called by the plugin to close an existing window. The window stops
  * existing immediately and thus it must not be used in any subsequent API calls.
  *
- * resizeWindowCallback(handle, width, height): Called by the plugin to request that the window size
- * should be width x height, where width > 0 and height > 0. While the program is not required to
- * obey the request in subsequent window updates, it should attempt to follow the request as closely
- * as possible as soon as possible.
+ * By default, createWindowCallback always denies the creation of windows.
  */
 void vicePluginAPI_setWindowCallbacks(
     VicePluginAPI_Context* ctx,
     uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle),
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height)
+    void (*closeWindowCallback)(void*, uint64_t handle)
+);
+
+/* Registers callbacks related to the window view:
+ *
+ * resizeWindowCallback(handle, width, height): Called by the plugin to request that the window size
+ * should be width x height, where width > 0 and height > 0. While the program is not required to
+ * obey the request in subsequent window view updates, it should attempt to follow the request as
+ * closely as possible as soon as possible.
+ *
+ * fetchWindowImageCallback(putImageFunc, putImageFuncData): Called by the plugin to fetch the
+ * newest available view image of given window for rendering (typically triggered by
+ * vicePluginAPI_notifyWindowViewChanged). The callback must call the supplied function
+ * putImageFunc exactly once before returning. The callback must pass the pointer putImageFuncData
+ * as the first argument to putImageFunc, and use the rest of the arguments
+ * (image, width, height, pitch) to specify the image data:
+ *   - It must always hold that width > 0 and height > 0.
+ *   - For all 0 <= y < height and 0 <= x < width, image[4 * (y * pitch + x) + c] is the value at
+ *     image position (x, y) for color channel blue, green and red for c = 0, 1, 2, respectively.
+ *     The values for channel c = 3 is not used for the image, but they must be safe to read.
+ * The callback may not call putImageFunc after returning. putImageFunc may not use the image
+ * pointer after returning; it should either render the image immediately or copy it to an internal
+ * buffer.
+ *
+ * By default, resizeWindowCallback does nothing and fetchWindowImageCallback supplies an
+ * unspecified valid image.
+ */
+void vicePluginAPI_setWindowViewCallbacks(
+    VicePluginAPI_Context* ctx,
+    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
+    void (*fetchWindowImageCallback)(
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* putImageFuncData,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* putImageFuncData
+    )
 );
 
 /**********************************************
@@ -266,6 +304,13 @@ void vicePluginAPI_setWindowCallbacks(
  * must not be used in any subsequent API calls.
  */
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle);
+
+/* Called to notify the plugin that the view in an existing window has changed. After receiving this
+ * notification, the plugin should use the fetchWindowImageCallback registered in
+ * vicePluginAPI_setWindowViewCallbacks to fetch the new view image and show it to the user as soon
+ * as possible.
+ */
+void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t handle);
 
 /**********************************
  * Non-context-specific functions *

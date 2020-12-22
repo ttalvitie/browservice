@@ -109,55 +109,31 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
-void Window::onFetchImage(
+void Window::notifyViewChanged() {
+    REQUIRE_API_THREAD();
+
+    if(!closed_) {
+        imageCompressor_->updateNotify();
+    }
+}
+
+void Window::onImageCompressorFetchImage(
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {
     REQUIRE_API_THREAD();
 
-    uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
-        steady_clock::now() - lastNavigateOperationTime_
-    ).count() >> 5);
-
-    size_t width = 512;
-    size_t height = 256;
-    size_t pitch = 564;
-    vector<uint8_t> data(4 * pitch * height);
-    for(size_t y = 0; y < height; ++y) {
-        for(size_t x = 0; x < width; ++x) {
-            for(size_t c = 0; c < 3; ++c) {
-                data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
-            }
-        }
+    if(closed_) {
+        vector<uint8_t> data(4, (uint8_t)255);
+        func(data.data(), 1, 1, 1);
+    } else {
+        eventHandler_->onWindowFetchImage(handle_, func);
     }
-    func(data.data(), width, height, pitch);
 }
 
 void Window::afterConstruct_(shared_ptr<Window> self) {
     imageCompressor_ = ImageCompressor::create(self, milliseconds(2000), true, 100); // TODO set parameters
-    animate_();
 
     updateInactivityTimeout_();
-}
-
-void Window::animate_() {
-    imageCompressor_->updateNotify();
-
-    int cursorType = max((int)(duration_cast<milliseconds>(
-        steady_clock::now() - lastNavigateOperationTime_
-    ).count() >> 10), 0) % 3;
-    imageCompressor_->setCursorSignal(cursorType);
-
-    if(duration_cast<milliseconds>(
-        steady_clock::now() - lastNavigateOperationTime_
-    ).count() > 10000) {
-        imageCompressor_->setIframeSignal(ImageCompressor::IframeSignalTrue);
-    }
-
-    animationTag_ = postDelayedTask(
-        milliseconds(300),
-        weak_ptr<Window>(shared_from_this()),
-        &Window::animate_
-    );
 }
 
 void Window::updateInactivityTimeout_(bool shorten) {

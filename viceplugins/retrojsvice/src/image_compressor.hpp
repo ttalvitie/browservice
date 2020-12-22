@@ -16,7 +16,7 @@ public:
     // image[4 * (y * pitch + x) + c] is the value for color blue, green and red
     // for c = 0, 1, 2, respectively. The callback func will not retain the
     // image pointer; it will copy the data before returning.
-    virtual void onFetchImage(
+    virtual void onImageCompressorFetchImage(
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) = 0;
 };
@@ -27,10 +27,10 @@ class HTTPRequest;
 // Image compressor service for a single browser session. The image pipeline is
 // run asynchronously: when an updated image is available, the service is
 // notified by calling updateNotify(); when it is ready to begin compressing it,
-// it uses the onFetchImage event handler to fetch the most recent image.
-// At most one image is being compressed at a time in a separate background
-// thread. At most one HTTP request is kept waiting for a new image to complete
-// at a time; the previous requests are responded to upon each
+// it uses the onImageCompressorFetchImage event handler to fetch the most
+// recent image. At most one image is being compressed at a time in a separate
+// background thread. At most one HTTP request is kept waiting for a new image
+// to complete at a time; the previous requests are responded to upon each
 // sendCompressedImage* call.
 class ImageCompressor : public enable_shared_from_this<ImageCompressor> {
 SHARED_ONLY_CLASS(ImageCompressor);

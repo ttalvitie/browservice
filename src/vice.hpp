@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+#include "timeout.hpp"
+
 // Dynamically loaded view service (vice) plugin library that shows the browser
 // view to the user and relays back the input events. Can be interacted with
 // using a ViceContext.
@@ -81,6 +83,8 @@ private:
     void pumpEvents_();
     void shutdownComplete_();
 
+    void animate_();
+
     shared_ptr<VicePlugin> plugin_;
     VicePluginAPI_Context* ctx_;
 
@@ -97,4 +101,6 @@ private:
     void* callbackData_;
 
     set<uint64_t> openWindows_;
+
+    shared_ptr<Timeout> animationTimeout_;
 };
