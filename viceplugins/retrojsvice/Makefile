@@ -1,5 +1,5 @@
 CXX ?= g++
-CFLAGS_COMMON := -std=c++17 -fPIC -Wall -Werror -Wno-error=deprecated-declarations -Wsign-compare
+CFLAGS_COMMON := -std=c++17 -fPIC -fvisibility=hidden -Wall -Werror -Wno-error=deprecated-declarations -Wsign-compare
 CFLAGS_debug := $(CFLAGS_COMMON) -g -O0
 CFLAGS_debug_png := $(CFLAGS_COMMON) -g -O3
 CFLAGS_release := $(CFLAGS_COMMON) -O3 -DNDEBUG

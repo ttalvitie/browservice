@@ -52,6 +52,8 @@ void setOutString(char** out, string val) {
     }
 }
 
+#define API_EXPORT __attribute__((visibility("default")))
+
 #define API_FUNC_START \
     try {
 #define API_FUNC_END \
@@ -71,7 +73,7 @@ struct VicePluginAPI_Context {
     shared_ptr<Context> impl;
 };
 
-int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
+API_EXPORT int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
 API_FUNC_START
 
     return (int)(apiVersion == (uint64_t)1000000);
@@ -79,7 +81,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-char* vicePluginAPI_getVersionString() {
+API_EXPORT char* vicePluginAPI_getVersionString() {
 API_FUNC_START
 
     return createMallocString(string("Retrojsvice ") + RetrojsviceVersion);
@@ -87,7 +89,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-VicePluginAPI_Context* vicePluginAPI_initContext(
+API_EXPORT VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
     const char** optionNames,
     const char** optionValues,
@@ -124,7 +126,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx) {
+API_EXPORT void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx) {
 API_FUNC_START
 
     REQUIRE(ctx != nullptr);
@@ -143,23 +145,26 @@ API_FUNC_END
     API_FUNC_END \
     }
 
-void vicePluginAPI_start(
+API_EXPORT void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_Callbacks callbacks,
     void* callbackData
 )
 WRAP_CTX_API(start, callbacks, callbackData)
 
-void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx)
+API_EXPORT void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(shutdown)
 
-void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
+API_EXPORT void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(pumpEvents)
 
-void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t handle)
+API_EXPORT void vicePluginAPI_notifyWindowViewChanged(
+    VicePluginAPI_Context* ctx,
+    uint64_t handle
+)
 WRAP_CTX_API(notifyWindowViewChanged, handle)
 
-void vicePluginAPI_getOptionDocs(
+API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(
         void* data,
@@ -193,7 +198,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-void vicePluginAPI_setGlobalLogCallback(
+API_EXPORT void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, int logLevel, const char* location, const char* msg),
     void* data,
@@ -232,7 +237,7 @@ API_FUNC_START
 API_FUNC_END
 }
 
-void vicePluginAPI_setGlobalPanicCallback(
+API_EXPORT void vicePluginAPI_setGlobalPanicCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, const char* location, const char* msg),
     void* data,
