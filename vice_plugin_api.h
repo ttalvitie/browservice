@@ -60,6 +60,19 @@ extern "C" {
  *         vicePlugin_pumpEvents as soon as possible. The implementation of vicePlugin_pumpEvents
  *         may then call the other callbacks directly.
  *
+ *     While the plugin context is running, the following kinds of things happen:
+ *
+ *       - The plugin opens and closes windows using the createWindow and closeWindow callbacks.
+ *
+ *       - The program supplies the window view image for each open window whenever the plugin
+ *         requests it using the fetchWindowImage callback. The program notifies the plugin whenever
+ *         the window image has changed by calling vicePluginAPI_notifyWindowViewChanged.
+ *
+ *       - The plugin sends various events to the program by calling callbacks, such as
+ *           - window view resize requests with the resizeWindow callback,
+ *           - user keyboard and mouse input events using TODO.
+ *         The program processes these events in an application-specific manner.
+ *
  *  5. To initiate the shutdown of the plugin context, the program must call vicePluginAPI_shutdown.
  *     When the plugin has shut down, it will respond by calling the shutdownComplete callback (in
  *     vicePlugin_pumpEvents). After this, the program and the plugin must immediately cease all
