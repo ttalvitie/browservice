@@ -386,7 +386,7 @@ void vicePluginAPI_getOptionDocs(
  *
  * The plugin may also choose to ignore the given callback completely. One valid implementation
  * for both of the functions is:
- * { if(destructorCallback) destructorCallback(data); }
+ * { if(callback && destructorCallback) destructorCallback(data); }
  */
 void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
