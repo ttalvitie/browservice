@@ -258,12 +258,6 @@ void Context::pumpEvents() {
     threadRunningPumpEvents = false;
 }
 
-void Context::closeWindow(uint64_t handle) {
-    RunningAPILock apiLock(this);
-
-    PANIC("Not implemented");
-}
-
 void Context::notifyWindowViewChanged(uint64_t handle) {
     RunningAPILock apiLock(this);
 

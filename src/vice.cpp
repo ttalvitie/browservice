@@ -15,7 +15,6 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(start) \
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
-    FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \

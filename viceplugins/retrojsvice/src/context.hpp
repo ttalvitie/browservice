@@ -39,8 +39,6 @@ public:
 
     void pumpEvents();
 
-    void closeWindow(uint64_t handle);
-
     void notifyWindowViewChanged(uint64_t handle);
 
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
