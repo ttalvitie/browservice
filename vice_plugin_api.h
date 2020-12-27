@@ -11,7 +11,7 @@ extern "C" {
  *** Vice Plugin API Definition ***
  **********************************/
 
-/* This file describes the common API for vice plugins: shared libraries that can be used by an
+/* This file describes the common API for "vice plugins": shared libraries that can be used by an
  * interactive program to show its GUI to the user.
  *
  * The vice plugin API was originally designed as an abstraction of the user-facing part of the
@@ -44,38 +44,36 @@ extern "C" {
  *     options are invalid); the program should show this error to the user. The program may query
  *     for the documentation of the options by calling vicePluginAPI_getOptionDocs.
  *
- *  4. The program registers callbacks for the plugin context to use after it has been started (see
- *     below) using the vicePluginAPI_set*Callback(s) functions. The program should call at least
- *     vicePluginAPI_setWindowCallbacks and vicePluginAPI_setWindowViewCallbacks to enable window
- *     management and rendering (otherwise the plugin does nothing).
- *
- *  5. The program starts the operation of the plugin context by calling vicePluginAPI_start.
- *     After this, the program and plugin communicate as follows:
+ *  4. The program starts the operation of the plugin context by calling vicePluginAPI_start,
+ *     providing a VicePluginAPI_Callbacks structure containing function pointers to callbacks to be
+ *     called by the plugin. After this, the program and plugin communicate using function calls as
+ *     follows:
  *
  *       - The program may call API functions directly; however, it must never make two API function
  *         calls concerning the same context concurrently.
  *
- *       - To avoid concurrency issues, the plugin context may not call callbacks given to it
- *         directly from its background threads. Instead, it is synchronized to the program event
- *         loop as follows: The plugin notifies the program that it has events to process by calling
- *         the event notification callback (given in vicePluginAPI_start) in any thread at any time.
- *         After a notification like this, the program should call vicePlugin_pumpEvents. The
- *         implementation of vicePlugin_pumpEvents may then call the callbacks directly.
+ *       - To avoid concurrency issues, the plugin context must not call callbacks directly from its
+ *         background threads (except when specifically permitted by the documentation). Instead, it
+ *         is synchronized to the program event loop as follows: The plugin notifies the program
+ *         that it has events to process by calling the special eventNotify callback in any thread
+ *         at any time. After a notification like this, the program should call
+ *         vicePlugin_pumpEvents as soon as possible. The implementation of vicePlugin_pumpEvents
+ *         may then call the other callbacks directly.
  *
- *  6. To start shutting down the plugin context, the program should call vicePluginAPI_shutdown.
- *     When the plugin has shut down, it will respond by calling the shutdown complete callback
- *     provided in vicePluginAPI_start (like all callbacks calls, this will happen in
- *     vicePlugin_pumpEvents).
+ *  5. To start shutting down the plugin context, the program should call vicePluginAPI_shutdown.
+ *     When the plugin has shut down, it will respond by calling the shutdownComplete callback (in
+ *     vicePlugin_pumpEvents). After this, the program and the plugin must immediately cease all
+ *     communication for this context.
  *
- *  7. The program destroys the plugin context using vicePluginAPI_destroyContext.
+ *  6. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
  * General API conventions and rules:
  *
  *   - The program and plugin communicate bidirectionally using function calls. The program directly
  *     calls the API functions of the plugin, and the plugin calls callback function pointers
  *     supplied by the program. In all its calls to the callback functions, the plugin passes a void
- *     data pointer given by the program as the first argument. The program may use this pointer to
- *     access its own data structures instead of using global variables.
+ *     data pointer supplied by the program as the first argument. The program may use this pointer
+ *     to access its own data structures instead of using global variables.
  *
  *   - To avoid reentrancy issues,
  *
@@ -122,6 +120,10 @@ int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
  */
 char* vicePluginAPI_getVersionString();
 
+/***************************************************************************************************
+ *** API version 1000000 ***
+ ***************************/
+
 /*************
  * Constants *
  *************/
@@ -137,9 +139,82 @@ char* vicePluginAPI_getVersionString();
 /* Opaque type for plugin contexts. */
 typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
-/***************************************************************************************************
- *** Functions for API version 1000000 ***
- *****************************************/
+/* Struct of pointers to callback functions provided by the program to be called by a running
+ * plugin. The program provides this struct to the plugin as an argument of vicePluginAPI_start
+ * along with a callbackData void* pointer that the plugin always passes as the first argument to
+ * each callback. With the exception of eventNotify, these callbacks are only called by the plugin
+ * from a thread executing a vicePluginAPI_pumpEvents call invoked by the program.
+ */
+struct VicePluginAPI_Callbacks {
+
+    /* A notification function that may be called by a running plugin from any thread at any time
+     * (even from an API function invoked by the program) to notify that the plugin has new events
+     * to process. When receiving this notification, the program must ensure that
+     * vicePluginAPI_pumpEvents is called as soon as possible; this will allow the plugin to process
+     * its internal event queue and call the other callbacks. Note that the program may not call
+     * vicePluginAPI_pumpEvents or any other API function from the callback itself.
+     */
+    void (*eventNotify)(void*);
+
+    /* Called by the plugin when the plugin shutdown (initiated by the program using
+     * vicePluginAPI_shutdown) is complete; after this, the context is no longer running. This means
+     * that it will not call any further callbacks (including eventNotify) and the program is not
+     * allowed call any other API functions for the context except for vicePluginAPI_destroyContext.
+     */
+    void (*shutdownComplete)(void*);
+
+    /* Called by the plugin to request the creation of a new window. To allow the creation of the
+     * window, the function must return a handle for the new window (a nonzero uint64_t value that
+     * is not already in use by a window) and ignore msg; the window begins its existence
+     * immediately. To deny the creation of the window, the function must return 0 and if msg is not
+     * NULL, it must point *msg to a short human-readable string describing the reason for the
+     * denial; the plugin is responsible for freeing the string using free().
+     */
+    uint64_t (*createWindow)(void*, char** msg);
+
+    /* Called by the plugin to close an existing window. The window stops existing immediately and
+     * thus it must not be used in any subsequent API calls.
+     */
+    void (*closeWindow)(void*, uint64_t handle);
+
+    /* Called by the plugin to request that the window size should be width x height, where
+     * width > 0 and height > 0. While the program is not required to obey the request in subsequent
+     * window view updates, it should attempt to follow the request as closely as possible as soon
+     * as possible.
+     */
+    void (*resizeWindow)(void*, uint64_t handle, int width, int height);
+
+    /* Called by the plugin to fetch the newest available view image of a window for rendering
+     * (typically triggered by vicePluginAPI_notifyWindowViewChanged). The function must call the
+     * supplied callback putImageFunc exactly once before returning. The callback must pass the
+     * given data pointer as the first argument to putImageFunc, and use the rest of the arguments
+     * (image, width, height, pitch) to specify the image data:
+     *
+     *   - It must always hold that width > 0 and height > 0.
+     *
+     *   - For all 0 <= y < height and 0 <= x < width, image[4 * (y * pitch + x) + c] is the value at
+     *     image position (x, y) for color channel blue, green and red for c = 0, 1, 2, respectively.
+     *     The values for channel c = 3 is not used for the image, but they must be safe to read.
+     *
+     * The function may not call putImageFunc after returning. putImageFunc may not use the image
+     * pointer after returning; it should either render the image immediately or copy it to an
+     * internal buffer.
+     */
+    void (*fetchWindowImage)(
+        void*,
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* data,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* data
+    );
+
+};
+typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 
 /**************************************
  * General context handling functions *
@@ -168,136 +243,60 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
 
 /* Destroy a vice plugin context that was previously initialized by vicePluginAPI_initContext. If
  * the context has been started using vicePluginAPI_start, it must have been successfully shut down
- * (by calling vicePluginAPI_shutdown and waiting for the shutdownCompleteCallback given in
- * vicePluginAPI_start to be called).
+ * (by calling vicePluginAPI_shutdown and waiting for the shutdownComplete callback to be called).
  */
 void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
-/* Start running given plugin context. This function may be called only once per context.
+/* Start running given plugin context. This function may be called only once per context. All the
+ * fields of the callbacks structure must be populated with valid function pointers (NULL function
+ * pointers are not allowed).
  *
- * A running plugin may call eventNotifyCallback from any thread at any time (even from an API
- * function invoked by the program). When receiving such call, the program must ensure that
- * vicePluginAPI_pumpEvents is called as soon as possible; this will allow the plugin to call
- * callbacks that have been registered to it using vicePluginAPI_set*Callback(s). Note that the
- * program may not call vicePluginAPI_pumpEvents or any other API function concerning this context
- * from the callback itself.
+ * During and after this function call, the running plugin may call callbacks.eventNotify from any
+ * thread at any time. When receiving such call, the program must ensure that
+ * vicePluginAPI_pumpEvents is called as soon as possible. In vicePluginAPI_pumpEvents, the plugin
+ * may then call the other callbacks supplied in the callbacks structure. The plugin always passes
+ * callbackData as the first argument to each function in the callbacks structure.
  *
- * In addition to starting the context, this function will register shutdownCompleteCallback to the
- * context. It will be called once from vicePluginAPI_pumpEvents when the plugin shutdown (initiated
- * by the program using vicePluginAPI_shutdown) is complete; after this, the context is no longer
- * running. This means that it will not call any further callbacks and the program is not allowed
- * call any other API functions for the context except for vicePluginAPI_destroyContext.
- *
- * The callbackData argument is passed as the first argument to each callback call made by the
- * running context, that is, calls to eventNotifyCallback, shutdownCompleteCallback and all the
- * callback functions registered to the context using vicePluginAPI_set*Callback(s).
+ * To shut down the plugin, the program must call vicePluginAPI_shutdown and continue running
+ * normally until callbacks.shutdownComplete is called. After this, both the program and the plugin
+ * must immediately stop calling API functions and callbacks (except for
+ * vicePluginAPI_destroyContext).
  */
 void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
-    void (*eventNotifyCallback)(void*),
-    void (*shutdownCompleteCallback)(void*),
+    VicePluginAPI_Callbacks callbacks,
     void* callbackData
 );
 
 /* Request shutdown of a running plugin context. This function may be called only once per context.
- * When the shutdown is complete, the plugin will call shutdownCompleteCallback (registered in
- * vicePluginAPI_start); after this, the program must destroy the context using
- * vicePluginAPI_destroyContext and refrain from calling any other API functions for this context.
+ * When the shutdown is complete, the plugin will call the shutdownComplete callback (in
+ * vicePluginAPI_pumpEvents); after this, the plugin will not call any further callbacks and the
+ * program must destroy the context using vicePluginAPI_destroyContext (and not call any other API
+ * functions for this context).
  */
 void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
 
 /* Allows a running plugin context to make progress in its own task queue. May call callbacks
- * registered to the context directly in the current thread before returning.
+ * (supplied by the program in the callbacks argument of vicePluginAPI_start) directly in the
+ * current thread before returning.
  *
- * This function should be called by the program if eventNotifyCallback (registered in
- * vicePluginAPI_start) has been called after this function was invoked the last time. Note that
- * eventNotifyCallback may be called while this function is running; in that case, this function
- * should be called again. The program may call this function even when eventNotifyCallback has not
- * been called. It is sufficient to call this function only once even if eventNotifyCallback has
- * been called multiple times after the previous call.
+ * This function should be called by the program if the eventNotify callback has been called after
+ * this function was invoked the last time. Note that eventNotify may also be called while this
+ * function is executing; in that case, this function should be called again.
+ *
+ * The program is allowed to call this function even when eventNotify has not been called. It is
+ * sufficient for the program to call this function only once even if eventNotify has been called
+ * multiple times after the previous call to this function.
  */
 void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
-
-/***********************************
- * Callback registration functions *
- ***********************************/
-
-/* The following functions may be called for a context initialized with vicePluginAPI_initContext
- * before starting the context with vicePluginAPI_start. The callbacks registered through these
- * functions are only called by the plugin from vicePluginAPI_pumpEvents; the callbacks themselves
- * may not call any plugin API functions. When calling the callbacks, the plugin always passes the
- * callbackData pointer specified in vicePluginAPI_start as the first argument. For callbacks that
- * are not registered, the plugin uses the default behavior documented for each callback type.
- */
-
-/* Registers basic window management callbacks:
- *
- * createWindowCallback(msg): Called by the plugin to request the creation of a new window. To allow
- * the creation of the window, the callback must return a handle for the new window (a nonzero
- * uint64_t value that is not already in use by a window) and ignore msg; the window begins its
- * existence immediately. To deny the creation of the window, the callback must return 0 and if msg
- * is not NULL, it must point *msg to a short human-readable string describing the reason for the
- * denial; the plugin is responsible for freeing the string using free().
- *
- * closeWindowCallback(handle): Called by the plugin to close an existing window. The window stops
- * existing immediately and thus it must not be used in any subsequent API calls.
- *
- * By default, createWindowCallback always denies the creation of windows.
- */
-void vicePluginAPI_setWindowCallbacks(
-    VicePluginAPI_Context* ctx,
-    uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle)
-);
-
-/* Registers callbacks related to the window view:
- *
- * resizeWindowCallback(handle, width, height): Called by the plugin to request that the window size
- * should be width x height, where width > 0 and height > 0. While the program is not required to
- * obey the request in subsequent window view updates, it should attempt to follow the request as
- * closely as possible as soon as possible.
- *
- * fetchWindowImageCallback(putImageFunc, putImageFuncData): Called by the plugin to fetch the
- * newest available view image of given window for rendering (typically triggered by
- * vicePluginAPI_notifyWindowViewChanged). The callback must call the supplied function
- * putImageFunc exactly once before returning. The callback must pass the pointer putImageFuncData
- * as the first argument to putImageFunc, and use the rest of the arguments
- * (image, width, height, pitch) to specify the image data:
- *   - It must always hold that width > 0 and height > 0.
- *   - For all 0 <= y < height and 0 <= x < width, image[4 * (y * pitch + x) + c] is the value at
- *     image position (x, y) for color channel blue, green and red for c = 0, 1, 2, respectively.
- *     The values for channel c = 3 is not used for the image, but they must be safe to read.
- * The callback may not call putImageFunc after returning. putImageFunc may not use the image
- * pointer after returning; it should either render the image immediately or copy it to an internal
- * buffer.
- *
- * By default, resizeWindowCallback does nothing and fetchWindowImageCallback supplies an
- * unspecified valid image.
- */
-void vicePluginAPI_setWindowViewCallbacks(
-    VicePluginAPI_Context* ctx,
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
-    void (*fetchWindowImageCallback)(
-        void*,
-        uint64_t handle,
-        void (*putImageFunc)(
-            void* putImageFuncData,
-            const uint8_t* image,
-            size_t width,
-            size_t height,
-            size_t pitch
-        ),
-        void* putImageFuncData
-    )
-);
 
 /**********************************************
  * API functions to use with running contexts *
  **********************************************/
 
 /* The following functions may be called for contexts that are running, i.e. contexts that have been
- * started with vicePluginAPI_start and have not yet shut down (the plugin has not called
- * shutdownCompleteCallback yet).
+ * started with vicePluginAPI_start and have not yet shut down (the plugin has not called the
+ * shutdownComplete callback yet).
  */
 
 /* Closes an existing window with given handle. The window stops existing immediately and thus it
@@ -306,9 +305,8 @@ void vicePluginAPI_setWindowViewCallbacks(
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle);
 
 /* Called to notify the plugin that the view in an existing window has changed. After receiving this
- * notification, the plugin should use the fetchWindowImageCallback registered in
- * vicePluginAPI_setWindowViewCallbacks to fetch the new view image and show it to the user as soon
- * as possible.
+ * notification, the plugin should use the fetchWindowImage callback to fetch the new view image and
+ * show it to the user as soon as possible.
  */
 void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t handle);
 

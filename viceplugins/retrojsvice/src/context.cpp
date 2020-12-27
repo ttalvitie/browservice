@@ -174,34 +174,8 @@ Context::Context(CKey, CKey,
     shutdownPhase_ = NoPendingShutdown;
     inAPICall_.store(false);
 
+    memset(&callbacks_, 0, sizeof(VicePluginAPI_Callbacks));
     callbackData_ = nullptr;
-
-    // Default callbacks:
-
-    // These callbacks are always set in start
-    eventNotifyCallback_ = [](void*) { PANIC(); };
-    shutdownCompleteCallback_ = [](void*) { PANIC(); };
-
-    // By default, allow no windows to be created
-    createWindowCallback_ = [](void*, char** msg) -> uint64_t {
-        if(msg != nullptr) {
-            *msg = createMallocString("Backend callback not available");
-        }
-        return 0;
-    };
-    closeWindowCallback_ = [](void*, uint64_t) { PANIC(); };
-
-    // Ignore resizes and always send 1x1 white pixel
-    resizeWindowCallback_ = [](void*, uint64_t, int, int) { };
-    fetchWindowImageCallback_ = [](
-        void*,
-        uint64_t handle,
-        void (*putImageFunc)(void*, const uint8_t*, size_t, size_t, size_t),
-        void* putImageFuncData
-    ) {
-        vector<uint8_t> img(4, (uint8_t)255);
-        putImageFunc(putImageFuncData, img.data(), 1, 1, 1);
-    };
 }
 
 Context::~Context() {
@@ -216,8 +190,7 @@ Context::~Context() {
 }
 
 void Context::start(
-    void (*eventNotifyCallback)(void*),
-    void (*shutdownCompleteCallback)(void*),
+    VicePluginAPI_Callbacks callbacks,
     void* callbackData
 ) {
     APILock apiLock(this);
@@ -230,15 +203,10 @@ void Context::start(
     }
     REQUIRE(state_ == Pending);
 
-    REQUIRE(eventNotifyCallback != nullptr);
-    REQUIRE(shutdownCompleteCallback != nullptr);
-
     INFO_LOG("Starting plugin");
 
+    callbacks_ = callbacks;
     callbackData_ = callbackData;
-
-    eventNotifyCallback_ = eventNotifyCallback;
-    shutdownCompleteCallback_ = shutdownCompleteCallback;
 
     state_ = Running;
     taskQueue_ = TaskQueue::create(shared_from_this());
@@ -288,54 +256,6 @@ void Context::pumpEvents() {
     taskQueue_->runTasks();
 
     threadRunningPumpEvents = false;
-}
-
-#define SET_CALLBACK_CHECKS() \
-    APILock apiLock(this); \
-    do { \
-        if(state_ != Pending) { \
-            PANIC( \
-                "Program is setting callbacks for a plugin context that has " \
-                "already been started" \
-            ); \
-        } \
-    } while(false)
-
-void Context::setWindowCallbacks(
-    uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle)
-) {
-    SET_CALLBACK_CHECKS();
-
-    REQUIRE(createWindowCallback != nullptr);
-    REQUIRE(closeWindowCallback != nullptr);
-
-    createWindowCallback_ = createWindowCallback;
-    closeWindowCallback_ = closeWindowCallback;
-}
-
-void Context::setWindowViewCallbacks(
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
-    void (*fetchWindowImageCallback)(
-        void*,
-        uint64_t handle,
-        void (*putImageFunc)(
-            void* putImageFuncData,
-            const uint8_t* image,
-            size_t width,
-            size_t height,
-            size_t pitch
-        ),
-        void* putImageFuncData
-    )
-) {
-    SET_CALLBACK_CHECKS();
-
-    REQUIRE(resizeWindowCallback != nullptr);
-    REQUIRE(fetchWindowImageCallback != nullptr);
-
-    resizeWindowCallback_ = resizeWindowCallback;
-    fetchWindowImageCallback_ = fetchWindowImageCallback;
 }
 
 void Context::closeWindow(uint64_t handle) {
@@ -441,7 +361,8 @@ void Context::onHTTPServerShutdownComplete() {
 }
 
 void Context::onTaskQueueNeedsRunTasks() {
-    eventNotifyCallback_(callbackData_);
+    REQUIRE(callbacks_.eventNotify != nullptr);
+    callbacks_.eventNotify(callbackData_);
 }
 
 void Context::onTaskQueueShutdownComplete() {
@@ -454,15 +375,19 @@ void Context::onTaskQueueShutdownComplete() {
 
     INFO_LOG("Plugin shutdown complete");
 
-    shutdownCompleteCallback_(callbackData_);
+    REQUIRE(callbacks_.shutdownComplete != nullptr);
+    callbacks_.shutdownComplete(callbackData_);
+
+    memset(&callbacks_, 0, sizeof(VicePluginAPI_Callbacks));
 }
 
 variant<uint64_t, string> Context::onWindowManagerCreateWindowRequest() {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
 
+    REQUIRE(callbacks_.createWindow != nullptr);
     char* msgC = nullptr;
-    uint64_t handle = createWindowCallback_(callbackData_, &msgC);
+    uint64_t handle = callbacks_.createWindow(callbackData_, &msgC);
 
     if(handle) {
         REQUIRE(msgC == nullptr);
@@ -480,7 +405,8 @@ void Context::onWindowManagerCloseWindow(uint64_t handle) {
     REQUIRE(state_ == Running);
     REQUIRE(handle);
 
-    closeWindowCallback_(callbackData_, handle);
+    REQUIRE(callbacks_.closeWindow != nullptr);
+    callbacks_.closeWindow(callbackData_, handle);
 }
 
 void Context::onWindowManagerFetchImage(
@@ -503,7 +429,9 @@ void Context::onWindowManagerFetchImage(
             *(function<void(const uint8_t*, size_t, size_t, size_t)>*)funcPtr;
         func(image, width, height, pitch);
     };
-    fetchWindowImageCallback_(callbackData_, handle, callFunc, (void*)&func);
+
+    REQUIRE(callbacks_.fetchWindowImage != nullptr);
+    callbacks_.fetchWindowImage(callbackData_, handle, callFunc, (void*)&func);
 }
 
 }

@@ -145,48 +145,16 @@ API_FUNC_END
 
 void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
-    void (*eventNotifyCallback)(void*),
-    void (*shutdownCompleteCallback)(void*),
+    VicePluginAPI_Callbacks callbacks,
     void* callbackData
 )
-WRAP_CTX_API(start, eventNotifyCallback, shutdownCompleteCallback, callbackData)
+WRAP_CTX_API(start, callbacks, callbackData)
 
 void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(shutdown)
 
 void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(pumpEvents)
-
-void vicePluginAPI_setWindowCallbacks(
-    VicePluginAPI_Context* ctx,
-    uint64_t (*createWindowCallback)(void*, char** msg),
-    void (*closeWindowCallback)(void*, uint64_t handle)
-)
-WRAP_CTX_API(setWindowCallbacks,
-    createWindowCallback,
-    closeWindowCallback
-)
-
-void vicePluginAPI_setWindowViewCallbacks(
-    VicePluginAPI_Context* ctx,
-    void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
-    void (*fetchWindowImageCallback)(
-        void*,
-        uint64_t handle,
-        void (*putImageFunc)(
-            void* putImageFuncData,
-            const uint8_t* image,
-            size_t width,
-            size_t height,
-            size_t pitch
-        ),
-        void* putImageFuncData
-    )
-)
-WRAP_CTX_API(setWindowViewCallbacks,
-    resizeWindowCallback,
-    fetchWindowImageCallback
-)
 
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t handle)
 WRAP_CTX_API(closeWindow, handle)

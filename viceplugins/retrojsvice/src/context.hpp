@@ -3,6 +3,8 @@
 #include "http.hpp"
 #include "window_manager.hpp"
 
+#include "../../../vice_plugin_api.h"
+
 namespace retrojsvice {
 
 // The implementation of the vice plugin context, exposed through the C API in
@@ -30,33 +32,12 @@ public:
 
     // Public API functions:
     void start(
-        void (*eventNotifyCallback)(void*),
-        void (*shutdownCompleteCallback)(void*),
+        VicePluginAPI_Callbacks callbacks,
         void* callbackData
     );
     void shutdown();
 
     void pumpEvents();
-
-    void setWindowCallbacks(
-        uint64_t (*createWindowCallback)(void*, char** msg),
-        void (*closeWindowCallback)(void*, uint64_t handle)
-    );
-    void setWindowViewCallbacks(
-        void (*resizeWindowCallback)(void*, uint64_t handle, int width, int height),
-        void (*fetchWindowImageCallback)(
-            void*,
-            uint64_t handle,
-            void (*putImageFunc)(
-                void* putImageFuncData,
-                const uint8_t* image,
-                size_t width,
-                size_t height,
-                size_t pitch
-            ),
-            void* putImageFuncData
-        )
-    );
 
     void closeWindow(uint64_t handle);
 
@@ -95,27 +76,8 @@ private:
     } shutdownPhase_;
     atomic<bool> inAPICall_;
 
+    VicePluginAPI_Callbacks callbacks_;
     void* callbackData_;
-
-    void (*eventNotifyCallback_)(void*);
-    void (*shutdownCompleteCallback_)(void*);
-
-    uint64_t (*createWindowCallback_)(void*, char** msg);
-    void (*closeWindowCallback_)(void*, uint64_t handle);
-
-    void (*resizeWindowCallback_)(void*, uint64_t handle, int width, int height);
-    void (*fetchWindowImageCallback_)(
-        void*,
-        uint64_t handle,
-        void (*putImageFunc)(
-            void* putImageFuncData,
-            const uint8_t* image,
-            size_t width,
-            size_t height,
-            size_t pitch
-        ),
-        void* putImageFuncData
-    );
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;

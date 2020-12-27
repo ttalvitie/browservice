@@ -15,8 +15,6 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(start) \
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
-    FOREACH_VICE_API_FUNC_ITEM(setWindowCallbacks) \
-    FOREACH_VICE_API_FUNC_ITEM(setWindowViewCallbacks) \
     FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
@@ -320,87 +318,89 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     void* callbackData = (void*)(new weak_ptr<ViceContext>(shared_from_this()));
 #endif
 
-    plugin_->apiFuncs_->setWindowCallbacks(
-        ctx_,
-        CTX_CALLBACK(uint64_t, (char** msg), {
-            if((int)self->openWindows_.size() < globals->config->sessionLimit) {
-                uint64_t handle;
-                do {
-                    handle = uniform_int_distribution<uint64_t>(1, -1)(rng);
-                } while(self->openWindows_.count(handle));
+    VicePluginAPI_Callbacks callbacks;
 
-                INFO_LOG("Window callback stub: Creating window ", handle);
-                REQUIRE(self->openWindows_.insert(handle).second);
+    callbacks.eventNotify = CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(void, (), {
+        if(!self->pumpEventsInQueue_.exchange(true)) {
+            postTask(self, &ViceContext::pumpEvents_);
+        }
+    });
 
-                return handle;
-            } else {
-                INFO_LOG("Window callback stub: Denying window creation due to limit");
-                if(msg != nullptr) {
-                    *msg = createMallocString("Session limit exceeded");
-                }
-                return 0;
+    callbacks.shutdownComplete = CTX_CALLBACK(void, (), {
+        self->shutdownComplete_();
+    });
+
+    callbacks.createWindow = CTX_CALLBACK(uint64_t, (char** msg), {
+        if((int)self->openWindows_.size() < globals->config->sessionLimit) {
+            uint64_t handle;
+            do {
+                handle = uniform_int_distribution<uint64_t>(1, -1)(rng);
+            } while(self->openWindows_.count(handle));
+
+            INFO_LOG("Window callback stub: Creating window ", handle);
+            REQUIRE(self->openWindows_.insert(handle).second);
+
+            return handle;
+        } else {
+            INFO_LOG("Window callback stub: Denying window creation due to limit");
+            if(msg != nullptr) {
+                *msg = createMallocString("Session limit exceeded");
             }
-        }),
-        CTX_CALLBACK(void, (uint64_t handle), {
-            REQUIRE(handle);
-            REQUIRE(self->openWindows_.count(handle));
-            INFO_LOG("Window callback stub: Closing window ", handle);
-            self->openWindows_.erase(handle);
-        })
-    );
-    plugin_->apiFuncs_->setWindowViewCallbacks(
-        ctx_,
-        CTX_CALLBACK(void, (uint64_t handle, int width, int height), {
-            REQUIRE(handle);
-            REQUIRE(self->openWindows_.count(handle));
-            REQUIRE(width > 0);
-            REQUIRE(height > 0);
-            INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
-        }),
-        CTX_CALLBACK(void, (
-            uint64_t handle,
-            void (*putImageFunc)(
-                void* putImageFuncData,
-                const uint8_t* image,
-                size_t width,
-                size_t height,
-                size_t pitch
-            ),
-            void* putImageFuncData
-        ), {
-            REQUIRE(handle);
-            REQUIRE(self->openWindows_.count(handle));
+            return 0;
+        }
+    });
 
-            uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
-                steady_clock::now().time_since_epoch()
-            ).count() >> 5);
+    callbacks.closeWindow = CTX_CALLBACK(void, (uint64_t handle), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Closing window ", handle);
+        self->openWindows_.erase(handle);
+    });
 
-            size_t width = 512;
-            size_t height = 256;
-            size_t pitch = 564;
-            vector<uint8_t> data(4 * pitch * height);
-            for(size_t y = 0; y < height; ++y) {
-                for(size_t x = 0; x < width; ++x) {
-                    for(size_t c = 0; c < 3; ++c) {
-                        data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
-                    }
+    callbacks.resizeWindow = CTX_CALLBACK(void, (uint64_t handle, int width, int height), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        REQUIRE(width > 0);
+        REQUIRE(height > 0);
+        INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
+    });
+
+    callbacks.fetchWindowImage = CTX_CALLBACK(void, (
+        uint64_t handle,
+        void (*putImageFunc)(
+            void* putImageFuncData,
+            const uint8_t* image,
+            size_t width,
+            size_t height,
+            size_t pitch
+        ),
+        void* putImageFuncData
+    ), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+
+        uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
+            steady_clock::now().time_since_epoch()
+        ).count() >> 5);
+
+        size_t width = 512;
+        size_t height = 256;
+        size_t pitch = 564;
+        vector<uint8_t> data(4 * pitch * height);
+        for(size_t y = 0; y < height; ++y) {
+            for(size_t x = 0; x < width; ++x) {
+                for(size_t c = 0; c < 3; ++c) {
+                    data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
                 }
             }
+        }
 
-            putImageFunc(putImageFuncData, data.data(), width, height, pitch);
-        })
-    );
+        putImageFunc(putImageFuncData, data.data(), width, height, pitch);
+    });
 
     plugin_->apiFuncs_->start(
         ctx_,
-        CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(void, (), {
-            if(!self->pumpEventsInQueue_.exchange(true)) {
-                postTask(self, &ViceContext::pumpEvents_);
-            }
-        }),
-        CTX_CALLBACK(void, (), {
-            self->shutdownComplete_();
-        }),
+        callbacks,
         callbackData
     );
 
