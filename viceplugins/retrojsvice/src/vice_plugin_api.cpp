@@ -200,7 +200,12 @@ API_FUNC_END
 
 API_EXPORT void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
-    void (*callback)(void* data, int logLevel, const char* location, const char* msg),
+    void (*callback)(
+        void* data,
+        VicePluginAPI_LogLevel logLevel,
+        const char* location,
+        const char* msg
+    ),
     void* data,
     void (*destructorCallback)(void* data)
 ) {
@@ -220,16 +225,16 @@ API_FUNC_START
                 const char* location,
                 const char* msg
             ) {
-                int logLevelID;
+                VicePluginAPI_LogLevel apiLogLevel;
                 if(logLevel == LogLevel::Error) {
-                    logLevelID = VICE_PLUGIN_API_LOG_LEVEL_ERROR;
+                    apiLogLevel = VICE_PLUGIN_API_LOG_LEVEL_ERROR;
                 } else if(logLevel == LogLevel::Warning) {
-                    logLevelID = VICE_PLUGIN_API_LOG_LEVEL_WARNING;
+                    apiLogLevel = VICE_PLUGIN_API_LOG_LEVEL_WARNING;
                 } else {
                     REQUIRE(logLevel == LogLevel::Info);
-                    logLevelID = VICE_PLUGIN_API_LOG_LEVEL_INFO;
+                    apiLogLevel = VICE_PLUGIN_API_LOG_LEVEL_INFO;
                 }
-                func(logLevelID, location, msg);
+                func(apiLogLevel, location, msg);
             }
         );
     }

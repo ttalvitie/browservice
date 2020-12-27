@@ -136,14 +136,6 @@ char* vicePluginAPI_getVersionString();
  *** API version 1000000 ***
  ***************************/
 
-/*************
- * Constants *
- *************/
-
-#define VICE_PLUGIN_API_LOG_LEVEL_INFO 0
-#define VICE_PLUGIN_API_LOG_LEVEL_WARNING 10
-#define VICE_PLUGIN_API_LOG_LEVEL_ERROR 20
-
 /*********
  * Types *
  *********/
@@ -231,6 +223,19 @@ struct VicePluginAPI_Callbacks {
 
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
+
+/* Type of log levels used in vicePluginAPI_setGlobalLogCallback. */
+enum VicePluginAPI_LogLevel {
+    VICE_PLUGIN_API_LOG_LEVEL_INFO = 0,
+    VICE_PLUGIN_API_LOG_LEVEL_WARNING = 10,
+    VICE_PLUGIN_API_LOG_LEVEL_ERROR = 20,
+
+    /* Value larger than any other enum value. Included in the enum to ensure binary compatibility
+     * when new values are added. Should NOT be used as a log level.
+     */
+    VICE_PLUGIN_API_LOG_LEVEL_HUGE_UNUSED = 1000000000
+};
+typedef enum VicePluginAPI_LogLevel VicePluginAPI_LogLevel;
 
 /**************************************
  * General context handling functions *
@@ -385,7 +390,12 @@ void vicePluginAPI_getOptionDocs(
  */
 void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
-    void (*callback)(void* data, int logLevel, const char* location, const char* msg),
+    void (*callback)(
+        void* data,
+        VicePluginAPI_LogLevel logLevel,
+        const char* location,
+        const char* msg
+    ),
     void* data,
     void (*destructorCallback)(void* data)
 );

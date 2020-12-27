@@ -49,7 +49,7 @@ char* createMallocString(string val) {
 
 void logCallback(
     void* filenamePtr,
-    int logLevel,
+    VicePluginAPI_LogLevel logLevel,
     const char* location,
     const char* msg
 ) {
