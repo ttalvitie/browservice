@@ -228,9 +228,9 @@ typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 
 /* Type of log levels used in vicePluginAPI_setGlobalLogCallback. */
 enum VicePluginAPI_LogLevel {
-    VICE_PLUGIN_API_LOG_LEVEL_INFO = 0,
-    VICE_PLUGIN_API_LOG_LEVEL_WARNING = 10,
-    VICE_PLUGIN_API_LOG_LEVEL_ERROR = 20,
+    VICE_PLUGIN_API_LOG_LEVEL_INFO = 100,
+    VICE_PLUGIN_API_LOG_LEVEL_WARNING = 200,
+    VICE_PLUGIN_API_LOG_LEVEL_ERROR = 300,
 
     /* Value larger than any other enum value. Included in the enum to ensure binary compatibility
      * when new values are added. Should NOT be used as a log level.
