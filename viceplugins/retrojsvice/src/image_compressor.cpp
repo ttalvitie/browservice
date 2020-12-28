@@ -143,6 +143,7 @@ ImageCompressor::ImageCompressor(CKey,
 
     compressedImage_ = serveWhiteJPEGPixel;
 
+    fetchingStopped_ = false;
     imageUpdated_ = false;
     compressedImageUpdated_ = false;
     compressionInProgress_ = false;
@@ -201,6 +202,11 @@ void ImageCompressor::sendCompressedImageWait(shared_ptr<HTTPRequest> httpReques
     }
 }
 
+void ImageCompressor::stopFetching() {
+    REQUIRE_API_THREAD();
+    fetchingStopped_ = true;
+}
+
 void ImageCompressor::flush() {
     REQUIRE_API_THREAD();
 
@@ -255,6 +261,7 @@ void ImageCompressor::afterConstruct_(shared_ptr<ImageCompressor> self) {
 
 tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
     REQUIRE_API_THREAD();
+    REQUIRE(!fetchingStopped_);
 
     vector<uint8_t> data;
     size_t width;
@@ -310,7 +317,12 @@ tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
 void ImageCompressor::pump_() {
     REQUIRE_API_THREAD();
 
-    if(compressionInProgress_ || !imageUpdated_ || compressedImageUpdated_) {
+    if(
+        fetchingStopped_ ||
+        compressionInProgress_ ||
+        !imageUpdated_ ||
+        compressedImageUpdated_
+    ) {
         return;
     }
 

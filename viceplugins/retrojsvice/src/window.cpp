@@ -47,6 +47,7 @@ void Window::close() {
 
     closed_ = true;
 
+    imageCompressor_->stopFetching();
     imageCompressor_->flush();
 
     REQUIRE(eventHandler_);

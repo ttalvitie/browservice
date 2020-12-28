@@ -54,6 +54,11 @@ public:
     // sendTimeout (given in constructor) is reached
     void sendCompressedImageWait(shared_ptr<HTTPRequest> httpRequest);
 
+    // Make sure that the compressor will never call onImageCompressorFetchImage
+    // again (effectively stopping the compressor from starting to compress new
+    // images)
+    void stopFetching();
+
     // Flush possible pending sendCompressedImageWait request with the latest
     // image available immediately
     void flush();
@@ -103,6 +108,7 @@ private:
     shared_ptr<DelayedTaskTag> waitTag_;
     CompressedImage compressedImage_;
 
+    bool fetchingStopped_;
     bool imageUpdated_;
     bool compressedImageUpdated_;
     bool compressionInProgress_;
