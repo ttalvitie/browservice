@@ -185,9 +185,11 @@ struct VicePluginAPI_Callbacks {
     /* Called by the plugin to request that the view image size for given window should be
      * width x height, where width > 0 and height > 0. While the program is not required to obey the
      * request in subsequent fetchWindowImage calls, it should attempt to follow the request as
-     * closely as possible as soon as possible.
+     * closely as possible as soon as possible. Typically, the plugin should call this function
+     * after the creation of each window (in addition to window resizes) because this is the only
+     * way for the plugin to signal its preference on the window view size.
      */
-    void (*resizeWindow)(void*, uint64_t handle, int width, int height);
+    void (*resizeWindow)(void*, uint64_t handle, size_t width, size_t height);
 
     /* Called by the plugin to fetch the newest available view image of a window for rendering. The
      * function must call the supplied callback putImageFunc exactly once before returning. The

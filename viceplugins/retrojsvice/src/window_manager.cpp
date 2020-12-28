@@ -94,6 +94,18 @@ void WindowManager::onWindowClose(uint64_t handle) {
     eventHandler_->onWindowManagerCloseWindow(handle);
 }
 
+void WindowManager::onWindowResize(
+    uint64_t handle,
+    size_t width,
+    size_t height
+) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerResizeWindow(handle, width, height);
+}
+
 void WindowManager::onWindowFetchImage(
     uint64_t handle,
     function<void(const uint8_t*, size_t, size_t, size_t)> func

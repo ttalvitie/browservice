@@ -24,6 +24,9 @@ Window::Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handl
     handle_ = handle;
     closed_ = false;
 
+    prevWidth_ = -1;
+    prevHeight_ = -1;
+
     prePrevVisited_ = false;
     preMainVisited_ = false;
     prevNextClicked_ = false;
@@ -279,7 +282,21 @@ void Window::handleImageRequest_(
         handleEvents_(startEventIdx, move(eventStr));
         curImgIdx_ = imgIdx;
 
-        INFO_LOG("TODO: set image size to ", width, "x", height);
+        width = min(max(width, 1), 16384);
+        height = min(max(height, 1), 16384);
+
+        if(width != prevWidth_ || height != prevHeight_) {
+            prevWidth_ = width;
+            prevHeight_ = height;
+
+            REQUIRE(eventHandler_);
+            eventHandler_->onWindowResize(
+                handle_,
+                (size_t)width,
+                (size_t)height
+            );
+        }
+
         if(immediate) {
             imageCompressor_->sendCompressedImageNow(mce, request);
         } else {

@@ -5,13 +5,17 @@ namespace retrojsvice {
 
 class WindowEventHandler {
 public:
-    // Exceptionally, onWindowClose is called directly instead of the task queue
-    // to ensure atomicity of window destruction
     // When called, the window is closed immediately (after the call, no more
     // event handlers will be called and none of the member functions of Window
     // may be called; the Window also drops the shared pointer to the event
     // handler).
     virtual void onWindowClose(uint64_t handle) = 0;
+
+    virtual void onWindowResize(
+        uint64_t handle,
+        size_t width,
+        size_t height
+    ) = 0;
 
     // See ImageCompressorEventHandler::onImageCompressorFetchImage
     virtual void onWindowFetchImage(
@@ -77,6 +81,9 @@ private:
 
     shared_ptr<ImageCompressor> imageCompressor_;
     shared_ptr<DelayedTaskTag> animationTag_;
+
+    int prevWidth_;
+    int prevHeight_;
 
     bool prePrevVisited_;
     bool preMainVisited_;

@@ -356,11 +356,19 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         self->openWindows_.erase(handle);
     });
 
-    callbacks.resizeWindow = CTX_CALLBACK(void, (uint64_t handle, int width, int height), {
+    callbacks.resizeWindow = CTX_CALLBACK(void, (
+        uint64_t handle,
+        size_t width,
+        size_t height
+    ), {
         REQUIRE(handle);
         REQUIRE(self->openWindows_.count(handle));
-        REQUIRE(width > 0);
-        REQUIRE(height > 0);
+        REQUIRE(width);
+        REQUIRE(height);
+
+        width = max(min(width, (size_t)4096), (size_t)64);
+        height = max(min(height, (size_t)4096), (size_t)64);
+
         INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
     });
 

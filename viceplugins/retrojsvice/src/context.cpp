@@ -402,6 +402,22 @@ void Context::onWindowManagerCloseWindow(uint64_t handle) {
     callbacks_.closeWindow(callbackData_, handle);
 }
 
+void Context::onWindowManagerResizeWindow(
+    uint64_t handle,
+    size_t width,
+    size_t height
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    width = max(width, (size_t)1);
+    height = max(height, (size_t)1);
+
+    REQUIRE(callbacks_.resizeWindow != nullptr);
+    callbacks_.resizeWindow(callbackData_, handle, width, height);
+}
+
 void Context::onWindowManagerFetchImage(
     uint64_t handle,
     function<void(const uint8_t*, size_t, size_t, size_t)> func

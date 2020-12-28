@@ -7,6 +7,12 @@ public:
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() = 0;
     virtual void onWindowManagerCloseWindow(uint64_t handle) = 0;
 
+    virtual void onWindowManagerResizeWindow(
+        uint64_t handle,
+        size_t width,
+        size_t height
+    ) = 0;
+
     // See ImageCompressorEventHandler::onImageCompressorFetchImage
     virtual void onWindowManagerFetchImage(
         uint64_t handle,
@@ -38,6 +44,11 @@ public:
 
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t handle) override;
+    virtual void onWindowResize(
+        uint64_t handle,
+        size_t width,
+        size_t height
+    ) override;
     virtual void onWindowFetchImage(
         uint64_t handle,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
