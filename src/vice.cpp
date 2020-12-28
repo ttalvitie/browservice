@@ -337,7 +337,10 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
             } while(self->openWindows_.count(handle));
 
             INFO_LOG("Window callback stub: Creating window ", handle);
-            REQUIRE(self->openWindows_.insert(handle).second);
+            WindowData data;
+            data.width = 512;
+            data.height = 512;
+            REQUIRE(self->openWindows_.emplace(handle, data).second);
 
             return handle;
         } else {
@@ -369,7 +372,9 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         width = max(min(width, (size_t)4096), (size_t)64);
         height = max(min(height, (size_t)4096), (size_t)64);
 
-        INFO_LOG("Window callback stub: Resizing window ", handle, " to size ", width, "x", height);
+        WindowData& windowData = self->openWindows_[handle];
+        windowData.width = (int)width;
+        windowData.height = (int)height;
     });
 
     callbacks.fetchWindowImage = CTX_CALLBACK(void, (
@@ -385,14 +390,15 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     ), {
         REQUIRE(handle);
         REQUIRE(self->openWindows_.count(handle));
+        const WindowData& windowData = self->openWindows_[handle];
 
         uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
             steady_clock::now().time_since_epoch()
         ).count() >> 5);
 
-        size_t width = 512;
-        size_t height = 256;
-        size_t pitch = 564;
+        size_t width = windowData.width;
+        size_t height = windowData.height;
+        size_t pitch = width;
         vector<uint8_t> data(4 * pitch * height);
         for(size_t y = 0; y < height; ++y) {
             for(size_t x = 0; x < width; ++x) {
@@ -483,7 +489,8 @@ void ViceContext::animate_() {
     REQUIRE_UI_THREAD();
     if(state_ != Running || shutdownPending_) return;
 
-    for(uint64_t handle : openWindows_) {
+    for(const pair<uint64_t, WindowData>& p : openWindows_) {
+        uint64_t handle = p.first;
         plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, handle);
     }
 

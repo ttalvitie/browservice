@@ -100,7 +100,11 @@ private:
 
     void* callbackData_;
 
-    set<uint64_t> openWindows_;
+    struct WindowData {
+        int width;
+        int height;
+    };
+    map<uint64_t, WindowData> openWindows_;
 
     shared_ptr<Timeout> animationTimeout_;
 };
