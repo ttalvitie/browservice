@@ -41,14 +41,16 @@ Window::~Window() {
     REQUIRE(closed_);
 }
 
-void Window::close() {
+void Window::close(MCE) {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
 
     closed_ = true;
 
+    // stopFetching will make sure that imageCompressor_->flush will not call
+    // event handlers
     imageCompressor_->stopFetching();
-    imageCompressor_->flush();
+    imageCompressor_->flush(mce);
 
     REQUIRE(eventHandler_);
     eventHandler_->onWindowClose(handle_);
@@ -56,7 +58,7 @@ void Window::close() {
     eventHandler_.reset();
 }
 
-void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
+void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
 
     if(closed_) {
@@ -85,6 +87,7 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
 
         if(mainIdx && imgIdx && immediate && width && height && startEventIdx) {
             handleImageRequest_(
+                mce,
                 request,
                 *mainIdx,
                 *imgIdx,
@@ -110,11 +113,11 @@ void Window::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
-void Window::notifyViewChanged() {
+void Window::notifyViewChanged(MCE) {
     REQUIRE_API_THREAD();
 
     if(!closed_) {
-        imageCompressor_->updateNotify();
+        imageCompressor_->updateNotify(mce);
     }
 }
 
@@ -145,11 +148,12 @@ void Window::updateInactivityTimeout_(bool shorten) {
         milliseconds(shorten ? 4000 : 30000),
         weak_ptr<Window>(shared_from_this()),
         &Window::inactivityTimeoutReached_,
+        mce,
         shorten
     );
 }
 
-void Window::inactivityTimeoutReached_(bool shortened) {
+void Window::inactivityTimeoutReached_(MCE, bool shortened) {
     REQUIRE_API_THREAD();
     if(closed_) return;
 
@@ -157,7 +161,7 @@ void Window::inactivityTimeoutReached_(bool shortened) {
         "Closing window ", handle_, " due to inactivity timeout",
         (shortened ? " (shortened due to client close signal)" : "")
     );
-    close();
+    close(mce);
 }
 
 void Window::handleEvents_(uint64_t startIdx, string eventStr) {
@@ -253,6 +257,7 @@ void Window::handleMainPageRequest_(shared_ptr<HTTPRequest> request) {
 }
 
 void Window::handleImageRequest_(
+    MCE,
     shared_ptr<HTTPRequest> request,
     uint64_t mainIdx,
     uint64_t imgIdx,
@@ -272,9 +277,9 @@ void Window::handleImageRequest_(
 
         INFO_LOG("TODO: set image size to ", width, "x", height);
         if(immediate) {
-            imageCompressor_->sendCompressedImageNow(request);
+            imageCompressor_->sendCompressedImageNow(mce, request);
         } else {
-            imageCompressor_->sendCompressedImageWait(request);
+            imageCompressor_->sendCompressedImageWait(mce, request);
         }
     }
 }

@@ -158,46 +158,50 @@ ImageCompressor::~ImageCompressor() {
     compressorThread_.join();
 }
 
-void ImageCompressor::setQuality(int quality) {
+void ImageCompressor::setQuality(MCE, int quality) {
     REQUIRE_API_THREAD();
     REQUIRE(quality >= MinQuality && quality <= getMaxQuality(allowPNG_));
 
     if(quality != quality_) {
         quality_ = quality;
-        updateNotify();
+        updateNotify(mce);
     }
 }
 
-void ImageCompressor::updateNotify() {
+void ImageCompressor::updateNotify(MCE) {
     REQUIRE_API_THREAD();
 
     imageUpdated_ = true;
-    pump_();
+    pump_(mce);
 }
 
-void ImageCompressor::sendCompressedImageNow(shared_ptr<HTTPRequest> httpRequest) {
+void ImageCompressor::sendCompressedImageNow(MCE,
+    shared_ptr<HTTPRequest> httpRequest
+) {
     REQUIRE_API_THREAD();
 
-    flush();
+    flush(mce);
 
     compressedImage_(httpRequest);
 
     compressedImageUpdated_ = false;
-    pump_();
+    pump_(mce);
 }
 
-void ImageCompressor::sendCompressedImageWait(shared_ptr<HTTPRequest> httpRequest) {
+void ImageCompressor::sendCompressedImageWait(MCE,
+    shared_ptr<HTTPRequest> httpRequest
+) {
     REQUIRE_API_THREAD();
 
-    flush();
+    flush(mce);
 
     if(compressedImageUpdated_) {
-        sendCompressedImageNow(httpRequest);
+        sendCompressedImageNow(mce, httpRequest);
     } else {
         shared_ptr<ImageCompressor> self = shared_from_this();
         waitTag_ = postDelayedTask(sendTimeout_, [self, httpRequest]() {
             REQUIRE_API_THREAD();
-            self->sendCompressedImageNow(httpRequest);
+            self->sendCompressedImageNow(mce, httpRequest);
         });
     }
 }
@@ -207,7 +211,7 @@ void ImageCompressor::stopFetching() {
     fetchingStopped_ = true;
 }
 
-void ImageCompressor::flush() {
+void ImageCompressor::flush(MCE) {
     REQUIRE_API_THREAD();
 
     if(waitTag_) {
@@ -215,23 +219,23 @@ void ImageCompressor::flush() {
     }
 }
 
-void ImageCompressor::setIframeSignal(int signal) {
+void ImageCompressor::setIframeSignal(MCE, int signal) {
     REQUIRE_API_THREAD();
     REQUIRE(signal >= 0 && signal < IframeSignalCount);
 
     if(iframeSignal_ != signal) {
         iframeSignal_ = signal;
-        updateNotify();
+        updateNotify(mce);
     }
 }
 
-void ImageCompressor::setCursorSignal(int signal) {
+void ImageCompressor::setCursorSignal(MCE, int signal) {
     REQUIRE_API_THREAD();
     REQUIRE(signal >= 0 && signal < CursorSignalCount);
 
     if(cursorSignal_ != signal) {
         cursorSignal_ = signal;
-        updateNotify();
+        updateNotify(mce);
     }
 }
 
@@ -259,7 +263,7 @@ void ImageCompressor::afterConstruct_(shared_ptr<ImageCompressor> self) {
     });
 }
 
-tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
+tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_(MCE) {
     REQUIRE_API_THREAD();
     REQUIRE(!fetchingStopped_);
 
@@ -314,7 +318,7 @@ tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_() {
     return {move(data), width, height};
 }
 
-void ImageCompressor::pump_() {
+void ImageCompressor::pump_(MCE) {
     REQUIRE_API_THREAD();
 
     if(
@@ -334,7 +338,7 @@ void ImageCompressor::pump_() {
     vector<uint8_t> imageData;
     size_t imageWidth;
     size_t imageHeight;
-    tie(imageData, imageWidth, imageHeight) = fetchImage_();
+    tie(imageData, imageWidth, imageHeight) = fetchImage_(mce);
 
     shared_ptr<ImageCompressor> self = shared_from_this();
     shared_ptr<PNGCompressor> pngCompressor = pngCompressor_;
@@ -355,7 +359,7 @@ void ImageCompressor::pump_() {
                 compressJPEG_(imageData, imageWidth, imageHeight, quality);
         }
 
-        postTask(self, &ImageCompressor::compressTaskDone_, compressedImage);
+        postTask(self, &ImageCompressor::compressTaskDone_, mce, compressedImage);
     };
 
     {
@@ -367,7 +371,7 @@ void ImageCompressor::pump_() {
     compressorCv_.notify_one();
 }
 
-void ImageCompressor::compressTaskDone_(CompressedImage compressedImage) {
+void ImageCompressor::compressTaskDone_(MCE, CompressedImage compressedImage) {
     REQUIRE_API_THREAD();
     REQUIRE(compressionInProgress_);
 
@@ -375,7 +379,7 @@ void ImageCompressor::compressTaskDone_(CompressedImage compressedImage) {
     compressedImageUpdated_ = true;
     compressedImage_ = compressedImage;
 
-    flush();
+    flush(mce);
 }
 
 }

@@ -271,4 +271,14 @@ char* createMallocString(string val);
 // plugin API function and to false when exiting the function).
 extern thread_local bool inAPIThread_;
 
+// Marker object used as first argument in class member functions to annotate
+// that the function May Call Event handlers registered to the class directly.
+// This makes sure that the caller is aware of this possibility, because the
+// caller has to specify the argument explicitly. In addition, adding this
+// argument retroactively to a function will ensure that the API compatibility
+// breaks, ensuring that all the places where the function is called from are
+// checked.
+struct MCE {};
+extern MCE mce;
+
 }

@@ -24,7 +24,7 @@ WindowManager::~WindowManager() {
     REQUIRE(closed_);
 }
 
-void WindowManager::close() {
+void WindowManager::close(MCE) {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
 
@@ -36,14 +36,14 @@ void WindowManager::close() {
 
         INFO_LOG("Closing window ", handle, " due to plugin shutdown");
 
-        window->close();
+        window->close(mce);
         REQUIRE(!windows_.count(handle));
     }
 
     eventHandler_.reset();
 }
 
-void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
+void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
 
     if(closed_) {
@@ -55,7 +55,7 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        handleNewWindowRequest_(request);
+        handleNewWindowRequest_(mce, request);
         return;
     }
 
@@ -67,7 +67,7 @@ void WindowManager::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             auto it = windows_.find(*handle);
             if(it != windows_.end()) {
                 shared_ptr<Window> window = it->second;
-                window->handleHTTPRequest(request);
+                window->handleHTTPRequest(mce, request);
             } else {
                 request->sendTextResponse(400, "ERROR: Invalid window handle\n");
             }
@@ -108,7 +108,7 @@ void WindowManager::onWindowFetchImage(
     eventHandler_->onWindowManagerFetchImage(handle, func);
 }
 
-void WindowManager::handleNewWindowRequest_(shared_ptr<HTTPRequest> request) {
+void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
     REQUIRE(!closed_);
     REQUIRE(eventHandler_);
 

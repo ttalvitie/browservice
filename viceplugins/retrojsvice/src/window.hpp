@@ -34,12 +34,12 @@ public:
     ~Window();
 
     // Immediately closes the window, calling WindowEventHandler::onWindowClose
-    // directly
-    void close();
+    // directly. Will not call any other event handlers.
+    void close(MCE);
 
-    void handleHTTPRequest(shared_ptr<HTTPRequest> request);
+    void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
-    void notifyViewChanged();
+    void notifyViewChanged(MCE);
 
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(
@@ -50,7 +50,7 @@ private:
     void afterConstruct_(shared_ptr<Window> self);
 
     void updateInactivityTimeout_(bool shorten = false);
-    void inactivityTimeoutReached_(bool shortened);
+    void inactivityTimeoutReached_(MCE, bool shortened);
 
     void handleEvents_(uint64_t startIdx, string eventStr);
 
@@ -58,6 +58,7 @@ private:
 
     void handleMainPageRequest_(shared_ptr<HTTPRequest> request);
     void handleImageRequest_(
+        MCE,
         shared_ptr<HTTPRequest> request,
         uint64_t mainIdx,
         uint64_t imgIdx,

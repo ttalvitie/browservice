@@ -6,12 +6,14 @@ namespace retrojsvice {
 
 class TaskQueueEventHandler {
 public:
-    // May be called from any thread at any time to signal that
-    // TaskQueue::runTasks needs to be called.
+    // Exceptionally, may be called from any thread at any time to signal that
+    // TaskQueue::runTasks needs to be called. (MCE annotations do not concern
+    // this function).
     virtual void onTaskQueueNeedsRunTasks() = 0;
 
-    // Called directly to signal that shutdown has completed, which means that
-    // no more tasks may be posted and the task queue may be destructed.
+    // Called to signal that shutdown has completed, which means that no more
+    // tasks may be posted, onTaskQueueNeedsRunTasks will not be called anymore
+    // and the task queue may be destructed.
     virtual void onTaskQueueShutdownComplete() = 0;
 };
 
@@ -31,7 +33,7 @@ class DelayedTaskTag;
 // using ActiveTaskQueueLock.
 //
 // Before destruction, the task queue must be shut down by calling shutdown and
-// waiting for the onTaskQueueShutdownComplete event. 
+// waiting for the onTaskQueueShutdownComplete event (called by runTasks).
 class TaskQueue {
 SHARED_ONLY_CLASS(TaskQueue);
 public:
@@ -41,7 +43,7 @@ public:
 
     ~TaskQueue();
 
-    void runTasks();
+    void runTasks(MCE);
 
     // Start shutting down the queue. The shutdown will complete the next time
     // the queue is completely empty. Upon completion, the

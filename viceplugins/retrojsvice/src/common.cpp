@@ -93,4 +93,6 @@ char* createMallocString(string val) {
 
 thread_local bool inAPIThread_ = false;
 
+MCE mce;
+
 }

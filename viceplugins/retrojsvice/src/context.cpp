@@ -238,7 +238,9 @@ void Context::shutdown() {
         REQUIRE(self->shutdownPhase_ == WaitWindowManager);
 
         REQUIRE(self->windowManager_);
-        self->windowManager_->close();
+
+        // Will only result in onWindowManagerCloseWindow events
+        self->windowManager_->close(mce);
 
         self->shutdownPhase_ = WaitHTTPServer;
 
@@ -253,7 +255,7 @@ void Context::pumpEvents() {
     REQUIRE(!threadRunningPumpEvents);
     threadRunningPumpEvents = true;
 
-    taskQueue_->runTasks();
+    taskQueue_->runTasks(mce);
 
     threadRunningPumpEvents = false;
 }
@@ -264,7 +266,7 @@ void Context::notifyWindowViewChanged(uint64_t handle) {
     shared_ptr<Window> window = windowManager_->tryGetWindow(handle);
     REQUIRE(window);
 
-    postTask(window, &Window::notifyViewChanged);
+    postTask(window, &Window::notifyViewChanged, mce);
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
@@ -340,7 +342,7 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         }
     }
 
-    windowManager_->handleHTTPRequest(request);
+    windowManager_->handleHTTPRequest(mce, request);
 }
 
 void Context::onHTTPServerShutdownComplete() {

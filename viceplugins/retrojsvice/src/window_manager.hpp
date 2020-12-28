@@ -4,9 +4,6 @@ namespace retrojsvice {
 
 class WindowManagerEventHandler {
 public:
-    // Exceptionally, onWindowManagerCreateWindowRequest and
-    // onWindowManagerCloseWindow are called directly instead of the task queue
-    // to ensure atomicity of window creation and destruction
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() = 0;
     virtual void onWindowManagerCloseWindow(uint64_t handle) = 0;
 
@@ -19,7 +16,7 @@ public:
 
 class HTTPRequest;
 
-// Must be closed with close() prior to destruction
+// Must be closed with close() prior to destruction.
 class WindowManager :
     public WindowEventHandler,
     public enable_shared_from_this<WindowManager>
@@ -30,12 +27,12 @@ public:
     ~WindowManager();
 
     // Immediately closes all windows and prevents new windows from being
-    // created; new HTTP requests are dropped immediately. Calls
+    // created; new HTTP requests are dropped immediately. May call
     // WindowManagerEventHandler::onCloseWindow directly and drops shared
-    // pointer to event handler.
-    void close();
+    // pointer to event handler. Will not call any other event handlers.
+    void close(MCE);
 
-    void handleHTTPRequest(shared_ptr<HTTPRequest> request);
+    void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
     shared_ptr<Window> tryGetWindow(uint64_t handle);
 
@@ -47,7 +44,7 @@ public:
     ) override;
 
 private:
-    void handleNewWindowRequest_(shared_ptr<HTTPRequest> request);
+    void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request);
 
     shared_ptr<WindowManagerEventHandler> eventHandler_;
     bool closed_;

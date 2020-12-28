@@ -23,7 +23,7 @@ TaskQueue::~TaskQueue() {
     REQUIRE(state_ == ShutdownComplete);
 }
 
-void TaskQueue::runTasks() {
+void TaskQueue::runTasks(MCE) {
     REQUIRE_API_THREAD();
 
     REQUIRE(!runningTasks_);
