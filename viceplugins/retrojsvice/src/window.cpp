@@ -141,6 +141,7 @@ void Window::afterConstruct_(shared_ptr<Window> self) {
     imageCompressor_ = ImageCompressor::create(self, milliseconds(2000), true, 100); // TODO set parameters
 
     updateInactivityTimeout_();
+    notifyViewChanged();
 }
 
 void Window::updateInactivityTimeout_(bool shorten) {
