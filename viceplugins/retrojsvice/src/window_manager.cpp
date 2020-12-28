@@ -78,15 +78,12 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
-shared_ptr<Window> WindowManager::tryGetWindow(uint64_t handle) {
+void WindowManager::notifyViewChanged(uint64_t handle) {
     REQUIRE_API_THREAD();
 
     auto it = windows_.find(handle);
-    if(it == windows_.end()) {
-        return shared_ptr<Window>();
-    } else {
-        return it->second;
-    }
+    REQUIRE(it != windows_.end());
+    it->second->notifyViewChanged();
 }
 
 void WindowManager::onWindowClose(uint64_t handle) {

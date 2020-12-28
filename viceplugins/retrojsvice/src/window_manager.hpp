@@ -34,7 +34,7 @@ public:
 
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
-    shared_ptr<Window> tryGetWindow(uint64_t handle);
+    void notifyViewChanged(uint64_t handle);
 
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t handle) override;

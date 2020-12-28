@@ -39,7 +39,7 @@ public:
 
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
-    void notifyViewChanged(MCE);
+    void notifyViewChanged();
 
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(

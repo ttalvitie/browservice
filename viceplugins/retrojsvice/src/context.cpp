@@ -263,10 +263,7 @@ void Context::pumpEvents() {
 void Context::notifyWindowViewChanged(uint64_t handle) {
     RunningAPILock apiLock(this);
 
-    shared_ptr<Window> window = windowManager_->tryGetWindow(handle);
-    REQUIRE(window);
-
-    postTask(window, &Window::notifyViewChanged, mce);
+    windowManager_->notifyViewChanged(handle);
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {

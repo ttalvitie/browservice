@@ -113,12 +113,15 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
-void Window::notifyViewChanged(MCE) {
+void Window::notifyViewChanged() {
     REQUIRE_API_THREAD();
 
-    if(!closed_) {
-        imageCompressor_->updateNotify(mce);
-    }
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self]() {
+        if(!self->closed_) {
+            self->imageCompressor_->updateNotify(mce);
+        }
+    });
 }
 
 void Window::onImageCompressorFetchImage(
