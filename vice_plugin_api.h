@@ -52,13 +52,14 @@ extern "C" {
  *       - The program may call API functions directly; however, it must never make two API function
  *         calls concerning the same context concurrently.
  *
- *       - To avoid concurrency issues, the plugin context must not call callbacks directly from its
- *         background threads (except when specifically permitted by the documentation). Instead, it
- *         is synchronized to the program event loop as follows: The plugin notifies the program
- *         that it has events to process by calling the special eventNotify callback in any thread
- *         at any time. After a notification like this, the program should call
- *         vicePlugin_pumpEvents as soon as possible. The implementation of vicePlugin_pumpEvents
- *         may then call the other callbacks directly.
+ *       - To avoid concurrency and reentrancy issues, the plugin context must not call callbacks
+ *         directly from its background threads or API functions invoked by the program (except when
+ *         specifically permitted by the documentation). Instead, it is synchronized to the program
+ *         event loop as follows: The plugin notifies the program when it has events to process by
+ *         calling the special eventNotify callback in any thread at any time. After a notification
+ *         like this, the program should call vicePlugin_pumpEvents as soon as possible. The
+ *         implementation of vicePlugin_pumpEvents may then advance the task queue of the plugin and
+ *         call the callbacks provided by the program directly.
  *
  *     While the plugin context is running, the following kinds of things happen:
  *
@@ -355,7 +356,7 @@ void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
  *
  * To shut down the plugin, the program must call vicePluginAPI_shutdown and continue running
  * normally until callbacks.shutdownComplete is called. After this, both the program and the plugin
- * must immediately stop calling API functions and callbacks (except for
+ * must immediately stop calling API functions and callbacks for this context (except for
  * vicePluginAPI_destroyContext).
  */
 void vicePluginAPI_start(
