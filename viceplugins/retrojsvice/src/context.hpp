@@ -82,6 +82,8 @@ public:
     virtual void onWindowManagerMouseLeave(
         uint64_t window, int x, int y
     ) override;
+    virtual void onWindowManagerKeyDown(uint64_t window, int key) override;
+    virtual void onWindowManagerKeyUp(uint64_t window, int key) override;
     virtual void onWindowManagerLoseFocus(uint64_t window) override;
 
 private:

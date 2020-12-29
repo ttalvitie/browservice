@@ -2,6 +2,7 @@
 
 #include "html.hpp"
 #include "http.hpp"
+#include "key.hpp"
 
 namespace retrojsvice {
 
@@ -224,6 +225,39 @@ bool Window::handleTokenizedEvent_(MCE,
         eventHandler_->onWindowMouseLeave(handle_, x, y);
         return true;
     }
+
+    auto keyDown = [&](int key) {
+        keysDown_.insert(key);
+        eventHandler_->onWindowKeyDown(handle_, key);
+    };
+    auto keyUp = [&](int key) {
+        if(keysDown_.erase(key)) {
+            eventHandler_->onWindowKeyUp(handle_, key);
+        }
+    };
+
+    if(name == "KDN" && argCount == 1) {
+        int key = -args[0];
+        if(key < 0 && isValidKey(key)) {
+            keyDown(key);
+        }
+        return true;
+    }
+    if(name == "KUP" && argCount == 1) {
+        int key = -args[0];
+        if(key < 0 && isValidKey(key)) {
+            keyUp(key);
+        }
+        return true;
+    }
+    if(name == "KPR" && argCount == 1) {
+        int key = args[0];
+        if(key > 0 && isValidKey(key)) {
+            keyDown(key);
+            keyUp(key);
+        }
+        return true;
+    }
     if(name == "FOUT" && argCount == 0) {
         eventHandler_->onWindowLoseFocus(handle_);
         return true;
@@ -358,13 +392,18 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
         prevNextClicked_ = false;
 
         if(curMainIdx_ > 1) {
-            // Make sure that no mouse buttons are stuck down and the focus and
-            // mouseover state is reset
+            // Make sure that no mouse buttons or keys are stuck down and the
+            // focus and mouseover state is reset
             REQUIRE(eventHandler_);
             while(!mouseButtonsDown_.empty()) {
                 int button = *mouseButtonsDown_.begin();
-                mouseButtonsDown_.erase(button);
+                mouseButtonsDown_.erase(mouseButtonsDown_.begin());
                 eventHandler_->onWindowMouseUp(handle_, 0, 0, button);
+            }
+            while(!keysDown_.empty()) {
+                int key = *keysDown_.begin();
+                keysDown_.erase(keysDown_.begin());
+                eventHandler_->onWindowKeyUp(handle_, key);
             }
             eventHandler_->onWindowMouseLeave(handle_, 0, 0);
             eventHandler_->onWindowLoseFocus(handle_);
@@ -375,7 +414,7 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
         request->sendHTMLResponse(
             200,
             writeMainHTML,
-            {handle_, curMainIdx_}// TODO:, validNonCharKeyList}
+            {handle_, curMainIdx_, validNonCharKeyList}
         );
     } else {
         request->sendHTMLResponse(200, writePreMainHTML, {handle_});

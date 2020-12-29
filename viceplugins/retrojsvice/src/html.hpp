@@ -17,6 +17,7 @@ void writePreMainHTML(ostream& out, const PreMainHTMLData& data);
 struct MainHTMLData {
     uint64_t handle;
     uint64_t mainIdx;
+    const string& nonCharKeyList;
 };
 void writeMainHTML(ostream& out, const MainHTMLData& data);
 

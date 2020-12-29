@@ -445,14 +445,32 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     callbacks.mouseWheel = CTX_CALLBACK(void, (
         uint64_t handle, int x, int y, int dx, int dy
     ), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
         INFO_LOG("Window callback stub: Mouse wheel delta (", dx, ", ", dy, ") at (", x, ", ", y, ") in ", handle);
     });
 
     callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
         INFO_LOG("Window callback stub: Mouse leave at (", x, ", ", y, ") in ", handle);
     });
 
+    callbacks.keyDown = CTX_CALLBACK(void, (uint64_t handle, int key), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Key ", key, " down in ", handle);
+    });
+
+    callbacks.keyUp = CTX_CALLBACK(void, (uint64_t handle, int key), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Key ", key, " up in ", handle);
+    });
+
     callbacks.loseFocus = CTX_CALLBACK(void, (uint64_t handle), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
         INFO_LOG("Window callback stub: Focus loss in ", handle);
     });
 

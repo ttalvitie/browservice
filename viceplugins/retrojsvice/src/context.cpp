@@ -505,6 +505,24 @@ void Context::onWindowManagerMouseLeave(uint64_t window, int x, int y) {
     callbacks_.mouseLeave(callbackData_, window, x, y);
 }
 
+void Context::onWindowManagerKeyDown(uint64_t window, int key) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(window);
+
+    REQUIRE(callbacks_.keyDown != nullptr);
+    callbacks_.keyDown(callbackData_, window, key);
+}
+
+void Context::onWindowManagerKeyUp(uint64_t window, int key) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(window);
+
+    REQUIRE(callbacks_.keyUp != nullptr);
+    callbacks_.keyUp(callbackData_, window, key);
+}
+
 void Context::onWindowManagerLoseFocus(uint64_t window) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);

@@ -30,6 +30,9 @@ public:
     virtual void onWindowMouseWheel(uint64_t window, int x, int y, int delta) = 0;
     virtual void onWindowMouseLeave(uint64_t window, int x, int y) = 0;
 
+    virtual void onWindowKeyDown(uint64_t window, int key) = 0;
+    virtual void onWindowKeyUp(uint64_t window, int key) = 0;
+
     virtual void onWindowLoseFocus(uint64_t window) = 0;
 };
 
@@ -104,6 +107,7 @@ private:
     int height_;
 
     set<int> mouseButtonsDown_;
+    set<int> keysDown_;
 
     bool prePrevVisited_;
     bool preMainVisited_;

@@ -231,10 +231,18 @@ struct VicePluginAPI_Callbacks {
      * appropriate.
      *
      * Guidelines for event interpretation:
+     *
      *   - Left, middle and right mouse button numbers are 0, 1 and 2, respectively.
+     *
      *   - Mouse wheel delta is positive for scrolling down/right, negative for scrolling up/left.
-     *   - Mouse wheel delta for one line of text is in the ballpark of 20.
-     *   - TODO: key events
+     *     The delta for one line of text is in the ballpark of 20.
+     *
+     *   - Positive key codes correspond to character keys. Each positive key code is equal to the
+     *     Unicode code point of the corresponding (modified) character.
+     *
+     *   - Negative key codes correspond to non-character keys. Each negative key code is the
+     *     negation of the corresponding Windows key code. The enum VicePluginAPI_Keys contains a
+     *     non-exhaustive list of the most important non-character key codes.
      */
     void (*mouseDown)(void*, uint64_t window, int x, int y, int button);
     void (*mouseUp)(void*, uint64_t window, int x, int y, int button);
@@ -242,10 +250,53 @@ struct VicePluginAPI_Callbacks {
     void (*mouseDoubleClick)(void*, uint64_t window, int x, int y, int button);
     void (*mouseWheel)(void*, uint64_t window, int x, int y, int dx, int dy);
     void (*mouseLeave)(void*, uint64_t window, int x, int y);
+    void (*keyDown)(void*, uint64_t window, int key);
+    void (*keyUp)(void*, uint64_t window, int key);
     void (*loseFocus)(void*, uint64_t window);
 
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
+
+/* Enum containing a non-exhaustive list of the most important non-character key codes (negations of
+ * the corresponding Windows key codes), as used in the keyDown and keyUp callbacks.
+ */
+enum VicePluginAPI_Keys {
+    VICE_PLUGIN_API_KEY_BACKSPACE = -8,
+    VICE_PLUGIN_API_KEY_TAB = -9,
+    VICE_PLUGIN_API_KEY_ENTER = -13,
+    VICE_PLUGIN_API_KEY_SHIFT = -16,
+    VICE_PLUGIN_API_KEY_CONTROL = -17,
+    VICE_PLUGIN_API_KEY_ALT = -18,
+    VICE_PLUGIN_API_KEY_CAPSLOCK = -20,
+    VICE_PLUGIN_API_KEY_ESC = -27,
+    VICE_PLUGIN_API_KEY_SPACE = -32,
+    VICE_PLUGIN_API_KEY_PAGEUP = -33,
+    VICE_PLUGIN_API_KEY_PAGEDOWN = -34,
+    VICE_PLUGIN_API_KEY_END = -35,
+    VICE_PLUGIN_API_KEY_HOME = -36,
+    VICE_PLUGIN_API_KEY_LEFT = -37,
+    VICE_PLUGIN_API_KEY_UP = -38,
+    VICE_PLUGIN_API_KEY_RIGHT = -39,
+    VICE_PLUGIN_API_KEY_DOWN = -40,
+    VICE_PLUGIN_API_KEY_INSERT = -45,
+    VICE_PLUGIN_API_KEY_DELETE = -46,
+    VICE_PLUGIN_API_KEY_WIN = -91,
+    VICE_PLUGIN_API_KEY_MENU = -93,
+    VICE_PLUGIN_API_KEY_F1 = -112,
+    VICE_PLUGIN_API_KEY_F2 = -113,
+    VICE_PLUGIN_API_KEY_F3 = -114,
+    VICE_PLUGIN_API_KEY_F4 = -115,
+    VICE_PLUGIN_API_KEY_F5 = -116,
+    VICE_PLUGIN_API_KEY_F6 = -117,
+    VICE_PLUGIN_API_KEY_F7 = -118,
+    VICE_PLUGIN_API_KEY_F8 = -119,
+    VICE_PLUGIN_API_KEY_F9 = -120,
+    VICE_PLUGIN_API_KEY_F10 = -121,
+    VICE_PLUGIN_API_KEY_F11 = -122,
+    VICE_PLUGIN_API_KEY_F12 = -123,
+    VICE_PLUGIN_API_KEY_NUMLOCK = -144
+};
+typedef enum VicePluginAPI_Keys VicePluginAPI_Keys;
 
 /* Type of log levels used in vicePluginAPI_setGlobalLogCallback. */
 enum VicePluginAPI_LogLevel {

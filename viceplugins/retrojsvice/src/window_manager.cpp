@@ -171,6 +171,22 @@ void WindowManager::onWindowMouseLeave(uint64_t window, int x, int y) {
     eventHandler_->onWindowManagerMouseLeave(window, x, y);
 }
 
+void WindowManager::onWindowKeyDown(uint64_t window, int key) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(window));
+
+    eventHandler_->onWindowManagerKeyDown(window, key);
+}
+
+void WindowManager::onWindowKeyUp(uint64_t window, int key) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(window));
+
+    eventHandler_->onWindowManagerKeyUp(window, key);
+}
+
 void WindowManager::onWindowLoseFocus(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
