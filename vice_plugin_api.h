@@ -241,7 +241,7 @@ struct VicePluginAPI_Callbacks {
      *     Unicode code point of the corresponding (modified) character.
      *
      *   - Negative key codes correspond to non-character keys. Each negative key code is the
-     *     negation of the corresponding Windows key code. The enum VicePluginAPI_Keys contains a
+     *     negation of the corresponding Windows key code. The enum VicePluginAPI_Key contains a
      *     non-exhaustive list of the most important non-character key codes.
      */
     void (*mouseDown)(void*, uint64_t window, int x, int y, int button);
@@ -257,10 +257,10 @@ struct VicePluginAPI_Callbacks {
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 
-/* Enum containing a non-exhaustive list of the most important non-character key codes (negations of
- * the corresponding Windows key codes), as used in the keyDown and keyUp callbacks.
+/* A non-exhaustive list of the most important non-character key codes (negations of the
+ * corresponding Windows key codes), as used in the keyDown and keyUp callbacks.
  */
-enum VicePluginAPI_Keys {
+enum VicePluginAPI_Key {
     VICE_PLUGIN_API_KEY_BACKSPACE = -8,
     VICE_PLUGIN_API_KEY_TAB = -9,
     VICE_PLUGIN_API_KEY_ENTER = -13,
@@ -296,7 +296,7 @@ enum VicePluginAPI_Keys {
     VICE_PLUGIN_API_KEY_F12 = -123,
     VICE_PLUGIN_API_KEY_NUMLOCK = -144
 };
-typedef enum VicePluginAPI_Keys VicePluginAPI_Keys;
+typedef enum VicePluginAPI_Key VicePluginAPI_Key;
 
 /* Type of log levels used in vicePluginAPI_setGlobalLogCallback. */
 enum VicePluginAPI_LogLevel {
