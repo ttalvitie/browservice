@@ -223,6 +223,26 @@ struct VicePluginAPI_Callbacks {
         void* data
     );
 
+    /* Called by the plugin to relay window input events (mouse, keyboard and focus) from the user.
+     * Processing input events is a messy business, and thus the implementations of these callbacks
+     * must tolerate all possible values for the int arguments and inconsistent state changes (e.g.
+     * huge values and negative values, mouse moving outside the window, invalid key codes, key
+     * repeat without key up event in between), clamping the values or ignoring the events where
+     * appropriate.
+     *
+     * Guidelines for event interpretation:
+     *   - Left, middle and right mouse button numbers are 0, 1 and 2, respectively.
+     *   - Mouse wheel delta is positive for scrolling up, negative for scrolling down.
+     *   - Mouse wheel delta for one line of text is in the ballpark of 20.
+     *   - TODO: key events
+     */
+    void (*mouseDown)(void*, uint64_t handle, int x, int y, int button);
+    void (*mouseUp)(void*, uint64_t handle, int x, int y, int button);
+    void (*mouseMove)(void*, uint64_t handle, int x, int y);
+    void (*mouseDoubleClick)(void*, uint64_t handle, int x, int y, int button);
+    void (*mouseWheel)(void*, uint64_t handle, int x, int y, int delta);
+    void (*mouseLeave)(void*, uint64_t handle, int x, int y);
+    void (*loseFocus)(void*, uint64_t handle);
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 

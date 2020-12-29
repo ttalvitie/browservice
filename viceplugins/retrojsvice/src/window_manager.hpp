@@ -18,6 +18,23 @@ public:
         uint64_t handle,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) = 0;
+
+    virtual void onWindowManagerMouseDown(
+        uint64_t handle, int x, int y, int button
+    ) = 0;
+    virtual void onWindowManagerMouseUp(
+        uint64_t handle, int x, int y, int button
+    ) = 0;
+    virtual void onWindowManagerMouseMove(uint64_t handle, int x, int y) = 0;
+    virtual void onWindowManagerMouseDoubleClick(
+        uint64_t handle, int x, int y, int button
+    ) = 0;
+    virtual void onWindowManagerMouseWheel(
+        uint64_t handle, int x, int y, int delta
+    ) = 0;
+    virtual void onWindowManagerMouseLeave(uint64_t handle, int x, int y) = 0;
+
+    virtual void onWindowManagerLoseFocus(uint64_t handle) = 0;
 };
 
 class HTTPRequest;
@@ -53,6 +70,21 @@ public:
         uint64_t handle,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) override;
+    virtual void onWindowMouseDown(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowMouseUp(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowMouseMove(uint64_t handle, int x, int y) override;
+    virtual void onWindowMouseDoubleClick(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowMouseWheel(
+        uint64_t handle, int x, int y, int delta
+    ) override;
+    virtual void onWindowMouseLeave(uint64_t handle, int x, int y) override;
+    virtual void onWindowLoseFocus(uint64_t handle) override;
 
 private:
     void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request);

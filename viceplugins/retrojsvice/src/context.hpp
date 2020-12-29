@@ -64,6 +64,25 @@ public:
         uint64_t handle,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) override;
+    virtual void onWindowManagerMouseDown(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowManagerMouseUp(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowManagerMouseMove(
+        uint64_t handle, int x, int y
+    ) override;
+    virtual void onWindowManagerMouseDoubleClick(
+        uint64_t handle, int x, int y, int button
+    ) override;
+    virtual void onWindowManagerMouseWheel(
+        uint64_t handle, int x, int y, int delta
+    ) override;
+    virtual void onWindowManagerMouseLeave(
+        uint64_t handle, int x, int y
+    ) override;
+    virtual void onWindowManagerLoseFocus(uint64_t handle) override;
 
 private:
     SocketAddress httpListenAddr_;

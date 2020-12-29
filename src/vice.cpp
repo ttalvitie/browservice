@@ -318,6 +318,7 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
 #endif
 
     VicePluginAPI_Callbacks callbacks;
+    memset(&callbacks, 0, sizeof(VicePluginAPI_Callbacks));
 
     callbacks.eventNotify = CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(void, (), {
         if(!self->pumpEventsInQueue_.exchange(true)) {
@@ -409,6 +410,50 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         }
 
         putImageFunc(putImageFuncData, data.data(), width, height, pitch);
+    });
+
+    callbacks.mouseDown = CTX_CALLBACK(void, (
+        uint64_t handle, int x, int y, int button
+    ), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Mouse button ", button, " down at (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.mouseUp = CTX_CALLBACK(void, (
+        uint64_t handle, int x, int y, int button
+    ), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Mouse button ", button, " up at (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.mouseMove = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Mouse moved to (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.mouseDoubleClick = CTX_CALLBACK(void, (
+        uint64_t handle, int x, int y, int button
+    ), {
+        REQUIRE(handle);
+        REQUIRE(self->openWindows_.count(handle));
+        INFO_LOG("Window callback stub: Mouse button ", button, " doubleclick at (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.mouseWheel = CTX_CALLBACK(void, (
+        uint64_t handle, int x, int y, int delta
+    ), {
+        INFO_LOG("Window callback stub: Mouse wheel delta ", delta, " at (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
+        INFO_LOG("Window callback stub: Mouse leave at (", x, ", ", y, ") in ", handle);
+    });
+
+    callbacks.loseFocus = CTX_CALLBACK(void, (uint64_t handle), {
+        INFO_LOG("Window callback stub: Focus loss in ", handle);
     });
 
     plugin_->apiFuncs_->start(

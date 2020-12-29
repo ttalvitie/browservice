@@ -117,6 +117,68 @@ void WindowManager::onWindowFetchImage(
     eventHandler_->onWindowManagerFetchImage(handle, func);
 }
 
+void WindowManager::onWindowMouseDown(
+    uint64_t handle, int x, int y, int button
+) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseDown(handle, x, y, button);
+}
+
+void WindowManager::onWindowMouseUp(uint64_t handle, int x, int y, int button) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseUp(handle, x, y, button);
+}
+
+void WindowManager::onWindowMouseMove(uint64_t handle, int x, int y) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseMove(handle, x, y);
+}
+
+void WindowManager::onWindowMouseDoubleClick(
+    uint64_t handle, int x, int y, int button
+) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseDoubleClick(handle, x, y, button);
+}
+
+void WindowManager::onWindowMouseWheel(
+    uint64_t handle, int x, int y, int delta
+) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseWheel(handle, x, y, delta);
+}
+
+void WindowManager::onWindowMouseLeave(uint64_t handle, int x, int y) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerMouseLeave(handle, x, y);
+}
+
+void WindowManager::onWindowLoseFocus(uint64_t handle) {
+    REQUIRE_API_THREAD();
+    REQUIRE(eventHandler_);
+    REQUIRE(windows_.count(handle));
+
+    eventHandler_->onWindowManagerLoseFocus(handle);
+}
+
 void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
     REQUIRE(!closed_);
     REQUIRE(eventHandler_);

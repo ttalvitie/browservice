@@ -24,8 +24,8 @@ Window::Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handl
     handle_ = handle;
     closed_ = false;
 
-    prevWidth_ = -1;
-    prevHeight_ = -1;
+    width_ = -1;
+    height_ = -1;
 
     prePrevVisited_ = false;
     preMainVisited_ = false;
@@ -74,7 +74,7 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     smatch match;
 
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
-        handleMainPageRequest_(request);
+        handleMainPageRequest_(mce, request);
         return;
     }
 
@@ -171,7 +171,113 @@ void Window::inactivityTimeoutReached_(MCE, bool shortened) {
     close(mce);
 }
 
-void Window::handleEvents_(uint64_t startIdx, string eventStr) {
+bool Window::handleTokenizedEvent_(MCE,
+    const string& name,
+    int argCount,
+    const int* args
+) {
+    REQUIRE(eventHandler_);
+
+    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        if(mouseButtonsDown_.insert(button).second) {
+            eventHandler_->onWindowMouseDown(handle_, x, y, button);
+        }
+        eventHandler_->onWindowMouseMove(handle_, x, y);
+        return true;
+    }
+    if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        if(mouseButtonsDown_.erase(button)) {
+            eventHandler_->onWindowMouseUp(handle_, x, y, button);
+        }
+        eventHandler_->onWindowMouseMove(handle_, x, y);
+        return true;
+    }
+    if(name == "MDBL" && argCount == 2) {
+        int x = args[0];
+        int y = args[1];
+        eventHandler_->onWindowMouseDoubleClick(handle_, x, y, 0);
+        return true;
+    }
+    if(name == "MWH" && argCount == 3) {
+        int x = args[0];
+        int y = args[1];
+        int delta = args[2];
+        delta = max(-180, min(180, delta));
+        eventHandler_->onWindowMouseWheel(handle_, x, y, delta);
+        return true;
+    }
+    if(name == "MMO" && argCount == 2) {
+        int x = args[0];
+        int y = args[1];
+        eventHandler_->onWindowMouseMove(handle_, x, y);
+        return true;
+    }
+    if(name == "MOUT" && argCount == 2) {
+        int x = args[0];
+        int y = args[1];
+        eventHandler_->onWindowMouseLeave(handle_, x, y);
+        return true;
+    }
+    if(name == "FOUT" && argCount == 0) {
+        eventHandler_->onWindowLoseFocus(handle_);
+        return true;
+    }
+    return false;
+}
+
+bool Window::handleEvent_(MCE,
+    string::const_iterator begin,
+    string::const_iterator end
+) {
+    REQUIRE(begin < end && *(end - 1) == '/');
+
+    string name;
+
+    const int MaxArgCount = 3;
+    int args[MaxArgCount];
+    int argCount = 0;
+
+    string::const_iterator pos = begin;
+    while(*pos != '/' && *pos != '_') {
+        ++pos;
+    }
+    name = string(begin, pos);
+
+    bool ok = true;
+    if(*pos == '_') {
+        ++pos;
+        while(true) {
+            if(argCount == MaxArgCount) {
+                ok = false;
+                break;
+            }
+            string::const_iterator argStart = pos;
+            while(*pos != '/' && *pos != '_') {
+                ++pos;
+            }
+            optional<int> arg = parseString<int>(string(argStart, pos));
+            if(!arg) {
+                ok = false;
+                break;
+            }
+            args[argCount++] = *arg;
+            if(*pos == '/') {
+                break;
+            }
+            ++pos;
+        }
+    }
+
+    return ok && handleTokenizedEvent_(mce, name, argCount, args);
+}
+
+void Window::handleEvents_(MCE, uint64_t startIdx, string eventStr) {
     REQUIRE_API_THREAD();
     if(closed_) return;
 
@@ -207,7 +313,12 @@ void Window::handleEvents_(uint64_t startIdx, string eventStr) {
         }
 
         if(eventIdx == curEventIdx_) {
-            INFO_LOG("TODO: process event ", string(itemBegin, itemEnd));
+            if(!handleEvent_(mce, itemBegin, itemEnd)) {
+                WARNING_LOG(
+                    "Could not parse event '", string(itemBegin, itemEnd),
+                    "' in window ", handle_
+                );
+            }
             ++eventIdx;
             curEventIdx_ = eventIdx;
         } else {
@@ -233,7 +344,7 @@ void Window::navigate_(int direction) {
     }
 }
 
-void Window::handleMainPageRequest_(shared_ptr<HTTPRequest> request) {
+void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
     if(preMainVisited_) {
@@ -246,9 +357,18 @@ void Window::handleMainPageRequest_(shared_ptr<HTTPRequest> request) {
         }
         prevNextClicked_ = false;
 
-        // TODO: Avoid keys/mouse buttons staying pressed down
-        //rootWidget_->sendLoseFocusEvent();
-        //rootWidget_->sendMouseLeaveEvent(0, 0);
+        if(curMainIdx_ > 1) {
+            // Make sure that no mouse buttons are stuck down and the focus and
+            // mouseover state is reset
+            REQUIRE(eventHandler_);
+            while(!mouseButtonsDown_.empty()) {
+                int button = *mouseButtonsDown_.begin();
+                mouseButtonsDown_.erase(button);
+                eventHandler_->onWindowMouseUp(handle_, 0, 0, button);
+            }
+            eventHandler_->onWindowMouseLeave(handle_, 0, 0);
+            eventHandler_->onWindowLoseFocus(handle_);
+        }
 
         curImgIdx_ = 0;
         curEventIdx_ = 0;
@@ -279,15 +399,15 @@ void Window::handleImageRequest_(
     } else {
         updateInactivityTimeout_();
 
-        handleEvents_(startEventIdx, move(eventStr));
+        handleEvents_(mce, startEventIdx, move(eventStr));
         curImgIdx_ = imgIdx;
 
         width = min(max(width, 1), 16384);
         height = min(max(height, 1), 16384);
 
-        if(width != prevWidth_ || height != prevHeight_) {
-            prevWidth_ = width;
-            prevHeight_ = height;
+        if(width != width_ || height != height_) {
+            width_ = width;
+            height_ = height;
 
             REQUIRE(eventHandler_);
             eventHandler_->onWindowResize(

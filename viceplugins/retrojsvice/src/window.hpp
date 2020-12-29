@@ -22,6 +22,15 @@ public:
         uint64_t handle,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) = 0;
+
+    virtual void onWindowMouseDown(uint64_t handle, int x, int y, int button) = 0;
+    virtual void onWindowMouseUp(uint64_t handle, int x, int y, int button) = 0;
+    virtual void onWindowMouseMove(uint64_t handle, int x, int y) = 0;
+    virtual void onWindowMouseDoubleClick(uint64_t handle, int x, int y, int button) = 0;
+    virtual void onWindowMouseWheel(uint64_t handle, int x, int y, int delta) = 0;
+    virtual void onWindowMouseLeave(uint64_t handle, int x, int y) = 0;
+
+    virtual void onWindowLoseFocus(uint64_t handle) = 0;
 };
 
 class HTTPRequest;
@@ -56,11 +65,20 @@ private:
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(MCE, bool shortened);
 
-    void handleEvents_(uint64_t startIdx, string eventStr);
+    bool handleTokenizedEvent_(MCE,
+        const string& name,
+        int argCount,
+        const int* args
+    );
+    bool handleEvent_(MCE,
+        string::const_iterator begin,
+        string::const_iterator end
+    );
+    void handleEvents_(MCE, uint64_t startIdx, string eventStr);
 
     void navigate_(int direction);
 
-    void handleMainPageRequest_(shared_ptr<HTTPRequest> request);
+    void handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleImageRequest_(
         MCE,
         shared_ptr<HTTPRequest> request,
@@ -82,8 +100,10 @@ private:
     shared_ptr<ImageCompressor> imageCompressor_;
     shared_ptr<DelayedTaskTag> animationTag_;
 
-    int prevWidth_;
-    int prevHeight_;
+    int width_;
+    int height_;
+
+    set<int> mouseButtonsDown_;
 
     bool prePrevVisited_;
     bool preMainVisited_;

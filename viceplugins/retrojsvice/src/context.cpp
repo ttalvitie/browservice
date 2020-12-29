@@ -443,4 +443,75 @@ void Context::onWindowManagerFetchImage(
     callbacks_.fetchWindowImage(callbackData_, handle, callFunc, (void*)&func);
 }
 
+void Context::onWindowManagerMouseDown(
+    uint64_t handle, int x, int y, int button
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseDown != nullptr);
+    callbacks_.mouseDown(callbackData_, handle, x, y, button);
+}
+
+void Context::onWindowManagerMouseUp(
+    uint64_t handle, int x, int y, int button
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseUp != nullptr);
+    callbacks_.mouseUp(callbackData_, handle, x, y, button);
+}
+
+void Context::onWindowManagerMouseMove(uint64_t handle, int x, int y) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseMove != nullptr);
+    callbacks_.mouseMove(callbackData_, handle, x, y);
+}
+
+void Context::onWindowManagerMouseDoubleClick(
+    uint64_t handle, int x, int y, int button
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseDoubleClick != nullptr);
+    callbacks_.mouseDoubleClick(callbackData_, handle, x, y, button);
+}
+
+void Context::onWindowManagerMouseWheel(
+    uint64_t handle, int x, int y, int delta
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseWheel != nullptr);
+    callbacks_.mouseWheel(callbackData_, handle, x, y, delta);
+}
+
+void Context::onWindowManagerMouseLeave(uint64_t handle, int x, int y) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.mouseLeave != nullptr);
+    callbacks_.mouseLeave(callbackData_, handle, x, y);
+}
+
+void Context::onWindowManagerLoseFocus(uint64_t handle) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(handle);
+
+    REQUIRE(callbacks_.loseFocus != nullptr);
+    callbacks_.loseFocus(callbackData_, handle);
+}
+
 }

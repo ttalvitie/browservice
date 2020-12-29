@@ -16,6 +16,7 @@
 #include <mutex>
 #include <optional>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <string>
 #include <thread>
@@ -54,6 +55,7 @@ using std::pair;
 using std::promise;
 using std::regex;
 using std::regex_match;
+using std::set;
 using std::shared_ptr;
 using std::smatch;
 using std::string;
