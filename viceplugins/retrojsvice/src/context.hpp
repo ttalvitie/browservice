@@ -39,7 +39,7 @@ public:
 
     void pumpEvents();
 
-    void notifyWindowViewChanged(uint64_t handle);
+    void notifyWindowViewChanged(uint64_t window);
 
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
@@ -54,35 +54,35 @@ public:
 
     // WindowManagerEventHandler;
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() override;
-    virtual void onWindowManagerCloseWindow(uint64_t handle) override;
+    virtual void onWindowManagerCloseWindow(uint64_t window) override;
     virtual void onWindowManagerResizeWindow(
-        uint64_t handle,
+        uint64_t window,
         size_t width,
         size_t height
     ) override;
     virtual void onWindowManagerFetchImage(
-        uint64_t handle,
+        uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) override;
     virtual void onWindowManagerMouseDown(
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ) override;
     virtual void onWindowManagerMouseUp(
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ) override;
     virtual void onWindowManagerMouseMove(
-        uint64_t handle, int x, int y
+        uint64_t window, int x, int y
     ) override;
     virtual void onWindowManagerMouseDoubleClick(
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ) override;
     virtual void onWindowManagerMouseWheel(
-        uint64_t handle, int x, int y, int delta
+        uint64_t window, int x, int y, int delta
     ) override;
     virtual void onWindowManagerMouseLeave(
-        uint64_t handle, int x, int y
+        uint64_t window, int x, int y
     ) override;
-    virtual void onWindowManagerLoseFocus(uint64_t handle) override;
+    virtual void onWindowManagerLoseFocus(uint64_t window) override;
 
 private:
     SocketAddress httpListenAddr_;

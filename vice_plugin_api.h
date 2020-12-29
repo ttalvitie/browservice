@@ -180,7 +180,7 @@ struct VicePluginAPI_Callbacks {
     /* Called by the plugin to close an existing window. The window stops existing immediately and
      * thus it must not be used in any subsequent API calls.
      */
-    void (*closeWindow)(void*, uint64_t handle);
+    void (*closeWindow)(void*, uint64_t window);
 
     /* Called by the plugin to request that the view image size for given window should be
      * width x height, where width > 0 and height > 0. While the program is not required to obey the
@@ -189,7 +189,7 @@ struct VicePluginAPI_Callbacks {
      * after the creation of each window (in addition to window resizes) because this is the only
      * way for the plugin to signal its preference on the window view size.
      */
-    void (*resizeWindow)(void*, uint64_t handle, size_t width, size_t height);
+    void (*resizeWindow)(void*, uint64_t window, size_t width, size_t height);
 
     /* Called by the plugin to fetch the newest available view image of a window for rendering. The
      * function must call the supplied callback putImageFunc exactly once before returning. The
@@ -212,7 +212,7 @@ struct VicePluginAPI_Callbacks {
      */
     void (*fetchWindowImage)(
         void*,
-        uint64_t handle,
+        uint64_t window,
         void (*putImageFunc)(
             void* data,
             const uint8_t* image,
@@ -236,13 +236,13 @@ struct VicePluginAPI_Callbacks {
      *   - Mouse wheel delta for one line of text is in the ballpark of 20.
      *   - TODO: key events
      */
-    void (*mouseDown)(void*, uint64_t handle, int x, int y, int button);
-    void (*mouseUp)(void*, uint64_t handle, int x, int y, int button);
-    void (*mouseMove)(void*, uint64_t handle, int x, int y);
-    void (*mouseDoubleClick)(void*, uint64_t handle, int x, int y, int button);
-    void (*mouseWheel)(void*, uint64_t handle, int x, int y, int dx, int dy);
-    void (*mouseLeave)(void*, uint64_t handle, int x, int y);
-    void (*loseFocus)(void*, uint64_t handle);
+    void (*mouseDown)(void*, uint64_t window, int x, int y, int button);
+    void (*mouseUp)(void*, uint64_t window, int x, int y, int button);
+    void (*mouseMove)(void*, uint64_t window, int x, int y);
+    void (*mouseDoubleClick)(void*, uint64_t window, int x, int y, int button);
+    void (*mouseWheel)(void*, uint64_t window, int x, int y, int dx, int dy);
+    void (*mouseLeave)(void*, uint64_t window, int x, int y);
+    void (*loseFocus)(void*, uint64_t window);
 
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
@@ -348,7 +348,7 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * notification, the plugin should use the fetchWindowImage callback to fetch the new view image and
  * show it to the user as soon as possible.
  */
-void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t handle);
+void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t window);
 
 /**********************************
  * Non-context-specific functions *

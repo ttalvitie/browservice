@@ -9,28 +9,28 @@ public:
     // event handlers will be called and none of the member functions of Window
     // may be called; the Window also drops the shared pointer to the event
     // handler).
-    virtual void onWindowClose(uint64_t handle) = 0;
+    virtual void onWindowClose(uint64_t window) = 0;
 
     virtual void onWindowResize(
-        uint64_t handle,
+        uint64_t window,
         size_t width,
         size_t height
     ) = 0;
 
     // See ImageCompressorEventHandler::onImageCompressorFetchImage
     virtual void onWindowFetchImage(
-        uint64_t handle,
+        uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) = 0;
 
-    virtual void onWindowMouseDown(uint64_t handle, int x, int y, int button) = 0;
-    virtual void onWindowMouseUp(uint64_t handle, int x, int y, int button) = 0;
-    virtual void onWindowMouseMove(uint64_t handle, int x, int y) = 0;
-    virtual void onWindowMouseDoubleClick(uint64_t handle, int x, int y, int button) = 0;
-    virtual void onWindowMouseWheel(uint64_t handle, int x, int y, int delta) = 0;
-    virtual void onWindowMouseLeave(uint64_t handle, int x, int y) = 0;
+    virtual void onWindowMouseDown(uint64_t window, int x, int y, int button) = 0;
+    virtual void onWindowMouseUp(uint64_t window, int x, int y, int button) = 0;
+    virtual void onWindowMouseMove(uint64_t window, int x, int y) = 0;
+    virtual void onWindowMouseDoubleClick(uint64_t window, int x, int y, int button) = 0;
+    virtual void onWindowMouseWheel(uint64_t window, int x, int y, int delta) = 0;
+    virtual void onWindowMouseLeave(uint64_t window, int x, int y) = 0;
 
-    virtual void onWindowLoseFocus(uint64_t handle) = 0;
+    virtual void onWindowLoseFocus(uint64_t window) = 0;
 };
 
 class HTTPRequest;

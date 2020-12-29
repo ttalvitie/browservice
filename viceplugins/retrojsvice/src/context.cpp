@@ -260,10 +260,10 @@ void Context::pumpEvents() {
     threadRunningPumpEvents = false;
 }
 
-void Context::notifyWindowViewChanged(uint64_t handle) {
+void Context::notifyWindowViewChanged(uint64_t window) {
     RunningAPILock apiLock(this);
 
-    windowManager_->notifyViewChanged(handle);
+    windowManager_->notifyViewChanged(window);
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
@@ -393,38 +393,38 @@ variant<uint64_t, string> Context::onWindowManagerCreateWindowRequest() {
     }
 }
 
-void Context::onWindowManagerCloseWindow(uint64_t handle) {
+void Context::onWindowManagerCloseWindow(uint64_t window) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.closeWindow != nullptr);
-    callbacks_.closeWindow(callbackData_, handle);
+    callbacks_.closeWindow(callbackData_, window);
 }
 
 void Context::onWindowManagerResizeWindow(
-    uint64_t handle,
+    uint64_t window,
     size_t width,
     size_t height
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     width = max(width, (size_t)1);
     height = max(height, (size_t)1);
 
     REQUIRE(callbacks_.resizeWindow != nullptr);
-    callbacks_.resizeWindow(callbackData_, handle, width, height);
+    callbacks_.resizeWindow(callbackData_, window, width, height);
 }
 
 void Context::onWindowManagerFetchImage(
-    uint64_t handle,
+    uint64_t window,
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     auto callFunc = [](
         void* funcPtr,
@@ -440,78 +440,78 @@ void Context::onWindowManagerFetchImage(
     };
 
     REQUIRE(callbacks_.fetchWindowImage != nullptr);
-    callbacks_.fetchWindowImage(callbackData_, handle, callFunc, (void*)&func);
+    callbacks_.fetchWindowImage(callbackData_, window, callFunc, (void*)&func);
 }
 
 void Context::onWindowManagerMouseDown(
-    uint64_t handle, int x, int y, int button
+    uint64_t window, int x, int y, int button
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseDown != nullptr);
-    callbacks_.mouseDown(callbackData_, handle, x, y, button);
+    callbacks_.mouseDown(callbackData_, window, x, y, button);
 }
 
 void Context::onWindowManagerMouseUp(
-    uint64_t handle, int x, int y, int button
+    uint64_t window, int x, int y, int button
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseUp != nullptr);
-    callbacks_.mouseUp(callbackData_, handle, x, y, button);
+    callbacks_.mouseUp(callbackData_, window, x, y, button);
 }
 
-void Context::onWindowManagerMouseMove(uint64_t handle, int x, int y) {
+void Context::onWindowManagerMouseMove(uint64_t window, int x, int y) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseMove != nullptr);
-    callbacks_.mouseMove(callbackData_, handle, x, y);
+    callbacks_.mouseMove(callbackData_, window, x, y);
 }
 
 void Context::onWindowManagerMouseDoubleClick(
-    uint64_t handle, int x, int y, int button
+    uint64_t window, int x, int y, int button
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseDoubleClick != nullptr);
-    callbacks_.mouseDoubleClick(callbackData_, handle, x, y, button);
+    callbacks_.mouseDoubleClick(callbackData_, window, x, y, button);
 }
 
 void Context::onWindowManagerMouseWheel(
-    uint64_t handle, int x, int y, int delta
+    uint64_t window, int x, int y, int delta
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseWheel != nullptr);
-    callbacks_.mouseWheel(callbackData_, handle, x, y, 0, -delta);
+    callbacks_.mouseWheel(callbackData_, window, x, y, 0, -delta);
 }
 
-void Context::onWindowManagerMouseLeave(uint64_t handle, int x, int y) {
+void Context::onWindowManagerMouseLeave(uint64_t window, int x, int y) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.mouseLeave != nullptr);
-    callbacks_.mouseLeave(callbackData_, handle, x, y);
+    callbacks_.mouseLeave(callbackData_, window, x, y);
 }
 
-void Context::onWindowManagerLoseFocus(uint64_t handle) {
+void Context::onWindowManagerLoseFocus(uint64_t window) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
-    REQUIRE(handle);
+    REQUIRE(window);
 
     REQUIRE(callbacks_.loseFocus != nullptr);
-    callbacks_.loseFocus(callbackData_, handle);
+    callbacks_.loseFocus(callbackData_, window);
 }
 
 }

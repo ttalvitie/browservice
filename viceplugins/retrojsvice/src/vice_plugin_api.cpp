@@ -160,9 +160,9 @@ WRAP_CTX_API(pumpEvents)
 
 API_EXPORT void vicePluginAPI_notifyWindowViewChanged(
     VicePluginAPI_Context* ctx,
-    uint64_t handle
+    uint64_t window
 )
-WRAP_CTX_API(notifyWindowViewChanged, handle)
+WRAP_CTX_API(notifyWindowViewChanged, window)
 
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,

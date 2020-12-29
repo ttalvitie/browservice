@@ -78,105 +78,105 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
-void WindowManager::notifyViewChanged(uint64_t handle) {
+void WindowManager::notifyViewChanged(uint64_t window) {
     REQUIRE_API_THREAD();
 
-    auto it = windows_.find(handle);
+    auto it = windows_.find(window);
     REQUIRE(it != windows_.end());
     it->second->notifyViewChanged();
 }
 
-void WindowManager::onWindowClose(uint64_t handle) {
+void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
 
-    REQUIRE(windows_.erase(handle));
-    eventHandler_->onWindowManagerCloseWindow(handle);
+    REQUIRE(windows_.erase(window));
+    eventHandler_->onWindowManagerCloseWindow(window);
 }
 
 void WindowManager::onWindowResize(
-    uint64_t handle,
+    uint64_t window,
     size_t width,
     size_t height
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerResizeWindow(handle, width, height);
+    eventHandler_->onWindowManagerResizeWindow(window, width, height);
 }
 
 void WindowManager::onWindowFetchImage(
-    uint64_t handle,
+    uint64_t window,
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerFetchImage(handle, func);
+    eventHandler_->onWindowManagerFetchImage(window, func);
 }
 
 void WindowManager::onWindowMouseDown(
-    uint64_t handle, int x, int y, int button
+    uint64_t window, int x, int y, int button
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseDown(handle, x, y, button);
+    eventHandler_->onWindowManagerMouseDown(window, x, y, button);
 }
 
-void WindowManager::onWindowMouseUp(uint64_t handle, int x, int y, int button) {
+void WindowManager::onWindowMouseUp(uint64_t window, int x, int y, int button) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseUp(handle, x, y, button);
+    eventHandler_->onWindowManagerMouseUp(window, x, y, button);
 }
 
-void WindowManager::onWindowMouseMove(uint64_t handle, int x, int y) {
+void WindowManager::onWindowMouseMove(uint64_t window, int x, int y) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseMove(handle, x, y);
+    eventHandler_->onWindowManagerMouseMove(window, x, y);
 }
 
 void WindowManager::onWindowMouseDoubleClick(
-    uint64_t handle, int x, int y, int button
+    uint64_t window, int x, int y, int button
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseDoubleClick(handle, x, y, button);
+    eventHandler_->onWindowManagerMouseDoubleClick(window, x, y, button);
 }
 
 void WindowManager::onWindowMouseWheel(
-    uint64_t handle, int x, int y, int delta
+    uint64_t window, int x, int y, int delta
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseWheel(handle, x, y, delta);
+    eventHandler_->onWindowManagerMouseWheel(window, x, y, delta);
 }
 
-void WindowManager::onWindowMouseLeave(uint64_t handle, int x, int y) {
+void WindowManager::onWindowMouseLeave(uint64_t window, int x, int y) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerMouseLeave(handle, x, y);
+    eventHandler_->onWindowManagerMouseLeave(window, x, y);
 }
 
-void WindowManager::onWindowLoseFocus(uint64_t handle) {
+void WindowManager::onWindowLoseFocus(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
-    REQUIRE(windows_.count(handle));
+    REQUIRE(windows_.count(window));
 
-    eventHandler_->onWindowManagerLoseFocus(handle);
+    eventHandler_->onWindowManagerLoseFocus(window);
 }
 
 void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
