@@ -402,22 +402,6 @@ void Context::onWindowManagerCloseWindow(uint64_t window) {
     callbacks_.closeWindow(callbackData_, window);
 }
 
-void Context::onWindowManagerResizeWindow(
-    uint64_t window,
-    size_t width,
-    size_t height
-) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    width = max(width, (size_t)1);
-    height = max(height, (size_t)1);
-
-    REQUIRE(callbacks_.resizeWindow != nullptr);
-    callbacks_.resizeWindow(callbackData_, window, width, height);
-}
-
 void Context::onWindowManagerFetchImage(
     uint64_t window,
     function<void(const uint8_t*, size_t, size_t, size_t)> func
@@ -443,93 +427,67 @@ void Context::onWindowManagerFetchImage(
     callbacks_.fetchWindowImage(callbackData_, window, callFunc, (void*)&func);
 }
 
-void Context::onWindowManagerMouseDown(
-    uint64_t window, int x, int y, int button
+void Context::onWindowManagerResizeWindow(
+    uint64_t window,
+    size_t width,
+    size_t height
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
     REQUIRE(window);
 
-    REQUIRE(callbacks_.mouseDown != nullptr);
-    callbacks_.mouseDown(callbackData_, window, x, y, button);
+    width = max(width, (size_t)1);
+    height = max(height, (size_t)1);
+
+    REQUIRE(callbacks_.resizeWindow != nullptr);
+    callbacks_.resizeWindow(callbackData_, window, width, height);
 }
 
-void Context::onWindowManagerMouseUp(
-    uint64_t window, int x, int y, int button
-) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
+#define FORWARD_WINDOW_EVENT(src, callback, callbackArgs) \
+    void Context::src { \
+        REQUIRE(threadRunningPumpEvents); \
+        REQUIRE(state_ == Running); \
+        REQUIRE(window); \
+         \
+        REQUIRE(callbacks_.callback != nullptr); \
+        callbacks_.callback callbackArgs; \
+    }
 
-    REQUIRE(callbacks_.mouseUp != nullptr);
-    callbacks_.mouseUp(callbackData_, window, x, y, button);
-}
-
-void Context::onWindowManagerMouseMove(uint64_t window, int x, int y) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.mouseMove != nullptr);
-    callbacks_.mouseMove(callbackData_, window, x, y);
-}
-
-void Context::onWindowManagerMouseDoubleClick(
-    uint64_t window, int x, int y, int button
-) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.mouseDoubleClick != nullptr);
-    callbacks_.mouseDoubleClick(callbackData_, window, x, y, button);
-}
-
-void Context::onWindowManagerMouseWheel(
-    uint64_t window, int x, int y, int delta
-) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.mouseWheel != nullptr);
-    callbacks_.mouseWheel(callbackData_, window, x, y, 0, -delta);
-}
-
-void Context::onWindowManagerMouseLeave(uint64_t window, int x, int y) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.mouseLeave != nullptr);
-    callbacks_.mouseLeave(callbackData_, window, x, y);
-}
-
-void Context::onWindowManagerKeyDown(uint64_t window, int key) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.keyDown != nullptr);
-    callbacks_.keyDown(callbackData_, window, key);
-}
-
-void Context::onWindowManagerKeyUp(uint64_t window, int key) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.keyUp != nullptr);
-    callbacks_.keyUp(callbackData_, window, key);
-}
-
-void Context::onWindowManagerLoseFocus(uint64_t window) {
-    REQUIRE(threadRunningPumpEvents);
-    REQUIRE(state_ == Running);
-    REQUIRE(window);
-
-    REQUIRE(callbacks_.loseFocus != nullptr);
-    callbacks_.loseFocus(callbackData_, window);
-}
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseDown(uint64_t window, int x, int y, int button),
+    mouseDown, (callbackData_, window, x, y, button)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseUp(uint64_t window, int x, int y, int button),
+    mouseUp, (callbackData_, window, x, y, button)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseMove(uint64_t window, int x, int y),
+    mouseMove, (callbackData_, window, x, y)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseDoubleClick(uint64_t window, int x, int y, int button),
+    mouseDoubleClick, (callbackData_, window, x, y, button)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseWheel(uint64_t window, int x, int y, int delta),
+    mouseWheel, (callbackData_, window, x, y, 0, -delta)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerMouseLeave(uint64_t window, int x, int y),
+    mouseLeave, (callbackData_, window, x, y)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerKeyDown(uint64_t window, int key),
+    keyDown, (callbackData_, window, key)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerKeyUp(uint64_t window, int key),
+    keyUp, (callbackData_, window, key)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowManagerLoseFocus(uint64_t window),
+    loseFocus, (callbackData_, window)
+)
 
 }

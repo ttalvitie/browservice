@@ -55,14 +55,14 @@ public:
     // WindowManagerEventHandler;
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() override;
     virtual void onWindowManagerCloseWindow(uint64_t window) override;
+    virtual void onWindowManagerFetchImage(
+        uint64_t window,
+        function<void(const uint8_t*, size_t, size_t, size_t)> func
+    ) override;
     virtual void onWindowManagerResizeWindow(
         uint64_t window,
         size_t width,
         size_t height
-    ) override;
-    virtual void onWindowManagerFetchImage(
-        uint64_t window,
-        function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) override;
     virtual void onWindowManagerMouseDown(
         uint64_t window, int x, int y, int button
