@@ -3,26 +3,30 @@
 #include "html.hpp"
 #include "http.hpp"
 #include "key.hpp"
+#include "secrets.hpp"
 
 namespace retrojsvice {
 
 namespace {
 
-regex mainPathRegex("/[0-9]+/");
-regex prevPathRegex("/[0-9]+/prev/");
-regex nextPathRegex("/[0-9]+/next/");
 regex imagePathRegex(
-    "/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
+    "/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
 );
 
 }
 
-Window::Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handle) {
+Window::Window(CKey,
+    shared_ptr<WindowEventHandler> eventHandler,
+    uint64_t handle,
+    shared_ptr<SecretGenerator> secretGen
+) {
     REQUIRE_API_THREAD();
     REQUIRE(handle);
 
     eventHandler_ = eventHandler;
     handle_ = handle;
+    csrfToken_ = secretGen->generateCSRFToken();
+    pathPrefix_ = "/" + toString(handle) + "/" + csrfToken_;
     closed_ = false;
 
     width_ = -1;
@@ -62,7 +66,7 @@ void Window::close(MCE) {
     eventHandler_.reset();
 }
 
-void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
+void Window::handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
 
     if(closed_) {
@@ -70,11 +74,31 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
         return;
     }
 
+    request->sendHTMLResponse(200, writeNewWindowHTML, {pathPrefix_});
+}
+
+void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
+    REQUIRE_API_THREAD();
+
+    string fullPath = request->path();
+    if(
+        fullPath.size() < pathPrefix_.size() ||
+        !passwordsEqual(fullPath.substr(0, pathPrefix_.size()), pathPrefix_)
+    ) {
+        request->sendTextResponse(403, "ERROR: Invalid CSRF token\n");
+        return;
+    }
+    string path = fullPath.substr(pathPrefix_.size());
+
+    if(closed_) {
+        request->sendTextResponse(400, "ERROR: Window has been closed\n");
+        return;
+    }
+
     string method = request->method();
-    string path = request->path();
     smatch match;
 
-    if(method == "GET" && regex_match(path, match, mainPathRegex)) {
+    if(method == "GET" && path == "/") {
         handleMainPageRequest_(mce, request);
         return;
     }
@@ -105,11 +129,11 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
         }
     }
 
-    if(method == "GET" && regex_match(path, match, prevPathRegex)) {
+    if(method == "GET" && path == "/prev/") {
         handlePrevPageRequest_(request);
         return;
     }
-    if(method == "GET" && regex_match(path, match, nextPathRegex)) {
+    if(method == "GET" && path == "/next/") {
         handleNextPageRequest_(request);
         return;
     }
@@ -414,10 +438,10 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
         request->sendHTMLResponse(
             200,
             writeMainHTML,
-            {handle_, curMainIdx_, validNonCharKeyList}
+            {pathPrefix_, curMainIdx_, validNonCharKeyList}
         );
     } else {
-        request->sendHTMLResponse(200, writePreMainHTML, {handle_});
+        request->sendHTMLResponse(200, writePreMainHTML, {pathPrefix_});
         preMainVisited_ = true;
     }
 }
@@ -473,9 +497,9 @@ void Window::handlePrevPageRequest_(shared_ptr<HTTPRequest> request) {
     }
 
     if(prePrevVisited_) {
-        request->sendHTMLResponse(200, writePrevHTML, {handle_});
+        request->sendHTMLResponse(200, writePrevHTML, {pathPrefix_});
     } else {
-        request->sendHTMLResponse(200, writePrePrevHTML, {handle_});
+        request->sendHTMLResponse(200, writePrePrevHTML, {pathPrefix_});
         prePrevVisited_ = true;
     }
 }
@@ -488,7 +512,7 @@ void Window::handleNextPageRequest_(shared_ptr<HTTPRequest> request) {
         navigate_(1);
     }
 
-    request->sendHTMLResponse(200, writeNextHTML, {handle_});
+    request->sendHTMLResponse(200, writeNextHTML, {pathPrefix_});
     return;
 }
 

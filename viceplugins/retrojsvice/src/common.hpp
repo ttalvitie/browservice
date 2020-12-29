@@ -15,6 +15,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <random>
 #include <regex>
 #include <set>
 #include <sstream>
@@ -47,14 +48,17 @@ using std::memory_order_relaxed;
 using std::map;
 using std::min;
 using std::move;
+using std::mt19937;
 using std::multimap;
 using std::mutex;
 using std::optional;
 using std::ostream;
 using std::pair;
 using std::promise;
+using std::random_device;
 using std::regex;
 using std::regex_match;
+using std::seed_seq;
 using std::set;
 using std::shared_ptr;
 using std::smatch;
@@ -64,6 +68,7 @@ using std::swap;
 using std::thread;
 using std::tie;
 using std::tuple;
+using std::uniform_int_distribution;
 using std::unique_lock;
 using std::unique_ptr;
 using std::variant;

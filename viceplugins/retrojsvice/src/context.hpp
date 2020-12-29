@@ -7,6 +7,8 @@
 
 namespace retrojsvice {
 
+class SecretGenerator;
+
 // The implementation of the vice plugin context, exposed through the C API in
 // vice_plugin_api.cpp.
 class Context :
@@ -105,6 +107,7 @@ private:
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;
+    shared_ptr<SecretGenerator> secretGen_;
     shared_ptr<WindowManager> windowManager_;
 
     class APILock;

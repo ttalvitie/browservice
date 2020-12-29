@@ -1,3 +1,5 @@
+#pragma once
+
 #include "image_compressor.hpp"
 #include "task_queue.hpp"
 
@@ -37,6 +39,7 @@ public:
 };
 
 class HTTPRequest;
+class SecretGenerator;
 
 // Must be closed before destruction (as signaled by the onWindowClose, caused
 // by the Window itself or initiated using Window::close)
@@ -46,13 +49,18 @@ class Window :
 {
 SHARED_ONLY_CLASS(Window);
 public:
-    Window(CKey, shared_ptr<WindowEventHandler> eventHandler, uint64_t handle);
+    Window(CKey,
+        shared_ptr<WindowEventHandler> eventHandler,
+        uint64_t handle,
+        shared_ptr<SecretGenerator> secretGen
+    );
     ~Window();
 
     // Immediately closes the window, calling WindowEventHandler::onWindowClose
     // directly. Will not call any other event handlers.
     void close(MCE);
 
+    void handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request);
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
     void notifyViewChanged();
@@ -98,6 +106,8 @@ private:
 
     shared_ptr<WindowEventHandler> eventHandler_;
     uint64_t handle_;
+    string csrfToken_;
+    string pathPrefix_;
     bool closed_;
 
     shared_ptr<ImageCompressor> imageCompressor_;

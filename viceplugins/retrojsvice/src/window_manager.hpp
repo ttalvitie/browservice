@@ -1,3 +1,5 @@
+#pragma once
+
 #include "window.hpp"
 
 namespace retrojsvice {
@@ -41,6 +43,7 @@ public:
 };
 
 class HTTPRequest;
+class SecretGenerator;
 
 // Must be closed with close() prior to destruction.
 class WindowManager :
@@ -49,7 +52,10 @@ class WindowManager :
 {
 SHARED_ONLY_CLASS(WindowManager);
 public:
-    WindowManager(CKey, shared_ptr<WindowManagerEventHandler> eventHandler);
+    WindowManager(CKey,
+        shared_ptr<WindowManagerEventHandler> eventHandler,
+        shared_ptr<SecretGenerator> secretGen
+    );
     ~WindowManager();
 
     // Immediately closes all windows and prevents new windows from being
@@ -98,6 +104,8 @@ private:
     bool closed_;
 
     map<uint64_t, shared_ptr<Window>> windows_;
+
+    shared_ptr<SecretGenerator> secretGen_;
 };
 
 }

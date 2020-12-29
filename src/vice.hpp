@@ -104,6 +104,7 @@ private:
         int width;
         int height;
     };
+    uint64_t nextWindowHandle_;
     map<uint64_t, WindowData> openWindows_;
 
     shared_ptr<Timeout> animationTimeout_;

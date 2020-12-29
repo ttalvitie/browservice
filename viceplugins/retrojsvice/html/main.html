@@ -109,7 +109,7 @@ function iframeLoadHandler(iframeLoadIdx) {
 
     var rand = (1e9 * Math.random()) | 0;
     document.forms[iframeElemIdx].innerHTML =
-        "<iframe src=\"/%-handle-%/iframe/%-mainIdx-%/" + rand + "/\"></iframe>";
+        "<iframe src=\"%-pathPrefix-%/iframe/%-mainIdx-%/" + rand + "/\"></iframe>";
 }
 
 function loadIframe() {
@@ -202,7 +202,7 @@ function sendImgReq(imgLoadIdx) {
     firstImgReqSent = true;
 
     var imgPath =
-        "/%-handle-%/image/" +
+        "%-pathPrefix-%/image/" +
         "%-mainIdx-%/" +
         (++imgReqIdx) + "/" +
         immediate + "/" +
@@ -544,8 +544,8 @@ function registerEventHandlers() {
 
         shutdown = true;
 
-        imgElems[0].src = "/%-handle-%/close/%-mainIdx-%/";
-        imgElems[1].src = "/%-handle-%/close/%-mainIdx-%/";
+        imgElems[0].src = "%-pathPrefix-%/close/%-mainIdx-%/";
+        imgElems[1].src = "%-pathPrefix-%/close/%-mainIdx-%/";
 
         var start = new Date().getTime();
         while(new Date().getTime() - start < 50) {}

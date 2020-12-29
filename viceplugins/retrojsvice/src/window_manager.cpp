@@ -1,6 +1,5 @@
 #include "window_manager.hpp"
 
-#include "html.hpp"
 #include "http.hpp"
 
 namespace retrojsvice {
@@ -12,12 +11,15 @@ regex windowPathRegex("/([0-9]+)/.*");
 }
 
 WindowManager::WindowManager(CKey,
-    shared_ptr<WindowManagerEventHandler> eventHandler
+    shared_ptr<WindowManagerEventHandler> eventHandler,
+    shared_ptr<SecretGenerator> secretGen
 ) {
     REQUIRE_API_THREAD();
 
     eventHandler_ = eventHandler;
     closed_ = false;
+
+    secretGen_ = secretGen;
 }
 
 WindowManager::~WindowManager() {
@@ -168,10 +170,10 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
             REQUIRE(!windows_.count(handle));
 
             shared_ptr<Window> window =
-                Window::create(shared_from_this(), handle);
+                Window::create(shared_from_this(), handle, secretGen_);
             REQUIRE(windows_.emplace(handle, window).second);
 
-            request->sendHTMLResponse(200, writeNewWindowHTML, {handle});
+            window->handleInitialForwardHTTPRequest(request);
         },
         [&](string msg) {
             INFO_LOG("Window creation denied by program (reason: ", msg, ")");

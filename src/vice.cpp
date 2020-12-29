@@ -292,6 +292,8 @@ ViceContext::ViceContext(CKey, CKey,
     state_ = Pending;
     shutdownPending_ = false;
     pumpEventsInQueue_.store(false);
+
+    nextWindowHandle_ = 1;
 }
 
 ViceContext::~ViceContext() {
@@ -332,10 +334,8 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
 
     callbacks.createWindow = CTX_CALLBACK(uint64_t, (char** msg), {
         if((int)self->openWindows_.size() < globals->config->sessionLimit) {
-            uint64_t handle;
-            do {
-                handle = uniform_int_distribution<uint64_t>(1, -1)(rng);
-            } while(self->openWindows_.count(handle));
+            uint64_t handle = self->nextWindowHandle_++;
+            REQUIRE(handle);
 
             INFO_LOG("Window callback stub: Creating window ", handle);
             WindowData data;
