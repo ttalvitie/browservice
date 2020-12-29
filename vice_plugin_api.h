@@ -232,7 +232,7 @@ struct VicePluginAPI_Callbacks {
      *
      * Guidelines for event interpretation:
      *   - Left, middle and right mouse button numbers are 0, 1 and 2, respectively.
-     *   - Mouse wheel delta is positive for scrolling up, negative for scrolling down.
+     *   - Mouse wheel delta is positive for scrolling down/right, negative for scrolling up/left.
      *   - Mouse wheel delta for one line of text is in the ballpark of 20.
      *   - TODO: key events
      */
@@ -240,9 +240,10 @@ struct VicePluginAPI_Callbacks {
     void (*mouseUp)(void*, uint64_t handle, int x, int y, int button);
     void (*mouseMove)(void*, uint64_t handle, int x, int y);
     void (*mouseDoubleClick)(void*, uint64_t handle, int x, int y, int button);
-    void (*mouseWheel)(void*, uint64_t handle, int x, int y, int delta);
+    void (*mouseWheel)(void*, uint64_t handle, int x, int y, int dx, int dy);
     void (*mouseLeave)(void*, uint64_t handle, int x, int y);
     void (*loseFocus)(void*, uint64_t handle);
+
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 

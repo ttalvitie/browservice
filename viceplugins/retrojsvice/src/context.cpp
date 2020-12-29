@@ -493,7 +493,7 @@ void Context::onWindowManagerMouseWheel(
     REQUIRE(handle);
 
     REQUIRE(callbacks_.mouseWheel != nullptr);
-    callbacks_.mouseWheel(callbackData_, handle, x, y, delta);
+    callbacks_.mouseWheel(callbackData_, handle, x, y, 0, -delta);
 }
 
 void Context::onWindowManagerMouseLeave(uint64_t handle, int x, int y) {

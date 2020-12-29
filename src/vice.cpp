@@ -443,9 +443,9 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     });
 
     callbacks.mouseWheel = CTX_CALLBACK(void, (
-        uint64_t handle, int x, int y, int delta
+        uint64_t handle, int x, int y, int dx, int dy
     ), {
-        INFO_LOG("Window callback stub: Mouse wheel delta ", delta, " at (", x, ", ", y, ") in ", handle);
+        INFO_LOG("Window callback stub: Mouse wheel delta (", dx, ", ", dy, ") at (", x, ", ", y, ") in ", handle);
     });
 
     callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
