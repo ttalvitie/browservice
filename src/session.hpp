@@ -9,12 +9,11 @@
 
 class Session;
 
+// Exceptionally, session event handlers are called directly instead of the
+// event loop to avoid race conditions
 class SessionEventHandler {
 public:
     virtual void onSessionClosed(uint64_t id) = 0;
-
-    // Exceptionally, onIsServerFullQuery and onPopupSessionOpen are called
-    // directly instead of the event loop to avoid race conditions.
     virtual bool onIsServerFullQuery() = 0;
     virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
 };

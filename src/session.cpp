@@ -158,7 +158,9 @@ public:
 
         INFO_LOG("Session ", session_->id_, " closed");
 
-        postTask(session_->eventHandler_, &SessionEventHandler::onSessionClosed, session_->id_);
+        if(shared_ptr<SessionEventHandler> eventHandler = session_->eventHandler_.lock()) {
+            eventHandler->onSessionClosed(session_->id_);
+        }
         session_->updateInactivityTimeout_();
     }
 
