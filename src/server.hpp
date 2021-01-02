@@ -37,8 +37,8 @@ public:
 
     // SessionEventHandler:
     virtual void onSessionClosed(uint64_t id) override;
-    virtual bool onIsServerFullQuery() override;
-    virtual void onPopupSessionOpen(shared_ptr<Session> session) override;
+//    virtual bool onIsServerFullQuery() override;
+//    virtual void onPopupSessionOpen(shared_ptr<Session> session) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);

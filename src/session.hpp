@@ -14,8 +14,8 @@ class Session;
 class SessionEventHandler {
 public:
     virtual void onSessionClosed(uint64_t id) = 0;
-    virtual bool onIsServerFullQuery() = 0;
-    virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
+//    virtual bool onIsServerFullQuery() = 0;
+//    virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
 };
 
 class DownloadManager;

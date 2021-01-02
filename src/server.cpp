@@ -87,7 +87,7 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        if(onIsServerFullQuery()) {
+        if((int)sessions_.size() >= globals->config->sessionLimit) {
             request->sendTextResponse(
                 503, "ERROR: Maximum number of concurrent sessions exceeded"
             );
@@ -145,7 +145,7 @@ void Server::onSessionClosed(uint64_t id) {
 
     checkShutdownStatus_();
 }
-
+/*
 bool Server::onIsServerFullQuery() {
     REQUIRE_UI_THREAD();
     return (int)sessions_.size() >= globals->config->sessionLimit;
@@ -160,7 +160,7 @@ void Server::onPopupSessionOpen(shared_ptr<Session> session) {
         session->close();
     }
 }
-
+*/
 void Server::afterConstruct_(shared_ptr<Server> self) {
     viceCtx_->start(self);
     httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);

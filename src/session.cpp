@@ -105,10 +105,10 @@ public:
 
         INFO_LOG("Session ", session_->id(), " opening popup");
 
-        if(eventHandler->onIsServerFullQuery()) {
+//        if(eventHandler->onIsServerFullQuery()) {
             INFO_LOG("Aborting popup creation due to session limit");
             return true;
-        }
+/*        }
 
         browserSettings.background_color = (cef_color_t)-1;
         windowInfo.SetAsWindowless(kNullWindowHandle);
@@ -129,7 +129,7 @@ public:
             );
         });
 
-        return false;
+        return false;*/
     }
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
