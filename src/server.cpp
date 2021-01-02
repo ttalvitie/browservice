@@ -92,12 +92,17 @@ void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
                 503, "ERROR: Maximum number of concurrent sessions exceeded"
             );
         } else {
-            shared_ptr<Session> session = Session::create(
+            shared_ptr<Session> session = Session::tryCreate(
                 shared_from_this(), hasPNGSupport(request->userAgent())
             );
-            sessions_[session->id()] = session;
-
-            request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
+            if(session) {
+                sessions_[session->id()] = session;
+                request->sendHTMLResponse(200, writeNewSessionHTML, {session->id()});
+            } else {
+                request->sendTextResponse(
+                    500, "ERROR: Creating session failed"
+                );
+            }
         }
         return;
     }

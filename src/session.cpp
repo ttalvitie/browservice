@@ -114,7 +114,8 @@ public:
         windowInfo.SetAsWindowless(kNullWindowHandle);
 
         shared_ptr<Session> popupSession =
-            Session::create(session_->eventHandler_, session_->allowPNG_, true);
+            Session::tryCreate(session_->eventHandler_, session_->allowPNG_, true);
+        REQUIRE(popupSession);
         client = new Client(popupSession);
 
         eventHandler->onPopupSessionOpen(popupSession);
@@ -336,63 +337,96 @@ private:
     IMPLEMENT_REFCOUNTING(Client);
 };
 
-Session::Session(CKey,
+shared_ptr<Session> Session::tryCreate(
     weak_ptr<SessionEventHandler> eventHandler,
     bool allowPNG,
     bool isPopup
 ) {
     REQUIRE_UI_THREAD();
 
-    eventHandler_ = eventHandler;
+    shared_ptr<Session> session = Session::create(CKey());
 
-    isPopup_ = isPopup;
+    session->eventHandler_ = eventHandler;
+
+    session->isPopup_ = isPopup;
 
     while(true) {
-        id_ = uniform_int_distribution<uint64_t>()(sessionIDRNG);
-        if(!usedSessionIDs.count(id_)) {
+        session->id_ = uniform_int_distribution<uint64_t>()(sessionIDRNG);
+        if(!usedSessionIDs.count(session->id_)) {
             break;
         }
     }
-    usedSessionIDs.insert(id_);
+    usedSessionIDs.insert(session->id_);
 
-    INFO_LOG("Opening session ", id_);
+    INFO_LOG("Opening session ", session->id_);
 
-    prePrevVisited_ = false;
-    preMainVisited_ = false;
+    session->prePrevVisited_ = false;
+    session->preMainVisited_ = false;
 
-    prevNextClicked_ = false;
+    session->prevNextClicked_ = false;
 
-    curMainIdx_ = 0;
-    curImgIdx_ = 0;
-    curEventIdx_ = 0;
+    session->curMainIdx_ = 0;
+    session->curImgIdx_ = 0;
+    session->curEventIdx_ = 0;
 
-    curDownloadIdx_ = 0;
+    session->curDownloadIdx_ = 0;
 
-    state_ = Pending;
+    session->state_ = Pending;
 
-    closeOnOpen_ = false;
+    session->closeOnOpen_ = false;
 
-    inactivityTimeoutLong_ = Timeout::create(30000);
-    inactivityTimeoutShort_ = Timeout::create(4000);
+    session->inactivityTimeoutLong_ = Timeout::create(30000);
+    session->inactivityTimeoutShort_ = Timeout::create(4000);
 
-    allowPNG_ = allowPNG;
+    session->allowPNG_ = allowPNG;
 
-    lastSecurityStatusUpdateTime_ = steady_clock::now();
-    lastNavigateOperationTime_ = steady_clock::now();
+    session->lastSecurityStatusUpdateTime_ = steady_clock::now();
+    session->lastNavigateOperationTime_ = steady_clock::now();
 
-    imageCompressor_ = ImageCompressor::create(2000, allowPNG_);
+    session->imageCompressor_ = ImageCompressor::create(2000, session->allowPNG_);
 
-    paddedRootViewport_ = ImageSlice::createImage(
+    session->paddedRootViewport_ = ImageSlice::createImage(
         800 + WidthSignalModulus - 1,
         600 + HeightSignalModulus - 1
     );
-    rootViewport_ = paddedRootViewport_.subRect(0, 800, 0, 600);
+    session->rootViewport_ = session->paddedRootViewport_.subRect(0, 800, 0, 600);
 
-    widthSignal_ = WidthSignalNoNewIframe;
-    heightSignal_ = NormalCursor;
+    session->widthSignal_ = WidthSignalNoNewIframe;
+    session->heightSignal_ = NormalCursor;
 
-    // Initialization is finalized in afterConstruct_
+    session->rootWidget_ = RootWidget::create(session, session, session, session->allowPNG_);
+    session->rootWidget_->setViewport(session->rootViewport_);
+
+    session->downloadManager_ = DownloadManager::create(session);
+
+    if(!session->isPopup_) {
+        CefRefPtr<CefClient> client = new Client(session);
+
+        CefWindowInfo windowInfo;
+        windowInfo.SetAsWindowless(kNullWindowHandle);
+
+        CefBrowserSettings browserSettings;
+        browserSettings.background_color = (cef_color_t)-1;
+
+        if(!CefBrowserHost::CreateBrowser(
+            windowInfo,
+            client,
+            globals->config->startPage,
+            browserSettings,
+            nullptr,
+            nullptr
+        )) {
+            INFO_LOG("Opening browser for session ", session->id_, " failed");
+            return {};
+        }
+    }
+
+    session->updateInactivityTimeout_();
+
+    return session;
 }
+
+Session::Session(CKey, CKey) {}
 
 Session::~Session() {
     for(auto elem : downloads_) {
@@ -730,38 +764,6 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
             200, writeDownloadIframeHTML, {self->id_, downloadIdx, file->name()}
         );
     });
-}
-
-void Session::afterConstruct_(shared_ptr<Session> self) {
-    rootWidget_ = RootWidget::create(self, self, self, allowPNG_);
-    rootWidget_->setViewport(rootViewport_);
-
-    downloadManager_ = DownloadManager::create(self);
-
-    if(!isPopup_) {
-        CefRefPtr<CefClient> client = new Client(self);
-
-        CefWindowInfo windowInfo;
-        windowInfo.SetAsWindowless(kNullWindowHandle);
-
-        CefBrowserSettings browserSettings;
-        browserSettings.background_color = (cef_color_t)-1;
-
-        if(!CefBrowserHost::CreateBrowser(
-            windowInfo,
-            client,
-            globals->config->startPage,
-            browserSettings,
-            nullptr,
-            nullptr
-        )) {
-            INFO_LOG("Opening browser for session ", id_, " failed, closing session");
-            state_ = Closed;
-            postTask(eventHandler_, &SessionEventHandler::onSessionClosed, id_);
-        }
-    }
-
-    updateInactivityTimeout_();
 }
 
 void Session::updateInactivityTimeout_(bool shortened) {

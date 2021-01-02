@@ -38,12 +38,16 @@ class Session :
 SHARED_ONLY_CLASS(Session);
 public:
     // Creates new session. The isPopup argument is only used internally to
-    // create popup sessions.
-    Session(CKey,
+    // create popup sessions. Returns empty pointer if creating the session
+    // failed
+    static shared_ptr<Session> tryCreate(
         weak_ptr<SessionEventHandler> eventHandler,
         bool allowPNG,
         bool isPopup = false
     );
+
+    // Private constructor
+    Session(CKey, CKey);
 
     ~Session();
 
@@ -79,8 +83,6 @@ public:
 private:
     // Class that implements CefClient interfaces for this session
     class Client;
-
-    void afterConstruct_(shared_ptr<Session> self);
 
     void updateInactivityTimeout_(bool shortened = false);
 
