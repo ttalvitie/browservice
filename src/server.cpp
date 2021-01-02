@@ -8,7 +8,7 @@
 namespace {
 
 regex sessionPathRegex("/([0-9]+)/.*");
-
+/*
 string htmlEscapeString(string src) {
     string ret;
     for(char c : src) {
@@ -28,7 +28,7 @@ string htmlEscapeString(string src) {
     }
     return ret;
 }
-
+*/
 }
 
 Server::Server(CKey,
@@ -46,24 +46,27 @@ void Server::shutdown() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Running) {
-        state_ = ShutdownPending;
+        state_ = WaitSessions;
         INFO_LOG("Shutting down server");
-
-        viceCtx_->shutdown();
-        httpServer_->shutdown();
 
         map<uint64_t, shared_ptr<Session>> sessions = sessions_;
         for(pair<uint64_t, shared_ptr<Session>> p : sessions) {
             p.second->close();
         }
+
+        checkSessionsEmpty_();
     }
 }
 
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
-    checkShutdownStatus_();
-}
+    REQUIRE(state_ == WaitViceContext);
 
+    state_ = ShutdownComplete;
+    INFO_LOG("Server shutdown complete");
+    postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
+}
+/*
 void Server::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_UI_THREAD();
 
@@ -135,7 +138,7 @@ void Server::onHTTPServerShutdownComplete() {
     REQUIRE_UI_THREAD();
     checkShutdownStatus_();
 }
-
+*/
 void Server::onSessionClosed(uint64_t id) {
     REQUIRE_UI_THREAD();
 
@@ -143,7 +146,7 @@ void Server::onSessionClosed(uint64_t id) {
     REQUIRE(it != sessions_.end());
     sessions_.erase(it);
 
-    checkShutdownStatus_();
+    checkSessionsEmpty_();
 }
 /*
 bool Server::onIsServerFullQuery() {
@@ -156,16 +159,16 @@ void Server::onPopupSessionOpen(shared_ptr<Session> session) {
 
     REQUIRE(sessions_.emplace(session->id(), session).second);
 
-    if(state_ == ShutdownPending) {
+    REQUIRE(state_ == Running || state_ == WaitSessions);
+    if(state_ == WaitSessions) {
         session->close();
     }
 }
 */
 void Server::afterConstruct_(shared_ptr<Server> self) {
     viceCtx_->start(self);
-    httpServer_ = HTTPServer::create(self, globals->config->httpListenAddr);
 }
-
+/*
 void Server::handleClipboardRequest_(shared_ptr<HTTPRequest> request) {
     string method = request->method();
     if(method == "GET") {
@@ -217,16 +220,11 @@ void Server::handleClipboardRequest_(shared_ptr<HTTPRequest> request) {
         request->sendTextResponse(400, "ERROR: Invalid request method");
     }
 }
+*/
 
-void Server::checkShutdownStatus_() {
-    if(
-        state_ == ShutdownPending &&
-        viceCtx_->isShutdownComplete() &&
-        httpServer_->isShutdownComplete() &&
-        sessions_.empty()
-    ) {
-        state_ = ShutdownComplete;
-        INFO_LOG("Server shutdown complete");
-        postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
+void Server::checkSessionsEmpty_() {
+    if(state_ == WaitSessions && sessions_.empty()) {
+        state_ = WaitViceContext;
+        viceCtx_->shutdown();
     }
 }
