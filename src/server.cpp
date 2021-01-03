@@ -1,7 +1,6 @@
 #include "server.hpp"
 
 #include "globals.hpp"
-#include "html.hpp"
 #include "quality.hpp"
 #include "xwindow.hpp"
 
@@ -80,9 +79,7 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
     uint64_t id = nextSessionID_++;
     REQUIRE(id);
 
-    shared_ptr<Session> session = Session::tryCreate(
-        shared_from_this(), id, true/*hasPNGSupport(request->userAgent())*/
-    );
+    shared_ptr<Session> session = Session::tryCreate(shared_from_this(), id);
     if(session) {
         sessions_[id] = session;
         return id;

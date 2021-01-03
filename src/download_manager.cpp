@@ -1,6 +1,5 @@
 #include "download_manager.hpp"
 
-#include "http.hpp"
 #include "temp_dir.hpp"
 
 #include "include/cef_download_handler.h"
@@ -99,7 +98,7 @@ string CompletedDownload::name() {
     REQUIRE_UI_THREAD();
     return name_;
 }
-
+/*
 void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
     REQUIRE_UI_THREAD();
 
@@ -141,7 +140,7 @@ void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
         {{"Content-Disposition", "attachment; filename=\"" + name_ + "\""}}
     );
 }
-
+*/
 class DownloadManager::DownloadHandler : public CefDownloadHandler {
 public:
     DownloadHandler(shared_ptr<DownloadManager> downloadManager) {

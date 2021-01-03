@@ -3,7 +3,6 @@
 #include "browser_area.hpp"
 #include "control_bar.hpp"
 #include "download_manager.hpp"
-#include "http.hpp"
 #include "image_slice.hpp"
 #include "widget.hpp"
 
@@ -26,7 +25,6 @@ public:
 };
 
 class DownloadManager;
-class ImageCompressor;
 class RootWidget;
 class Timeout;
 
@@ -49,7 +47,6 @@ public:
     static shared_ptr<Session> tryCreate(
         shared_ptr<SessionEventHandler> eventHandler,
         uint64_t id,
-        bool allowPNG,
         bool isPopup = false
     );
 
@@ -61,8 +58,6 @@ public:
     // Close open session. SessionEventHandler::onSessionClosing will not be
     // called as the close is initiated by the user.
     void close();
-
-    void handleHTTPRequest(shared_ptr<HTTPRequest> request);
 
     ImageSlice getViewImage();
 
@@ -107,10 +102,7 @@ private:
         string::const_iterator end
     );
 
-    void setWidthSignal_(int newWidthSignal);
-    void setHeightSignal_(int newHeightSignal);
-
-    void addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe);
+//    void addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe);
 
     // -1 = back, 0 = refresh, 1 = forward
     void navigate_(int direction);
@@ -158,28 +150,10 @@ private:
 
     shared_ptr<Timeout> securityStatusUpdateTimeout_;
 
-    bool allowPNG_;
-    shared_ptr<ImageCompressor> imageCompressor_;
-
-    ImageSlice paddedRootViewport_;
     ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
 
-    queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
-
-    // We use width and height modulo WidthSignalModulus and HeightSignalModulus
-    // of the part of rootViewport_ sent to imageCompressor_ to signal various
-    // things to the client. We make the initial signals (1, 1) as
-    // imageCompressor_ initially sends a 1x1 image.
-    static constexpr int WidthSignalNewIframe = 0;
-    static constexpr int WidthSignalNoNewIframe = 1;
-    static constexpr int WidthSignalModulus = 2;
-
-    // Height signals are given by *Cursor defined in widget.hpp
-    static constexpr int HeightSignalModulus = CursorTypeCount;
-
-    int widthSignal_;
-    int heightSignal_;
+//    queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
 
     shared_ptr<DownloadManager> downloadManager_;
 

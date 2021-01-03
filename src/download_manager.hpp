@@ -2,7 +2,6 @@
 
 #include "common.hpp"
 
-class HTTPRequest;
 class TempDir;
 
 class CompletedDownload : public enable_shared_from_this<CompletedDownload> {
@@ -21,7 +20,7 @@ public:
     // Serve the downloaded file to as response to given request. Note that
     // no-cache-headers are omitted, so the result may be cached (to circumvent
     // bugs in IE).
-    void serve(shared_ptr<HTTPRequest> request);
+//    void serve(shared_ptr<HTTPRequest> request);
 
 private:
     shared_ptr<TempDir> tempDir_;

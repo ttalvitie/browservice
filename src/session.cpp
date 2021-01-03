@@ -3,33 +3,11 @@
 #include "data_url.hpp"
 #include "event.hpp"
 #include "globals.hpp"
-#include "html.hpp"
-#include "image_compressor.hpp"
 #include "key.hpp"
 #include "timeout.hpp"
 #include "root_widget.hpp"
 
 #include "include/cef_client.h"
-
-namespace {
-
-regex mainPathRegex("/[0-9]+/");
-regex prevPathRegex("/[0-9]+/prev/");
-regex nextPathRegex("/[0-9]+/next/");
-regex imagePathRegex(
-    "/[0-9]+/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
-);
-regex iframePathRegex(
-    "/[0-9]+/iframe/([0-9]+)/[0-9]+/"
-);
-regex downloadPathRegex(
-    "/[0-9]+/download/([0-9]+)/.*"
-);
-regex closePathRegex(
-    "/[0-9]+/close/([0-9]+)/"
-);
-
-}
 
 class Session::Client :
     public CefClient,
@@ -137,7 +115,6 @@ public:
             // We got close() while Pending and closing was deferred
             REQUIRE(session_->browser_);
             session_->browser_->GetHost()->CloseBrowser(true);
-            session_->imageCompressor_->flush();
         } else {
             session_->state_ = Open;
         }
@@ -157,7 +134,6 @@ public:
         session_->state_ = Closed;
         session_->browser_ = nullptr;
         session_->rootWidget_->browserArea()->setBrowser(nullptr);
-        session_->imageCompressor_->flush();
         session_->securityStatusUpdateTimeout_->clear(false);
 
         INFO_LOG("Session ", session_->id_, " closed");
@@ -343,7 +319,6 @@ private:
 shared_ptr<Session> Session::tryCreate(
     shared_ptr<SessionEventHandler> eventHandler,
     uint64_t id,
-    bool allowPNG,
     bool isPopup
 ) {
     REQUIRE_UI_THREAD();
@@ -369,24 +344,13 @@ shared_ptr<Session> Session::tryCreate(
 
     session->state_ = Pending;
 
-    session->allowPNG_ = allowPNG;
-
     session->lastNavigateOperationTime_ = steady_clock::now();
 
     session->securityStatusUpdateTimeout_ = Timeout::create(1000);
 
-    session->imageCompressor_ = ImageCompressor::create(2000, session->allowPNG_);
+    session->rootViewport_ = ImageSlice::createImage(800, 600);
 
-    session->paddedRootViewport_ = ImageSlice::createImage(
-        800 + WidthSignalModulus - 1,
-        600 + HeightSignalModulus - 1
-    );
-    session->rootViewport_ = session->paddedRootViewport_.subRect(0, 800, 0, 600);
-
-    session->widthSignal_ = WidthSignalNoNewIframe;
-    session->heightSignal_ = NormalCursor;
-
-    session->rootWidget_ = RootWidget::create(session, session, session, session->allowPNG_);
+    session->rootWidget_ = RootWidget::create(session, session, session, true);
     session->rootWidget_->setViewport(session->rootViewport_);
 
     session->downloadManager_ = DownloadManager::create(session);
@@ -440,7 +404,6 @@ void Session::close() {
         state_ = Closing;
         REQUIRE(browser_);
         browser_->GetHost()->CloseBrowser(true);
-        imageCompressor_->flush();
         securityStatusUpdateTimeout_->clear(false);
     } else if(state_ == Pending) {
         INFO_LOG(
@@ -449,162 +412,10 @@ void Session::close() {
         );
 
         state_ = Closing;
-        imageCompressor_->flush();
         securityStatusUpdateTimeout_->clear(false);
     } else {
         REQUIRE(false);
     }
-}
-
-void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
-    REQUIRE_UI_THREAD();
-
-    if(state_ == Closing || state_ == Closed) {
-        request->sendTextResponse(503, "ERROR: Browser session has been closed");
-        return;
-    }
-
-    string method = request->method();
-    string path = request->path();
-    smatch match;
-
-    if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        REQUIRE(match.size() >= 8);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-        optional<uint64_t> imgIdx = parseString<uint64_t>(match[2]);
-        optional<int> immediate = parseString<int>(match[3]);
-        optional<int> width = parseString<int>(match[4]);
-        optional<int> height = parseString<int>(match[5]);
-        optional<uint64_t> startEventIdx = parseString<uint64_t>(match[6]);
-
-        if(mainIdx && imgIdx && immediate && width && height && startEventIdx) {
-            if(*mainIdx != curMainIdx_ || *imgIdx <= curImgIdx_) {
-                request->sendTextResponse(400, "ERROR: Outdated request");
-            } else {
-                handleEvents_(*startEventIdx, match[7].first, match[7].second);
-                curImgIdx_ = *imgIdx;
-                updateRootViewportSize_(*width, *height);
-                if(*immediate) {
-                    imageCompressor_->sendCompressedImageNow(request);
-                } else {
-                    imageCompressor_->sendCompressedImageWait(request);
-                }
-            }
-            return;
-        }
-    }
-
-    if(method == "GET" && regex_match(path, match, iframePathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-        if(mainIdx) {
-            if(*mainIdx != curMainIdx_) {
-                request->sendTextResponse(400, "ERROR: Outdated request");
-            } else if(iframeQueue_.empty()) {
-                request->sendTextResponse(200, "OK");
-            } else {
-                function<void(shared_ptr<HTTPRequest>)> iframe = iframeQueue_.front();
-                iframeQueue_.pop();
-
-                if(iframeQueue_.empty()) {
-                    setWidthSignal_(WidthSignalNoNewIframe);
-                }
-
-                iframe(request);
-            }
-            return;
-        }
-    }
-
-    if(method == "GET" && regex_match(path, match, downloadPathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> downloadIdx = parseString<uint64_t>(match[1]);
-        if(downloadIdx) {
-            auto it = downloads_.find(*downloadIdx);
-            if(it == downloads_.end()) {
-                request->sendTextResponse(400, "ERROR: Outdated download index");
-            } else {
-                it->second.first->serve(request);
-            }
-            return;
-        }
-    }
-
-    if(method == "GET" && regex_match(path, match, closePathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-        if(mainIdx) {
-            if(*mainIdx != curMainIdx_) {
-                request->sendTextResponse(400, "ERROR: Outdated request");
-            } else {
-                // Close requested, increment mainIdx to invalidate requests to
-                // the current main and set shortened inactivity timer as this
-                // may be a reload
-                ++curMainIdx_;
-                curImgIdx_ = 0;
-                curEventIdx_ = 0;
-
-                request->sendTextResponse(200, "OK");
-            }
-            return;
-        }
-    }
-
-    if(method == "GET" && regex_match(path, match, mainPathRegex)) {
-        if(preMainVisited_) {
-            ++curMainIdx_;
-
-            if(curMainIdx_ > 1 && !prevNextClicked_) {
-                // This is not first main page load and no prev/next clicked,
-                // so this must be a refresh
-                navigate_(0);
-            }
-            prevNextClicked_ = false;
-
-            // Avoid keys/mouse buttons staying pressed down
-            rootWidget_->sendLoseFocusEvent();
-            rootWidget_->sendMouseLeaveEvent(0, 0);
-
-            curImgIdx_ = 0;
-            curEventIdx_ = 0;
-            request->sendHTMLResponse(
-                200,
-                writeMainHTML,
-                {id_, curMainIdx_, validNonCharKeyList}
-            );
-        } else {
-            request->sendHTMLResponse(200, writePreMainHTML, {id_});
-            preMainVisited_ = true;
-        }
-        return;
-    }
-
-    if(method == "GET" && regex_match(path, match, prevPathRegex)) {
-        if(curMainIdx_ > 0 && !prevNextClicked_) {
-            prevNextClicked_ = true;
-            navigate_(-1);
-        }
-
-        if(prePrevVisited_) {
-            request->sendHTMLResponse(200, writePrevHTML, {id_});
-        } else {
-            request->sendHTMLResponse(200, writePrePrevHTML, {id_});
-            prePrevVisited_ = true;
-        }
-        return;
-    }
-
-    if(method == "GET" && regex_match(path, match, nextPathRegex)) {
-        if(curMainIdx_ > 0 && !prevNextClicked_) {
-            prevNextClicked_ = true;
-            navigate_(1);
-        }
-
-        request->sendHTMLResponse(200, writeNextHTML, {id_});
-        return;
-    }
-
-    request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
 ImageSlice Session::getViewImage() {
@@ -628,7 +439,7 @@ void Session::onWidgetCursorChanged() {
     postTask([self]() {
         int cursor = self->rootWidget_->cursor();
         REQUIRE(cursor >= 0 && cursor < CursorTypeCount);
-        self->setHeightSignal_(cursor);
+        INFO_LOG("Cursor changed to ", cursor, ", TODO: implement");
     });
 }
 
@@ -668,7 +479,7 @@ void Session::onAddressSubmitted(string url) {
 
 void Session::onQualityChanged(int quality) {
     REQUIRE_UI_THREAD();
-    imageCompressor_->setQuality(quality);
+    INFO_LOG("Quality change to ", quality, ", TODO: implement");
 }
 
 void Session::onPendingDownloadAccepted() {
@@ -693,9 +504,7 @@ void Session::onStopFind(bool clearSelection) {
 void Session::onClipboardButtonPressed() {
     REQUIRE_UI_THREAD();
 
-    addIframe_([](shared_ptr<HTTPRequest> request) {
-        request->sendHTMLResponse(200, writeClipboardIframeHTML, {});
-    });
+    INFO_LOG("Clipboard button pressed (TODO: implement)");
 }
 
 void Session::onBrowserAreaViewDirty() {
@@ -716,31 +525,7 @@ void Session::onDownloadProgressChanged(vector<int> progress) {
 void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     REQUIRE_UI_THREAD();
 
-    weak_ptr<Session> selfWeak = shared_from_this();
-    addIframe_([file, selfWeak](shared_ptr<HTTPRequest> request) {
-        REQUIRE_UI_THREAD();
-
-        shared_ptr<Session> self = selfWeak.lock();
-        if(!self) return;
-
-        // Some browser use multiple requests to download a file. Thus, we add
-        // the file to downloads_ to be kept a certain period of time, and
-        // forward the client to the actual download page
-        uint64_t downloadIdx = ++self->curDownloadIdx_;
-        shared_ptr<Timeout> timeout = Timeout::create(10000);
-        REQUIRE(self->downloads_.insert({downloadIdx, {file, timeout}}).second);
-
-        timeout->set([selfWeak, downloadIdx]() {
-            REQUIRE_UI_THREAD();
-            if(shared_ptr<Session> self = selfWeak.lock()) {
-                self->downloads_.erase(downloadIdx);
-            }
-        });
-
-        request->sendHTMLResponse(
-            200, writeDownloadIframeHTML, {self->id_, downloadIdx, file->name()}
-        );
-    });
+    INFO_LOG("Download completed (TODO: implement)");
 }
 
 void Session::updateSecurityStatus_() {
@@ -791,17 +576,13 @@ void Session::updateRootViewportSize_(int width, int height) {
     height = max(min(height, 4096), 64);
 
     if(rootViewport_.width() != width || rootViewport_.height() != height) {
-        paddedRootViewport_ = ImageSlice::createImage(
-            width + WidthSignalModulus - 1,
-            height + HeightSignalModulus - 1
-        );
-        rootViewport_ = paddedRootViewport_.subRect(0, width, 0, height);
+        rootViewport_ = ImageSlice::createImage(width, height);
         rootWidget_->setViewport(rootViewport_);
     }
 }
 
 void Session::sendViewportToCompressor_() {
-    REQUIRE(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
+/*    REQUIRE(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
     REQUIRE(heightSignal_ >= 0 && heightSignal_ < HeightSignalModulus);
 
     int width = paddedRootViewport_.width();
@@ -813,12 +594,14 @@ void Session::sendViewportToCompressor_() {
     while(height % HeightSignalModulus != heightSignal_) {
         --height;
     }
-
-    imageCompressor_->updateImage(
+*/
+/*    imageCompressor_->updateImage(
         paddedRootViewport_.subRect(0, width, 0, height)
     );
-
-    eventHandler_->onSessionViewImageChanged(id_);
+*/
+    if(state_ == Pending || state_ == Open) {
+        eventHandler_->onSessionViewImageChanged(id_);
+    }
 }
 
 void Session::handleEvents_(
@@ -860,26 +643,12 @@ void Session::handleEvents_(
         }
     }
 }
-
-void Session::setWidthSignal_(int newWidthSignal) {
-    if(newWidthSignal != widthSignal_) {
-        widthSignal_ = newWidthSignal;
-        sendViewportToCompressor_();
-    }
-}
-
-void Session::setHeightSignal_(int newHeightSignal) {
-    if(newHeightSignal != heightSignal_) {
-        heightSignal_ = newHeightSignal;
-        sendViewportToCompressor_();
-    }
-}
-
+/*
 void Session::addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe) {
     iframeQueue_.push(iframe);
     setWidthSignal_(WidthSignalNewIframe);
 }
-
+*/
 void Session::navigate_(int direction) {
     REQUIRE(direction >= -1 && direction <= 1);
 
