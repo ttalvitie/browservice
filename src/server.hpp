@@ -13,7 +13,6 @@ public:
 // for onServerShutdownComplete event.
 class Server :
     public ViceContextEventHandler,
-//    public HTTPServerEventHandler,
     public SessionEventHandler,
     public enable_shared_from_this<Server>
 {
@@ -35,22 +34,14 @@ public:
         function<void(const uint8_t*, size_t, size_t, size_t)> putImage
     ) override;
     virtual void onViceContextShutdownComplete() override;
-/*
-    // HTTPServerEventHandler:
-    virtual void onHTTPServerRequest(shared_ptr<HTTPRequest> request) override;
-    virtual void onHTTPServerShutdownComplete() override;
-*/
+
     // SessionEventHandler:
     virtual void onSessionClosing(uint64_t id) override;
     virtual void onSessionClosed(uint64_t id) override;
-//    virtual bool onIsServerFullQuery() override;
-//    virtual void onPopupSessionOpen(shared_ptr<Session> session) override;
     virtual void onSessionViewImageChanged(uint64_t id) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);
-
-//    void handleClipboardRequest_(shared_ptr<HTTPRequest> request);
 
     void checkSessionsEmpty_();
 

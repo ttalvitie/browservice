@@ -87,8 +87,6 @@ public:
     void start(shared_ptr<ViceContextEventHandler> eventHandler);
     void shutdown();
 
-    bool isShutdownComplete();
-
     // Vice plugin API functions for running contexts:
     void closeWindow(uint64_t window);
     void notifyWindowViewChanged(uint64_t window);

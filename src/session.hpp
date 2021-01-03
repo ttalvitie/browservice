@@ -19,8 +19,6 @@ public:
     // Called when session is completely closed and can be destructed.
     virtual void onSessionClosed(uint64_t id) = 0;
 
-//    virtual bool onIsServerFullQuery() = 0;
-//    virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
     virtual void onSessionViewImageChanged(uint64_t id) = 0;
 };
 
@@ -102,8 +100,6 @@ private:
         string::const_iterator end
     );
 
-//    void addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe);
-
     // -1 = back, 0 = refresh, 1 = forward
     void navigate_(int direction);
 
@@ -152,8 +148,6 @@ private:
 
     ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
-
-//    queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
 
     shared_ptr<DownloadManager> downloadManager_;
 

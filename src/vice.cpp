@@ -443,11 +443,6 @@ void ViceContext::shutdown() {
     plugin_->apiFuncs_->shutdown(ctx_);
 }
 
-bool ViceContext::isShutdownComplete() {
-    REQUIRE_UI_THREAD();
-    return state_ == ShutdownComplete;
-}
-
 void ViceContext::closeWindow(uint64_t window) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Running);

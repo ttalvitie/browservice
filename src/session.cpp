@@ -74,33 +74,8 @@ public:
 
         shared_ptr<SessionEventHandler> eventHandler = session_->eventHandler_;
 
-        INFO_LOG("Session ", session_->id_, " opening popup");
-
-//        if(eventHandler->onIsServerFullQuery()) {
-            INFO_LOG("Aborting popup creation due to session limit");
-            return true;
-/*        }
-
-        browserSettings.background_color = (cef_color_t)-1;
-        windowInfo.SetAsWindowless(kNullWindowHandle);
-
-        shared_ptr<Session> popupSession =
-            Session::tryCreate(session_->eventHandler_, session_->allowPNG_, true);
-        REQUIRE(popupSession);
-        client = new Client(popupSession);
-
-        eventHandler->onPopupSessionOpen(popupSession);
-
-        uint64_t popupSessionID = popupSession->id();
-        session_->addIframe_([popupSessionID](shared_ptr<HTTPRequest> request) {
-            request->sendHTMLResponse(
-                200,
-                writePopupIframeHTML,
-                {popupSessionID}
-            );
-        });
-
-        return false;*/
+        INFO_LOG("Session ", session_->id_, " opening popup, TODO: implement");
+        return true;
     }
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
@@ -582,23 +557,6 @@ void Session::updateRootViewportSize_(int width, int height) {
 }
 
 void Session::sendViewportToCompressor_() {
-/*    REQUIRE(widthSignal_ >= 0 && widthSignal_ < WidthSignalModulus);
-    REQUIRE(heightSignal_ >= 0 && heightSignal_ < HeightSignalModulus);
-
-    int width = paddedRootViewport_.width();
-    while(width % WidthSignalModulus != widthSignal_) {
-        --width;
-    }
-
-    int height = paddedRootViewport_.height();
-    while(height % HeightSignalModulus != heightSignal_) {
-        --height;
-    }
-*/
-/*    imageCompressor_->updateImage(
-        paddedRootViewport_.subRect(0, width, 0, height)
-    );
-*/
     if(state_ == Pending || state_ == Open) {
         eventHandler_->onSessionViewImageChanged(id_);
     }
@@ -643,12 +601,7 @@ void Session::handleEvents_(
         }
     }
 }
-/*
-void Session::addIframe_(function<void(shared_ptr<HTTPRequest>)> iframe) {
-    iframeQueue_.push(iframe);
-    setWidthSignal_(WidthSignalNewIframe);
-}
-*/
+
 void Session::navigate_(int direction) {
     REQUIRE(direction >= -1 && direction <= 1);
 
