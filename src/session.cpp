@@ -158,6 +158,7 @@ public:
         session_->browser_ = nullptr;
         session_->rootWidget_->browserArea()->setBrowser(nullptr);
         session_->imageCompressor_->flush();
+        session_->securityStatusUpdateTimeout_->clear(false);
 
         INFO_LOG("Session ", session_->id_, " closed");
 
@@ -370,8 +371,9 @@ shared_ptr<Session> Session::tryCreate(
 
     session->allowPNG_ = allowPNG;
 
-    session->lastSecurityStatusUpdateTime_ = steady_clock::now();
     session->lastNavigateOperationTime_ = steady_clock::now();
+
+    session->securityStatusUpdateTimeout_ = Timeout::create(1000);
 
     session->imageCompressor_ = ImageCompressor::create(2000, session->allowPNG_);
 
@@ -415,6 +417,8 @@ shared_ptr<Session> Session::tryCreate(
         }
     }
 
+    session->updateSecurityStatus_();
+
     return session;
 }
 
@@ -437,13 +441,16 @@ void Session::close() {
         REQUIRE(browser_);
         browser_->GetHost()->CloseBrowser(true);
         imageCompressor_->flush();
+        securityStatusUpdateTimeout_->clear(false);
     } else if(state_ == Pending) {
         INFO_LOG(
             "Closing session ", id_,
-            " requested while session is still opening, deferring request"
+            " requested while browser is still opening, deferring browser close"
         );
 
         state_ = Closing;
+        imageCompressor_->flush();
+        securityStatusUpdateTimeout_->clear(false);
     } else {
         REQUIRE(false);
     }
@@ -455,14 +462,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     if(state_ == Closing || state_ == Closed) {
         request->sendTextResponse(503, "ERROR: Browser session has been closed");
         return;
-    }
-
-    // Force update security status every once in a while just to make sure we
-    // don't miss updates for a long time
-    if(duration_cast<milliseconds>(
-        steady_clock::now() - lastSecurityStatusUpdateTime_
-    ).count() >= 1000) {
-        updateSecurityStatus_();
     }
 
     string method = request->method();
@@ -747,8 +746,6 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
 void Session::updateSecurityStatus_() {
     REQUIRE_UI_THREAD();
 
-    lastSecurityStatusUpdateTime_ = steady_clock::now();
-
     SecurityStatus securityStatus = SecurityStatus::Insecure;
     if(browser_) {
         CefRefPtr<CefNavigationEntry> nav = browser_->GetHost()->GetVisibleNavigationEntry();
@@ -775,6 +772,16 @@ void Session::updateSecurityStatus_() {
     }
 
     rootWidget_->controlBar()->setSecurityStatus(securityStatus);
+
+    if(state_ == Pending || state_ == Open) {
+        // Force update security status every once in a while just to make sure we
+        // don't miss updates for a long time
+        securityStatusUpdateTimeout_->clear(false);
+        shared_ptr<Session> self = shared_from_this();
+        securityStatusUpdateTimeout_->set([self]() {
+            self->updateSecurityStatus_();
+        });
+    }
 }
 
 void Session::updateRootViewportSize_(int width, int height) {

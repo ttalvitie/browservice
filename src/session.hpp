@@ -154,8 +154,9 @@ private:
     //   - Closed: Both closed
     enum {Pending, Open, Closing, Closed} state_;
 
-    steady_clock::time_point lastSecurityStatusUpdateTime_;
     steady_clock::time_point lastNavigateOperationTime_;
+
+    shared_ptr<Timeout> securityStatusUpdateTimeout_;
 
     bool allowPNG_;
     shared_ptr<ImageCompressor> imageCompressor_;
