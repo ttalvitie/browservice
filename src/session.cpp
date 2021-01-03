@@ -13,9 +13,6 @@
 
 namespace {
 
-set<uint64_t> usedSessionIDs;
-mt19937 sessionIDRNG(random_device{}());
-
 regex mainPathRegex("/[0-9]+/");
 regex prevPathRegex("/[0-9]+/prev/");
 regex nextPathRegex("/[0-9]+/next/");
@@ -97,13 +94,9 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        shared_ptr<SessionEventHandler> eventHandler =
-            session_->eventHandler_.lock();
-        if(!eventHandler) {
-            return true;
-        }
+        shared_ptr<SessionEventHandler> eventHandler = session_->eventHandler_;
 
-        INFO_LOG("Session ", session_->id(), " opening popup");
+        INFO_LOG("Session ", session_->id_, " opening popup");
 
 //        if(eventHandler->onIsServerFullQuery()) {
             INFO_LOG("Aborting popup creation due to session limit");
@@ -134,22 +127,32 @@ public:
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
         REQUIRE_UI_THREAD();
-        REQUIRE(session_->state_ == Pending);
+        REQUIRE(session_->state_ == Pending || session_->state_ == Closing);
 
         INFO_LOG("CEF browser for session ", session_->id_, " created");
 
         session_->browser_ = browser;
-        session_->state_ = Open;
-        session_->rootWidget_->browserArea()->setBrowser(browser);
 
-        if(session_->closeOnOpen_) {
-            session_->close();
+        if(session_->state_ == Closing) {
+            // We got close() while Pending and closing was deferred
+            REQUIRE(session_->browser_);
+            session_->browser_->GetHost()->CloseBrowser(true);
+            session_->imageCompressor_->flush();
+        } else {
+            session_->state_ = Open;
         }
+
+        session_->rootWidget_->browserArea()->setBrowser(browser);
     }
 
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
         REQUIRE_UI_THREAD();
-        REQUIRE(session_->state_ == Open || session_->state_ == Closing);
+
+        if(session_->state_ == Open) {
+            session_->eventHandler_->onSessionClosing(session_->id_);
+            session_->state_ = Closing;
+        }
+        REQUIRE(session_->state_ == Closing);
 
         session_->state_ = Closed;
         session_->browser_ = nullptr;
@@ -158,10 +161,7 @@ public:
 
         INFO_LOG("Session ", session_->id_, " closed");
 
-        if(shared_ptr<SessionEventHandler> eventHandler = session_->eventHandler_.lock()) {
-            eventHandler->onSessionClosed(session_->id_);
-        }
-        session_->updateInactivityTimeout_();
+        session_->eventHandler_->onSessionClosed(session_->id_);
     }
 
     // CefLoadHandler:
@@ -340,7 +340,8 @@ private:
 };
 
 shared_ptr<Session> Session::tryCreate(
-    weak_ptr<SessionEventHandler> eventHandler,
+    shared_ptr<SessionEventHandler> eventHandler,
+    uint64_t id,
     bool allowPNG,
     bool isPopup
 ) {
@@ -349,16 +350,8 @@ shared_ptr<Session> Session::tryCreate(
     shared_ptr<Session> session = Session::create(CKey());
 
     session->eventHandler_ = eventHandler;
-
+    session->id_ = id;
     session->isPopup_ = isPopup;
-
-    while(true) {
-        session->id_ = uniform_int_distribution<uint64_t>()(sessionIDRNG);
-        if(!usedSessionIDs.count(session->id_)) {
-            break;
-        }
-    }
-    usedSessionIDs.insert(session->id_);
 
     INFO_LOG("Opening session ", session->id_);
 
@@ -374,11 +367,6 @@ shared_ptr<Session> Session::tryCreate(
     session->curDownloadIdx_ = 0;
 
     session->state_ = Pending;
-
-    session->closeOnOpen_ = false;
-
-    session->inactivityTimeoutLong_ = Timeout::create(30000);
-    session->inactivityTimeoutShort_ = Timeout::create(4000);
 
     session->allowPNG_ = allowPNG;
 
@@ -418,12 +406,14 @@ shared_ptr<Session> Session::tryCreate(
             nullptr,
             nullptr
         )) {
-            INFO_LOG("Opening browser for session ", session->id_, " failed");
+            WARNING_LOG(
+                "Opening browser for session ", session->id_, " failed, ",
+                "aborting session creation"
+            );
+            session->state_ = Closed;
             return {};
         }
     }
-
-    session->updateInactivityTimeout_();
 
     return session;
 }
@@ -431,14 +421,11 @@ shared_ptr<Session> Session::tryCreate(
 Session::Session(CKey, CKey) {}
 
 Session::~Session() {
+    REQUIRE(state_ == Closed);
+
     for(auto elem : downloads_) {
         elem.second.second->clear(false);
     }
-
-    uint64_t id = id_;
-    postTask([id]() {
-        usedSessionIDs.erase(id);
-    });
 }
 
 void Session::close() {
@@ -456,8 +443,9 @@ void Session::close() {
             " requested while session is still opening, deferring request"
         );
 
-        // Close the browser as soon as it opens
-        closeOnOpen_ = true;
+        state_ = Closing;
+    } else {
+        REQUIRE(false);
     }
 }
 
@@ -494,8 +482,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             if(*mainIdx != curMainIdx_ || *imgIdx <= curImgIdx_) {
                 request->sendTextResponse(400, "ERROR: Outdated request");
             } else {
-                updateInactivityTimeout_();
-
                 handleEvents_(*startEventIdx, match[7].first, match[7].second);
                 curImgIdx_ = *imgIdx;
                 updateRootViewportSize_(*width, *height);
@@ -518,8 +504,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
             } else if(iframeQueue_.empty()) {
                 request->sendTextResponse(200, "OK");
             } else {
-                updateInactivityTimeout_();
-
                 function<void(shared_ptr<HTTPRequest>)> iframe = iframeQueue_.front();
                 iframeQueue_.pop();
 
@@ -560,7 +544,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
                 ++curMainIdx_;
                 curImgIdx_ = 0;
                 curEventIdx_ = 0;
-                updateInactivityTimeout_(true);
 
                 request->sendTextResponse(200, "OK");
             }
@@ -569,8 +552,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, mainPathRegex)) {
-        updateInactivityTimeout_();
-
         if(preMainVisited_) {
             ++curMainIdx_;
 
@@ -600,8 +581,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, prevPathRegex)) {
-        updateInactivityTimeout_();
-
         if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
             navigate_(-1);
@@ -617,8 +596,6 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && regex_match(path, match, nextPathRegex)) {
-        updateInactivityTimeout_();
-
         if(curMainIdx_ > 0 && !prevNextClicked_) {
             prevNextClicked_ = true;
             navigate_(1);
@@ -631,9 +608,8 @@ void Session::handleHTTPRequest(shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
-uint64_t Session::id() {
-    REQUIRE_UI_THREAD();
-    return id_;
+ImageSlice Session::getViewImage() {
+    return rootViewport_;
 }
 
 void Session::onWidgetViewDirty() {
@@ -768,32 +744,6 @@ void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     });
 }
 
-void Session::updateInactivityTimeout_(bool shortened) {
-    REQUIRE_UI_THREAD();
-
-    inactivityTimeoutLong_->clear(false);
-    inactivityTimeoutShort_->clear(false);
-
-    if(state_ == Pending || state_ == Open) {
-        shared_ptr<Timeout> timeout =
-            shortened ? inactivityTimeoutShort_ : inactivityTimeoutLong_;
-
-        weak_ptr<Session> self = shared_from_this();
-        timeout->set([self, shortened]() {
-            REQUIRE_UI_THREAD();
-            if(shared_ptr<Session> session = self.lock()) {
-                if(session->state_ == Pending || session->state_ == Open) {
-                    INFO_LOG(
-                        "Inactivity timeout for session ", session->id_, " reached",
-                        (shortened ? " (shortened due to client close signal)" : "")
-                    );
-                    session->close();
-                }
-            }
-        });
-    }
-}
-
 void Session::updateSecurityStatus_() {
     REQUIRE_UI_THREAD();
 
@@ -860,6 +810,8 @@ void Session::sendViewportToCompressor_() {
     imageCompressor_->updateImage(
         paddedRootViewport_.subRect(0, width, 0, height)
     );
+
+    eventHandler_->onSessionViewImageChanged(id_);
 }
 
 void Session::handleEvents_(

@@ -47,6 +47,17 @@ private:
 
 class ViceContextEventHandler {
 public:
+    // To deny window creation, return 0 and optionally set msg to short
+    // human-readable reason for the denial.
+    virtual uint64_t onViceContextCreateWindowRequest(string& msg) = 0;
+
+    virtual void onViceContextCloseWindow(uint64_t window) = 0;
+
+    virtual void onViceContextFetchWindowImage(
+        uint64_t window,
+        function<void(const uint8_t*, size_t, size_t, size_t)> putImage
+    ) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 
@@ -71,19 +82,22 @@ public:
     ~ViceContext();
 
     // Start running the context. Before quitting CEF message loop, call
-    // shutdown and wait for onViceContextShutdownComplete event.
-    void start(weak_ptr<ViceContextEventHandler> eventHandler);
+    // shutdown and wait for onViceContextShutdownComplete event. Pointer to
+    // the event handler will be retained until shutdown is complete.
+    void start(shared_ptr<ViceContextEventHandler> eventHandler);
     void shutdown();
 
     bool isShutdownComplete();
+
+    // Vice plugin API functions for running contexts:
+    void closeWindow(uint64_t window);
+    void notifyWindowViewChanged(uint64_t window);
 
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);
 
     void pumpEvents_();
     void shutdownComplete_();
-
-    void animate_();
 
     shared_ptr<VicePlugin> plugin_;
     VicePluginAPI_Context* ctx_;
@@ -92,7 +106,7 @@ private:
     bool shutdownPending_;
     atomic<bool> pumpEventsInQueue_;
 
-    weak_ptr<ViceContextEventHandler> eventHandler_;
+    shared_ptr<ViceContextEventHandler> eventHandler_;
 
     // For running contexts, we store a shared pointer to self to avoid it being
     // destructed.
@@ -105,7 +119,5 @@ private:
         int height;
     };
     uint64_t nextWindowHandle_;
-    map<uint64_t, WindowData> openWindows_;
-
-    shared_ptr<Timeout> animationTimeout_;
+    set<uint64_t> openWindows_;
 };

@@ -56,9 +56,9 @@ public:
     );
     ~Window();
 
-    // Immediately closes the window, calling WindowEventHandler::onWindowClose
-    // directly. Will not call any other event handlers.
-    void close(MCE);
+    // Immediately closes the window. Does not call
+    // WindowEventHandler::onWindowClose.
+    void close();
 
     void handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request);
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
@@ -72,6 +72,9 @@ public:
 
 private:
     void afterConstruct_(shared_ptr<Window> self);
+
+    // Closes window and calls WindowEventHandler::onWindowClose.
+    void selfClose_(MCE);
 
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(MCE, bool shortened);

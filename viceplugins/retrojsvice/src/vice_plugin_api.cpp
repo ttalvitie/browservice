@@ -158,6 +158,12 @@ WRAP_CTX_API(shutdown)
 API_EXPORT void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(pumpEvents)
 
+API_EXPORT void vicePluginAPI_closeWindow(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+)
+WRAP_CTX_API(closeWindow, window)
+
 API_EXPORT void vicePluginAPI_notifyWindowViewChanged(
     VicePluginAPI_Context* ctx,
     uint64_t window

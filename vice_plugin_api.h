@@ -179,7 +179,8 @@ struct VicePluginAPI_Callbacks {
     uint64_t (*createWindow)(void*, char** msg);
 
     /* Called by the plugin to close an existing window. The window stops existing immediately and
-     * thus it must not be used in any subsequent API calls.
+     * thus it must not be used in any subsequent API/callback calls (including the API function
+     * vicePluginAPI_closeWindow).
      */
     void (*closeWindow)(void*, uint64_t window);
 
@@ -395,6 +396,11 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * started with vicePluginAPI_start and have not yet shut down (the plugin has not called the
  * shutdownComplete callback yet).
  */
+
+/* Called by the program to close an existing window. The window stops existing immediately and thus
+ * it must not be used in any subsequent API/callback calls (including the closeWindow callback).
+ */
+void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t window);
 
 /* Called to notify the plugin that the view in an existing window has changed. After receiving this
  * notification, the plugin should use the fetchWindowImage callback to fetch the new view image and

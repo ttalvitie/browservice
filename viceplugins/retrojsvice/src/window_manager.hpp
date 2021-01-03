@@ -66,6 +66,7 @@ public:
 
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
+    void closeWindow(uint64_t window);
     void notifyViewChanged(uint64_t window);
 
     // WindowEventHandler:

@@ -9,13 +9,20 @@
 
 class Session;
 
-// Exceptionally, session event handlers are called directly instead of the
-// event loop to avoid race conditions
 class SessionEventHandler {
 public:
+    // Called when session is closing for vice plugin (communication should
+    // cease) but cannot be destructed yet as the CEF browser is still open.
+    // Unless the session is closed with Session::close(), this is always called
+    // before SessionEventHandler::onSessionClosed.
+    virtual void onSessionClosing(uint64_t id) = 0;
+
+    // Called when session is completely closed and can be destructed.
     virtual void onSessionClosed(uint64_t id) = 0;
+
 //    virtual bool onIsServerFullQuery() = 0;
 //    virtual void onPopupSessionOpen(shared_ptr<Session> session) = 0;
+    virtual void onSessionViewImageChanged(uint64_t id) = 0;
 };
 
 class DownloadManager;
@@ -26,7 +33,7 @@ class Timeout;
 class CefBrowser;
 
 // Single browser session. Before quitting CEF message loop, call close and wait
-// for onSessionClosed event. 
+// for onSessionClosed event.
 class Session :
     public WidgetParent,
     public ControlBarEventHandler,
@@ -40,7 +47,8 @@ public:
     // create popup sessions. Returns empty pointer if creating the session
     // failed
     static shared_ptr<Session> tryCreate(
-        weak_ptr<SessionEventHandler> eventHandler,
+        shared_ptr<SessionEventHandler> eventHandler,
+        uint64_t id,
         bool allowPNG,
         bool isPopup = false
     );
@@ -50,13 +58,13 @@ public:
 
     ~Session();
 
-    // Close browser if it is not yet closed
+    // Close open session. SessionEventHandler::onSessionClosing will not be
+    // called as the close is initiated by the user.
     void close();
 
     void handleHTTPRequest(shared_ptr<HTTPRequest> request);
 
-    // Get the unique and constant ID of this session
-    uint64_t id();
+    ImageSlice getViewImage();
 
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
@@ -83,8 +91,6 @@ private:
     // Class that implements CefClient interfaces for this session
     class Client;
 
-    void updateInactivityTimeout_(bool shortened = false);
-
     void updateSecurityStatus_();
 
     // Change root viewport size if it is different than currently. Clamps
@@ -109,7 +115,7 @@ private:
     // -1 = back, 0 = refresh, 1 = forward
     void navigate_(int direction);
 
-    weak_ptr<SessionEventHandler> eventHandler_;
+    shared_ptr<SessionEventHandler> eventHandler_;
 
     uint64_t id_;
 
@@ -139,13 +145,14 @@ private:
     map<uint64_t, pair<shared_ptr<CompletedDownload>, shared_ptr<Timeout>>> downloads_;
     uint64_t curDownloadIdx_;
 
+    // The session consists of the vice plugin window (communicating through
+    // event handlers and public member functions) and the CEF browser with
+    // different lifetimes:
+    //   - Pending: Vice plugin window open, CEF browser closed
+    //   - Open: Both open
+    //   - Closing: Vice plugin window closed, CEF browser open
+    //   - Closed: Both closed
     enum {Pending, Open, Closing, Closed} state_;
-
-    // If true, browser should close as soon as it is opened
-    bool closeOnOpen_;
-
-    shared_ptr<Timeout> inactivityTimeoutLong_;
-    shared_ptr<Timeout> inactivityTimeoutShort_;
 
     steady_clock::time_point lastSecurityStatusUpdateTime_;
     steady_clock::time_point lastNavigateOperationTime_;

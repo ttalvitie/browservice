@@ -190,7 +190,6 @@ public:
         return ret;
     }
 
-
 private:
     void clampBoundX_(int& x) {
         x = max(min(x, width_), 0);

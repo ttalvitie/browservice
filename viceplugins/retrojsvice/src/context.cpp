@@ -262,8 +262,16 @@ void Context::pumpEvents() {
     threadRunningPumpEvents = false;
 }
 
+void Context::closeWindow(uint64_t window) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    windowManager_->closeWindow(window);
+}
+
 void Context::notifyWindowViewChanged(uint64_t window) {
     RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
 
     windowManager_->notifyViewChanged(window);
 }

@@ -28,6 +28,12 @@ public:
     void shutdown();
 
     // ViceContextEventHandler:
+    virtual uint64_t onViceContextCreateWindowRequest(string& reason) override;
+    virtual void onViceContextCloseWindow(uint64_t window) override;
+    virtual void onViceContextFetchWindowImage(
+        uint64_t window,
+        function<void(const uint8_t*, size_t, size_t, size_t)> putImage
+    ) override;
     virtual void onViceContextShutdownComplete() override;
 /*
     // HTTPServerEventHandler:
@@ -35,9 +41,11 @@ public:
     virtual void onHTTPServerShutdownComplete() override;
 */
     // SessionEventHandler:
+    virtual void onSessionClosing(uint64_t id) override;
     virtual void onSessionClosed(uint64_t id) override;
 //    virtual bool onIsServerFullQuery() override;
 //    virtual void onPopupSessionOpen(shared_ptr<Session> session) override;
+    virtual void onSessionViewImageChanged(uint64_t id) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);
@@ -48,6 +56,7 @@ private:
 
     weak_ptr<ServerEventHandler> eventHandler_;
 
+    uint64_t nextSessionID_;
     enum {Running, WaitSessions, WaitViceContext, ShutdownComplete} state_;
 
     shared_ptr<ViceContext> viceCtx_;

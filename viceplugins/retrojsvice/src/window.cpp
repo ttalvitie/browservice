@@ -49,7 +49,7 @@ Window::~Window() {
     REQUIRE(closed_);
 }
 
-void Window::close(MCE) {
+void Window::close() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
 
@@ -61,8 +61,6 @@ void Window::close(MCE) {
     imageCompressor_->flush(mce);
 
     REQUIRE(eventHandler_);
-    eventHandler_->onWindowClose(handle_);
-
     eventHandler_.reset();
 }
 
@@ -172,6 +170,14 @@ void Window::afterConstruct_(shared_ptr<Window> self) {
     notifyViewChanged();
 }
 
+void Window::selfClose_(MCE) {
+    shared_ptr<WindowEventHandler> eventHandler = eventHandler_;
+    close();
+
+    REQUIRE(eventHandler);
+    eventHandler->onWindowClose(handle_);
+}
+
 void Window::updateInactivityTimeout_(bool shorten) {
     REQUIRE_API_THREAD();
     if(closed_) return;
@@ -193,7 +199,7 @@ void Window::inactivityTimeoutReached_(MCE, bool shortened) {
         "Closing window ", handle_, " due to inactivity timeout",
         (shortened ? " (shortened due to client close signal)" : "")
     );
-    close(mce);
+    selfClose_(mce);
 }
 
 bool Window::handleTokenizedEvent_(MCE,

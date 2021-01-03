@@ -15,6 +15,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(start) \
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
+    FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
@@ -301,9 +302,10 @@ ViceContext::~ViceContext() {
     plugin_->apiFuncs_->destroyContext(ctx_);
 }
 
-void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
+void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Pending);
+    REQUIRE(eventHandler);
 
     state_ = Running;
     eventHandler_ = eventHandler;
@@ -333,53 +335,32 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
     });
 
     callbacks.createWindow = CTX_CALLBACK(uint64_t, (char** msg), {
-        if((int)self->openWindows_.size() < globals->config->sessionLimit) {
-            uint64_t handle = self->nextWindowHandle_++;
-            REQUIRE(handle);
-
-            INFO_LOG("Window callback stub: Creating window ", handle);
-            WindowData data;
-            data.width = 512;
-            data.height = 512;
-            REQUIRE(self->openWindows_.emplace(handle, data).second);
-
-            return handle;
+        string reason = "Unknown reason";
+        uint64_t window =
+            self->eventHandler_->onViceContextCreateWindowRequest(reason);
+        if(window || msg == nullptr) {
+            REQUIRE(self->openWindows_.insert(window).second);
+            return window;
         } else {
-            INFO_LOG("Window callback stub: Denying window creation due to limit");
-            if(msg != nullptr) {
-                *msg = createMallocString("Session limit exceeded");
-            }
+            *msg = createMallocString(reason);
             return 0;
         }
     });
 
-    callbacks.closeWindow = CTX_CALLBACK(void, (uint64_t handle), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Closing window ", handle);
-        self->openWindows_.erase(handle);
+    callbacks.closeWindow = CTX_CALLBACK(void, (uint64_t window), {
+        REQUIRE(self->openWindows_.erase(window));
+        self->eventHandler_->onViceContextCloseWindow(window);
     });
 
     callbacks.resizeWindow = CTX_CALLBACK(void, (
-        uint64_t handle,
+        uint64_t window,
         size_t width,
         size_t height
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        REQUIRE(width);
-        REQUIRE(height);
-
-        width = max(min(width, (size_t)4096), (size_t)64);
-        height = max(min(height, (size_t)4096), (size_t)64);
-
-        WindowData& windowData = self->openWindows_[handle];
-        windowData.width = (int)width;
-        windowData.height = (int)height;
     });
 
     callbacks.fetchWindowImage = CTX_CALLBACK(void, (
-        uint64_t handle,
+        uint64_t window,
         void (*putImageFunc)(
             void* putImageFuncData,
             const uint8_t* image,
@@ -389,89 +370,61 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         ),
         void* putImageFuncData
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        const WindowData& windowData = self->openWindows_[handle];
+        REQUIRE(self->openWindows_.count(window));
 
-        uint8_t shift = (uint8_t)(duration_cast<milliseconds>(
-            steady_clock::now().time_since_epoch()
-        ).count() >> 5);
+        bool putImageCalled = false;
+        self->eventHandler_->onViceContextFetchWindowImage(
+            window,
+            [&](
+                const uint8_t* image,
+                size_t width,
+                size_t height,
+                size_t pitch
+            ) {
+                REQUIRE(!putImageCalled);
+                putImageCalled = true;
 
-        size_t width = windowData.width;
-        size_t height = windowData.height;
-        size_t pitch = width;
-        vector<uint8_t> data(4 * pitch * height);
-        for(size_t y = 0; y < height; ++y) {
-            for(size_t x = 0; x < width; ++x) {
-                for(size_t c = 0; c < 3; ++c) {
-                    data[4 * (y * pitch + x) + c] = (uint8_t)((uint8_t)x + shift) ^ (uint8_t)((uint8_t)y + shift);
-                }
+                REQUIRE(width);
+                REQUIRE(height);
+                putImageFunc(putImageFuncData, image, width, height, pitch);
             }
-        }
-
-        putImageFunc(putImageFuncData, data.data(), width, height, pitch);
+        );
+        REQUIRE(putImageCalled);
     });
 
     callbacks.mouseDown = CTX_CALLBACK(void, (
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse button ", button, " down at (", x, ", ", y, ") in ", handle);
     });
 
     callbacks.mouseUp = CTX_CALLBACK(void, (
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse button ", button, " up at (", x, ", ", y, ") in ", handle);
     });
 
-    callbacks.mouseMove = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse moved to (", x, ", ", y, ") in ", handle);
+    callbacks.mouseMove = CTX_CALLBACK(void, (uint64_t window, int x, int y), {
     });
 
     callbacks.mouseDoubleClick = CTX_CALLBACK(void, (
-        uint64_t handle, int x, int y, int button
+        uint64_t window, int x, int y, int button
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse button ", button, " doubleclick at (", x, ", ", y, ") in ", handle);
     });
 
     callbacks.mouseWheel = CTX_CALLBACK(void, (
-        uint64_t handle, int x, int y, int dx, int dy
+        uint64_t window, int x, int y, int dx, int dy
     ), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse wheel delta (", dx, ", ", dy, ") at (", x, ", ", y, ") in ", handle);
     });
 
-    callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t handle, int x, int y), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Mouse leave at (", x, ", ", y, ") in ", handle);
+    callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t window, int x, int y), {
     });
 
-    callbacks.keyDown = CTX_CALLBACK(void, (uint64_t handle, int key), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Key ", key, " down in ", handle);
+    callbacks.keyDown = CTX_CALLBACK(void, (uint64_t window, int key), {
     });
 
-    callbacks.keyUp = CTX_CALLBACK(void, (uint64_t handle, int key), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Key ", key, " up in ", handle);
+    callbacks.keyUp = CTX_CALLBACK(void, (uint64_t window, int key), {
     });
 
-    callbacks.loseFocus = CTX_CALLBACK(void, (uint64_t handle), {
-        REQUIRE(handle);
-        REQUIRE(self->openWindows_.count(handle));
-        INFO_LOG("Window callback stub: Focus loss in ", handle);
+    callbacks.loseFocus = CTX_CALLBACK(void, (uint64_t window), {
     });
 
     plugin_->apiFuncs_->start(
@@ -479,9 +432,6 @@ void ViceContext::start(weak_ptr<ViceContextEventHandler> eventHandler) {
         callbacks,
         callbackData
     );
-
-    animationTimeout_ = Timeout::create(30);
-    animate_();
 }
 
 void ViceContext::shutdown() {
@@ -491,13 +441,29 @@ void ViceContext::shutdown() {
 
     shutdownPending_ = true;
     plugin_->apiFuncs_->shutdown(ctx_);
-
-    animationTimeout_->clear(false);
 }
 
 bool ViceContext::isShutdownComplete() {
     REQUIRE_UI_THREAD();
     return state_ == ShutdownComplete;
+}
+
+void ViceContext::closeWindow(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+
+    REQUIRE(openWindows_.erase(window));
+    plugin_->apiFuncs_->closeWindow(ctx_, window);
+}
+
+void ViceContext::notifyWindowViewChanged(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(window));
+
+    plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, window);
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {
@@ -542,23 +508,10 @@ void ViceContext::shutdownComplete_() {
     shutdownPending_ = false;
     self_.reset();
 
+    REQUIRE(eventHandler_);
     postTask(
         eventHandler_,
         &ViceContextEventHandler::onViceContextShutdownComplete
     );
-}
-
-void ViceContext::animate_() {
-    REQUIRE_UI_THREAD();
-    if(state_ != Running || shutdownPending_) return;
-
-    for(const pair<uint64_t, WindowData>& p : openWindows_) {
-        uint64_t handle = p.first;
-        plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, handle);
-    }
-
-    shared_ptr<ViceContext> self = shared_from_this();
-    animationTimeout_->set([self]() {
-        self->animate_();
-    });
+    eventHandler_.reset();
 }

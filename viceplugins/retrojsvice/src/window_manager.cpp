@@ -29,17 +29,19 @@ WindowManager::~WindowManager() {
 void WindowManager::close(MCE) {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
+    REQUIRE(eventHandler_);
 
     closed_ = true;
 
     while(!windows_.empty()) {
         uint64_t handle = windows_.begin()->first;
         shared_ptr<Window> window = windows_.begin()->second;
+        windows_.erase(handle);
 
         INFO_LOG("Closing window ", handle, " due to plugin shutdown");
 
-        window->close(mce);
-        REQUIRE(!windows_.count(handle));
+        window->close();
+        eventHandler_->onWindowManagerCloseWindow(handle);
     }
 
     eventHandler_.reset();
@@ -78,6 +80,19 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     }
 
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
+}
+
+void WindowManager::closeWindow(uint64_t window) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    shared_ptr<Window> windowPtr = it->second;
+    windows_.erase(it);
+
+    INFO_LOG("Closing window ", window, " as requested by program");
+
+    windowPtr->close();
 }
 
 void WindowManager::notifyViewChanged(uint64_t window) {
