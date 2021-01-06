@@ -2,6 +2,8 @@
 
 #include "globals.hpp"
 
+namespace browservice {
+
 bool hasPNGSupport(string userAgent) {
     for(char& c : userAgent) {
         c = tolower(c);
@@ -13,7 +15,7 @@ bool hasPNGSupport(string userAgent) {
 }
 
 int getDefaultQuality(bool allowPNG) {
-    int ret = globals->config->defaultQuality;
+    int ret = MaxQuality;
     if(!allowPNG && ret == MaxQuality) {
         --ret;
     }
@@ -27,4 +29,6 @@ int getMaxQuality(bool allowPNG) {
     } else {
         return MaxQuality - 1;
     }
+}
+
 }

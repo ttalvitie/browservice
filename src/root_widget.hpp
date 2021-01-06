@@ -2,6 +2,8 @@
 
 #include "widget.hpp"
 
+namespace browservice {
+
 class ControlBar;
 class ControlBarEventHandler;
 class BrowserAreaEventHandler;
@@ -35,3 +37,5 @@ private:
     shared_ptr<ControlBar> controlBar_;
     shared_ptr<BrowserArea> browserArea_;
 };
+
+}

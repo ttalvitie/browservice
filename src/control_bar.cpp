@@ -3,6 +3,8 @@
 #include "text.hpp"
 #include "timeout.hpp"
 
+namespace browservice {
+
 namespace {
 
 ImageSlice secureIcon = ImageSlice::createImageFromStrings({
@@ -787,4 +789,6 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
         children.push_back(findBar_);
     }
     return children;
+}
+
 }

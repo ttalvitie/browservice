@@ -6,54 +6,56 @@
 #include "image_slice.hpp"
 #include "widget.hpp"
 
-class Session;
+class CefBrowser;
 
-class SessionEventHandler {
+namespace browservice {
+
+class Window;
+
+class WindowEventHandler {
 public:
-    // Called when session is closing for vice plugin (communication should
+    // Called when window is closing for vice plugin (communication should
     // cease) but cannot be destructed yet as the CEF browser is still open.
-    // Unless the session is closed with Session::close(), this is always called
-    // before SessionEventHandler::onSessionClosed.
-    virtual void onSessionClosing(uint64_t id) = 0;
+    // Unless the window is closed with Window::close(), this is always called
+    // before WindowEventHandler::onWindowClosed.
+    virtual void onWindowClosing(uint64_t handle) = 0;
 
-    // Called when session is completely closed and can be destructed.
-    virtual void onSessionClosed(uint64_t id) = 0;
+    // Called when window is completely closed and can be destructed.
+    virtual void onWindowClosed(uint64_t handle) = 0;
 
-    virtual void onSessionViewImageChanged(uint64_t id) = 0;
+    virtual void onWindowViewImageChanged(uint64_t handle) = 0;
 };
 
 class DownloadManager;
 class RootWidget;
 class Timeout;
 
-class CefBrowser;
-
-// Single browser session. Before quitting CEF message loop, call close and wait
-// for onSessionClosed event.
-class Session :
+// Single browser window. Before quitting CEF message loop, call close and wait
+// for onWindowClosed event.
+class Window :
     public WidgetParent,
     public ControlBarEventHandler,
     public BrowserAreaEventHandler,
     public DownloadManagerEventHandler,
-    public enable_shared_from_this<Session>
+    public enable_shared_from_this<Window>
 {
-SHARED_ONLY_CLASS(Session);
+SHARED_ONLY_CLASS(Window);
 public:
-    // Creates new session. The isPopup argument is only used internally to
-    // create popup sessions. Returns empty pointer if creating the session
+    // Creates new window. The isPopup argument is only used internally to
+    // create popup windows. Returns empty pointer if creating the window
     // failed
-    static shared_ptr<Session> tryCreate(
-        shared_ptr<SessionEventHandler> eventHandler,
-        uint64_t id,
+    static shared_ptr<Window> tryCreate(
+        shared_ptr<WindowEventHandler> eventHandler,
+        uint64_t handle,
         bool isPopup = false
     );
 
     // Private constructor
-    Session(CKey, CKey);
+    Window(CKey, CKey);
 
-    ~Session();
+    ~Window();
 
-    // Close open session. SessionEventHandler::onSessionClosing will not be
+    // Close open window. WindowEventHandler::onWindowClosing will not be
     // called as the close is initiated by the user.
     void close();
 
@@ -81,7 +83,7 @@ public:
     virtual void onDownloadCompleted(shared_ptr<CompletedDownload> file) override;
 
 private:
-    // Class that implements CefClient interfaces for this session
+    // Class that implements CefClient interfaces for this window
     class Client;
 
     void updateSecurityStatus_();
@@ -103,9 +105,9 @@ private:
     // -1 = back, 0 = refresh, 1 = forward
     void navigate_(int direction);
 
-    shared_ptr<SessionEventHandler> eventHandler_;
+    shared_ptr<WindowEventHandler> eventHandler_;
 
-    uint64_t id_;
+    uint64_t handle_;
 
     bool isPopup_;
 
@@ -133,7 +135,7 @@ private:
     map<uint64_t, pair<shared_ptr<CompletedDownload>, shared_ptr<Timeout>>> downloads_;
     uint64_t curDownloadIdx_;
 
-    // The session consists of the vice plugin window (communicating through
+    // The window consists of the vice plugin window (communicating through
     // event handlers and public member functions) and the CEF browser with
     // different lifetimes:
     //   - Pending: Vice plugin window open, CEF browser closed
@@ -154,3 +156,5 @@ private:
     // Only available in Open state
     CefRefPtr<CefBrowser> browser_;
 };
+
+}

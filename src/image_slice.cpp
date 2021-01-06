@@ -1,5 +1,7 @@
 #include "image_slice.hpp"
 
+namespace browservice {
+
 ImageSlice ImageSlice::createImage(int width, int height, uint8_t r, uint8_t g, uint8_t b) {
     ImageSlice slice = createImage(width, height, 0);
     slice.fill(0, width, 0, height, r, g, b);
@@ -51,4 +53,6 @@ ImageSlice ImageSlice::createImageFromStrings(
     }
 
     return ret;
+}
+
 }

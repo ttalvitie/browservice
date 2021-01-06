@@ -3,6 +3,8 @@
 #include "control_bar.hpp"
 #include "browser_area.hpp"
 
+namespace browservice {
+
 RootWidget::RootWidget(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ControlBarEventHandler> controlBarEventHandler,
@@ -53,4 +55,6 @@ void RootWidget::widgetViewportUpdated_() {
 vector<shared_ptr<Widget>> RootWidget::widgetListChildren_() {
     REQUIRE_UI_THREAD();
     return {controlBar_, browserArea_};
+}
+
 }

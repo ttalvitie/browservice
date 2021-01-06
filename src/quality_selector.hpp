@@ -3,6 +3,8 @@
 #include "text_field.hpp"
 #include "widget.hpp"
 
+namespace browservice {
+
 class QualitySelectorEventHandler {
 public:
     virtual void onQualityChanged(int quality) = 0;
@@ -70,3 +72,5 @@ private:
     bool upButtonPressed_;
     bool downButtonPressed_;
 };
+
+}

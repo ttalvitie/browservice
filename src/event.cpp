@@ -3,6 +3,8 @@
 #include "key.hpp"
 #include "widget.hpp"
 
+namespace browservice {
+
 namespace {
 
 bool processParsedEvent(
@@ -146,4 +148,6 @@ bool processEvent(
     }
 
     return ok && processParsedEvent(widget, name, argCount, args);
+}
+
 }

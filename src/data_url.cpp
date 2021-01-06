@@ -4,6 +4,8 @@
 
 #include <Poco/Crypto/DigestEngine.h>
 
+namespace browservice {
+
 namespace {
 
 const size_t HashLength = 32;
@@ -82,4 +84,6 @@ optional<string> readSignedDataURL(string dataURL, string signKey) {
     } else {
         return empty;
     }
+}
+
 }

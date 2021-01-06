@@ -2,6 +2,8 @@
 
 #include "widget.hpp"
 
+namespace browservice {
+
 typedef pair<ImageSlice, ImageSlice> MenuButtonIcon;
 
 class MenuButton;
@@ -47,3 +49,5 @@ private:
     bool mouseOver_;
     bool mouseDown_;
 };
+
+}

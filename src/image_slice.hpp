@@ -2,6 +2,8 @@
 
 #include "rect.hpp"
 
+namespace browservice {
+
 // Reference to a rectangular part of a shared image buffer
 class ImageSlice {
 public:
@@ -210,3 +212,5 @@ private:
     int globalX_;
     int globalY_;
 };
+
+}

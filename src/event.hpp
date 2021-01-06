@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 class Widget;
 
 // Parse event string given by range [begin, end). If successful, return true
@@ -11,3 +13,5 @@ bool processEvent(
     string::const_iterator begin,
     string::const_iterator end
 );
+
+}

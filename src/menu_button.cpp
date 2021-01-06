@@ -2,6 +2,8 @@
 
 #include "key.hpp"
 
+namespace browservice {
+
 MenuButton::MenuButton(CKey,
     MenuButtonIcon icon,
     weak_ptr<WidgetParent> widgetParent,
@@ -113,4 +115,6 @@ void MenuButton::widgetKeyDownEvent_(int key) {
     if(key == keys::Esc) {
         postTask(eventHandler_, &MenuButtonEventHandler::onMenuButtonEscKeyDown);
     }
+}
+
 }

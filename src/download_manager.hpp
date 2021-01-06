@@ -2,6 +2,12 @@
 
 #include "common.hpp"
 
+class CefDownloadHandler;
+class CefBeforeDownloadCallback;
+class CefDownloadItemCallback;
+
+namespace browservice {
+
 class TempDir;
 
 class CompletedDownload : public enable_shared_from_this<CompletedDownload> {
@@ -35,10 +41,6 @@ public:
     virtual void onDownloadProgressChanged(vector<int> progress) {}
     virtual void onDownloadCompleted(shared_ptr<CompletedDownload> file) = 0;
 };
-
-class CefDownloadHandler;
-class CefBeforeDownloadCallback;
-class CefDownloadItemCallback;
 
 class DownloadManager : public enable_shared_from_this<DownloadManager> {
 SHARED_ONLY_CLASS(DownloadManager);
@@ -77,3 +79,5 @@ private:
     map<uint32_t, DownloadInfo> infos_;
     queue<uint32_t> pending_;
 };
+
+}

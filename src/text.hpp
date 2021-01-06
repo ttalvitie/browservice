@@ -2,6 +2,8 @@
 
 #include "image_slice.hpp"
 
+namespace browservice {
+
 // Common text rendering library context for multiple TextLayout objects.
 // You typically need only one; you should use the one in
 // globals->textRenderContext.
@@ -104,3 +106,5 @@ private:
     int width_;
     int offset_;
 };
+
+}

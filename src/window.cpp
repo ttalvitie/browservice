@@ -1,4 +1,4 @@
-#include "session.hpp"
+#include "window.hpp"
 
 #include "data_url.hpp"
 #include "event.hpp"
@@ -9,7 +9,9 @@
 
 #include "include/cef_client.h"
 
-class Session::Client :
+namespace browservice {
+
+class Window::Client :
     public CefClient,
     public CefLifeSpanHandler,
     public CefLoadHandler,
@@ -19,12 +21,12 @@ class Session::Client :
     public CefKeyboardHandler
 {
 public:
-    Client(shared_ptr<Session> session) {
-        session_ = session;
+    Client(shared_ptr<Window> window) {
+        window_ = window;
         renderHandler_ =
-            session->rootWidget_->browserArea()->createCefRenderHandler();
+            window->rootWidget_->browserArea()->createCefRenderHandler();
         downloadHandler_ =
-            session->downloadManager_->createCefDownloadHandler();
+            window->downloadManager_->createCefDownloadHandler();
         lastFindID_ = -1;
         certificateErrorPageSignKey_ = generateDataURLSignKey();
     }
@@ -72,48 +74,48 @@ public:
     ) override {
         REQUIRE_UI_THREAD();
 
-        shared_ptr<SessionEventHandler> eventHandler = session_->eventHandler_;
+        shared_ptr<WindowEventHandler> eventHandler = window_->eventHandler_;
 
-        INFO_LOG("Session ", session_->id_, " opening popup, TODO: implement");
+        INFO_LOG("Window ", window_->handle_, " opening popup, TODO: implement");
         return true;
     }
 
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
         REQUIRE_UI_THREAD();
-        REQUIRE(session_->state_ == Pending || session_->state_ == Closing);
+        REQUIRE(window_->state_ == Pending || window_->state_ == Closing);
 
-        INFO_LOG("CEF browser for session ", session_->id_, " created");
+        INFO_LOG("CEF browser for window ", window_->handle_, " created");
 
-        session_->browser_ = browser;
+        window_->browser_ = browser;
 
-        if(session_->state_ == Closing) {
+        if(window_->state_ == Closing) {
             // We got close() while Pending and closing was deferred
-            REQUIRE(session_->browser_);
-            session_->browser_->GetHost()->CloseBrowser(true);
+            REQUIRE(window_->browser_);
+            window_->browser_->GetHost()->CloseBrowser(true);
         } else {
-            session_->state_ = Open;
+            window_->state_ = Open;
         }
 
-        session_->rootWidget_->browserArea()->setBrowser(browser);
+        window_->rootWidget_->browserArea()->setBrowser(browser);
     }
 
     virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
         REQUIRE_UI_THREAD();
 
-        if(session_->state_ == Open) {
-            session_->eventHandler_->onSessionClosing(session_->id_);
-            session_->state_ = Closing;
+        if(window_->state_ == Open) {
+            window_->eventHandler_->onWindowClosing(window_->handle_);
+            window_->state_ = Closing;
         }
-        REQUIRE(session_->state_ == Closing);
+        REQUIRE(window_->state_ == Closing);
 
-        session_->state_ = Closed;
-        session_->browser_ = nullptr;
-        session_->rootWidget_->browserArea()->setBrowser(nullptr);
-        session_->securityStatusUpdateTimeout_->clear(false);
+        window_->state_ = Closed;
+        window_->browser_ = nullptr;
+        window_->rootWidget_->browserArea()->setBrowser(nullptr);
+        window_->securityStatusUpdateTimeout_->clear(false);
 
-        INFO_LOG("Session ", session_->id_, " closed");
+        INFO_LOG("Window ", window_->handle_, " closed");
 
-        session_->eventHandler_->onSessionClosed(session_->id_);
+        window_->eventHandler_->onWindowClosed(window_->handle_);
     }
 
     // CefLoadHandler:
@@ -126,16 +128,16 @@ public:
 
         if(frame->IsMain()) {
             if(readSignedDataURL(frame->GetURL(), certificateErrorPageSignKey_)) {
-                session_->rootWidget_->browserArea()->showError(
+                window_->rootWidget_->browserArea()->showError(
                     "Loading URL failed due to a certificate error"
                 );
             } else {
-                session_->rootWidget_->browserArea()->clearError();
+                window_->rootWidget_->browserArea()->clearError();
             }
 
             // Make sure that the loaded page gets the correct idea about the
             // focus and mouse over status
-            session_->rootWidget_->browserArea()->refreshStatusEvents();
+            window_->rootWidget_->browserArea()->refreshStatusEvents();
         }
     }
 
@@ -146,8 +148,8 @@ public:
         bool canGoForward
     ) override {
         REQUIRE_UI_THREAD();
-        session_->rootWidget_->controlBar()->setLoading(isLoading);
-        session_->updateSecurityStatus_();
+        window_->rootWidget_->controlBar()->setLoading(isLoading);
+        window_->updateSecurityStatus_();
     }
 
     virtual void OnLoadError(
@@ -173,8 +175,8 @@ public:
             );
         } else if(errorCode != ERR_ABORTED) {
             string msg = "Loading URL failed due to error: " + string(errorText);
-            session_->rootWidget_->browserArea()->showError(msg);
-            session_->rootWidget_->controlBar()->setAddress(failedURL);
+            window_->rootWidget_->browserArea()->showError(msg);
+            window_->rootWidget_->controlBar()->setAddress(failedURL);
         }
     }
 
@@ -189,11 +191,11 @@ public:
         optional<string> errorURL =
             readSignedDataURL(url, certificateErrorPageSignKey_);
         if(errorURL) {
-            session_->rootWidget_->controlBar()->setAddress(*errorURL);
+            window_->rootWidget_->controlBar()->setAddress(*errorURL);
         } else {
-            session_->rootWidget_->controlBar()->setAddress(url);
+            window_->rootWidget_->controlBar()->setAddress(url);
         }
-        session_->updateSecurityStatus_();
+        window_->updateSecurityStatus_();
     }
 
     virtual bool OnCursorChange(
@@ -208,7 +210,7 @@ public:
         if(type == CT_HAND) cursor = HandCursor;
         if(type == CT_IBEAM) cursor = TextCursor;
 
-        session_->rootWidget_->browserArea()->setCursor(cursor);
+        window_->rootWidget_->browserArea()->setCursor(cursor);
         return true;
     }
 
@@ -224,7 +226,7 @@ public:
     ) override {
         CEF_REQUIRE_IO_THREAD();
 
-        postTask(session_, &Session::updateSecurityStatus_);
+        postTask(window_, &Window::updateSecurityStatus_);
         return nullptr;
     }
 
@@ -253,7 +255,7 @@ public:
         REQUIRE_UI_THREAD();
 
         if(identifier >= lastFindID_) {
-            session_->rootWidget_->controlBar()->setFindResult(count > 0);
+            window_->rootWidget_->controlBar()->setFindResult(count > 0);
             lastFindID_ = identifier;
         }
     }
@@ -269,7 +271,7 @@ public:
             event.windows_key_code == -keys::Backspace &&
             !event.focus_on_editable_field
         ) {
-            session_->navigate_(
+            window_->navigate_(
                 (event.modifiers & EVENTFLAG_SHIFT_DOWN) ? 1 : -1
             );
             return true;
@@ -278,7 +280,7 @@ public:
     }
 
 private:
-    shared_ptr<Session> session_;
+    shared_ptr<Window> window_;
 
     CefRefPtr<CefRenderHandler> renderHandler_;
     CefRefPtr<CefDownloadHandler> downloadHandler_;
@@ -291,47 +293,47 @@ private:
     IMPLEMENT_REFCOUNTING(Client);
 };
 
-shared_ptr<Session> Session::tryCreate(
-    shared_ptr<SessionEventHandler> eventHandler,
-    uint64_t id,
+shared_ptr<Window> Window::tryCreate(
+    shared_ptr<WindowEventHandler> eventHandler,
+    uint64_t handle,
     bool isPopup
 ) {
     REQUIRE_UI_THREAD();
 
-    shared_ptr<Session> session = Session::create(CKey());
+    shared_ptr<Window> window = Window::create(CKey());
 
-    session->eventHandler_ = eventHandler;
-    session->id_ = id;
-    session->isPopup_ = isPopup;
+    window->eventHandler_ = eventHandler;
+    window->handle_ = handle;
+    window->isPopup_ = isPopup;
 
-    INFO_LOG("Opening session ", session->id_);
+    INFO_LOG("Opening window ", window->handle_);
 
-    session->prePrevVisited_ = false;
-    session->preMainVisited_ = false;
+    window->prePrevVisited_ = false;
+    window->preMainVisited_ = false;
 
-    session->prevNextClicked_ = false;
+    window->prevNextClicked_ = false;
 
-    session->curMainIdx_ = 0;
-    session->curImgIdx_ = 0;
-    session->curEventIdx_ = 0;
+    window->curMainIdx_ = 0;
+    window->curImgIdx_ = 0;
+    window->curEventIdx_ = 0;
 
-    session->curDownloadIdx_ = 0;
+    window->curDownloadIdx_ = 0;
 
-    session->state_ = Pending;
+    window->state_ = Pending;
 
-    session->lastNavigateOperationTime_ = steady_clock::now();
+    window->lastNavigateOperationTime_ = steady_clock::now();
 
-    session->securityStatusUpdateTimeout_ = Timeout::create(1000);
+    window->securityStatusUpdateTimeout_ = Timeout::create(1000);
 
-    session->rootViewport_ = ImageSlice::createImage(800, 600);
+    window->rootViewport_ = ImageSlice::createImage(800, 600);
 
-    session->rootWidget_ = RootWidget::create(session, session, session, true);
-    session->rootWidget_->setViewport(session->rootViewport_);
+    window->rootWidget_ = RootWidget::create(window, window, window, true);
+    window->rootWidget_->setViewport(window->rootViewport_);
 
-    session->downloadManager_ = DownloadManager::create(session);
+    window->downloadManager_ = DownloadManager::create(window);
 
-    if(!session->isPopup_) {
-        CefRefPtr<CefClient> client = new Client(session);
+    if(!window->isPopup_) {
+        CefRefPtr<CefClient> client = new Client(window);
 
         CefWindowInfo windowInfo;
         windowInfo.SetAsWindowless(kNullWindowHandle);
@@ -348,22 +350,22 @@ shared_ptr<Session> Session::tryCreate(
             nullptr
         )) {
             WARNING_LOG(
-                "Opening browser for session ", session->id_, " failed, ",
-                "aborting session creation"
+                "Opening browser for window ", window->handle_, " failed, ",
+                "aborting window creation"
             );
-            session->state_ = Closed;
+            window->state_ = Closed;
             return {};
         }
     }
 
-    session->updateSecurityStatus_();
+    window->updateSecurityStatus_();
 
-    return session;
+    return window;
 }
 
-Session::Session(CKey, CKey) {}
+Window::Window(CKey, CKey) {}
 
-Session::~Session() {
+Window::~Window() {
     REQUIRE(state_ == Closed);
 
     for(auto elem : downloads_) {
@@ -371,18 +373,18 @@ Session::~Session() {
     }
 }
 
-void Session::close() {
+void Window::close() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Open) {
-        INFO_LOG("Closing session ", id_, " requested");
+        INFO_LOG("Closing window ", handle_, " requested");
         state_ = Closing;
         REQUIRE(browser_);
         browser_->GetHost()->CloseBrowser(true);
         securityStatusUpdateTimeout_->clear(false);
     } else if(state_ == Pending) {
         INFO_LOG(
-            "Closing session ", id_,
+            "Closing window ", handle_,
             " requested while browser is still opening, deferring browser close"
         );
 
@@ -393,24 +395,24 @@ void Session::close() {
     }
 }
 
-ImageSlice Session::getViewImage() {
+ImageSlice Window::getViewImage() {
     return rootViewport_;
 }
 
-void Session::onWidgetViewDirty() {
+void Window::onWidgetViewDirty() {
     REQUIRE_UI_THREAD();
 
-    shared_ptr<Session> self = shared_from_this();
+    shared_ptr<Window> self = shared_from_this();
     postTask([self]() {
         self->rootWidget_->render();
         self->sendViewportToCompressor_();
     });
 }
 
-void Session::onWidgetCursorChanged() {
+void Window::onWidgetCursorChanged() {
     REQUIRE_UI_THREAD();
 
-    shared_ptr<Session> self = shared_from_this();
+    shared_ptr<Window> self = shared_from_this();
     postTask([self]() {
         int cursor = self->rootWidget_->cursor();
         REQUIRE(cursor >= 0 && cursor < CursorTypeCount);
@@ -418,10 +420,10 @@ void Session::onWidgetCursorChanged() {
     });
 }
 
-void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
+void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
     REQUIRE_UI_THREAD();
 
-    shared_ptr<Session> self = shared_from_this();
+    shared_ptr<Window> self = shared_from_this();
     postTask([self, key]() {
         if(key == GlobalHotkey::Address) {
             self->rootWidget_->controlBar()->activateAddress();
@@ -438,7 +440,7 @@ void Session::onGlobalHotkeyPressed(GlobalHotkey key) {
     });
 }
 
-void Session::onAddressSubmitted(string url) {
+void Window::onAddressSubmitted(string url) {
     REQUIRE_UI_THREAD();
 
     if(!browser_) return;
@@ -452,58 +454,58 @@ void Session::onAddressSubmitted(string url) {
     }
 }
 
-void Session::onQualityChanged(int quality) {
+void Window::onQualityChanged(int quality) {
     REQUIRE_UI_THREAD();
     INFO_LOG("Quality change to ", quality, ", TODO: implement");
 }
 
-void Session::onPendingDownloadAccepted() {
+void Window::onPendingDownloadAccepted() {
     REQUIRE_UI_THREAD();
     downloadManager_->acceptPendingDownload();
 }
 
-void Session::onFind(string text, bool forward, bool findNext) {
+void Window::onFind(string text, bool forward, bool findNext) {
     REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->Find(0, text, forward, false, findNext);
 }
 
-void Session::onStopFind(bool clearSelection) {
+void Window::onStopFind(bool clearSelection) {
     REQUIRE_UI_THREAD();
     if(!browser_) return;
 
     browser_->GetHost()->StopFinding(clearSelection);
 }
 
-void Session::onClipboardButtonPressed() {
+void Window::onClipboardButtonPressed() {
     REQUIRE_UI_THREAD();
 
     INFO_LOG("Clipboard button pressed (TODO: implement)");
 }
 
-void Session::onBrowserAreaViewDirty() {
+void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
     sendViewportToCompressor_();
 }
 
-void Session::onPendingDownloadCountChanged(int count) {
+void Window::onPendingDownloadCountChanged(int count) {
     REQUIRE_UI_THREAD();
     rootWidget_->controlBar()->setPendingDownloadCount(count);
 }
 
-void Session::onDownloadProgressChanged(vector<int> progress) {
+void Window::onDownloadProgressChanged(vector<int> progress) {
     REQUIRE_UI_THREAD();
     rootWidget_->controlBar()->setDownloadProgress(move(progress));
 }
 
-void Session::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
+void Window::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     REQUIRE_UI_THREAD();
 
     INFO_LOG("Download completed (TODO: implement)");
 }
 
-void Session::updateSecurityStatus_() {
+void Window::updateSecurityStatus_() {
     REQUIRE_UI_THREAD();
 
     SecurityStatus securityStatus = SecurityStatus::Insecure;
@@ -537,14 +539,14 @@ void Session::updateSecurityStatus_() {
         // Force update security status every once in a while just to make sure we
         // don't miss updates for a long time
         securityStatusUpdateTimeout_->clear(false);
-        shared_ptr<Session> self = shared_from_this();
+        shared_ptr<Window> self = shared_from_this();
         securityStatusUpdateTimeout_->set([self]() {
             self->updateSecurityStatus_();
         });
     }
 }
 
-void Session::updateRootViewportSize_(int width, int height) {
+void Window::updateRootViewportSize_(int width, int height) {
     REQUIRE_UI_THREAD();
 
     width = max(min(width, 4096), 64);
@@ -556,20 +558,20 @@ void Session::updateRootViewportSize_(int width, int height) {
     }
 }
 
-void Session::sendViewportToCompressor_() {
+void Window::sendViewportToCompressor_() {
     if(state_ == Pending || state_ == Open) {
-        eventHandler_->onSessionViewImageChanged(id_);
+        eventHandler_->onWindowViewImageChanged(handle_);
     }
 }
 
-void Session::handleEvents_(
+void Window::handleEvents_(
     uint64_t startIdx,
     string::const_iterator begin,
     string::const_iterator end
 ) {
     uint64_t eventIdx = startIdx;
     if(eventIdx > curEventIdx_) {
-        WARNING_LOG(eventIdx - curEventIdx_, " events skipped in session ", id_);
+        WARNING_LOG(eventIdx - curEventIdx_, " events skipped in window ", handle_);
         curEventIdx_ = eventIdx;
     }
 
@@ -591,7 +593,7 @@ void Session::handleEvents_(
             if(!processEvent(rootWidget_, eventBegin, eventEnd)) {
                 WARNING_LOG(
                     "Could not parse event '", string(eventBegin, eventEnd),
-                    "' in session ", id_
+                    "' in window ", handle_
                 );
             }
             ++eventIdx;
@@ -602,7 +604,7 @@ void Session::handleEvents_(
     }
 }
 
-void Session::navigate_(int direction) {
+void Window::navigate_(int direction) {
     REQUIRE(direction >= -1 && direction <= 1);
 
     // If two navigation operations are too close together, they probably are
@@ -625,4 +627,6 @@ void Session::navigate_(int direction) {
             browser_->GoForward();
         }
     }
+}
+
 }

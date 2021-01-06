@@ -1,8 +1,10 @@
 #pragma once
 
-#include "common.hpp"
-
 #include "timeout.hpp"
+
+typedef struct VicePluginAPI_Context VicePluginAPI_Context;
+
+namespace browservice {
 
 // Dynamically loaded view service (vice) plugin library that shows the browser
 // view to the user and relays back the input events. Can be interacted with
@@ -61,8 +63,6 @@ public:
     virtual void onViceContextShutdownComplete() = 0;
 };
 
-typedef struct VicePluginAPI_Context VicePluginAPI_Context;
-
 // An initialized vice plugin context.
 class ViceContext : public enable_shared_from_this<ViceContext> {
 SHARED_ONLY_CLASS(ViceContext);
@@ -119,3 +119,5 @@ private:
     uint64_t nextWindowHandle_;
     set<uint64_t> openWindows_;
 };
+
+}

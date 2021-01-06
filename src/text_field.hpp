@@ -2,6 +2,8 @@
 
 #include "widget.hpp"
 
+namespace browservice {
+
 class TextFieldEventHandler {
 public:
     virtual void onTextFieldSubmitted(string text) {}
@@ -84,3 +86,5 @@ private:
 
     shared_ptr<Timeout> caretBlinkTimeout_;
 };
+
+}

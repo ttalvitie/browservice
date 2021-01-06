@@ -3,6 +3,8 @@
 #include "text_field.hpp"
 #include "menu_button.hpp"
 
+namespace browservice {
+
 class FindBarEventHandler {
 public:
     virtual void onFindBarClose() = 0;
@@ -64,3 +66,5 @@ private:
     optional<string> text_;
     bool lastDirForward_;
 };
+
+}

@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 // Keys are represented by integers; positive integers are Unicode code points
 // and negative integers are Windows key codes for non-character keys.
 bool isValidKey(int key);
@@ -55,5 +57,7 @@ constexpr int F10 = -121;
 constexpr int F11 = -122;
 constexpr int F12 = -123;
 constexpr int NumLock = -144;
+
+}
 
 }

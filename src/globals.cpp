@@ -4,6 +4,8 @@
 #include "text.hpp"
 #include "xwindow.hpp"
 
+namespace browservice {
+
 Globals::Globals(CKey, shared_ptr<Config> config)
     : config(config),
       xWindow(XWindow::create()),
@@ -13,3 +15,5 @@ Globals::Globals(CKey, shared_ptr<Config> config)
 }
 
 shared_ptr<Globals> globals;
+
+}

@@ -2,6 +2,8 @@
 
 #include "key.hpp"
 
+namespace browservice {
+
 Widget::Widget(weak_ptr<WidgetParent> parent) {
     REQUIRE_UI_THREAD();
 
@@ -413,3 +415,5 @@ DEFINE_EVENT_FORWARD(
     LoseFocus, focusChild_, (), ()
 );
 #undef EVENT_PREPROCESSING
+
+}

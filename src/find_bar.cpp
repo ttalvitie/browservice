@@ -1,5 +1,7 @@
 #include "find_bar.hpp"
 
+namespace browservice {
+
 namespace {
 
 vector<string> downIconPattern = {
@@ -355,4 +357,6 @@ void FindBar::widgetRender_() {
 
 vector<shared_ptr<Widget>> FindBar::widgetListChildren_() {
     return {textField_, downButton_, upButton_, closeButton_};
+}
+
 }

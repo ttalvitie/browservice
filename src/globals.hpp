@@ -2,6 +2,8 @@
 
 #include "config.hpp"
 
+namespace browservice {
+
 class TextRenderContext;
 class XWindow;
 
@@ -16,3 +18,5 @@ public:
 };
 
 extern shared_ptr<Globals> globals;
+
+}

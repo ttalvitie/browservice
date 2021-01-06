@@ -6,6 +6,8 @@
 
 #include <dlfcn.h>
 
+namespace browservice {
+
 struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
@@ -509,4 +511,6 @@ void ViceContext::shutdownComplete_() {
         &ViceContextEventHandler::onViceContextShutdownComplete
     );
     eventHandler_.reset();
+}
+
 }

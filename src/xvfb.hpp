@@ -4,6 +4,8 @@
 
 #include <sys/types.h>
 
+namespace browservice {
+
 class TempDir;
 
 // Xvfb X server child process
@@ -27,3 +29,5 @@ private:
     int display_;
     bool running_;
 };
+
+}

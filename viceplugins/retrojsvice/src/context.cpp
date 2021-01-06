@@ -282,7 +282,7 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     ret.emplace_back(
         "default-quality",
         "QUALITY",
-        "initial image quality for each session (10..100 or PNG)",
+        "initial image quality for each window (10..100 or PNG)",
         "default: PNG"
     );
     ret.emplace_back(

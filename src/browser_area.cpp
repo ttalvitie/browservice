@@ -5,6 +5,8 @@
 
 #include "include/cef_render_handler.h"
 
+namespace browservice {
+
 namespace {
 
 CefMouseEvent createMouseEvent(int x, int y, uint32_t eventModifiers) {
@@ -446,4 +448,6 @@ void BrowserArea::widgetLoseFocusEvent_() {
     if(!browser_) return;
 
     browser_->GetHost()->SendFocusEvent(false);
+}
+
 }

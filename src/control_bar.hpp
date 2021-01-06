@@ -7,6 +7,8 @@
 #include "quality_selector.hpp"
 #include "widget.hpp"
 
+namespace browservice {
+
 enum class SecurityStatus {
     Secure,
     Warning,
@@ -117,3 +119,5 @@ private:
     bool loading_;
     optional<steady_clock::time_point> loadingAnimationStartTime_;
 };
+
+}

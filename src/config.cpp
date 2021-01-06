@@ -7,6 +7,8 @@
 
 #include <Poco/Net/HTTPServer.h>
 
+namespace browservice {
+
 const char* BrowserviceVersion = "0.9.1.2";
 
 namespace {
@@ -315,4 +317,6 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
     }
 
     return Config::create(src);
+}
+
 }

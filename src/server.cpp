@@ -4,11 +4,7 @@
 #include "quality.hpp"
 #include "xwindow.hpp"
 
-namespace {
-
-regex sessionPathRegex("/([0-9]+)/.*");
-
-}
+namespace browservice {
 
 Server::Server(CKey,
     weak_ptr<ServerEventHandler> eventHandler,
@@ -17,7 +13,7 @@ Server::Server(CKey,
     REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
     state_ = Running;
-    nextSessionID_ = 1;
+    nextWindowHandle_ = 1;
     viceCtx_ = viceCtx;
     // Setup is finished in afterConstruct_
 }
@@ -26,16 +22,16 @@ void Server::shutdown() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Running) {
-        state_ = WaitSessions;
+        state_ = WaitWindows;
         INFO_LOG("Shutting down server");
 
-        map<uint64_t, shared_ptr<Session>> sessions = sessions_;
-        for(pair<uint64_t, shared_ptr<Session>> p : sessions) {
+        map<uint64_t, shared_ptr<Window>> windows = windows_;
+        for(pair<uint64_t, shared_ptr<Window>> p : windows) {
             p.second->close();
             viceCtx_->closeWindow(p.first);
         }
 
-        checkSessionsEmpty_();
+        checkWindowsEmpty_();
     }
 }
 
@@ -48,23 +44,23 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
         return 0;
     }
 
-    INFO_LOG("Got request for new session from vice plugin");
+    INFO_LOG("Got request for new window from vice plugin");
 
-    if((int)sessions_.size() >= globals->config->sessionLimit) {
-        INFO_LOG("Denying session creation due to session limit");
-        reason = "Maximum number of concurrent sessions exceeded";
+    if((int)windows_.size() >= globals->config->windowLimit) {
+        INFO_LOG("Denying window creation due to window limit");
+        reason = "Maximum number of concurrent windows exceeded";
         return 0;
     }
 
-    uint64_t id = nextSessionID_++;
-    REQUIRE(id);
+    uint64_t handle = nextWindowHandle_++;
+    REQUIRE(handle);
 
-    shared_ptr<Session> session = Session::tryCreate(shared_from_this(), id);
-    if(session) {
-        sessions_[id] = session;
-        return id;
+    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle);
+    if(window) {
+        windows_[handle] = window;
+        return handle;
     } else {
-        reason = "Creating browser for session failed";
+        reason = "Creating browser for window failed";
         return 0;
     }
 }
@@ -73,8 +69,8 @@ void Server::onViceContextCloseWindow(uint64_t window) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-    auto it = sessions_.find(window);
-    REQUIRE(it != sessions_.end());
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
 
     it->second->close();
 }
@@ -86,8 +82,8 @@ void Server::onViceContextFetchWindowImage(
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-    auto it = sessions_.find(window);
-    REQUIRE(it != sessions_.end());
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
 
     ImageSlice image = it->second->getViewImage();
     if(image.width() < 1 || image.height() < 1) {
@@ -105,35 +101,37 @@ void Server::onViceContextShutdownComplete() {
     postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
 }
 
-void Server::onSessionClosing(uint64_t id) {
+void Server::onWindowClosing(uint64_t handle) {
     REQUIRE_UI_THREAD();
-    PANIC("Session closing on its own; not implemented");
+    PANIC("Window closing on its own; not implemented");
 }
 
-void Server::onSessionClosed(uint64_t id) {
+void Server::onWindowClosed(uint64_t handle) {
     REQUIRE_UI_THREAD();
 
-    auto it = sessions_.find(id);
-    REQUIRE(it != sessions_.end());
-    sessions_.erase(it);
+    auto it = windows_.find(handle);
+    REQUIRE(it != windows_.end());
+    windows_.erase(it);
 
-    checkSessionsEmpty_();
+    checkWindowsEmpty_();
 }
 
-void Server::onSessionViewImageChanged(uint64_t id) {
+void Server::onWindowViewImageChanged(uint64_t handle) {
     REQUIRE_UI_THREAD();
-    REQUIRE(sessions_.count(id));
+    REQUIRE(windows_.count(handle));
 
-    viceCtx_->notifyWindowViewChanged(id);
+    viceCtx_->notifyWindowViewChanged(handle);
 }
 
 void Server::afterConstruct_(shared_ptr<Server> self) {
     viceCtx_->start(self);
 }
 
-void Server::checkSessionsEmpty_() {
-    if(state_ == WaitSessions && sessions_.empty()) {
+void Server::checkWindowsEmpty_() {
+    if(state_ == WaitWindows && windows_.empty()) {
         state_ = WaitViceContext;
         viceCtx_->shutdown();
     }
+}
+
 }

@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 // Our X window that we can use to e.g. access clipboard
 class XWindow {
 SHARED_ONLY_CLASS(XWindow);
@@ -19,3 +21,5 @@ private:
     class Impl;
     shared_ptr<Impl> impl_;
 };
+
+}

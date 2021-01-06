@@ -6,6 +6,8 @@
 #include <freetype/fttypes.h>
 #include <pango/pangoft2.h>
 
+namespace browservice {
+
 namespace {
 
 int jumpUTF8Chars(const string& str, int idx, int count) {
@@ -463,4 +465,6 @@ void OverflowTextLayout::render(ImageSlice dest, uint8_t rgb) {
 void OverflowTextLayout::clampOffset_() {
     offset_ = min(offset_, textWidth() + 1 - width_);
     offset_ = max(offset_, 0);
+}
+
 }

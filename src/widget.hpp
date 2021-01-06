@@ -2,6 +2,8 @@
 
 #include "image_slice.hpp"
 
+namespace browservice {
+
 static constexpr int HandCursor = 0;
 static constexpr int NormalCursor = 1;
 static constexpr int TextCursor = 2;
@@ -157,3 +159,5 @@ private:
     int cursor_;
     int myCursor_;
 };
+
+}

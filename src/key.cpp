@@ -1,5 +1,7 @@
 #include "key.hpp"
 
+namespace browservice {
+
 namespace {
 
 vector<int> initSortedValidNonCharKeys() {
@@ -108,3 +110,5 @@ UTF8Char keyToUTF8(int key) {
 }
 
 const string validNonCharKeyList = initValidNonCharKeyList();
+
+}

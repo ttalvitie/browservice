@@ -2,6 +2,8 @@
 
 #include "include/wrapper/cef_closure_task.h"
 
+namespace browservice {
+
 Timeout::Timeout(CKey, int64_t delayMs) {
     REQUIRE_UI_THREAD();
 
@@ -90,4 +92,6 @@ void Timeout::delayedTask_() {
         };
         CefPostDelayedTask(TID_UI, base::Bind(call, task), addDelayMs);
     }
+}
+
 }

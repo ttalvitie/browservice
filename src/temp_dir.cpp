@@ -3,6 +3,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+namespace browservice {
+
 TempDir::TempDir(CKey) {
     char path[] = "/tmp/browservicetmp_XXXXXX";
     REQUIRE(mkdtemp(path) != nullptr);
@@ -17,4 +19,6 @@ TempDir::~TempDir() {
 
 const string& TempDir::path() {
     return path_;
+}
+
 }

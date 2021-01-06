@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+namespace browservice {
+
 namespace {
 
 optional<int> parseDisplay(string displayStr) {
@@ -169,4 +171,6 @@ void Xvfb::shutdown() {
     }
 
     running_ = false;
+}
+
 }

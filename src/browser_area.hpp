@@ -3,15 +3,17 @@
 #include "rect.hpp"
 #include "widget.hpp"
 
+class CefBrowser;
+class CefRenderHandler;
+
+namespace browservice {
+
 class BrowserAreaEventHandler {
 public:
     virtual void onBrowserAreaViewDirty() = 0;
 };
 
 class TextLayout;
-
-class CefBrowser;
-class CefRenderHandler;
 
 // BrowserArea is a special widget in the sense that it renders continuously
 // (outside render() calls) and does not notify of updates using
@@ -78,3 +80,5 @@ private:
     bool errorActive_;
     shared_ptr<TextLayout> errorLayout_;
 };
+
+}

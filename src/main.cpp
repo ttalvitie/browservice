@@ -11,6 +11,8 @@
 
 #include <X11/Xlib.h>
 
+namespace browservice {
+
 namespace {
 
 class AppServerEventHandler : public ServerEventHandler {
@@ -93,7 +95,11 @@ void handleTermSignalInApp(int signalID) {
 
 }
 
+}
+
 int main(int argc, char* argv[]) {
+    using namespace browservice;
+
     CefMainArgs mainArgs(argc, argv);
 
     int exitCode = CefExecuteProcess(mainArgs, nullptr, nullptr);

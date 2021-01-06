@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 // Timeout that runs a given callback from the CEF UI thread event loop after a
 // specified (fixed) delay, unless canceled
 class Timeout : public enable_shared_from_this<Timeout> {
@@ -35,3 +37,5 @@ private:
     bool delayedTaskScheduled_;
     steady_clock::time_point delayedTaskTime_;
 };
+
+}

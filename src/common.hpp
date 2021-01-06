@@ -30,6 +30,8 @@
 #include "include/base/cef_logging.h"
 #include "include/wrapper/cef_helpers.h"
 
+namespace browservice {
+
 using std::array;
 using std::atomic;
 using std::binary_search;
@@ -302,3 +304,5 @@ void postTask(weak_ptr<T> weakPtr, void (T::*func)(Args...), Args... args) {
             } \
         } while(false)
 #endif
+
+}

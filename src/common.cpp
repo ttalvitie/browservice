@@ -2,6 +2,8 @@
 
 #include "include/wrapper/cef_closure_task.h"
 
+namespace browservice {
+
 thread_local mt19937 rng(random_device{}());
 
 static atomic<bool> panicUsingCEFFatalError_(false);
@@ -36,3 +38,5 @@ void postTask(function<void()> func) {
 }
 
 atomic<bool> requireUIThreadEnabled_(false);
+
+}

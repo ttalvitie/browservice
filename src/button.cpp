@@ -1,6 +1,8 @@
 #include "button.hpp"
 #include "text.hpp"
 
+namespace browservice {
+
 Button::Button(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ButtonEventHandler> eventHandler
@@ -108,4 +110,6 @@ void Button::widgetMouseMoveEvent_(int x, int y) {
             signalViewDirty_();
         }
     }
+}
+
 }

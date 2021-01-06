@@ -4,6 +4,8 @@
 
 #include <xcb/xcb.h>
 
+namespace browservice {
+
 class XWindow::Impl : public enable_shared_from_this<XWindow::Impl> {
 SHARED_ONLY_CLASS(Impl);
 public:
@@ -373,4 +375,6 @@ void XWindow::pasteFromClipboard(function<void(string)> callback) {
 void XWindow::copyToClipboard(string text) {
     REQUIRE_UI_THREAD();
     impl_->copyToClipboard(text);
+}
+
 }

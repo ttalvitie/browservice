@@ -1,5 +1,7 @@
 #include "widget.hpp"
 
+namespace browservice {
+
 class ButtonEventHandler {
 public:
     virtual void onButtonPressed() = 0;
@@ -33,3 +35,5 @@ private:
 
     shared_ptr<TextLayout> textLayout_;
 };
+
+}

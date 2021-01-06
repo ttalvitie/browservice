@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 extern const char* BrowserviceVersion;
 
 class Config {
@@ -20,13 +22,11 @@ public:
 public:
     const vector<pair<string, string>> viceOpts;
     const string vicePlugin;
-    const string httpListenAddr;
     const string userAgent;
-    const int defaultQuality;
     const bool useDedicatedXvfb;
     const string startPage;
     const string dataDir;
-    const int sessionLimit;
-    const string httpAuth;
+    const int windowLimit;
 };
 
+}

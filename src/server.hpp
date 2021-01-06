@@ -1,7 +1,9 @@
 #pragma once
 
-#include "session.hpp"
+#include "window.hpp"
 #include "vice.hpp"
+
+namespace browservice {
 
 class ServerEventHandler {
 public:
@@ -9,11 +11,11 @@ public:
 };
 
 // The root object for the whole browser proxy server, handling multiple
-// browser sessions. Before quitting CEF message loop, call shutdown and wait
+// browser windows. Before quitting CEF message loop, call shutdown and wait
 // for onServerShutdownComplete event.
 class Server :
     public ViceContextEventHandler,
-    public SessionEventHandler,
+    public WindowEventHandler,
     public enable_shared_from_this<Server>
 {
 SHARED_ONLY_CLASS(Server);
@@ -35,21 +37,23 @@ public:
     ) override;
     virtual void onViceContextShutdownComplete() override;
 
-    // SessionEventHandler:
-    virtual void onSessionClosing(uint64_t id) override;
-    virtual void onSessionClosed(uint64_t id) override;
-    virtual void onSessionViewImageChanged(uint64_t id) override;
+    // WindowEventHandler:
+    virtual void onWindowClosing(uint64_t handle) override;
+    virtual void onWindowClosed(uint64_t handle) override;
+    virtual void onWindowViewImageChanged(uint64_t handle) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);
 
-    void checkSessionsEmpty_();
+    void checkWindowsEmpty_();
 
     weak_ptr<ServerEventHandler> eventHandler_;
 
-    uint64_t nextSessionID_;
-    enum {Running, WaitSessions, WaitViceContext, ShutdownComplete} state_;
+    uint64_t nextWindowHandle_;
+    enum {Running, WaitWindows, WaitViceContext, ShutdownComplete} state_;
 
     shared_ptr<ViceContext> viceCtx_;
-    map<uint64_t, shared_ptr<Session>> sessions_;
+    map<uint64_t, shared_ptr<Window>> windows_;
 };
+
+}

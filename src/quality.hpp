@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 // Integer values in range [MinQuality, MaxQuality] are valid image
 // qualities. If quality is equal to MaxQuality, then PNG is used;
 // otherwise, the quality is a JPEG image quality value.
@@ -14,3 +16,5 @@ bool hasPNGSupport(string userAgent);
 // into account the possibility of disabling PNG
 int getDefaultQuality(bool allowPNG);
 int getMaxQuality(bool allowPNG);
+
+}

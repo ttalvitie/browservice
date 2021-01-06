@@ -1,13 +1,10 @@
 #define CONF_FOREACH_OPT \
     CONF_FOREACH_OPT_ITEM(vicePlugin) \
-    CONF_FOREACH_OPT_ITEM(httpListenAddr) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
-    CONF_FOREACH_OPT_ITEM(defaultQuality) \
     CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
-    CONF_FOREACH_OPT_ITEM(sessionLimit) \
-    CONF_FOREACH_OPT_ITEM(httpAuth)
+    CONF_FOREACH_OPT_ITEM(windowLimit)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -20,26 +17,6 @@ CONF_DEF_OPT_INFO(vicePlugin) {
     }
     bool validate(const string& val) {
         return !val.empty();
-    }
-};
-
-CONF_DEF_OPT_INFO(httpListenAddr) {
-    const char* name = "http-listen-addr";
-    const char* valSpec = "IP:PORT";
-    string desc() {
-        return "bind address and port for the HTTP server";
-    }
-    string defaultVal() {
-        return "127.0.0.1:8080";
-    }
-    bool validate(const string& val) {
-        string val2;
-        try {
-            val2 = Poco::Net::SocketAddress(val).toString();
-        } catch(...) {
-            return false;
-        }
-        return val == val2;
     }
 };
 
@@ -60,36 +37,6 @@ CONF_DEF_OPT_INFO(userAgent) {
     }
 };
 
-CONF_DEF_OPT_INFO(defaultQuality) {
-    const char* name = "default-quality";
-    const char* valSpec = "QUALITY";
-    string desc() {
-        stringstream ss;
-        ss << "initial image quality for each session ";
-        ss << "(" << MinQuality << ".." << (MaxQuality - 1) << " or PNG)";
-        return ss.str();
-    }
-    int defaultVal() {
-        return MaxQuality;
-    }
-    string defaultValStr() {
-        return "default: PNG";
-    }
-    optional<int> parse(string str) {
-        for(char& c : str) {
-            c = tolower(c);
-        }
-        if(str == "png") {
-            return MaxQuality;
-        } else {
-            return parseString<int>(str);
-        }
-    }
-    bool validate(int val) {
-        return val >= MinQuality && val <= MaxQuality;
-    }
-};
-
 CONF_DEF_OPT_INFO(useDedicatedXvfb) {
     const char* name = "use-dedicated-xvfb";
     const char* valSpec = "YES/NO";
@@ -107,7 +54,7 @@ CONF_DEF_OPT_INFO(startPage) {
     const char* name = "start-page";
     const char* valSpec = "URL";
     string desc() {
-        return "URL of the initial page for each new session";
+        return "URL of the initial page for each new window";
     }
     string defaultVal() {
         return "about:blank";
@@ -131,56 +78,16 @@ CONF_DEF_OPT_INFO(dataDir) {
     }
 };
 
-CONF_DEF_OPT_INFO(sessionLimit) {
-    const char* name = "session-limit";
+CONF_DEF_OPT_INFO(windowLimit) {
+    const char* name = "window-limit";
     const char* valSpec = "COUNT";
     string desc() {
-        return "maximum number of sessions (browser windows) that can be open at the same time";
+        return "maximum number of browser windows that can be open at the same time";
     }
     int defaultVal() {
         return 32;
     }
     bool validate(int val) {
         return val >= 1;
-    }
-};
-
-CONF_DEF_OPT_INFO(httpAuth) {
-    const char* name = "http-auth";
-    const char* valSpec = "USER:PASSWORD";
-    string desc() {
-        return "if nonempty, the client is required to authenticate using HTTP basic authentication with given username and password; if the special value 'env' is specified, the value is read from the environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS";
-    }
-    string defaultValStr() {
-        return "default empty";
-    }
-    string defaultVal() {
-        return "";
-    }
-    optional<string> parse(string str) {
-        optional<string> empty;
-
-        if(str.empty()) {
-            return string();
-        } else {
-            string value;
-            if(str == "env") {
-                const char* valuePtr = getenv("BROWSERVICE_HTTP_AUTH_CREDENTIALS");
-                if(valuePtr == nullptr) {
-                    ERROR_LOG("Environment variable BROWSERVICE_HTTP_AUTH_CREDENTIALS missing");
-                    return empty;
-                }
-                value = valuePtr;
-            } else {
-                value = str;
-            }
-
-            size_t colonPos = value.find(':');
-            if(colonPos == value.npos || !colonPos || colonPos + 1 == value.size()) {
-                ERROR_LOG("Given HTTP authentication credential string is invalid");
-                return empty;
-            }
-            return value;
-        }
     }
 };

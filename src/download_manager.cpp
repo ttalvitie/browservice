@@ -4,6 +4,8 @@
 
 #include "include/cef_download_handler.h"
 
+namespace browservice {
+
 namespace {
 
 pair<string, string> extractExtension(const string& filename) {
@@ -312,4 +314,6 @@ void DownloadManager::downloadProgressChanged_() {
         &DownloadManagerEventHandler::onDownloadProgressChanged,
         progress
     );
+}
+
 }

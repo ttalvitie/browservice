@@ -5,6 +5,8 @@
 #include "quality.hpp"
 #include "timeout.hpp"
 
+namespace browservice {
+
 QualitySelector::QualitySelector(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<QualitySelectorEventHandler> eventHandler,
@@ -268,4 +270,6 @@ void QualitySelector::widgetGainFocusEvent_(int x, int y) {
 void QualitySelector::widgetLoseFocusEvent_() {
     REQUIRE_UI_THREAD();
     hasFocus_ = false;
+}
+
 }

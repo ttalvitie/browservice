@@ -2,6 +2,8 @@
 
 #include "common.hpp"
 
+namespace browservice {
+
 class TempDir {
 SHARED_ONLY_CLASS(TempDir);
 public:
@@ -13,3 +15,5 @@ public:
 private:
     string path_;
 };
+
+}

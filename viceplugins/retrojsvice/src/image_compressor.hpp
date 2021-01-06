@@ -23,7 +23,7 @@ public:
 class DelayedTaskTag;
 class HTTPRequest;
 
-// Image compressor service for a single browser session. The image pipeline is
+// Image compressor service for a single browser window. The image pipeline is
 // run asynchronously: when an updated image is available, the service is
 // notified by calling updateNotify(); when it is ready to begin compressing it,
 // it uses the onImageCompressorFetchImage event handler to fetch the most

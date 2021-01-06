@@ -6,6 +6,8 @@
 #include "timeout.hpp"
 #include "xwindow.hpp"
 
+namespace browservice {
+
 TextField::TextField(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<TextFieldEventHandler> eventHandler
@@ -403,4 +405,6 @@ void TextField::widgetLoseFocusEvent_() {
             &TextFieldEventHandler::onTextFieldLostFocusAfterEdit
         );
     }
+}
+
 }
