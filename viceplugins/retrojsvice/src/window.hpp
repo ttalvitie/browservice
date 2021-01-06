@@ -7,10 +7,9 @@ namespace retrojsvice {
 
 class WindowEventHandler {
 public:
-    // When called, the window is closed immediately (after the call, no more
-    // event handlers will be called and none of the member functions of Window
-    // may be called; the Window also drops the shared pointer to the event
-    // handler).
+    // Called when window closes itself (i.e. is not closed by a call to
+    // Window::close()). The window is immediately closed as if Window::close
+    // was called.
     virtual void onWindowClose(uint64_t window) = 0;
 
     // See ImageCompressorEventHandler::onImageCompressorFetchImage
@@ -56,7 +55,8 @@ public:
     );
     ~Window();
 
-    // Immediately closes the window. Does not call
+    // Immediately closes the window (no more event handlers will be called and
+    // no member functions may be called for this window). Does not call
     // WindowEventHandler::onWindowClose.
     void close();
 
