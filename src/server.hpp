@@ -38,14 +38,14 @@ public:
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:
-    virtual void onWindowClosing(uint64_t handle) override;
-    virtual void onWindowClosed(uint64_t handle) override;
+    virtual void onWindowClose(uint64_t handle) override;
+    virtual void onWindowCleanupComplete(uint64_t handle) override;
     virtual void onWindowViewImageChanged(uint64_t handle) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);
 
-    void checkWindowsEmpty_();
+    void checkCleanupComplete_();
 
     weak_ptr<ServerEventHandler> eventHandler_;
 
@@ -53,7 +53,8 @@ private:
     enum {Running, WaitWindows, WaitViceContext, ShutdownComplete} state_;
 
     shared_ptr<ViceContext> viceCtx_;
-    map<uint64_t, shared_ptr<Window>> windows_;
+    map<uint64_t, shared_ptr<Window>> openWindows_;
+    map<uint64_t, shared_ptr<Window>> cleanupWindows_;
 };
 
 }

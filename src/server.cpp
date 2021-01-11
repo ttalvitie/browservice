@@ -25,13 +25,15 @@ void Server::shutdown() {
         state_ = WaitWindows;
         INFO_LOG("Shutting down server");
 
-        map<uint64_t, shared_ptr<Window>> windows = windows_;
+        map<uint64_t, shared_ptr<Window>> windows;
+        swap(windows, openWindows_);
         for(pair<uint64_t, shared_ptr<Window>> p : windows) {
             p.second->close();
             viceCtx_->closeWindow(p.first);
+            REQUIRE(cleanupWindows_.insert(p).second);
         }
 
-        checkWindowsEmpty_();
+        checkCleanupComplete_();
     }
 }
 
@@ -46,7 +48,10 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
 
     INFO_LOG("Got request for new window from vice plugin");
 
-    if((int)windows_.size() >= globals->config->windowLimit) {
+    if(
+        (int)openWindows_.size() + (int)cleanupWindows_.size()
+        >= globals->config->windowLimit
+    ) {
         INFO_LOG("Denying window creation due to window limit");
         reason = "Maximum number of concurrent windows exceeded";
         return 0;
@@ -57,10 +62,10 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
 
     shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle);
     if(window) {
-        windows_[handle] = window;
+        REQUIRE(openWindows_.emplace(handle, window).second);
         return handle;
     } else {
-        reason = "Creating browser for window failed";
+        reason = "Creating CEF browser for window failed";
         return 0;
     }
 }
@@ -69,10 +74,15 @@ void Server::onViceContextCloseWindow(uint64_t window) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-    auto it = windows_.find(window);
-    REQUIRE(it != windows_.end());
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
 
-    it->second->close();
+    uint64_t handle = it->first;
+    shared_ptr<Window> windowPtr = it->second;
+    openWindows_.erase(it);
+
+    windowPtr->close();
+    REQUIRE(cleanupWindows_.emplace(handle, windowPtr).second);
 }
 
 void Server::onViceContextFetchWindowImage(
@@ -82,8 +92,8 @@ void Server::onViceContextFetchWindowImage(
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-    auto it = windows_.find(window);
-    REQUIRE(it != windows_.end());
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
 
     ImageSlice image = it->second->getViewImage();
     if(image.width() < 1 || image.height() < 1) {
@@ -101,24 +111,33 @@ void Server::onViceContextShutdownComplete() {
     postTask(eventHandler_, &ServerEventHandler::onServerShutdownComplete);
 }
 
-void Server::onWindowClosing(uint64_t handle) {
+void Server::onWindowClose(uint64_t handle) {
     REQUIRE_UI_THREAD();
-    PANIC("Window closing on its own; not implemented");
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(handle);
+    REQUIRE(it != openWindows_.end());
+
+    shared_ptr<Window> window = it->second;
+    openWindows_.erase(it);
+
+    REQUIRE(cleanupWindows_.emplace(handle, window).second);
+
+    viceCtx_->closeWindow(handle);
 }
 
-void Server::onWindowClosed(uint64_t handle) {
+void Server::onWindowCleanupComplete(uint64_t handle) {
     REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
 
-    auto it = windows_.find(handle);
-    REQUIRE(it != windows_.end());
-    windows_.erase(it);
-
-    checkWindowsEmpty_();
+    REQUIRE(cleanupWindows_.erase(handle));
+    checkCleanupComplete_();
 }
 
 void Server::onWindowViewImageChanged(uint64_t handle) {
     REQUIRE_UI_THREAD();
-    REQUIRE(windows_.count(handle));
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
 
     viceCtx_->notifyWindowViewChanged(handle);
 }
@@ -127,8 +146,9 @@ void Server::afterConstruct_(shared_ptr<Server> self) {
     viceCtx_->start(self);
 }
 
-void Server::checkWindowsEmpty_() {
-    if(state_ == WaitWindows && windows_.empty()) {
+void Server::checkCleanupComplete_() {
+    if(state_ == WaitWindows && cleanupWindows_.empty()) {
+        REQUIRE(openWindows_.empty());
         state_ = WaitViceContext;
         viceCtx_->shutdown();
     }
