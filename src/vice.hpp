@@ -103,6 +103,7 @@ private:
     enum {Pending, Running, ShutdownComplete} state_;
     bool shutdownPending_;
     atomic<bool> pumpEventsInQueue_;
+    atomic<bool> shutdownCompleteFlag_;
 
     shared_ptr<ViceContextEventHandler> eventHandler_;
 

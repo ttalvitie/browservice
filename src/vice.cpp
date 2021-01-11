@@ -295,6 +295,7 @@ ViceContext::ViceContext(CKey, CKey,
     state_ = Pending;
     shutdownPending_ = false;
     pumpEventsInQueue_.store(false);
+    shutdownCompleteFlag_.store(false);
 
     nextWindowHandle_ = 1;
 }
@@ -327,6 +328,8 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     memset(&callbacks, 0, sizeof(VicePluginAPI_Callbacks));
 
     callbacks.eventNotify = CTX_CALLBACK_WITHOUT_PUMPEVENTS_CHECK(void, (), {
+        REQUIRE(!self->shutdownCompleteFlag_.load());
+
         if(!self->pumpEventsInQueue_.exchange(true)) {
             postTask(self, &ViceContext::pumpEvents_);
         }
@@ -486,8 +489,11 @@ shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {
 
 void ViceContext::pumpEvents_() {
     REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
     REQUIRE(threadActivePumpEventsContext == nullptr);
+
+    if(state_ != Running) {
+        return;
+    }
 
     pumpEventsInQueue_.store(false);
 
@@ -503,6 +509,7 @@ void ViceContext::shutdownComplete_() {
 
     state_ = ShutdownComplete;
     shutdownPending_ = false;
+    shutdownCompleteFlag_.store(true);
     self_.reset();
 
     REQUIRE(eventHandler_);
