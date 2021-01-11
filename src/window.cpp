@@ -322,6 +322,19 @@ void Window::close() {
     }
 }
 
+void Window::resize(int width, int height) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    width = max(min(width, 4096), 64);
+    height = max(min(height, 4096), 64);
+
+    if(rootViewport_.width() != width || rootViewport_.height() != height) {
+        rootViewport_ = ImageSlice::createImage(width, height);
+        rootWidget_->setViewport(rootViewport_);
+    }
+}
+
 ImageSlice Window::getViewImage() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);

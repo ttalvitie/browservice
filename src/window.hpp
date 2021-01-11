@@ -57,6 +57,7 @@ public:
     ~Window();
 
     void close();
+    void resize(int width, int height);
     ImageSlice getViewImage();
 
     // WidgetParent:

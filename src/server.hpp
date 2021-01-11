@@ -31,6 +31,9 @@ public:
     // ViceContextEventHandler:
     virtual uint64_t onViceContextCreateWindowRequest(string& reason) override;
     virtual void onViceContextCloseWindow(uint64_t window) override;
+    virtual void onViceContextResizeWindow(
+        uint64_t window, int width, int height
+    ) override;
     virtual void onViceContextFetchWindowImage(
         uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> putImage

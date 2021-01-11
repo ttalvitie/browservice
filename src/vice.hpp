@@ -54,12 +54,13 @@ public:
     virtual uint64_t onViceContextCreateWindowRequest(string& msg) = 0;
 
     virtual void onViceContextCloseWindow(uint64_t window) = 0;
-
+    virtual void onViceContextResizeWindow(
+        uint64_t window, int width, int height
+    ) = 0;
     virtual void onViceContextFetchWindowImage(
         uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> putImage
     ) = 0;
-
     virtual void onViceContextShutdownComplete() = 0;
 };
 

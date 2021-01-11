@@ -362,6 +362,15 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         size_t width,
         size_t height
     ), {
+        REQUIRE(self->openWindows_.count(window));
+        REQUIRE(width);
+        REQUIRE(height);
+
+        self->eventHandler_->onViceContextResizeWindow(
+            window,
+            (int)min(width, (size_t)16384),
+            (int)min(height, (size_t)16384)
+        );
     });
 
     callbacks.fetchWindowImage = CTX_CALLBACK(void, (

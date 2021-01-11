@@ -85,6 +85,18 @@ void Server::onViceContextCloseWindow(uint64_t window) {
     REQUIRE(cleanupWindows_.emplace(handle, windowPtr).second);
 }
 
+void Server::onViceContextResizeWindow(
+    uint64_t window, int width, int height
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    it->second->resize(width, height);
+}
+
 void Server::onViceContextFetchWindowImage(
     uint64_t window,
     function<void(const uint8_t*, size_t, size_t, size_t)> putImage
