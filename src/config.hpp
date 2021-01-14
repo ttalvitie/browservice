@@ -26,5 +26,5 @@ public:
     const string dataDir;
     const int sessionLimit;
     const string httpAuth;
+    const vector<pair<string, optional<string>>> chromiumArgs;
 };
-

@@ -106,8 +106,8 @@ struct OptInfo;
 
 template <typename T, const T Config::* Var>
 string helpLine(OptInfo<T, Var> info) {
-    const int DescStart = 32;
-    const int DescStartIndented = 34;
+    const int DescStart = 33;
+    const int DescStartIndented = 35;
     const int MaxWidth = 90;
 
     stringstream ss;
@@ -215,8 +215,8 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
                 lines.push_back(helpLine(CONF_OPT_INFO(var)));
             CONF_FOREACH_OPT
             #undef CONF_FOREACH_OPT_ITEM
-            lines.push_back("  --help                        show this help and exit");
-            lines.push_back("  --version                     show the version and exit");
+            lines.push_back("  --help                         show this help and exit");
+            lines.push_back("  --version                      show the version and exit");
 
             sort(lines.begin(), lines.end());
             for(const string& line : lines) {
