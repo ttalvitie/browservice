@@ -60,6 +60,18 @@ public:
     void resize(int width, int height);
     ImageSlice getViewImage();
 
+    // Functions for passing input events to the Window. All arguments are be
+    // sanitized.
+    void mouseDown(int x, int y, int button);
+    void mouseUp(int x, int y, int button);
+    void mouseMove(int x, int y);
+    void mouseDoubleClick(int x, int y, int button);
+    void mouseWheel(int x, int y, int dx, int dy);
+    void mouseLeave(int x, int y);
+    void keyDown(int key);
+    void keyUp(int key);
+    void loseFocus();
+
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override {}
@@ -81,8 +93,9 @@ private:
     class Client;
 
     void watchdog_();
-
     void updateSecurityStatus_();
+
+    void clampMouseCoords_(int& x, int& y);
 
     uint64_t handle_;
     enum {Open, Closed, CleanupComplete} state_;

@@ -38,6 +38,23 @@ public:
         uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> putImage
     ) override;
+    virtual void onViceContextMouseDown(
+        uint64_t window, int x, int y, int button
+    ) override;
+    virtual void onViceContextMouseUp(
+        uint64_t window, int x, int y, int button
+    ) override;
+    virtual void onViceContextMouseMove(uint64_t window, int x, int y) override;
+    virtual void onViceContextMouseDoubleClick(
+        uint64_t window, int x, int y, int button
+    ) override;
+    virtual void onViceContextMouseWheel(
+        uint64_t window, int x, int y, int dx, int dy
+    ) override;
+    virtual void onViceContextMouseLeave(uint64_t window, int x, int y) override;
+    virtual void onViceContextKeyDown(uint64_t window, int key) override;
+    virtual void onViceContextKeyUp(uint64_t window, int key) override;
+    virtual void onViceContextLoseFocus(uint64_t window) override;
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:

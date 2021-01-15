@@ -2,6 +2,7 @@
 
 #include "data_url.hpp"
 #include "globals.hpp"
+#include "key.hpp"
 #include "root_widget.hpp"
 #include "timeout.hpp"
 
@@ -342,6 +343,86 @@ ImageSlice Window::getViewImage() {
     return rootViewport_;
 }
 
+void Window::mouseDown(int x, int y, int button) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(button >= 0 && button <= 2) {
+        clampMouseCoords_(x, y);
+        rootWidget_->sendMouseDownEvent(x, y, button);
+    }
+}
+
+void Window::mouseUp(int x, int y, int button) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(button >= 0 && button <= 2) {
+        clampMouseCoords_(x, y);
+        rootWidget_->sendMouseUpEvent(x, y, button);
+    }
+}
+
+void Window::mouseMove(int x, int y) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    clampMouseCoords_(x, y);
+    rootWidget_->sendMouseMoveEvent(x, y);
+}
+
+void Window::mouseDoubleClick(int x, int y, int button) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(button == 0) {
+        clampMouseCoords_(x, y);
+        rootWidget_->sendMouseDoubleClickEvent(x, y);
+    }
+}
+
+void Window::mouseWheel(int x, int y, int dx, int dy) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    clampMouseCoords_(x, y);
+    int delta = max(-180, min(180, -dy));
+    rootWidget_->sendMouseWheelEvent(x, y, delta);
+}
+
+void Window::mouseLeave(int x, int y) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    clampMouseCoords_(x, y);
+    rootWidget_->sendMouseLeaveEvent(x, y);
+}
+
+void Window::keyDown(int key) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(isValidKey(key)) {
+        rootWidget_->sendKeyDownEvent(key);
+    }
+}
+
+void Window::keyUp(int key) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(isValidKey(key)) {
+        rootWidget_->sendKeyUpEvent(key);
+    }
+}
+
+void Window::loseFocus() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    rootWidget_->sendLoseFocusEvent();
+}
+
 void Window::onWidgetViewDirty() {
     REQUIRE_UI_THREAD();
 
@@ -424,6 +505,13 @@ void Window::updateSecurityStatus_() {
     }
 
     rootWidget_->controlBar()->setSecurityStatus(securityStatus);
+}
+
+void Window::clampMouseCoords_(int& x, int& y) {
+    x = max(x, -1000);
+    y = max(y, -1000);
+    x = min(x, rootViewport_.width() + 1000);
+    y = min(y, rootViewport_.height() + 1000);
 }
 
 }

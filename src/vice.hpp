@@ -47,6 +47,8 @@ private:
     friend class ViceContext;
 };
 
+// Implementations of these event handlers may NOT call functions of ViceContext
+// directly.
 class ViceContextEventHandler {
 public:
     // To deny window creation, return 0 and optionally set msg to short
@@ -61,6 +63,25 @@ public:
         uint64_t window,
         function<void(const uint8_t*, size_t, size_t, size_t)> putImage
     ) = 0;
+
+    virtual void onViceContextMouseDown(
+        uint64_t window, int x, int y, int button
+    ) = 0;
+    virtual void onViceContextMouseUp(
+        uint64_t window, int x, int y, int button
+    ) = 0;
+    virtual void onViceContextMouseMove(uint64_t window, int x, int y) = 0;
+    virtual void onViceContextMouseDoubleClick(
+        uint64_t window, int x, int y, int button
+    ) = 0;
+    virtual void onViceContextMouseWheel(
+        uint64_t window, int x, int y, int dx, int dy
+    ) = 0;
+    virtual void onViceContextMouseLeave(uint64_t window, int x, int y) = 0;
+    virtual void onViceContextKeyDown(uint64_t window, int key) = 0;
+    virtual void onViceContextKeyUp(uint64_t window, int key) = 0;
+    virtual void onViceContextLoseFocus(uint64_t window) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 

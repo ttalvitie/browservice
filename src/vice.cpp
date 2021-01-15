@@ -406,40 +406,57 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         REQUIRE(putImageCalled);
     });
 
-    callbacks.mouseDown = CTX_CALLBACK(void, (
-        uint64_t window, int x, int y, int button
-    ), {
-    });
+#define FORWARD_INPUT_EVENT(name, Name, args, call) \
+    callbacks.name = CTX_CALLBACK(void, args, { \
+        REQUIRE(self->openWindows_.count(window)); \
+        self->eventHandler_->onViceContext ## Name call; \
+    })
 
-    callbacks.mouseUp = CTX_CALLBACK(void, (
-        uint64_t window, int x, int y, int button
-    ), {
-    });
-
-    callbacks.mouseMove = CTX_CALLBACK(void, (uint64_t window, int x, int y), {
-    });
-
-    callbacks.mouseDoubleClick = CTX_CALLBACK(void, (
-        uint64_t window, int x, int y, int button
-    ), {
-    });
-
-    callbacks.mouseWheel = CTX_CALLBACK(void, (
-        uint64_t window, int x, int y, int dx, int dy
-    ), {
-    });
-
-    callbacks.mouseLeave = CTX_CALLBACK(void, (uint64_t window, int x, int y), {
-    });
-
-    callbacks.keyDown = CTX_CALLBACK(void, (uint64_t window, int key), {
-    });
-
-    callbacks.keyUp = CTX_CALLBACK(void, (uint64_t window, int key), {
-    });
-
-    callbacks.loseFocus = CTX_CALLBACK(void, (uint64_t window), {
-    });
+    FORWARD_INPUT_EVENT(
+        mouseDown, MouseDown,
+        (uint64_t window, int x, int y, int button),
+        (window, x, y, button)
+    );
+    FORWARD_INPUT_EVENT(
+        mouseUp, MouseUp,
+        (uint64_t window, int x, int y, int button),
+        (window, x, y, button)
+    );
+    FORWARD_INPUT_EVENT(
+        mouseMove, MouseMove,
+        (uint64_t window, int x, int y),
+        (window, x, y)
+    );
+    FORWARD_INPUT_EVENT(
+        mouseDoubleClick, MouseDoubleClick,
+        (uint64_t window, int x, int y, int button),
+        (window, x, y, button)
+    );
+    FORWARD_INPUT_EVENT(
+        mouseWheel, MouseWheel,
+        (uint64_t window, int x, int y, int dx, int dy),
+        (window, x, y, dx, dy)
+    );
+    FORWARD_INPUT_EVENT(
+        mouseLeave, MouseLeave,
+        (uint64_t window, int x, int y),
+        (window, x, y)
+    );
+    FORWARD_INPUT_EVENT(
+        keyDown, KeyDown,
+        (uint64_t window, int key),
+        (window, key)
+    );
+    FORWARD_INPUT_EVENT(
+        keyUp, KeyUp,
+        (uint64_t window, int key),
+        (window, key)
+    );
+    FORWARD_INPUT_EVENT(
+        loseFocus, LoseFocus,
+        (uint64_t window),
+        (window)
+    );
 
     plugin_->apiFuncs_->start(
         ctx_,
