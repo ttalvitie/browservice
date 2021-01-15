@@ -62,15 +62,15 @@ public:
 
     // Functions for passing input events to the Window. All arguments are be
     // sanitized.
-    void mouseDown(int x, int y, int button);
-    void mouseUp(int x, int y, int button);
-    void mouseMove(int x, int y);
-    void mouseDoubleClick(int x, int y, int button);
-    void mouseWheel(int x, int y, int dx, int dy);
-    void mouseLeave(int x, int y);
-    void keyDown(int key);
-    void keyUp(int key);
-    void loseFocus();
+    void sendMouseDownEvent(int x, int y, int button);
+    void sendMouseUpEvent(int x, int y, int button);
+    void sendMouseMoveEvent(int x, int y);
+    void sendMouseDoubleClickEvent(int x, int y, int button);
+    void sendMouseWheelEvent(int x, int y, int dx, int dy);
+    void sendMouseLeaveEvent(int x, int y);
+    void sendKeyDownEvent(int key);
+    void sendKeyUpEvent(int key);
+    void sendLoseFocusEvent();
 
     // WidgetParent:
     virtual void onWidgetViewDirty() override;

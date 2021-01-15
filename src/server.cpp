@@ -114,7 +114,7 @@ void Server::onViceContextFetchWindowImage(
     putImage(image.buf(), image.width(), image.height(), image.pitch());
 }
 
-#define FORWARD_INPUT_EVENT(name, Name, args, call) \
+#define FORWARD_INPUT_EVENT(Name, args, call) \
     void Server::onViceContext ## Name args { \
         REQUIRE_UI_THREAD(); \
         REQUIRE(state_ != ShutdownComplete); \
@@ -122,51 +122,51 @@ void Server::onViceContextFetchWindowImage(
         auto it = openWindows_.find(window); \
         REQUIRE(it != openWindows_.end()); \
         \
-        it->second->name call; \
+        it->second->send ## Name ## Event call; \
     }
 
 FORWARD_INPUT_EVENT(
-    mouseDown, MouseDown,
+    MouseDown,
     (uint64_t window, int x, int y, int button),
     (x, y, button)
 )
 FORWARD_INPUT_EVENT(
-    mouseUp, MouseUp,
+    MouseUp,
     (uint64_t window, int x, int y, int button),
     (x, y, button)
 )
 FORWARD_INPUT_EVENT(
-    mouseMove, MouseMove,
+    MouseMove,
     (uint64_t window, int x, int y),
     (x, y)
 )
 FORWARD_INPUT_EVENT(
-    mouseDoubleClick, MouseDoubleClick,
+    MouseDoubleClick,
     (uint64_t window, int x, int y, int button),
     (x, y, button)
 )
 FORWARD_INPUT_EVENT(
-    mouseWheel, MouseWheel,
+    MouseWheel,
     (uint64_t window, int x, int y, int dx, int dy),
     (x, y, dx, dy)
 )
 FORWARD_INPUT_EVENT(
-    mouseLeave, MouseLeave,
+    MouseLeave,
     (uint64_t window, int x, int y),
     (x, y)
 )
 FORWARD_INPUT_EVENT(
-    keyDown, KeyDown,
+    KeyDown,
     (uint64_t window, int key),
     (key)
 )
 FORWARD_INPUT_EVENT(
-    keyUp, KeyUp,
+    KeyUp,
     (uint64_t window, int key),
     (key)
 )
 FORWARD_INPUT_EVENT(
-    loseFocus, LoseFocus,
+    LoseFocus,
     (uint64_t window),
     ()
 )

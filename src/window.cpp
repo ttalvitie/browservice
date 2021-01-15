@@ -343,7 +343,7 @@ ImageSlice Window::getViewImage() {
     return rootViewport_;
 }
 
-void Window::mouseDown(int x, int y, int button) {
+void Window::sendMouseDownEvent(int x, int y, int button) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -353,7 +353,7 @@ void Window::mouseDown(int x, int y, int button) {
     }
 }
 
-void Window::mouseUp(int x, int y, int button) {
+void Window::sendMouseUpEvent(int x, int y, int button) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -363,7 +363,7 @@ void Window::mouseUp(int x, int y, int button) {
     }
 }
 
-void Window::mouseMove(int x, int y) {
+void Window::sendMouseMoveEvent(int x, int y) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -371,7 +371,7 @@ void Window::mouseMove(int x, int y) {
     rootWidget_->sendMouseMoveEvent(x, y);
 }
 
-void Window::mouseDoubleClick(int x, int y, int button) {
+void Window::sendMouseDoubleClickEvent(int x, int y, int button) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -381,7 +381,7 @@ void Window::mouseDoubleClick(int x, int y, int button) {
     }
 }
 
-void Window::mouseWheel(int x, int y, int dx, int dy) {
+void Window::sendMouseWheelEvent(int x, int y, int dx, int dy) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -390,7 +390,7 @@ void Window::mouseWheel(int x, int y, int dx, int dy) {
     rootWidget_->sendMouseWheelEvent(x, y, delta);
 }
 
-void Window::mouseLeave(int x, int y) {
+void Window::sendMouseLeaveEvent(int x, int y) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -398,7 +398,7 @@ void Window::mouseLeave(int x, int y) {
     rootWidget_->sendMouseLeaveEvent(x, y);
 }
 
-void Window::keyDown(int key) {
+void Window::sendKeyDownEvent(int key) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -407,7 +407,7 @@ void Window::keyDown(int key) {
     }
 }
 
-void Window::keyUp(int key) {
+void Window::sendKeyUpEvent(int key) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
@@ -416,7 +416,7 @@ void Window::keyUp(int key) {
     }
 }
 
-void Window::loseFocus() {
+void Window::sendLoseFocusEvent() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
