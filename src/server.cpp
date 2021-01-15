@@ -107,7 +107,7 @@ void Server::onViceContextFetchWindowImage(
     auto it = openWindows_.find(window);
     REQUIRE(it != openWindows_.end());
 
-    ImageSlice image = it->second->getViewImage();
+    ImageSlice image = it->second->fetchViewImage();
     if(image.width() < 1 || image.height() < 1) {
         image = ImageSlice::createImage(1, 1);
     }

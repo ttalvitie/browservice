@@ -58,10 +58,10 @@ public:
 
     void close();
     void resize(int width, int height);
-    ImageSlice getViewImage();
+    ImageSlice fetchViewImage();
 
-    // Functions for passing input events to the Window. All arguments are be
-    // sanitized.
+    // Functions for passing input events to the Window. The functions accept
+    // all combinations of argument values (the values are sanitized).
     void sendMouseDownEvent(int x, int y, int button);
     void sendMouseUpEvent(int x, int y, int button);
     void sendMouseMoveEvent(int x, int y);
@@ -97,11 +97,16 @@ private:
 
     void clampMouseCoords_(int& x, int& y);
 
+    // May call onWindowViewImageChanged immediately.
+    void signalImageChanged_();
+
     uint64_t handle_;
     enum {Open, Closed, CleanupComplete} state_;
 
     // Empty only in CleanupComplete state.
     shared_ptr<WindowEventHandler> eventHandler_;
+
+    bool imageChanged_;
 
     // Always empty in CleanupComplete state. May be empty in Open and Closed
     // states if the browser has not yet started.

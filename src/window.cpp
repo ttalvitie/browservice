@@ -263,6 +263,8 @@ shared_ptr<Window> Window::tryCreate(
     window->state_ = Open;
     window->eventHandler_ = eventHandler;
 
+    window->imageChanged_ = false;
+
     window->rootViewport_ = ImageSlice::createImage(800, 600);
     window->rootWidget_ = RootWidget::create(window, window, window, true);
     window->rootWidget_->setViewport(window->rootViewport_);
@@ -336,10 +338,11 @@ void Window::resize(int width, int height) {
     }
 }
 
-ImageSlice Window::getViewImage() {
+ImageSlice Window::fetchViewImage() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
 
+    imageChanged_ = false;
     return rootViewport_;
 }
 
@@ -434,9 +437,7 @@ void Window::onWidgetViewDirty() {
     postTask([self]() {
         if(self->state_ == Open) {
             self->rootWidget_->render();
-
-            REQUIRE(self->eventHandler_);
-            self->eventHandler_->onWindowViewImageChanged(self->handle_);
+            self->signalImageChanged_();
         }
     });
 }
@@ -445,8 +446,7 @@ void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Open) {
-        REQUIRE(eventHandler_);
-        eventHandler_->onWindowViewImageChanged(handle_);
+        signalImageChanged_();
     }
 }
 
@@ -512,6 +512,17 @@ void Window::clampMouseCoords_(int& x, int& y) {
     y = max(y, -1000);
     x = min(x, rootViewport_.width() + 1000);
     y = min(y, rootViewport_.height() + 1000);
+}
+
+void Window::signalImageChanged_() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open && !imageChanged_) {
+        imageChanged_ = true;
+
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowViewImageChanged(handle_);
+    }
 }
 
 }
