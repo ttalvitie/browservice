@@ -70,10 +70,16 @@ public:
         }
     }
 
-    virtual void OnBeforeClose(CefRefPtr<CefBrowser>) override {
-        REQUIRE_UI_THREAD();
-        REQUIRE(window_->state_ == Open || window_->state_ == Closed);
-        REQUIRE(window_->browser_);
+#define BROWSER_EVENT_HANDLER_CHECKS() \
+    do { \
+        REQUIRE_UI_THREAD(); \
+        REQUIRE(window_->state_ == Open || window_->state_ == Closed); \
+        REQUIRE(window_->browser_); \
+        REQUIRE(window_->browser_->IsSame(browser)); \
+    } while(false)
+
+    virtual void OnBeforeClose(CefRefPtr<CefBrowser> browser) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ == Open) {
             // The window closed on its own (not triggered by close()).
@@ -103,11 +109,11 @@ public:
 
     // CefLoadHandler:
     virtual void OnLoadStart(
-        CefRefPtr<CefBrowser>,
+        CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
         TransitionType transitionType
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ == Open && frame->IsMain()) {
             if(readSignedDataURL(frame->GetURL(), certificateErrorPageSignKey_)) {
@@ -125,12 +131,12 @@ public:
     }
 
     virtual void OnLoadingStateChange(
-        CefRefPtr<CefBrowser>,
+        CefRefPtr<CefBrowser> browser,
         bool isLoading,
         bool canGoBack,
         bool canGoForward
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ == Open) {
             window_->rootWidget_->controlBar()->setLoading(isLoading);
@@ -139,13 +145,13 @@ public:
     }
 
     virtual void OnLoadError(
-        CefRefPtr<CefBrowser>,
+        CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
         ErrorCode errorCode,
         const CefString& errorText,
         const CefString& failedURL
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ != Open || !frame->IsMain()) {
             return;
@@ -168,11 +174,11 @@ public:
 
     // CefDisplayHandler:
     virtual void OnAddressChange(
-        CefRefPtr<CefBrowser>,
+        CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
         const CefString& url
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ != Open) {
             return;
@@ -189,12 +195,12 @@ public:
     }
 
     virtual bool OnCursorChange(
-        CefRefPtr<CefBrowser>,
+        CefRefPtr<CefBrowser> browser,
         CefCursorHandle cursorHandle,
         cef_cursor_type_t type,
         const CefCursorInfo& customCursorInfo
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ != Open) {
             return true;
@@ -231,7 +237,7 @@ public:
         CefRefPtr<CefSSLInfo> sslInfo,
         CefRefPtr<CefRequestCallback> callback
     ) override {
-        REQUIRE_UI_THREAD();
+        BROWSER_EVENT_HANDLER_CHECKS();
 
         lastCertificateErrorURL_ = string(requestURL);
         return false;
