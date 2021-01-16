@@ -262,6 +262,25 @@ void Context::pumpEvents() {
     threadRunningPumpEvents = false;
 }
 
+bool Context::createPopupWindow(
+    uint64_t parentWindow,
+    uint64_t popupWindow,
+    char** msg
+) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    string reason = "Unknown reason";
+    if(windowManager_->createPopupWindow(parentWindow, popupWindow, reason)) {
+        return true;
+    } else {
+        if(msg != nullptr) {
+            *msg = createMallocString(reason);
+        }
+        return false;
+    }
+}
+
 void Context::closeWindow(uint64_t window) {
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);

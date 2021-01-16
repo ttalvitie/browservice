@@ -397,6 +397,22 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * shutdownComplete callback yet).
  */
 
+/* Called when the program wants to create a popup window with handle popupWindow (a nonzero
+ * uint64_t value that is not already in use by a window) from an existing window parentWindow. To
+ * allow the creation of the window, the function must return true and ignore msg; the created
+ * window begins its existence immediately. The created window works in exactly the same way as
+ * windows created by the plugin, and it exists independently of parentWindow. To deny the creation
+ * of the window, the function must return false and if msg is not NULL, it must point *msg to a
+ * short human-readable string describing the reason for the denial; the calling program is
+ * responsible for freeing the string using free().
+ */
+bool vicePluginAPI_createPopupWindow(
+    VicePluginAPI_Context* ctx,
+    uint64_t parentWindow,
+    uint64_t popupWindow,
+    char** msg
+);
+
 /* Called by the program to close an existing window. The window stops existing immediately and thus
  * it must not be used in any subsequent API/callback calls (including the closeWindow callback).
  */

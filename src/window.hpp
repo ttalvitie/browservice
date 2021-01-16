@@ -9,11 +9,22 @@ class CefBrowser;
 
 namespace browservice {
 
+class Window;
+
 class WindowEventHandler {
 public:
     virtual void onWindowClose(uint64_t handle) = 0;
     virtual void onWindowCleanupComplete(uint64_t handle) = 0;
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
+
+    // To accept popup creation, the implementation should call the accept
+    // function once with the handle of the new window as argument before
+    // returning. The accept function returns the new window that uses the same
+    // event handler as the original window.
+    virtual void onWindowCreatePopupRequest(
+        uint64_t handle,
+        function<shared_ptr<Window>(uint64_t)> accept
+    ) = 0;
 };
 
 class Timeout;
@@ -91,6 +102,19 @@ public:
 private:
     // Class that implements CefClient interfaces for the window.
     class Client;
+
+    // To create a window:
+    //   - Create the object using the private constructor.
+    //   - Call init_().
+    //   - Create a CEF browser using a Client object pointed to the window as
+    //     the CefClient.
+    //       - If creating the browser succeeded, call createSuccessful_();
+    //         after this, the window is open.
+    //       - If creating the browser failed, call createFailed_() and let the
+    //         object destruct.
+    void init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle);
+    void createSuccessful_();
+    void createFailed_();
 
     void watchdog_();
     void updateSecurityStatus_();

@@ -49,10 +49,81 @@ public:
     }
 
     // CefLifeSpanHandler:
+    virtual bool OnBeforePopup(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        const CefString&,
+        const CefString&,
+        CefLifeSpanHandler::WindowOpenDisposition,
+        bool,
+        const CefPopupFeatures&,
+        CefWindowInfo& windowInfo,
+        CefRefPtr<CefClient>& client,
+        CefBrowserSettings& browserSettings,
+        CefRefPtr<CefDictionaryValue>&,
+        bool*
+    ) override {
+        REQUIRE_UI_THREAD();
+        REQUIRE(window_->state_ == Open || window_->state_ == Closed);
+        REQUIRE(browser);
+        REQUIRE(window_->browser_);
+        REQUIRE(window_->browser_->IsSame(browser));
+
+        if(window_->state_ == Open) {
+            INFO_LOG(
+                "CEF browser of window ", window_->handle_,
+                " is requesting a popup window"
+            );
+
+            shared_ptr<bool> allowAcceptCall(new bool);
+            bool acceptCalled = false;
+            bool popupDenied = true;
+
+            auto accept = [&, allowAcceptCall](
+                uint64_t newHandle
+            ) -> shared_ptr<Window> {
+                REQUIRE(*allowAcceptCall);
+                REQUIRE(!acceptCalled);
+                acceptCalled = true;
+
+                REQUIRE(newHandle);
+                REQUIRE(newHandle != window_->handle_);
+
+                INFO_LOG(
+                    "Creating window ", newHandle,
+                    " (popup of window ", window_->handle_, ")"
+                );
+
+                shared_ptr<Window> newWindow = Window::create(Window::CKey());
+                newWindow->init_(window_->eventHandler_, newHandle);
+
+                windowInfo.SetAsWindowless(kNullWindowHandle);
+                browserSettings.background_color = (cef_color_t)-1;
+                client = new Client(newWindow);
+
+                newWindow->createSuccessful_();
+
+                popupDenied = false;
+                return newWindow;
+            };
+
+            REQUIRE(window_->eventHandler_);
+            *allowAcceptCall = true;
+            window_->eventHandler_->onWindowCreatePopupRequest(
+                window_->handle_, accept
+            );
+            *allowAcceptCall = false;
+
+            return popupDenied;
+        } else {
+            return true;
+        }
+    }
+
     virtual void OnAfterCreated(CefRefPtr<CefBrowser> browser) override {
         REQUIRE_UI_THREAD();
-        REQUIRE(browser);
         REQUIRE(window_->state_ == Open || window_->state_ == Closed);
+        REQUIRE(browser);
         REQUIRE(!window_->browser_);
 
         INFO_LOG("CEF browser for window ", window_->handle_, " created");
@@ -74,6 +145,7 @@ public:
     do { \
         REQUIRE_UI_THREAD(); \
         REQUIRE(window_->state_ == Open || window_->state_ == Closed); \
+        REQUIRE(browser); \
         REQUIRE(window_->browser_); \
         REQUIRE(window_->browser_->IsSame(browser)); \
     } while(false)
@@ -264,18 +336,7 @@ shared_ptr<Window> Window::tryCreate(
     INFO_LOG("Creating window ", handle);
 
     shared_ptr<Window> window = Window::create(CKey());
-
-    window->handle_ = handle;
-    window->state_ = Open;
-    window->eventHandler_ = eventHandler;
-
-    window->imageChanged_ = false;
-
-    window->rootViewport_ = ImageSlice::createImage(800, 600);
-    window->rootWidget_ = RootWidget::create(window, window, window, true);
-    window->rootWidget_->setViewport(window->rootViewport_);
-
-    window->watchdogTimeout_ = Timeout::create(1000);
+    window->init_(eventHandler, handle);
 
     CefRefPtr<CefClient> client = new Client(window);
 
@@ -297,12 +358,11 @@ shared_ptr<Window> Window::tryCreate(
             "Opening CEF browser for window ", handle, " failed, ",
             "aborting window creation"
         );
-        window->state_ = CleanupComplete;
-        window->eventHandler_.reset();
+        window->createFailed_();
         return {};
     }
 
-    postTask(window, &Window::watchdog_);
+    window->createSuccessful_();
 
     return window;
 }
@@ -454,6 +514,39 @@ void Window::onBrowserAreaViewDirty() {
     if(state_ == Open) {
         signalImageChanged_();
     }
+}
+
+void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(eventHandler);
+    REQUIRE(handle);
+
+    handle_ = handle;
+    state_ = Open;
+    eventHandler_ = eventHandler;
+
+    imageChanged_ = false;
+
+    shared_ptr<Window> self = shared_from_this();
+
+    rootViewport_ = ImageSlice::createImage(800, 600);
+    rootWidget_ = RootWidget::create(self, self, self, true);
+    rootWidget_->setViewport(rootViewport_);
+
+    watchdogTimeout_ = Timeout::create(1000);
+}
+
+void Window::createSuccessful_() {
+    REQUIRE_UI_THREAD();
+
+    postTask(shared_from_this(), &Window::watchdog_);
+}
+
+void Window::createFailed_() {
+    REQUIRE_UI_THREAD();
+
+    state_ = CleanupComplete;
+    eventHandler_.reset();
 }
 
 // Called every 1s for an Open window for various checks.

@@ -41,6 +41,11 @@ public:
 
     void pumpEvents();
 
+    bool createPopupWindow(
+        uint64_t parentWindow,
+        uint64_t popupWindow,
+        char** msg
+    );
     void closeWindow(uint64_t window);
     void notifyWindowViewChanged(uint64_t window);
 

@@ -211,6 +211,54 @@ void Server::onWindowViewImageChanged(uint64_t handle) {
     viceCtx_->notifyWindowViewChanged(handle);
 }
 
+void Server::onWindowCreatePopupRequest(
+    uint64_t handle,
+    function<shared_ptr<Window>(uint64_t)> accept
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    if(state_ != Running) {
+        INFO_LOG(
+            "Denying popup window request because the server is shutting down"
+        );
+        return;
+    }
+
+    if(
+        (int)openWindows_.size() + (int)cleanupWindows_.size()
+        >= globals->config->windowLimit
+    ) {
+        INFO_LOG("Denying popup window request due to window limit");
+        return;
+    }
+
+    uint64_t newHandle = nextWindowHandle_++;
+    REQUIRE(newHandle);
+
+    INFO_LOG(
+        "Sending request for the creation of popup window ", newHandle,
+        " (opened by existing window ", handle, ") to the vice plugin"
+    );
+
+    string msg;
+    if(viceCtx_->requestCreatePopup(handle, newHandle, msg)) {
+        INFO_LOG(
+            "Popup window creation ", newHandle, " accepted by the vice plugin"
+        );
+
+        shared_ptr<Window> newWindow = accept(newHandle);
+        REQUIRE(newWindow);
+        REQUIRE(openWindows_.emplace(newHandle, newWindow).second);
+    } else {
+        INFO_LOG(
+            "Popup window ", newHandle,
+            " creation denied by the vice plugin for reason: ", msg
+        );
+    }
+}
+
 void Server::afterConstruct_(shared_ptr<Server> self) {
     viceCtx_->start(self);
 }

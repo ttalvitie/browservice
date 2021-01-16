@@ -66,6 +66,11 @@ public:
 
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
+    bool createPopupWindow(
+        uint64_t parentWindow,
+        uint64_t popupWindow,
+        string& reason
+    );
     void closeWindow(uint64_t window);
     void notifyViewChanged(uint64_t window);
 

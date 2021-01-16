@@ -61,6 +61,10 @@ public:
     virtual void onWindowClose(uint64_t handle) override;
     virtual void onWindowCleanupComplete(uint64_t handle) override;
     virtual void onWindowViewImageChanged(uint64_t handle) override;
+    virtual void onWindowCreatePopupRequest(
+        uint64_t handle,
+        function<shared_ptr<Window>(uint64_t)> accept
+    ) override;
 
 private:
     void afterConstruct_(shared_ptr<Server> self);

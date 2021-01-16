@@ -82,6 +82,39 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method\n");
 }
 
+bool WindowManager::createPopupWindow(
+    uint64_t parentWindow,
+    uint64_t popupWindow,
+    string& reason
+) {
+    REQUIRE_API_THREAD();
+
+    if(closed_) {
+        reason = "Plugin is shutting down";
+        return false;
+    }
+
+    auto it = windows_.find(parentWindow);
+    REQUIRE(it != windows_.end());
+    shared_ptr<Window> parentWindowPtr = it->second;
+
+    REQUIRE(popupWindow);
+    REQUIRE(!windows_.count(popupWindow));
+
+    INFO_LOG(
+        "Creating popup window ", popupWindow, " with parent ", parentWindow,
+        " as requested by the program"
+    );
+
+    shared_ptr<Window> popupWindowPtr =
+        Window::create(shared_from_this(), popupWindow, secretGen_);
+    REQUIRE(windows_.emplace(popupWindow, popupWindowPtr).second);
+
+    parentWindowPtr->notifyPopupCreated(popupWindowPtr);
+
+    return true;
+}
+
 void WindowManager::closeWindow(uint64_t window) {
     REQUIRE_API_THREAD();
 

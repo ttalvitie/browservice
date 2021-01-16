@@ -17,6 +17,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(start) \
     FOREACH_VICE_API_FUNC_ITEM(shutdown) \
     FOREACH_VICE_API_FUNC_ITEM(pumpEvents) \
+    FOREACH_VICE_API_FUNC_ITEM(createPopupWindow) \
     FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
@@ -472,6 +473,34 @@ void ViceContext::shutdown() {
 
     shutdownPending_ = true;
     plugin_->apiFuncs_->shutdown(ctx_);
+}
+
+bool ViceContext::requestCreatePopup(
+    uint64_t parentWindow,
+    uint64_t popupWindow,
+    string& msg
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(parentWindow));
+    REQUIRE(popupWindow);
+    REQUIRE(!openWindows_.count(popupWindow));
+
+    char* msgC = nullptr;
+
+    if(plugin_->apiFuncs_->createPopupWindow(
+        ctx_, parentWindow, popupWindow, &msgC)
+    ) {
+        REQUIRE(msgC == nullptr);
+        REQUIRE(openWindows_.insert(popupWindow).second);
+        return true;
+    } else {
+        REQUIRE(msgC != nullptr);
+        msg = msgC;
+        free(msgC);
+        return false;
+    }
 }
 
 void ViceContext::closeWindow(uint64_t window) {

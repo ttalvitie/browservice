@@ -139,8 +139,21 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
+void Window::notifyPopupCreated(shared_ptr<Window> popupWindow) {
+    REQUIRE_API_THREAD();
+    REQUIRE(popupWindow);
+    REQUIRE(!closed_);
+    REQUIRE(!popupWindow->closed_);
+
+    INFO_LOG(
+        "TODO: Client-side opening of popup windows not implemented; "
+        "navigate to ", popupWindow->pathPrefix_, "/prev/ manually"
+    );
+}
+
 void Window::notifyViewChanged() {
     REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
 
     shared_ptr<Window> self = shared_from_this();
     postTask([self]() {

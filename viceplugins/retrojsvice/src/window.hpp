@@ -63,6 +63,8 @@ public:
     void handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request);
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
+    void notifyPopupCreated(shared_ptr<Window> popupWindow);
+
     void notifyViewChanged();
 
     // ImageCompressorEventHandler:

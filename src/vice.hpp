@@ -110,7 +110,17 @@ public:
     void shutdown();
 
     // Vice plugin API functions for running contexts:
+
+    // If the request is denied, the function returns false and sets msg to a
+    // short human-readable reason for the denial.
+    bool requestCreatePopup(
+        uint64_t parentWindow,
+        uint64_t popupWindow,
+        string& msg
+    );
+
     void closeWindow(uint64_t window);
+
     void notifyWindowViewChanged(uint64_t window);
 
 private:
