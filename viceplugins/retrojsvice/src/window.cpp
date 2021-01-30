@@ -484,16 +484,25 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
 
         snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
         stringstream snakeOilKeyStream;
-        for(int i = 0; i < (int)snakeOilKeyCipherKey_.size(); ++i) {
+        const int ChunkSize = 30;
+        for(int i = 0; i < (int)snakeOilKeyCipherKey_.size(); i += ChunkSize) {
             if(i != 0) {
-                snakeOilKeyStream << ',';
-                if(!(i & 31)) {
-                    snakeOilKeyStream << '\n';
-                }
+                snakeOilKeyStream << "\n";
             }
-            snakeOilKeyStream << snakeOilKeyCipherKey_[i];
+            snakeOilKeyStream << "pushSnakeOil(new Array(";
+            for(
+                int j = i;
+                j < (int)snakeOilKeyCipherKey_.size() && j < i + ChunkSize;
+                ++j
+            ) {
+                if(j != i) {
+                    snakeOilKeyStream << ',';
+                }
+                snakeOilKeyStream << snakeOilKeyCipherKey_[j];
+            }
+            snakeOilKeyStream << "));";
         }
-        string snakeOilKeyCipherKeyString = snakeOilKeyStream.str();
+        string snakeOilKeyCipherKeyWrites = snakeOilKeyStream.str();
 
         curImgIdx_ = 0;
         curEventIdx_ = 0;
@@ -502,7 +511,7 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
             pathPrefix_,
             curMainIdx_,
             validNonCharKeyList,
-            snakeOilKeyCipherKeyString
+            snakeOilKeyCipherKeyWrites
         });
     } else {
         request->sendHTMLResponse(

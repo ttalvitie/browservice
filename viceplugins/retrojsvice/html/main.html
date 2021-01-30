@@ -323,9 +323,14 @@ for(var i = 0; i < nonCharKeyList.length; ++i) {
 var hackForm;
 var hackInput;
 
-var snakeOilKeyCipherKey = new Array(
-%-snakeOilKeyCipherKey-%
-);
+var snakeOilKeyCipherKey = new Array();
+function pushSnakeOil(a) {
+    for(var i = 0; i < a.length; ++i) {
+        snakeOilKeyCipherKey[snakeOilKeyCipherKey.length] = a[i];
+    }
+}
+%-snakeOilKeyCipherKeyWrites-%
+
 function encodeKey(key) {
     var i = eventQueueStartIdx + eventQueue.length;
     return key ^ snakeOilKeyCipherKey[i % snakeOilKeyCipherKey.length];

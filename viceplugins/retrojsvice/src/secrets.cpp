@@ -63,7 +63,7 @@ string SecretGenerator::generateCSRFToken() {
 vector<int> SecretGenerator::generateSnakeOilCipherKey() {
     REQUIRE_API_THREAD();
 
-    vector<int> key(uniform_int_distribution<int>(5000, 6000)(rng_));
+    vector<int> key(uniform_int_distribution<int>(2000, 2500)(rng_));
     for(int& val : key) {
         val = uniform_int_distribution<int>(0, 255)(rng_);
     }
