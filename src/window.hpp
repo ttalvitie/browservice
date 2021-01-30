@@ -96,8 +96,8 @@ public:
     virtual void onAddressSubmitted(string url) override;
     virtual void onQualityChanged(int quality) override {}
     virtual void onPendingDownloadAccepted() override {}
-    virtual void onFind(string text, bool forward, bool findNext) override {}
-    virtual void onStopFind(bool clearSelection) override {}
+    virtual void onFind(string text, bool forward, bool findNext) override;
+    virtual void onStopFind(bool clearSelection) override;
     virtual void onClipboardButtonPressed() override {}
 
     // BrowserAreaEventHandler:

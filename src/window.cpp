@@ -16,7 +16,7 @@ class Window::Client :
     public CefLoadHandler,
     public CefDisplayHandler,
     public CefRequestHandler,
-    //public CefFindHandler,
+    public CefFindHandler,
     public CefKeyboardHandler
 {
 public:
@@ -28,6 +28,7 @@ public:
         renderHandler_ =
             window->rootWidget_->browserArea()->createCefRenderHandler();
 
+        lastFindID_ = -1;
         certificateErrorPageSignKey_ = generateDataURLSignKey();
     }
 
@@ -45,6 +46,9 @@ public:
         return this;
     }
     virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefFindHandler> GetFindHandler() override {
         return this;
     }
     virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override {
@@ -318,6 +322,25 @@ public:
         return false;
     }
 
+    // CefFindHandler:
+    virtual void OnFindResult(
+        CefRefPtr<CefBrowser> browser,
+        int identifier,
+        int count,
+        const CefRect& selectionRect,
+        int activeMatchOrdinal,
+        bool finalUpdate
+    ) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
+
+        if(window_->state_ == Open && identifier >= lastFindID_) {
+            if(count > 0 || finalUpdate) {
+                window_->rootWidget_->controlBar()->setFindResult(count > 0);
+            }
+            lastFindID_ = identifier;
+        }
+    }
+
     // CefKeyboardHandler:
     virtual bool OnPreKeyEvent(
         CefRefPtr<CefBrowser> browser,
@@ -344,6 +367,7 @@ private:
     shared_ptr<Window> window_;
     CefRefPtr<CefRenderHandler> renderHandler_;
 
+    int lastFindID_;
     optional<string> lastCertificateErrorURL_;
     string certificateErrorPageSignKey_;
 
@@ -607,6 +631,22 @@ void Window::onAddressSubmitted(string url) {
     if(frame) {
         frame->LoadURL(url);
         rootWidget_->browserArea()->takeFocus();
+    }
+}
+
+void Window::onFind(string text, bool forward, bool findNext) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open && browser_) {
+        browser_->GetHost()->Find(0, text, forward, false, findNext);
+    }
+}
+
+void Window::onStopFind(bool clearSelection) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open && browser_) {
+        browser_->GetHost()->StopFinding(clearSelection);
     }
 }
 
