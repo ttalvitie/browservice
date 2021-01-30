@@ -1,6 +1,7 @@
 #include "vice.hpp"
 
 #include "globals.hpp"
+#include "widget.hpp"
 
 #include "../vice_plugin_api.h"
 
@@ -20,6 +21,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(createPopupWindow) \
     FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
+    FOREACH_VICE_API_FUNC_ITEM(setWindowCursor) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -519,6 +521,25 @@ void ViceContext::notifyWindowViewChanged(uint64_t window) {
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, window);
+}
+
+void ViceContext::setWindowCursor(uint64_t window, int cursor) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(window));
+
+    VicePluginAPI_MouseCursor apiCursor;
+    if(cursor == HandCursor) {
+        apiCursor = VICE_PLUGIN_API_MOUSE_CURSOR_HAND;
+    } else if(cursor == TextCursor) {
+        apiCursor = VICE_PLUGIN_API_MOUSE_CURSOR_TEXT;
+    } else {
+        REQUIRE(cursor == NormalCursor);
+        apiCursor = VICE_PLUGIN_API_MOUSE_CURSOR_NORMAL;
+    }
+
+    plugin_->apiFuncs_->setWindowCursor(ctx_, window, apiCursor);
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

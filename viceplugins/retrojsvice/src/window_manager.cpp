@@ -136,6 +136,14 @@ void WindowManager::notifyViewChanged(uint64_t window) {
     it->second->notifyViewChanged();
 }
 
+void WindowManager::setCursor(uint64_t window, int cursorSignal) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    it->second->setCursor(cursorSignal);
+}
+
 void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);

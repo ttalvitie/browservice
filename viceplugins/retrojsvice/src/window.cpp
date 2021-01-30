@@ -163,6 +163,21 @@ void Window::notifyViewChanged() {
     });
 }
 
+void Window::setCursor(int cursorSignal) {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+    REQUIRE(
+        cursorSignal >= 0 && cursorSignal < ImageCompressor::CursorSignalCount
+    );
+
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self, cursorSignal]() {
+        if(!self->closed_) {
+            self->imageCompressor_->setCursorSignal(mce, cursorSignal);
+        }
+    });
+}
+
 void Window::onImageCompressorFetchImage(
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {

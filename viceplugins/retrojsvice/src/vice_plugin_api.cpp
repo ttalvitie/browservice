@@ -178,6 +178,13 @@ API_EXPORT void vicePluginAPI_notifyWindowViewChanged(
 )
 WRAP_CTX_API(notifyWindowViewChanged, window)
 
+API_EXPORT void vicePluginAPI_setWindowCursor(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    VicePluginAPI_MouseCursor cursor
+)
+WRAP_CTX_API(setWindowCursor, window, cursor)
+
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(

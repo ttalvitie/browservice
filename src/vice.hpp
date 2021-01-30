@@ -118,10 +118,11 @@ public:
         uint64_t popupWindow,
         string& msg
     );
-
     void closeWindow(uint64_t window);
 
     void notifyWindowViewChanged(uint64_t window);
+
+    void setWindowCursor(uint64_t window, int cursor);
 
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);

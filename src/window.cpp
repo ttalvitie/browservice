@@ -508,6 +508,25 @@ void Window::onWidgetViewDirty() {
     });
 }
 
+void Window::onWidgetCursorChanged() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ != Open) {
+        return;
+    }
+
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self]() {
+        if(self->state_ == Open) {
+            int cursor = self->rootWidget_->cursor();
+            REQUIRE(cursor >= 0 && cursor < CursorTypeCount);
+
+            REQUIRE(self->eventHandler_);
+            self->eventHandler_->onWindowCursorChanged(self->handle_, cursor);
+        }
+    });
+}
+
 void Window::onAddressSubmitted(string url) {
     REQUIRE_UI_THREAD();
 

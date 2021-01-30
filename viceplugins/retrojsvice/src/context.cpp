@@ -295,6 +295,26 @@ void Context::notifyWindowViewChanged(uint64_t window) {
     windowManager_->notifyViewChanged(window);
 }
 
+void Context::setWindowCursor(
+    uint64_t window,
+    VicePluginAPI_MouseCursor cursor
+) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    int cursorSignal;
+    if(cursor == VICE_PLUGIN_API_MOUSE_CURSOR_NORMAL) {
+        cursorSignal = ImageCompressor::CursorSignalNormal;
+    } else if(cursor == VICE_PLUGIN_API_MOUSE_CURSOR_HAND) {
+        cursorSignal = ImageCompressor::CursorSignalHand;
+    } else {
+        REQUIRE(cursor == VICE_PLUGIN_API_MOUSE_CURSOR_TEXT);
+        cursorSignal = ImageCompressor::CursorSignalText;
+    }
+
+    windowManager_->setCursor(window, cursorSignal);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

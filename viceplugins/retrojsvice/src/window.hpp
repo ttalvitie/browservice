@@ -67,6 +67,8 @@ public:
 
     void notifyViewChanged();
 
+    void setCursor(int cursorSignal);
+
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(
         function<void(const uint8_t*, size_t, size_t, size_t)> func

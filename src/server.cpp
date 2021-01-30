@@ -211,6 +211,14 @@ void Server::onWindowViewImageChanged(uint64_t handle) {
     viceCtx_->notifyWindowViewChanged(handle);
 }
 
+void Server::onWindowCursorChanged(uint64_t handle, int cursor) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    viceCtx_->setWindowCursor(handle, cursor);
+}
+
 void Server::onWindowCreatePopupRequest(
     uint64_t handle,
     function<shared_ptr<Window>(uint64_t)> accept

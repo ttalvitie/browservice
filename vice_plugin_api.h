@@ -306,12 +306,24 @@ enum VicePluginAPI_LogLevel {
     VICE_PLUGIN_API_LOG_LEVEL_WARNING = 200,
     VICE_PLUGIN_API_LOG_LEVEL_ERROR = 300,
 
-    /* Value larger than any other enum value. Included in the enum to ensure binary compatibility
-     * when new values are added. Should NOT be used as a log level.
+    /* Invalid value that is larger than any valid enum value, used to ensure
+     * binary compatibility when new values are added.
      */
     VICE_PLUGIN_API_LOG_LEVEL_HUGE_UNUSED = 1000000000
 };
 typedef enum VicePluginAPI_LogLevel VicePluginAPI_LogLevel;
+
+/* Type of mouse cursors used in vicePluginAPI_setWindowCursor. */
+enum VicePluginAPI_MouseCursor {
+    VICE_PLUGIN_API_MOUSE_CURSOR_NORMAL = 0,
+    VICE_PLUGIN_API_MOUSE_CURSOR_HAND = 1,
+    VICE_PLUGIN_API_MOUSE_CURSOR_TEXT = 2,
+
+    /* Invalid value that is larger than any valid enum value, used to ensure
+     * binary compatibility when new values are added.
+     */
+    VICE_PLUGIN_API_MOUSE_CURSOR_HUGE_UNUSED = 1000000000
+};
 
 /**************************************
  * General context handling functions *
@@ -392,19 +404,18 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * API functions to use with running contexts *
  **********************************************/
 
-/* The following functions may be called for contexts that are running, i.e. contexts that have been
- * started with vicePluginAPI_start and have not yet shut down (the plugin has not called the
- * shutdownComplete callback yet).
+/* The following functions may be called by the program for contexts that are running, i.e. contexts
+ * that have been started with vicePluginAPI_start and have not yet shut down (the plugin has not
+ * called the shutdownComplete callback yet).
  */
 
-/* Called when the program wants to create a popup window with handle popupWindow (a nonzero
- * uint64_t value that is not already in use by a window) from an existing window parentWindow. To
- * allow the creation of the window, the function must return true and ignore msg; the created
- * window begins its existence immediately. The created window works in exactly the same way as
- * windows created by the plugin, and it exists independently of parentWindow. To deny the creation
- * of the window, the function must return false and if msg is not NULL, it must point *msg to a
- * short human-readable string describing the reason for the denial; the calling program is
- * responsible for freeing the string using free().
+/* Create a popup window with handle popupWindow (a nonzero uint64_t value that is not already in
+ * use by a window) from an existing window parentWindow. To allow the creation of the window, the
+ * function must return true and ignore msg; the created window begins its existence immediately.
+ * The created window works in exactly the same way as windows created by the plugin, and it exists
+ * independently of parentWindow. To deny the creation of the window, the function must return false
+ * and if msg is not NULL, it must point *msg to a short human-readable string describing the reason
+ * for the denial; the calling program is responsible for freeing the string using free().
  */
 bool vicePluginAPI_createPopupWindow(
     VicePluginAPI_Context* ctx,
@@ -413,16 +424,23 @@ bool vicePluginAPI_createPopupWindow(
     char** msg
 );
 
-/* Called by the program to close an existing window. The window stops existing immediately and thus
- * it must not be used in any subsequent API/callback calls (including the closeWindow callback).
+/* Close an existing window. The window stops existing immediately and thus it must not be used in
+ * any subsequent API/callback calls (including the closeWindow callback).
  */
 void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t window);
 
-/* Called to notify the plugin that the view in an existing window has changed. After receiving this
+/* Notifies the plugin that the view in an existing window has changed. After receiving this
  * notification, the plugin should use the fetchWindowImage callback to fetch the new view image and
  * show it to the user as soon as possible.
  */
 void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t window);
+
+/* Changes the currently active mouse cursor for given window. */
+void vicePluginAPI_setWindowCursor(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    VicePluginAPI_MouseCursor cursor
+);
 
 /**********************************
  * Non-context-specific functions *
@@ -469,8 +487,7 @@ void vicePluginAPI_getOptionDocs(
  *
  * Arguments for callback:
  *   - data: The data argument given to vicePluginAPI_setGlobal*Callback.
- *   - logLevel: The severity of the log event. Allowed values: VICE_PLUGIN_API_LOG_LEVEL_INFO,
- *       VICE_PLUGIN_API_LOG_LEVEL_WARNING and VICE_PLUGIN_API_LOG_LEVEL_ERROR.
+ *   - logLevel: The severity of the log event.
  *   - location: String describing the source of the event. Example: "viceplugin.cpp:142".
  *   - msg: Message string.
  *

@@ -16,6 +16,7 @@ public:
     virtual void onWindowClose(uint64_t handle) = 0;
     virtual void onWindowCleanupComplete(uint64_t handle) = 0;
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
+    virtual void onWindowCursorChanged(uint64_t handle, int cursor) = 0;
 
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before
@@ -85,7 +86,7 @@ public:
 
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
-    virtual void onWidgetCursorChanged() override {}
+    virtual void onWidgetCursorChanged() override;
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) override {}
 
     // ControlBarEventHandler:

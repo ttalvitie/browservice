@@ -74,6 +74,8 @@ public:
     void closeWindow(uint64_t window);
     void notifyViewChanged(uint64_t window);
 
+    void setCursor(uint64_t window, int cursorSignal);
+
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t window) override;
     virtual void onWindowFetchImage(
