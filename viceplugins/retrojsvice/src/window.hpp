@@ -103,8 +103,7 @@ private:
     void navigate_(MCE, int direction);
 
     void handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request);
-    void handleImageRequest_(
-        MCE,
+    void handleImageRequest_(MCE,
         shared_ptr<HTTPRequest> request,
         uint64_t mainIdx,
         uint64_t imgIdx,
@@ -114,8 +113,14 @@ private:
         uint64_t startEventIdx,
         string eventStr
     );
+    void handleIframeRequest_(MCE,
+        shared_ptr<HTTPRequest> request,
+        uint64_t mainIdx
+    );
     void handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request);
+
+    void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
     string programName_;
     shared_ptr<SecretGenerator> secretGen_;
@@ -166,6 +171,8 @@ private:
     shared_ptr<DelayedTaskTag> inactivityTimeoutTag_;
 
     steady_clock::time_point lastNavigateOperationTime_;
+
+    queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
 };
 
 }

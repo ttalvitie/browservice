@@ -43,4 +43,10 @@ struct NextHTMLData {
 };
 void writeNextHTML(ostream& out, const NextHTMLData& data);
 
+struct PopupIframeHTMLData {
+    const string& programName;
+    const string& popupPathPrefix;
+};
+void writePopupIframeHTML(ostream& out, const PopupIframeHTMLData& data);
+
 }

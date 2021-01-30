@@ -71,6 +71,8 @@ public:
     void close();
     void resize(int width, int height);
     ImageSlice fetchViewImage();
+
+    // -1 = back, 0 = refresh, 1 = forward.
     void navigate(int direction);
 
     // Functions for passing input events to the Window. The functions accept

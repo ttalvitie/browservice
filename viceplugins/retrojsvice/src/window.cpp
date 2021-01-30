@@ -12,6 +12,9 @@ namespace {
 regex imagePathRegex(
     "/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
 );
+regex iframePathRegex(
+    "/iframe/([0-9]+)/[0-9]+/"
+);
 
 }
 
@@ -134,6 +137,16 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
         }
     }
 
+    if(method == "GET" && regex_match(path, match, iframePathRegex)) {
+        REQUIRE(match.size() == 2);
+        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
+
+        if(mainIdx) {
+            handleIframeRequest_(mce, request, *mainIdx);
+            return;
+        }
+    }
+
     if(method == "GET" && path == "/prev/") {
         handlePrevPageRequest_(mce, request);
         return;
@@ -152,10 +165,21 @@ void Window::notifyPopupCreated(shared_ptr<Window> popupWindow) {
     REQUIRE(!closed_);
     REQUIRE(!popupWindow->closed_);
 
-    INFO_LOG(
-        "TODO: Client-side opening of popup windows not implemented; "
-        "navigate to ", popupWindow->pathPrefix_, "/prev/ manually"
-    );
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self, popupWindow]() {
+        if(self->closed_) {
+            return;
+        }
+        self->addIframe_(mce,
+            [self, popupWindow](shared_ptr<HTTPRequest> request) {
+                request->sendHTMLResponse(
+                    200,
+                    writePopupIframeHTML,
+                    {self->programName_, popupWindow->pathPrefix_}
+                );
+            }
+        );
+    });
 }
 
 void Window::notifyViewChanged() {
@@ -523,8 +547,7 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     }
 }
 
-void Window::handleImageRequest_(
-    MCE,
+void Window::handleImageRequest_(MCE,
     shared_ptr<HTTPRequest> request,
     uint64_t mainIdx,
     uint64_t imgIdx,
@@ -565,6 +588,30 @@ void Window::handleImageRequest_(
     }
 }
 
+void Window::handleIframeRequest_(MCE,
+    shared_ptr<HTTPRequest> request,
+    uint64_t mainIdx
+) {
+    if(mainIdx != curMainIdx_) {
+        request->sendTextResponse(400, "ERROR: Outdated request");
+    } else if(iframeQueue_.empty()) {
+        request->sendTextResponse(200, "OK");
+    } else {
+        updateInactivityTimeout_();
+
+        function<void(shared_ptr<HTTPRequest>)> iframe = iframeQueue_.front();
+        iframeQueue_.pop();
+
+        if(iframeQueue_.empty()) {
+            imageCompressor_->setIframeSignal(
+                mce, ImageCompressor::IframeSignalFalse
+            );
+        }
+
+        iframe(request);
+    }
+}
+
 void Window::handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
@@ -595,6 +642,11 @@ void Window::handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
 
     request->sendHTMLResponse(200, writeNextHTML, {programName_, pathPrefix_});
     return;
+}
+
+void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {
+    iframeQueue_.push(iframe);
+    imageCompressor_->setIframeSignal(mce, ImageCompressor::IframeSignalTrue);
 }
 
 }
