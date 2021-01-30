@@ -15,9 +15,9 @@ class Window::Client :
     public CefLifeSpanHandler,
     public CefLoadHandler,
     public CefDisplayHandler,
-    public CefRequestHandler/*,
-    public CefFindHandler,
-    public CefKeyboardHandler*/
+    public CefRequestHandler,
+    //public CefFindHandler,
+    public CefKeyboardHandler
 {
 public:
     Client(shared_ptr<Window> window) {
@@ -45,6 +45,9 @@ public:
         return this;
     }
     virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override {
         return this;
     }
 
@@ -312,6 +315,28 @@ public:
         BROWSER_EVENT_HANDLER_CHECKS();
 
         lastCertificateErrorURL_ = string(requestURL);
+        return false;
+    }
+
+    // CefKeyboardHandler:
+    virtual bool OnPreKeyEvent(
+        CefRefPtr<CefBrowser> browser,
+        const CefKeyEvent& event,
+        CefEventHandle osEvent,
+        bool* isKeyboardShortcut
+    ) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
+
+        if(
+            window_->state_ == Open &&
+            event.windows_key_code == -keys::Backspace &&
+            !event.focus_on_editable_field
+        ) {
+            window_->navigate(
+                (event.modifiers & EVENTFLAG_SHIFT_DOWN) ? 1 : -1
+            );
+            return true;
+        }
         return false;
     }
 
