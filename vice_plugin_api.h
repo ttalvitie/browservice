@@ -256,6 +256,13 @@ struct VicePluginAPI_Callbacks {
     void (*keyUp)(void*, uint64_t window, int key);
     void (*loseFocus)(void*, uint64_t window);
 
+    /* If the UI for a window presented to the user by the plugin contains navigation
+     * (back/refresh/forward) controls (such as buttons), the plugin may relay their events to the
+     * program using this function. The direction argument must be set to -1 for back and 1 for
+     * forward navigation, and 0 for refresh. The program may ignore these events.
+     */
+    void (*navigate)(void*, uint64_t window, int direction);
+
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 

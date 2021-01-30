@@ -135,11 +135,11 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     }
 
     if(method == "GET" && path == "/prev/") {
-        handlePrevPageRequest_(request);
+        handlePrevPageRequest_(mce, request);
         return;
     }
     if(method == "GET" && path == "/next/") {
-        handleNextPageRequest_(request);
+        handleNextPageRequest_(mce, request);
         return;
     }
 
@@ -194,6 +194,7 @@ void Window::onImageCompressorFetchImage(
         vector<uint8_t> data(4, (uint8_t)255);
         func(data.data(), 1, 1, 1);
     } else {
+        REQUIRE(eventHandler_);
         eventHandler_->onWindowFetchImage(handle_, func);
     }
 }
@@ -434,7 +435,7 @@ void Window::handleEvents_(MCE, uint64_t startIdx, string eventStr) {
     }
 }
 
-void Window::navigate_(int direction) {
+void Window::navigate_(MCE, int direction) {
     REQUIRE(direction >= -1 && direction <= 1);
 
     // If two navigation operations are too close together, they probably are
@@ -447,7 +448,8 @@ void Window::navigate_(int direction) {
     lastNavigateOperationTime_ = steady_clock::now();
 
     if(!closed_) {
-        INFO_LOG("TODO: navigate_(", direction, ")");
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowNavigate(handle_, direction);
     }
 }
 
@@ -460,7 +462,7 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
         if(curMainIdx_ > 1 && !prevNextClicked_) {
             // This is not first main page load and no prev/next clicked,
             // so this must be a refresh
-            navigate_(0);
+            navigate_(mce, 0);
         }
         prevNextClicked_ = false;
 
@@ -563,12 +565,12 @@ void Window::handleImageRequest_(
     }
 }
 
-void Window::handlePrevPageRequest_(shared_ptr<HTTPRequest> request) {
+void Window::handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
     if(curMainIdx_ > 0 && !prevNextClicked_) {
         prevNextClicked_ = true;
-        navigate_(-1);
+        navigate_(mce, -1);
     }
 
     if(prePrevVisited_) {
@@ -583,12 +585,12 @@ void Window::handlePrevPageRequest_(shared_ptr<HTTPRequest> request) {
     }
 }
 
-void Window::handleNextPageRequest_(shared_ptr<HTTPRequest> request) {
+void Window::handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
     if(curMainIdx_ > 0 && !prevNextClicked_) {
         prevNextClicked_ = true;
-        navigate_(1);
+        navigate_(mce, 1);
     }
 
     request->sendHTMLResponse(200, writeNextHTML, {programName_, pathPrefix_});

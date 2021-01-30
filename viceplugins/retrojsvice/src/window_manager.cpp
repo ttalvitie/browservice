@@ -211,6 +211,10 @@ FORWARD_WINDOW_EVENT(
     onWindowLoseFocus(uint64_t window),
     onWindowManagerLoseFocus(window)
 )
+FORWARD_WINDOW_EVENT(
+    onWindowNavigate(uint64_t window, int direction),
+    onWindowManagerNavigate(window, direction)
+)
 
 void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
     REQUIRE(!closed_);

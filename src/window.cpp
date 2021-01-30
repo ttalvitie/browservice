@@ -412,6 +412,24 @@ ImageSlice Window::fetchViewImage() {
     return rootViewport_;
 }
 
+void Window::navigate(int direction) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+    REQUIRE(direction >= -1 && direction <= 1);
+
+    if(browser_) {
+        if(direction == -1) {
+            browser_->GoBack();
+        }
+        if(direction == 0) {
+            browser_->Reload();
+        }
+        if(direction == 1) {
+            browser_->GoForward();
+        }
+    }
+}
+
 void Window::sendMouseDownEvent(int x, int y, int button) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == Open);
@@ -547,8 +565,7 @@ void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
                 self->rootWidget_->controlBar()->findNext();
             }
             if(key == GlobalHotkey::Refresh) {
-                INFO_LOG("TODO: navigate_(0)");
-                //self->navigate_(0);
+                self->navigate(0);
             }
         }
     });

@@ -82,6 +82,8 @@ public:
     virtual void onViceContextKeyUp(uint64_t window, int key) = 0;
     virtual void onViceContextLoseFocus(uint64_t window) = 0;
 
+    virtual void onViceContextNavigate(uint64_t window, int direction) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 

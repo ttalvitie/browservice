@@ -40,6 +40,8 @@ public:
     virtual void onWindowManagerKeyUp(uint64_t window, int key) = 0;
 
     virtual void onWindowManagerLoseFocus(uint64_t window) = 0;
+
+    virtual void onWindowManagerNavigate(uint64_t window, int direction) = 0;
 };
 
 class HTTPRequest;
@@ -105,6 +107,7 @@ public:
     virtual void onWindowKeyDown(uint64_t window, int key) override;
     virtual void onWindowKeyUp(uint64_t window, int key) override;
     virtual void onWindowLoseFocus(uint64_t window) override;
+    virtual void onWindowNavigate(uint64_t window, int direction) override;
 
 private:
     void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request);

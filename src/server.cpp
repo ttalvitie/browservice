@@ -171,6 +171,16 @@ FORWARD_INPUT_EVENT(
     ()
 )
 
+void Server::onViceContextNavigate(uint64_t window, int direction) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    it->second->navigate(direction);
+}
+
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == WaitViceContext);

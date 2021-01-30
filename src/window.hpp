@@ -71,6 +71,7 @@ public:
     void close();
     void resize(int width, int height);
     ImageSlice fetchViewImage();
+    void navigate(int direction);
 
     // Functions for passing input events to the Window. The functions accept
     // all combinations of argument values (the values are sanitized).

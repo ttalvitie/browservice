@@ -462,6 +462,12 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         (window)
     );
 
+    callbacks.navigate = CTX_CALLBACK(void, (uint64_t window, int direction), {
+        REQUIRE(self->openWindows_.count(window));
+        REQUIRE(direction >= -1 && direction <= 1);
+        self->eventHandler_->onViceContextNavigate(window, direction);
+    });
+
     plugin_->apiFuncs_->start(
         ctx_,
         callbacks,

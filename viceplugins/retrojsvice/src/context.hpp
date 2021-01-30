@@ -97,6 +97,9 @@ public:
     virtual void onWindowManagerKeyDown(uint64_t window, int key) override;
     virtual void onWindowManagerKeyUp(uint64_t window, int key) override;
     virtual void onWindowManagerLoseFocus(uint64_t window) override;
+    virtual void onWindowManagerNavigate(
+        uint64_t window, int direction
+    ) override;
 
 private:
     SocketAddress httpListenAddr_;

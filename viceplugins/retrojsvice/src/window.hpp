@@ -35,6 +35,8 @@ public:
     virtual void onWindowKeyUp(uint64_t window, int key) = 0;
 
     virtual void onWindowLoseFocus(uint64_t window) = 0;
+
+    virtual void onWindowNavigate(uint64_t window, int direction) = 0;
 };
 
 class HTTPRequest;
@@ -98,7 +100,7 @@ private:
     );
     void handleEvents_(MCE, uint64_t startIdx, string eventStr);
 
-    void navigate_(int direction);
+    void navigate_(MCE, int direction);
 
     void handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleImageRequest_(
@@ -112,8 +114,8 @@ private:
         uint64_t startEventIdx,
         string eventStr
     );
-    void handlePrevPageRequest_(shared_ptr<HTTPRequest> request);
-    void handleNextPageRequest_(shared_ptr<HTTPRequest> request);
+    void handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request);
+    void handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request);
 
     string programName_;
     shared_ptr<SecretGenerator> secretGen_;

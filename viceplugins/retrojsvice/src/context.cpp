@@ -547,5 +547,9 @@ FORWARD_WINDOW_EVENT(
     onWindowManagerLoseFocus(uint64_t window),
     loseFocus, (callbackData_, window)
 )
+FORWARD_WINDOW_EVENT(
+    onWindowManagerNavigate(uint64_t window, int direction),
+    navigate, (callbackData_, window, direction)
+)
 
 }
