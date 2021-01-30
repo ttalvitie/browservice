@@ -84,12 +84,15 @@ private:
     void updateInactivityTimeout_(bool shorten = false);
     void inactivityTimeoutReached_(MCE, bool shortened);
 
+    int decodeKey_(uint64_t eventIdx, int key);
     bool handleTokenizedEvent_(MCE,
+        uint64_t eventIdx,
         const string& name,
         int argCount,
         const int* args
     );
     bool handleEvent_(MCE,
+        uint64_t eventIdx,
         string::const_iterator begin,
         string::const_iterator end
     );
@@ -113,6 +116,17 @@ private:
     void handleNextPageRequest_(shared_ptr<HTTPRequest> request);
 
     string programName_;
+    shared_ptr<SecretGenerator> secretGen_;
+
+    // The key codes sent by the client are XOR "encrypted" using this key. Note
+    // that THIS DOES NOT PROVIDE SECURITY from sniffers, because the key is
+    // sent in plain text in the HTML. The only point of this is to reduce the
+    // likelihood that a password being typed is revealed from the URL in the
+    // status bar of the browser for example in screen capture videos. Even this
+    // does not always work due to the inherent and grave vulnerability of the
+    // non-OTP XOR encryption. Thus you should NEVER rely on this providing any
+    // kind of security.
+    vector<int> snakeOilKeyCipherKey_;
 
     shared_ptr<WindowEventHandler> eventHandler_;
     uint64_t handle_;

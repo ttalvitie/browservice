@@ -25,6 +25,8 @@ Window::Window(CKey,
     REQUIRE(handle);
 
     programName_ = move(programName);
+    secretGen_ = secretGen;
+    snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
 
     eventHandler_ = eventHandler;
     handle_ = handle;
@@ -235,7 +237,14 @@ void Window::inactivityTimeoutReached_(MCE, bool shortened) {
     selfClose_(mce);
 }
 
+int Window::decodeKey_(uint64_t eventIdx, int key) {
+    REQUIRE(!snakeOilKeyCipherKey_.empty());
+    size_t i = (size_t)eventIdx % snakeOilKeyCipherKey_.size();
+    return key ^ snakeOilKeyCipherKey_[i];
+}
+
 bool Window::handleTokenizedEvent_(MCE,
+    uint64_t eventIdx,
     const string& name,
     int argCount,
     const int* args
@@ -300,21 +309,21 @@ bool Window::handleTokenizedEvent_(MCE,
     };
 
     if(name == "KDN" && argCount == 1) {
-        int key = -args[0];
+        int key = -decodeKey_(eventIdx, args[0]);
         if(key < 0 && isValidKey(key)) {
             keyDown(key);
         }
         return true;
     }
     if(name == "KUP" && argCount == 1) {
-        int key = -args[0];
+        int key = -decodeKey_(eventIdx, args[0]);
         if(key < 0 && isValidKey(key)) {
             keyUp(key);
         }
         return true;
     }
     if(name == "KPR" && argCount == 1) {
-        int key = args[0];
+        int key = decodeKey_(eventIdx, args[0]);
         if(key > 0 && isValidKey(key)) {
             keyDown(key);
             keyUp(key);
@@ -329,6 +338,7 @@ bool Window::handleTokenizedEvent_(MCE,
 }
 
 bool Window::handleEvent_(MCE,
+    uint64_t eventIdx,
     string::const_iterator begin,
     string::const_iterator end
 ) {
@@ -371,7 +381,7 @@ bool Window::handleEvent_(MCE,
         }
     }
 
-    return ok && handleTokenizedEvent_(mce, name, argCount, args);
+    return ok && handleTokenizedEvent_(mce, eventIdx, name, argCount, args);
 }
 
 void Window::handleEvents_(MCE, uint64_t startIdx, string eventStr) {
@@ -410,7 +420,7 @@ void Window::handleEvents_(MCE, uint64_t startIdx, string eventStr) {
         }
 
         if(eventIdx == curEventIdx_) {
-            if(!handleEvent_(mce, itemBegin, itemEnd)) {
+            if(!handleEvent_(mce, eventIdx, itemBegin, itemEnd)) {
                 WARNING_LOG(
                     "Could not parse event '", string(itemBegin, itemEnd),
                     "' in window ", handle_
@@ -472,13 +482,28 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
             eventHandler_->onWindowLoseFocus(handle_);
         }
 
+        snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
+        stringstream snakeOilKeyStream;
+        for(int i = 0; i < (int)snakeOilKeyCipherKey_.size(); ++i) {
+            if(i != 0) {
+                snakeOilKeyStream << ',';
+                if(!(i & 31)) {
+                    snakeOilKeyStream << '\n';
+                }
+            }
+            snakeOilKeyStream << snakeOilKeyCipherKey_[i];
+        }
+        string snakeOilKeyCipherKeyString = snakeOilKeyStream.str();
+
         curImgIdx_ = 0;
         curEventIdx_ = 0;
-        request->sendHTMLResponse(
-            200,
-            writeMainHTML,
-            {programName_, pathPrefix_, curMainIdx_, validNonCharKeyList}
-        );
+        request->sendHTMLResponse(200, writeMainHTML, {
+            programName_,
+            pathPrefix_,
+            curMainIdx_,
+            validNonCharKeyList,
+            snakeOilKeyCipherKeyString
+        });
     } else {
         request->sendHTMLResponse(
             200, writePreMainHTML, {programName_, pathPrefix_}

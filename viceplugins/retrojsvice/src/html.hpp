@@ -21,6 +21,7 @@ struct MainHTMLData {
     const string& pathPrefix;
     uint64_t mainIdx;
     const string& nonCharKeyList;
+    const string& snakeOilKeyCipherKey;
 };
 void writeMainHTML(ostream& out, const MainHTMLData& data);
 

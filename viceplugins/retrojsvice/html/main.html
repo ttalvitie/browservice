@@ -323,6 +323,14 @@ for(var i = 0; i < nonCharKeyList.length; ++i) {
 var hackForm;
 var hackInput;
 
+var snakeOilKeyCipherKey = new Array(
+%-snakeOilKeyCipherKey-%
+);
+function encodeKey(key) {
+    var i = eventQueueStartIdx + eventQueue.length;
+    return key ^ snakeOilKeyCipherKey[i % snakeOilKeyCipherKey.length];
+}
+
 function putEvent(event) {
     eventQueue[eventQueue.length] = event;
     newEventNotify();
@@ -351,9 +359,9 @@ function sanitizeModifiers(event, func) {
         event.ctrlKey === false &&
         event.altKey === false
     ) {
-        if(shiftDown) putEvent("KUP_16");
-        if(controlDown) putEvent("KUP_17");
-        if(altDown) putEvent("KUP_18");
+        if(shiftDown) putEvent("KUP_" + encodeKey(16));
+        if(controlDown) putEvent("KUP_" + encodeKey(17));
+        if(altDown) putEvent("KUP_" + encodeKey(18));
         shiftDown = false;
         controlDown = false;
         altDown = false;
@@ -361,13 +369,13 @@ function sanitizeModifiers(event, func) {
 
     var tmpShift = !shiftDown && event.shiftKey === true;
     var tmpControl = !controlDown && event.ctrlKey === true;
-    if(tmpShift) putEvent("KDN_16");
-    if(tmpControl) putEvent("KDN_17");
+    if(tmpShift) putEvent("KDN_" + encodeKey(16));
+    if(tmpControl) putEvent("KDN_" + encodeKey(17));
 
     func();
 
-    if(tmpControl) putEvent("KUP_17");
-    if(tmpShift) putEvent("KUP_16");
+    if(tmpControl) putEvent("KUP_" + encodeKey(17));
+    if(tmpShift) putEvent("KUP_" + encodeKey(16));
 }
 
 function registerEventHandlers() {
@@ -489,7 +497,7 @@ function registerEventHandlers() {
             !(controlDown && ((key >= 65 && key <= 90) || (key >= 97 && key <= 122)))
         ) {
             sanitizeModifiers(event, function() {
-                putEvent("KPR_" + key);
+                putEvent("KPR_" + encodeKey(key));
             });
         }
         preventDefault(event);
@@ -503,7 +511,7 @@ function registerEventHandlers() {
             var key = event.which | 0;
         }
         if(controlDown && key >= 65 && key <= 90) {
-            putEvent("KPR_" + (key + 32));
+            putEvent("KPR_" + encodeKey(key + 32));
             preventDefault(event);
         } else if(nonCharKeys[key]) {
             if(key == 16) shiftDown = true;
@@ -511,7 +519,7 @@ function registerEventHandlers() {
             if(key == 18) altDown = true;
 
             sanitizeModifiers(event, function() {
-                putEvent("KDN_" + key);
+                putEvent("KDN_" + encodeKey(key));
             });
 
             preventDefault(event);
@@ -530,10 +538,10 @@ function registerEventHandlers() {
             if(key == 17 || key == 18) {
                 controlDown = false;
                 altDown = false;
-                putEvent("KUP_17");
-                putEvent("KUP_18");
+                putEvent("KUP_" + encodeKey(17));
+                putEvent("KUP_" + encodeKey(18));
             } else {
-                putEvent("KUP_" + key);
+                putEvent("KUP_" + encodeKey(key));
             }
             preventDefault(event);
         }
