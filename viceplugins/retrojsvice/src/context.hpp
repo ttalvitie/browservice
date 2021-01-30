@@ -21,14 +21,16 @@ SHARED_ONLY_CLASS(Context);
 public:
     // Returns either a successfully constructed context or an error message.
     static variant<shared_ptr<Context>, string> init(
-        vector<pair<string, string>> options
+        vector<pair<string, string>> options,
+        string programName
     );
 
     // Private constructor.
     Context(CKey, CKey,
         SocketAddress httpListenAddr,
         int httpMaxThreads,
-        string httpAuthCredentials
+        string httpAuthCredentials,
+        string programName
     );
     ~Context();
 
@@ -100,6 +102,7 @@ private:
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;
+    string programName_;
 
     enum {Pending, Running, ShutdownComplete} state_;
     enum {

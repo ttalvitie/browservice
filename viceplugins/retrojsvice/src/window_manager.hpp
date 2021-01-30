@@ -54,7 +54,8 @@ SHARED_ONLY_CLASS(WindowManager);
 public:
     WindowManager(CKey,
         shared_ptr<WindowManagerEventHandler> eventHandler,
-        shared_ptr<SecretGenerator> secretGen
+        shared_ptr<SecretGenerator> secretGen,
+        string programName
     );
     ~WindowManager();
 
@@ -114,6 +115,7 @@ private:
     map<uint64_t, shared_ptr<Window>> windows_;
 
     shared_ptr<SecretGenerator> secretGen_;
+    string programName_;
 };
 
 }

@@ -51,7 +51,8 @@ public:
     Window(CKey,
         shared_ptr<WindowEventHandler> eventHandler,
         uint64_t handle,
-        shared_ptr<SecretGenerator> secretGen
+        shared_ptr<SecretGenerator> secretGen,
+        string programName
     );
     ~Window();
 
@@ -110,6 +111,8 @@ private:
     );
     void handlePrevPageRequest_(shared_ptr<HTTPRequest> request);
     void handleNextPageRequest_(shared_ptr<HTTPRequest> request);
+
+    string programName_;
 
     shared_ptr<WindowEventHandler> eventHandler_;
     uint64_t handle_;

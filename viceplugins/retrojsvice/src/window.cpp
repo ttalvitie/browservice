@@ -18,10 +18,13 @@ regex imagePathRegex(
 Window::Window(CKey,
     shared_ptr<WindowEventHandler> eventHandler,
     uint64_t handle,
-    shared_ptr<SecretGenerator> secretGen
+    shared_ptr<SecretGenerator> secretGen,
+    string programName
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(handle);
+
+    programName_ = move(programName);
 
     eventHandler_ = eventHandler;
     handle_ = handle;
@@ -72,7 +75,9 @@ void Window::handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request) {
         return;
     }
 
-    request->sendHTMLResponse(200, writeNewWindowHTML, {pathPrefix_});
+    request->sendHTMLResponse(
+        200, writeNewWindowHTML, {programName_, pathPrefix_}
+    );
 }
 
 void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
@@ -472,10 +477,12 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
         request->sendHTMLResponse(
             200,
             writeMainHTML,
-            {pathPrefix_, curMainIdx_, validNonCharKeyList}
+            {programName_, pathPrefix_, curMainIdx_, validNonCharKeyList}
         );
     } else {
-        request->sendHTMLResponse(200, writePreMainHTML, {pathPrefix_});
+        request->sendHTMLResponse(
+            200, writePreMainHTML, {programName_, pathPrefix_}
+        );
         preMainVisited_ = true;
     }
 }
@@ -531,9 +538,13 @@ void Window::handlePrevPageRequest_(shared_ptr<HTTPRequest> request) {
     }
 
     if(prePrevVisited_) {
-        request->sendHTMLResponse(200, writePrevHTML, {pathPrefix_});
+        request->sendHTMLResponse(
+            200, writePrevHTML, {programName_, pathPrefix_}
+        );
     } else {
-        request->sendHTMLResponse(200, writePrePrevHTML, {pathPrefix_});
+        request->sendHTMLResponse(
+            200, writePrePrevHTML, {programName_, pathPrefix_}
+        );
         prePrevVisited_ = true;
     }
 }
@@ -546,7 +557,7 @@ void Window::handleNextPageRequest_(shared_ptr<HTTPRequest> request) {
         navigate_(1);
     }
 
-    request->sendHTMLResponse(200, writeNextHTML, {pathPrefix_});
+    request->sendHTMLResponse(200, writeNextHTML, {programName_, pathPrefix_});
     return;
 }
 

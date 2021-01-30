@@ -334,6 +334,12 @@ enum VicePluginAPI_MouseCursor {
  * success. (Documentation of the supported configuration options can be queried using
  * vicePluginAPI_getOptionDocs.)
  *
+ * The programName argument should specify the name of the program that the plugin may display to
+ * the user if appropriate. The plugin should not make any assumptions about the name and sanitize
+ * it as required. To achieve the best compatibility, the program name should be a short string
+ * consisting only of ASCII letters, numbers and spaces, as some plugins may have to filter out
+ * special characters and the space may be limited.
+ *
  * In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is set to
  * point to a string describing the reason for the failure; the caller must free the string using
  * free().
@@ -347,6 +353,7 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
     const char** optionNames,
     const char** optionValues,
     size_t optionCount,
+    const char* programName,
     char** initErrorMsgOut
 );
 

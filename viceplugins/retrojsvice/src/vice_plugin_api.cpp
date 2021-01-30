@@ -94,21 +94,27 @@ API_EXPORT VicePluginAPI_Context* vicePluginAPI_initContext(
     const char** optionNames,
     const char** optionValues,
     size_t optionCount,
+    const char* programName,
     char** initErrorMsgOut
 ) {
 API_FUNC_START
 
     REQUIRE(apiVersion == (uint64_t)1000000);
 
+    REQUIRE(programName != nullptr);
+
     vector<pair<string, string>> options;
     for(size_t i = 0; i < optionCount; ++i) {
+        REQUIRE(optionNames != nullptr);
+        REQUIRE(optionValues != nullptr);
         REQUIRE(optionNames[i] != nullptr);
         REQUIRE(optionValues[i] != nullptr);
 
         options.emplace_back(optionNames[i], optionValues[i]);
     }
 
-    variant<shared_ptr<Context>, string> result = Context::init(options);
+    variant<shared_ptr<Context>, string> result =
+        Context::init(options, programName);
 
     shared_ptr<Context> impl;
     if(shared_ptr<Context>* implPtr = get_if<shared_ptr<Context>>(&result)) {

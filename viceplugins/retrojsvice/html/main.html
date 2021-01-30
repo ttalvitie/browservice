@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Browservice</title>
+<title>%-programName-%</title>
 <meta http-equiv="imagetoolbar" content="no">
 <style>
 body {
@@ -173,8 +173,8 @@ function sendImgReq(imgLoadIdx) {
     if(shutdown || imgLoadIdx != currentImgLoadIdx) return;
 
     if(imgLoadAttempts > imgLoadMaxRetries) {
-        document.title = "Browservice: Connection lost";
-        window.status = "Browservice: Connection lost";
+        document.title = "%-programName-%: Connection lost";
+        window.status = "%-programName-%: Connection lost";
         shutdown = true;
         return;
     }

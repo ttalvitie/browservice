@@ -12,7 +12,8 @@ regex windowPathRegex("/([0-9]+)/.*");
 
 WindowManager::WindowManager(CKey,
     shared_ptr<WindowManagerEventHandler> eventHandler,
-    shared_ptr<SecretGenerator> secretGen
+    shared_ptr<SecretGenerator> secretGen,
+    string programName
 ) {
     REQUIRE_API_THREAD();
 
@@ -20,6 +21,7 @@ WindowManager::WindowManager(CKey,
     closed_ = false;
 
     secretGen_ = secretGen;
+    programName_ = move(programName);
 }
 
 WindowManager::~WindowManager() {
@@ -106,8 +108,9 @@ bool WindowManager::createPopupWindow(
         " as requested by the program"
     );
 
-    shared_ptr<Window> popupWindowPtr =
-        Window::create(shared_from_this(), popupWindow, secretGen_);
+    shared_ptr<Window> popupWindowPtr = Window::create(
+        shared_from_this(), popupWindow, secretGen_, programName_
+    );
     REQUIRE(windows_.emplace(popupWindow, popupWindowPtr).second);
 
     parentWindowPtr->notifyPopupCreated(popupWindowPtr);
@@ -225,8 +228,9 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
             REQUIRE(handle);
             REQUIRE(!windows_.count(handle));
 
-            shared_ptr<Window> window =
-                Window::create(shared_from_this(), handle, secretGen_);
+            shared_ptr<Window> window = Window::create(
+                shared_from_this(), handle, secretGen_, programName_
+            );
             REQUIRE(windows_.emplace(handle, window).second);
 
             window->handleInitialForwardHTTPRequest(request);

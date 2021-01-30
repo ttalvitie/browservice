@@ -37,6 +37,28 @@ pair<bool, string> parseHTTPAuthOption(string optValue) {
     }
 }
 
+string sanitizeProgramName(string src) {
+    string ret;
+    for(char c : src) {
+        if(
+            (c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9') ||
+            c == ' '
+        ) {
+            if(ret.size() >= 60) {
+                ret.append("...");
+                break;
+            }
+            ret.push_back(c);
+        }
+    }
+    if(ret.empty()) {
+        ret = "retrojsvice";
+    }
+    return ret;
+}
+
 thread_local bool threadRunningPumpEvents = false;
 
 }
@@ -115,7 +137,8 @@ private:
 };
 
 variant<shared_ptr<Context>, string> Context::init(
-    vector<pair<string, string>> options
+    vector<pair<string, string>> options,
+    string programName
 ) {
     SocketAddress httpListenAddr =
         SocketAddress::parse(defaultHTTPListenAddr).value();
@@ -156,14 +179,16 @@ variant<shared_ptr<Context>, string> Context::init(
         CKey(),
         httpListenAddr,
         httpMaxThreads,
-        httpAuthCredentials
+        httpAuthCredentials,
+        programName
     );
 }
 
 Context::Context(CKey, CKey,
     SocketAddress httpListenAddr,
     int httpMaxThreads,
-    string httpAuthCredentials
+    string httpAuthCredentials,
+    string programName
 )
     : httpListenAddr_(httpListenAddr)
 {
@@ -171,6 +196,7 @@ Context::Context(CKey, CKey,
 
     httpMaxThreads_ = httpMaxThreads;
     httpAuthCredentials_ = httpAuthCredentials;
+    programName_ = sanitizeProgramName(programName);
 
     state_ = Pending;
     shutdownPhase_ = NoPendingShutdown;
@@ -221,7 +247,8 @@ void Context::start(
         httpMaxThreads_
     );
     secretGen_ = SecretGenerator::create();
-    windowManager_ = WindowManager::create(shared_from_this(), secretGen_);
+    windowManager_ =
+        WindowManager::create(shared_from_this(), secretGen_, programName_);
 }
 
 void Context::shutdown() {
