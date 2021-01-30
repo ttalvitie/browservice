@@ -527,6 +527,33 @@ void Window::onWidgetCursorChanged() {
     });
 }
 
+void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ != Open) {
+        return;
+    }
+
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self, key]() {
+        if(self->state_ == Open) {
+            if(key == GlobalHotkey::Address) {
+                self->rootWidget_->controlBar()->activateAddress();
+            }
+            if(key == GlobalHotkey::Find) {
+                self->rootWidget_->controlBar()->openFindBar();
+            }
+            if(key == GlobalHotkey::FindNext) {
+                self->rootWidget_->controlBar()->findNext();
+            }
+            if(key == GlobalHotkey::Refresh) {
+                INFO_LOG("TODO: navigate_(0)");
+                //self->navigate_(0);
+            }
+        }
+    });
+}
+
 void Window::onAddressSubmitted(string url) {
     REQUIRE_UI_THREAD();
 
