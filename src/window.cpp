@@ -508,6 +508,20 @@ void Window::onWidgetViewDirty() {
     });
 }
 
+void Window::onAddressSubmitted(string url) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ != Open || !browser_ || url.empty()) {
+        return;
+    }
+
+    CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
+    if(frame) {
+        frame->LoadURL(url);
+        rootWidget_->browserArea()->takeFocus();
+    }
+}
+
 void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
 

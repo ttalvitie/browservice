@@ -89,7 +89,7 @@ public:
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) override {}
 
     // ControlBarEventHandler:
-    virtual void onAddressSubmitted(string url) override {}
+    virtual void onAddressSubmitted(string url) override;
     virtual void onQualityChanged(int quality) override {}
     virtual void onPendingDownloadAccepted() override {}
     virtual void onFind(string text, bool forward, bool findNext) override {}
