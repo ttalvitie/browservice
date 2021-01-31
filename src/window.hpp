@@ -18,6 +18,7 @@ public:
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
     virtual void onWindowCursorChanged(uint64_t handle, int cursor) = 0;
     virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) = 0;
+    virtual void onWindowClipboardButtonPressed(uint64_t handle) = 0;
 
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before
@@ -99,7 +100,7 @@ public:
     virtual void onPendingDownloadAccepted() override {}
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;
-    virtual void onClipboardButtonPressed() override {}
+    virtual void onClipboardButtonPressed() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;

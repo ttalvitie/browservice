@@ -209,6 +209,13 @@ void Window::setCursor(int cursorSignal) {
     });
 }
 
+void Window::clipboardButtonPressed() {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    INFO_LOG("Clipboard button pressed, TODO: implement");
+}
+
 void Window::onImageCompressorFetchImage(
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {

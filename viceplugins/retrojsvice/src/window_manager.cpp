@@ -153,6 +153,14 @@ bool WindowManager::needsClipboardButtonQuery(uint64_t window) {
     return true;
 }
 
+void WindowManager::clipboardButtonPressed(uint64_t window) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    it->second->clipboardButtonPressed();
+}
+
 void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);

@@ -349,6 +349,13 @@ int Context::windowNeedsClipboardButtonQuery(uint64_t window) {
     return (int)windowManager_->needsClipboardButtonQuery(window);
 }
 
+void Context::windowClipboardButtonPressed(uint64_t window) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    windowManager_->clipboardButtonPressed(window);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

@@ -23,6 +23,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(setWindowCursor) \
     FOREACH_VICE_API_FUNC_ITEM(windowNeedsClipboardButtonQuery) \
+    FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -560,6 +561,15 @@ bool ViceContext::windowNeedsClipboardButtonQuery(uint64_t window) {
         plugin_->apiFuncs_->windowNeedsClipboardButtonQuery(ctx_, window);
     REQUIRE(result == 0 || result == 1);
     return (bool)result;
+}
+
+void ViceContext::windowClipboardButtonPressed(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(window));
+
+    plugin_->apiFuncs_->windowClipboardButtonPressed(ctx_, window);
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

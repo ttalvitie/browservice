@@ -650,6 +650,15 @@ void Window::onStopFind(bool clearSelection) {
     }
 }
 
+void Window::onClipboardButtonPressed() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowClipboardButtonPressed(handle_);
+    }
+}
+
 void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
 

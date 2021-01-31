@@ -459,10 +459,15 @@ void vicePluginAPI_setWindowCursor(
 /* Returns 1 if the plugin needs a clipboard button for given existing window; otherwise, returns 0.
  * The program is recommended to call this function for every window and if the result is 1, display
  * a clipboard button in the UI for the window (click events are relayed by calling
- * vicePluginAPI_clipboardButtonPressed). However, the program is also allowed to not call this
- * function at all or to display/omit a clipboard button independent of the result.
+ * vicePluginAPI_windowClipboardButtonPressed). However, the program is also allowed to not call
+ * this function at all or to display/omit a clipboard button independent of the result.
  */
 int vicePluginAPI_windowNeedsClipboardButtonQuery(VicePluginAPI_Context* ctx, uint64_t window);
+
+/* Signals to the plugin that the clipboard button in a window has been pressed. May be called even
+ * if vicePluginAPI_windowNeedsClipboardButtonQuery returns 0.
+ */
+void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint64_t window);
 
 /**********************************
  * Non-context-specific functions *

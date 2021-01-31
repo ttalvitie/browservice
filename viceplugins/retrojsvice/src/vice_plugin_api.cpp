@@ -197,6 +197,12 @@ API_EXPORT int vicePluginAPI_windowNeedsClipboardButtonQuery(
 )
 WRAP_CTX_API(windowNeedsClipboardButtonQuery, window)
 
+API_EXPORT void vicePluginAPI_windowClipboardButtonPressed(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+)
+WRAP_CTX_API(windowClipboardButtonPressed, window)
+
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(
