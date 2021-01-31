@@ -17,6 +17,7 @@ public:
     virtual void onWindowCleanupComplete(uint64_t handle) = 0;
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
     virtual void onWindowCursorChanged(uint64_t handle, int cursor) = 0;
+    virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) = 0;
 
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before

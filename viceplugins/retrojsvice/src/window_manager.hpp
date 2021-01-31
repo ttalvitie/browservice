@@ -79,6 +79,8 @@ public:
 
     void setCursor(uint64_t window, int cursorSignal);
 
+    bool needsClipboardButtonQuery(uint64_t window);
+
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t window) override;
     virtual void onWindowFetchImage(

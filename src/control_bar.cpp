@@ -273,6 +273,7 @@ const int BtnWidth = 22;
 struct ControlBar::Layout {
     Layout(
         int width,
+        bool isClipboardButtonVisible,
         bool isDownloadVisible,
         bool isFindBarVisible
     ) : width(width) {
@@ -326,7 +327,11 @@ struct ControlBar::Layout {
         separator2Pos = separator2Start + SeparatorWidth / 2;
 
         clipboardButtonEnd = separator2Start;
-        clipboardButtonStart = clipboardButtonEnd - BtnWidth;
+        if(isClipboardButtonVisible) {
+            clipboardButtonStart = clipboardButtonEnd - BtnWidth;
+        } else {
+            clipboardButtonStart = clipboardButtonEnd;
+        }
 
         findButtonEnd = clipboardButtonStart;
         findButtonStart = findButtonEnd - BtnWidth;
@@ -411,6 +416,7 @@ ControlBar::ControlBar(CKey,
 
     eventHandler_ = eventHandler;
 
+    clipboardButtonEnabled_ = false;
     allowPNG_ = allowPNG;
 
     animationTimeout_ = Timeout::create(30);
@@ -432,6 +438,15 @@ ControlBar::ControlBar(CKey,
     loading_ = false;
 
     // Initialization is completed in afterConstruct_
+}
+
+void ControlBar::enableClipboardButton() {
+    if(!clipboardButtonEnabled_) {
+        clipboardButtonEnabled_ = true;
+
+        widgetViewportUpdated_();
+        signalViewDirty_();
+    }
 }
 
 void ControlBar::setSecurityStatus(SecurityStatus value) {
@@ -538,7 +553,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         openFindBar();
     }
 
-    if(button.lock() == clipboardButton_) {
+    if(button.lock() == clipboardButton_ && clipboardButtonEnabled_) {
         postTask(
             eventHandler_,
             &ControlBarEventHandler::onClipboardButtonPressed
@@ -602,7 +617,12 @@ bool ControlBar::isDownloadVisible_() {
 }
 
 ControlBar::Layout ControlBar::layout_() {
-    return Layout(getViewport().width(), isDownloadVisible_(), findBarVisible_);
+    return Layout(
+        getViewport().width(),
+        clipboardButtonEnabled_,
+        isDownloadVisible_(),
+        findBarVisible_
+    );
 }
 
 void ControlBar::widgetViewportUpdated_() {
@@ -620,12 +640,14 @@ void ControlBar::widgetViewportUpdated_() {
     findButton_->setViewport(viewport.subRect(
         layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
     ));
-    clipboardButton_->setViewport(viewport.subRect(
-        layout.clipboardButtonStart, layout.clipboardButtonEnd, 1, Height - 4
-    ));
     qualitySelector_->setViewport(viewport.subRect(
         layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
     ));
+    if(clipboardButtonEnabled_) {
+        clipboardButton_->setViewport(viewport.subRect(
+            layout.clipboardButtonStart, layout.clipboardButtonEnd, 1, Height - 4
+        ));
+    }
     if(isDownloadVisible_()) {
         downloadButton_->setViewport(viewport.subRect(
             layout.downloadStart, layout.downloadEnd,
@@ -779,9 +801,11 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
         addrField_,
         goButton_,
         findButton_,
-        clipboardButton_,
         qualitySelector_
     };
+    if(clipboardButtonEnabled_) {
+        children.push_back(clipboardButton_);
+    }
     if(isDownloadVisible_()) {
         children.push_back(downloadButton_);
     }

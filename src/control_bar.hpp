@@ -47,6 +47,8 @@ public:
         bool allowPNG
     );
 
+    void enableClipboardButton();
+
     void setSecurityStatus(SecurityStatus value);
     void setAddress(string addr);
     void setLoading(bool loading);
@@ -91,6 +93,8 @@ private:
     virtual vector<shared_ptr<Widget>> widgetListChildren_() override;
 
     weak_ptr<ControlBarEventHandler> eventHandler_;
+
+    bool clipboardButtonEnabled_;
 
     bool allowPNG_;
 

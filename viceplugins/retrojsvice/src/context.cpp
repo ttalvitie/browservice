@@ -342,6 +342,13 @@ void Context::setWindowCursor(
     windowManager_->setCursor(window, cursorSignal);
 }
 
+int Context::windowNeedsClipboardButtonQuery(uint64_t window) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    return (int)windowManager_->needsClipboardButtonQuery(window);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

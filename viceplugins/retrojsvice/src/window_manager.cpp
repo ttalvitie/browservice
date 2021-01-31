@@ -147,6 +147,12 @@ void WindowManager::setCursor(uint64_t window, int cursorSignal) {
     it->second->setCursor(cursorSignal);
 }
 
+bool WindowManager::needsClipboardButtonQuery(uint64_t window) {
+    REQUIRE_API_THREAD();
+    REQUIRE(windows_.count(window));
+    return true;
+}
+
 void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);

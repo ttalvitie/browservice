@@ -53,6 +53,8 @@ public:
 
     void setWindowCursor(uint64_t window, VicePluginAPI_MouseCursor cursor);
 
+    int windowNeedsClipboardButtonQuery(uint64_t window);
+
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 

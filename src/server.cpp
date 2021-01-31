@@ -229,6 +229,14 @@ void Server::onWindowCursorChanged(uint64_t handle, int cursor) {
     viceCtx_->setWindowCursor(handle, cursor);
 }
 
+bool Server::onWindowNeedsClipboardButtonQuery(uint64_t handle) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    return viceCtx_->windowNeedsClipboardButtonQuery(handle);
+}
+
 void Server::onWindowCreatePopupRequest(
     uint64_t handle,
     function<shared_ptr<Window>(uint64_t)> accept

@@ -126,6 +126,8 @@ public:
 
     void setWindowCursor(uint64_t window, int cursor);
 
+    bool windowNeedsClipboardButtonQuery(uint64_t window);
+
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);
 

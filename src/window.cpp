@@ -681,7 +681,20 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle)
 void Window::createSuccessful_() {
     REQUIRE_UI_THREAD();
 
-    postTask(shared_from_this(), &Window::watchdog_);
+    shared_ptr<Window> self = shared_from_this();
+
+    postTask(self, &Window::watchdog_);
+
+    postTask([self]() {
+        if(self->state_ == Open) {
+            REQUIRE(self->eventHandler_);
+            if(self->eventHandler_->onWindowNeedsClipboardButtonQuery(
+                self->handle_
+            )) {
+                self->rootWidget_->controlBar()->enableClipboardButton();
+            }
+        }
+    });
 }
 
 void Window::createFailed_() {
