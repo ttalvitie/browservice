@@ -11,7 +11,7 @@ SHARED_ONLY_CLASS(SecretGenerator);
 public:
     SecretGenerator(CKey);
 
-    // 20 characters from [A-Za-z0-9]
+    // 32 characters from [A-Za-z0-9]
     string generateCSRFToken();
 
     // 2000..2500 integers in range 0..255

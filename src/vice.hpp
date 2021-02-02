@@ -84,6 +84,8 @@ public:
 
     virtual void onViceContextNavigate(uint64_t window, int direction) = 0;
 
+    virtual void onViceContextCopyToClipboard(string text) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 

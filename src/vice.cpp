@@ -470,6 +470,10 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         self->eventHandler_->onViceContextNavigate(window, direction);
     });
 
+    callbacks.copyToClipboard = CTX_CALLBACK(void, (const char* text), {
+        self->eventHandler_->onViceContextCopyToClipboard(text);
+    });
+
     plugin_->apiFuncs_->start(
         ctx_,
         callbacks,

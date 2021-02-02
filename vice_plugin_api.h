@@ -263,6 +263,14 @@ struct VicePluginAPI_Callbacks {
      */
     void (*navigate)(void*, uint64_t window, int direction);
 
+    /* Called by the plugin to request that a given text should be copied to the clipboard of the
+     * program. The text should be encoded as UTF-8, but arbitrary null-terminated binary data is
+     * allowed; the program should either tolerate invalid UTF-8 or validate/sanitize the data
+     * before use. The program may ignore this request, allow it only in specific circumstances or
+     * process it in any application-specific manner.
+     */
+    void (*copyToClipboard)(void*, const char* text);
+
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 

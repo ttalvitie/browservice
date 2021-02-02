@@ -1,5 +1,6 @@
 #include "context.hpp"
 
+#include "html.hpp"
 #include "secrets.hpp"
 
 namespace retrojsvice {
@@ -55,6 +56,26 @@ string sanitizeProgramName(string src) {
     }
     if(ret.empty()) {
         ret = "retrojsvice";
+    }
+    return ret;
+}
+
+string htmlEscapeString(string src) {
+    string ret;
+    for(char c : src) {
+        if(c == '&') {
+            ret += "&amp;";
+        } else if(c == '<') {
+            ret += "&lt;";
+        } else if(c == '>') {
+            ret += "&gt;";
+        } else if(c == '"') {
+            ret += "&quot;";
+        } else if(c == '\'') {
+            ret += "&apos;";
+        } else {
+            ret.push_back(c);
+        }
     }
     return ret;
 }
@@ -249,6 +270,8 @@ void Context::start(
     secretGen_ = SecretGenerator::create();
     windowManager_ =
         WindowManager::create(shared_from_this(), secretGen_, programName_);
+
+    clipboardCSRFToken_ = secretGen_->generateCSRFToken();
 }
 
 void Context::shutdown() {
@@ -411,7 +434,11 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
         }
     }
 
-    windowManager_->handleHTTPRequest(mce, request);
+    if(request->path() == "/clipboard/") {
+        handleClipboardHTTPRequest_(mce, request);
+    } else {
+        windowManager_->handleHTTPRequest(mce, request);
+    }
 }
 
 void Context::onHTTPServerShutdownComplete() {
@@ -565,5 +592,44 @@ FORWARD_WINDOW_EVENT(
     onWindowManagerNavigate(uint64_t window, int direction),
     navigate, (callbackData_, window, direction)
 )
+
+void Context::handleClipboardHTTPRequest_(MCE,
+    shared_ptr<HTTPRequest> request
+) {
+    string method = request->method();
+    if(method == "GET") {
+        request->sendHTMLResponse(
+            200,
+            writeClipboardHTML,
+            {programName_, "", clipboardCSRFToken_}
+        );
+    } else if(method == "POST") {
+        REQUIRE(!clipboardCSRFToken_.empty());
+        if(request->getFormParam("csrftoken") != clipboardCSRFToken_) {
+            request->sendTextResponse(403, "ERROR: Invalid CSRF token\n");
+            return;
+        }
+
+        string mode = request->getFormParam("mode");
+        if(mode == "get") {
+            request->sendTextResponse(500, "ERROR: Getting clipboard not implemented (TODO)");
+        } else if(mode == "set") {
+            string text = request->getFormParam("text");
+
+            REQUIRE(callbacks_.copyToClipboard != nullptr);
+            callbacks_.copyToClipboard(callbackData_, text.c_str());
+
+            request->sendHTMLResponse(
+                200,
+                writeClipboardHTML,
+                {programName_, htmlEscapeString(text), clipboardCSRFToken_}
+            );
+        } else {
+            request->sendTextResponse(400, "ERROR: Invalid request parameters");
+        }
+    } else {
+        request->sendTextResponse(400, "ERROR: Invalid request method");
+    }
+}
 
 }

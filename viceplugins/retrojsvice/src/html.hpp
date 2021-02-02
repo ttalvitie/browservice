@@ -49,4 +49,16 @@ struct PopupIframeHTMLData {
 };
 void writePopupIframeHTML(ostream& out, const PopupIframeHTMLData& data);
 
+struct ClipboardIframeHTMLData {
+    const string& programName;
+};
+void writeClipboardIframeHTML(ostream& out, const ClipboardIframeHTMLData& data);
+
+struct ClipboardHTMLData {
+    const string& programName;
+    const string& escapedText;
+    const string& csrfToken;
+};
+void writeClipboardHTML(ostream& out, const ClipboardHTMLData& data);
+
 }

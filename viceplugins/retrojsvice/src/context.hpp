@@ -105,6 +105,8 @@ public:
     ) override;
 
 private:
+    void handleClipboardHTTPRequest_(MCE, shared_ptr<HTTPRequest> request);
+
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;
@@ -126,6 +128,8 @@ private:
     shared_ptr<HTTPServer> httpServer_;
     shared_ptr<SecretGenerator> secretGen_;
     shared_ptr<WindowManager> windowManager_;
+
+    string clipboardCSRFToken_;
 
     class APILock;
     class RunningAPILock;

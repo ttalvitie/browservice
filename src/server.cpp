@@ -181,6 +181,13 @@ void Server::onViceContextNavigate(uint64_t window, int direction) {
     it->second->navigate(direction);
 }
 
+void Server::onViceContextCopyToClipboard(string text) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    globals->xWindow->copyToClipboard(move(text));
+}
+
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == WaitViceContext);

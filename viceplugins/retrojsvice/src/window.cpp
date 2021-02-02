@@ -226,7 +226,21 @@ void Window::clipboardButtonPressed() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
 
-    INFO_LOG("Clipboard button pressed, TODO: implement");
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self]() {
+        if(self->closed_) {
+            return;
+        }
+        self->addIframe_(mce,
+            [self](shared_ptr<HTTPRequest> request) {
+                request->sendHTMLResponse(
+                    200,
+                    writeClipboardIframeHTML,
+                    {self->programName_}
+                );
+            }
+        );
+    });
 }
 
 void Window::onImageCompressorFetchImage(

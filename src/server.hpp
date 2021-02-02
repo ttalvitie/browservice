@@ -56,6 +56,7 @@ public:
     virtual void onViceContextKeyUp(uint64_t window, int key) override;
     virtual void onViceContextLoseFocus(uint64_t window) override;
     virtual void onViceContextNavigate(uint64_t window, int direction) override;
+    virtual void onViceContextCopyToClipboard(string text) override;
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:

@@ -40,7 +40,7 @@ string SecretGenerator::generateCSRFToken() {
     REQUIRE_API_THREAD();
 
     string token;
-    for(int i = 0; i < 20; ++i) {
+    for(int i = 0; i < 32; ++i) {
         int t = uniform_int_distribution<int>(0, 61)(rng_);
         if(t < 10) {
             REQUIRE(t >= 0);
