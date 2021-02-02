@@ -15,6 +15,9 @@ regex imagePathRegex(
 regex iframePathRegex(
     "/iframe/([0-9]+)/[0-9]+/"
 );
+regex closePathRegex(
+    "/close/([0-9]+)/"
+);
 
 }
 
@@ -143,6 +146,16 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
 
         if(mainIdx) {
             handleIframeRequest_(mce, request, *mainIdx);
+            return;
+        }
+    }
+
+    if(method == "GET" && regex_match(path, match, closePathRegex)) {
+        REQUIRE(match.size() == 2);
+        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
+
+        if(mainIdx) {
+            handleCloseRequest_(request, *mainIdx);
             return;
         }
     }
@@ -616,6 +629,25 @@ void Window::handleIframeRequest_(MCE,
         }
 
         iframe(request);
+    }
+}
+
+void Window::handleCloseRequest_(
+    shared_ptr<HTTPRequest> request,
+    uint64_t mainIdx
+) {
+    if(mainIdx != curMainIdx_) {
+        request->sendTextResponse(400, "ERROR: Outdated request");
+    } else {
+        // Close requested, increment mainIdx to invalidate requests to the
+        // current main and set shortened inactivity timer as this may be a
+        // reload
+        ++curMainIdx_;
+        curImgIdx_ = 0;
+        curEventIdx_ = 0;
+        updateInactivityTimeout_(true);
+
+        request->sendTextResponse(200, "OK");
     }
 }
 

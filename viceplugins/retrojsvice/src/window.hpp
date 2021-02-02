@@ -119,6 +119,10 @@ private:
         shared_ptr<HTTPRequest> request,
         uint64_t mainIdx
     );
+    void handleCloseRequest_(
+        shared_ptr<HTTPRequest> request,
+        uint64_t mainIdx
+    );
     void handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request);
 
