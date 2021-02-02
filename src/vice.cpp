@@ -471,7 +471,8 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     });
 
     callbacks.copyToClipboard = CTX_CALLBACK(void, (const char* text), {
-        self->eventHandler_->onViceContextCopyToClipboard(text);
+        string sanitizedText = sanitizeUTF8String(text);
+        self->eventHandler_->onViceContextCopyToClipboard(move(sanitizedText));
     });
 
     plugin_->apiFuncs_->start(

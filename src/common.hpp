@@ -124,6 +124,8 @@ string toString(const T& obj) {
     return ss.str();
 }
 
+string sanitizeUTF8String(string str);
+
 // Logging macros that log given message along with severity, source file and
 // line information to stderr. Message is formed by calling toString for each
 // argument and concatenating the results.
