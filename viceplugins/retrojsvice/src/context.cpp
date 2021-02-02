@@ -615,6 +615,7 @@ void Context::handleClipboardHTTPRequest_(MCE,
             request->sendTextResponse(500, "ERROR: Getting clipboard not implemented (TODO)");
         } else if(mode == "set") {
             string text = request->getFormParam("text");
+            text = sanitizeUTF8String(text);
 
             REQUIRE(callbacks_.copyToClipboard != nullptr);
             callbacks_.copyToClipboard(callbackData_, text.c_str());

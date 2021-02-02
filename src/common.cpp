@@ -34,21 +34,17 @@ string sanitizeUTF8String(string str) {
         }
 
         bool ok = true;
-        for(size_t j = length - 1; j; --j) {
+        int point = ch & (0x7F >> length);
+        for(size_t j = 1; j < length; ++j) {
             int ch2 = (int)(uint8_t)str[i + j];
             if((ch2 & 0xC0) != 0x80) {
                 ok = false;
                 break;
             }
+            point = (point << 6) | (ch2 & 0x3F);
         }
         if(!ok) {
             continue;
-        }
-
-        int point = ch & (0x7F >> length);
-        for(size_t j = 1; j < length; ++j) {
-            int ch2 = (int)(uint8_t)str[i + j];
-            point = (point << 6) | (ch2 & 0x3F);
         }
 
         if(

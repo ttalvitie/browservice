@@ -104,6 +104,8 @@ string toString(const T& obj) {
     return ss.str();
 }
 
+string sanitizeUTF8String(string str);
+
 // Helper class for defining visitors for variants
 template<class... T> struct Overloaded : T... { using T::operator()...; };
 template<class... T> Overloaded(T...) -> Overloaded<T...>;

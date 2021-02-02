@@ -4,6 +4,62 @@
 
 namespace retrojsvice {
 
+string sanitizeUTF8String(string str) {
+    string ret;
+    for(size_t i = 0; i < str.size(); ++i) {
+        int ch = (int)(uint8_t)str[i];
+        if(ch == 0) {
+            continue;
+        }
+        if(ch < 128) {
+            ret.push_back((char)ch);
+            continue;
+        }
+
+        size_t length;
+        if((ch & 0xE0) == 0xC0) {
+            length = 2;
+        } else if((ch & 0xF0) == 0xE0) {
+            length = 3;
+        } else if((ch & 0xF8) == 0xF0) {
+            length = 4;
+        } else {
+            continue;
+        }
+
+        if(i + length > str.size()) {
+            continue;
+        }
+
+        bool ok = true;
+        int point = ch & (0x7F >> length);
+        for(size_t j = 1; j < length; ++j) {
+            int ch2 = (int)(uint8_t)str[i + j];
+            if((ch2 & 0xC0) != 0x80) {
+                ok = false;
+                break;
+            }
+            point = (point << 6) | (ch2 & 0x3F);
+        }
+        if(!ok) {
+            continue;
+        }
+
+        if(
+            (length == (size_t)2 && point >= 0x80 && point <= 0x7FF) ||
+            (length == (size_t)3 && (
+                (point >= 0x800 && point <= 0xD7FF) ||
+                (point >= 0xE000 && point <= 0xFFFF)
+            )) ||
+            (length == (size_t)4 && point >= 0x10000 && point <= 0x10FFFF)
+        ) {
+            ret.append(str.substr(i, length));
+            i += length - 1;
+        }
+    }
+    return ret;
+}
+
 namespace {
 
 void defaultLogCallback(
