@@ -57,7 +57,8 @@ public:
     WindowManager(CKey,
         shared_ptr<WindowManagerEventHandler> eventHandler,
         shared_ptr<SecretGenerator> secretGen,
-        string programName
+        string programName,
+        int defaultQuality
     );
     ~WindowManager();
 
@@ -122,6 +123,7 @@ private:
 
     shared_ptr<SecretGenerator> secretGen_;
     string programName_;
+    int defaultQuality_;
 };
 
 }

@@ -54,7 +54,9 @@ public:
         shared_ptr<WindowEventHandler> eventHandler,
         uint64_t handle,
         shared_ptr<SecretGenerator> secretGen,
-        string programName
+        string programName,
+        bool allowPNG,
+        int initialQuality
     );
     ~Window();
 
@@ -66,7 +68,7 @@ public:
     void handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request);
     void handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request);
 
-    void notifyPopupCreated(shared_ptr<Window> popupWindow);
+    shared_ptr<Window> createPopup(uint64_t popupHandle);
 
     void notifyViewChanged();
 
@@ -129,6 +131,8 @@ private:
     void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
     string programName_;
+    bool allowPNG_;
+    int initialQuality_;
     shared_ptr<SecretGenerator> secretGen_;
 
     // The key codes sent by the client are XOR "encrypted" using this key. Note

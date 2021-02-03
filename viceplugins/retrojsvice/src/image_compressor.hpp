@@ -37,11 +37,12 @@ public:
     ImageCompressor(CKey,
         weak_ptr<ImageCompressorEventHandler> eventHandler,
         steady_clock::duration sendTimeout,
-        bool allowPNG,
         int quality
     );
     ~ImageCompressor();
 
+    // Supported values: 10..100 for JPEG and 101 for PNG.
+    int quality();
     void setQuality(MCE, int quality);
 
     void updateNotify(MCE);
@@ -89,7 +90,6 @@ private:
 
     weak_ptr<ImageCompressorEventHandler> eventHandler_;
     steady_clock::duration sendTimeout_;
-    bool allowPNG_;
     int quality_;
 
     int iframeSignal_;

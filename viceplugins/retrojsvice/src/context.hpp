@@ -27,6 +27,7 @@ public:
 
     // Private constructor.
     Context(CKey, CKey,
+        int defaultQuality,
         SocketAddress httpListenAddr,
         int httpMaxThreads,
         string httpAuthCredentials,
@@ -109,6 +110,7 @@ private:
     void handleClipboardHTTPRequest_(MCE, shared_ptr<HTTPRequest> request);
     void startClipboardTimeout_();
 
+    int defaultQuality_;
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;

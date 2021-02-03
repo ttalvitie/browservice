@@ -4,7 +4,6 @@
 #include "jpeg.hpp"
 #include "png.hpp"
 #include "task_queue.hpp"
-#include "quality.hpp"
 
 namespace retrojsvice {
 
@@ -118,15 +117,13 @@ function<void(shared_ptr<HTTPRequest>)> compressJPEG_(
 ImageCompressor::ImageCompressor(CKey,
     weak_ptr<ImageCompressorEventHandler> eventHandler,
     steady_clock::duration sendTimeout,
-    bool allowPNG,
     int quality
 ) {
     REQUIRE_API_THREAD();
-    REQUIRE(quality >= MinQuality && quality <= getMaxQuality(allowPNG));
+    REQUIRE(quality >= 10 && quality <= 101);
 
     eventHandler_ = eventHandler;
     sendTimeout_ = sendTimeout;
-    allowPNG_ = allowPNG;
 
     quality_ = quality;
 
@@ -158,9 +155,14 @@ ImageCompressor::~ImageCompressor() {
     compressorThread_.join();
 }
 
+int ImageCompressor::quality() {
+    REQUIRE_API_THREAD();
+    return quality_;
+}
+
 void ImageCompressor::setQuality(MCE, int quality) {
     REQUIRE_API_THREAD();
-    REQUIRE(quality >= MinQuality && quality <= getMaxQuality(allowPNG_));
+    REQUIRE(quality >= 10 && quality <= 101);
 
     if(quality != quality_) {
         quality_ = quality;
@@ -351,7 +353,7 @@ void ImageCompressor::pump_(MCE) {
         imageHeight
     ]() {
         CompressedImage compressedImage;
-        if(quality == MaxQuality) {
+        if(quality == 101) {
             compressedImage =
                 compressPNG_(imageData, imageWidth, imageHeight, pngCompressor);
         } else {

@@ -161,6 +161,7 @@ variant<shared_ptr<Context>, string> Context::init(
     vector<pair<string, string>> options,
     string programName
 ) {
+    int defaultQuality = 101;
     SocketAddress httpListenAddr =
         SocketAddress::parse(defaultHTTPListenAddr).value();
     int httpMaxThreads = defaultHTTPMaxThreads;
@@ -171,7 +172,19 @@ variant<shared_ptr<Context>, string> Context::init(
         const string& value = option.second;
 
         if(name == "default-quality") {
-            return "Option default-quality supported but not implemented";
+            string lowValue = value;
+            for(char& c : lowValue) {
+                c = tolower(c);
+            }
+            if(lowValue == "png") {
+                defaultQuality = 101;
+            } else {
+                optional<int> parsed = parseString<int>(value);
+                if(!parsed.has_value() || *parsed < 10 || *parsed > 100) {
+                    return "Invalid value '" + value + "' for option default-quality";
+                }
+                defaultQuality = *parsed;
+            }
         } else if(name == "http-listen-addr") {
             optional<SocketAddress> parsed = SocketAddress::parse(value);
             if(!parsed.has_value()) {
@@ -198,6 +211,7 @@ variant<shared_ptr<Context>, string> Context::init(
 
     return Context::create(
         CKey(),
+        defaultQuality,
         httpListenAddr,
         httpMaxThreads,
         httpAuthCredentials,
@@ -206,6 +220,7 @@ variant<shared_ptr<Context>, string> Context::init(
 }
 
 Context::Context(CKey, CKey,
+    int defaultQuality,
     SocketAddress httpListenAddr,
     int httpMaxThreads,
     string httpAuthCredentials,
@@ -215,6 +230,7 @@ Context::Context(CKey, CKey,
 {
     INFO_LOG("Creating retrojsvice plugin context");
 
+    defaultQuality_ = defaultQuality;
     httpMaxThreads_ = httpMaxThreads;
     httpAuthCredentials_ = httpAuthCredentials;
     programName_ = sanitizeProgramName(programName);
@@ -268,8 +284,9 @@ void Context::start(
         httpMaxThreads_
     );
     secretGen_ = SecretGenerator::create();
-    windowManager_ =
-        WindowManager::create(shared_from_this(), secretGen_, programName_);
+    windowManager_ = WindowManager::create(
+        shared_from_this(), secretGen_, programName_, defaultQuality_
+    );
 
     clipboardCSRFToken_ = secretGen_->generateCSRFToken();
 }

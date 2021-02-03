@@ -25,12 +25,21 @@ Window::Window(CKey,
     shared_ptr<WindowEventHandler> eventHandler,
     uint64_t handle,
     shared_ptr<SecretGenerator> secretGen,
-    string programName
+    string programName,
+    bool allowPNG,
+    int initialQuality
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(handle);
+    REQUIRE(initialQuality >= 10 && initialQuality <= 101);
+
+    if(!allowPNG && initialQuality == 101) {
+        initialQuality = 100;
+    }
 
     programName_ = move(programName);
+    allowPNG_ = allowPNG;
+    initialQuality_ = initialQuality;
     secretGen_ = secretGen;
     snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
 
@@ -172,15 +181,24 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
 }
 
-void Window::notifyPopupCreated(shared_ptr<Window> popupWindow) {
+shared_ptr<Window> Window::createPopup(uint64_t popupHandle) {
     REQUIRE_API_THREAD();
-    REQUIRE(popupWindow);
     REQUIRE(!closed_);
-    REQUIRE(!popupWindow->closed_);
+    REQUIRE(popupHandle);
+    REQUIRE(eventHandler_);
+
+    shared_ptr<Window> popupWindow = Window::create(
+        eventHandler_,
+        popupHandle,
+        secretGen_,
+        programName_,
+        allowPNG_,
+        imageCompressor_->quality()
+    );
 
     shared_ptr<Window> self = shared_from_this();
     postTask([self, popupWindow]() {
-        if(self->closed_) {
+        if(self->closed_ || popupWindow->closed_) {
             return;
         }
         self->addIframe_(mce,
@@ -193,6 +211,8 @@ void Window::notifyPopupCreated(shared_ptr<Window> popupWindow) {
             }
         );
     });
+
+    return popupWindow;
 }
 
 void Window::notifyViewChanged() {
@@ -258,7 +278,9 @@ void Window::onImageCompressorFetchImage(
 }
 
 void Window::afterConstruct_(shared_ptr<Window> self) {
-    imageCompressor_ = ImageCompressor::create(self, milliseconds(2000), true, 100); // TODO set parameters
+    imageCompressor_ = ImageCompressor::create(
+        self, milliseconds(2000), initialQuality_
+    );
 
     updateInactivityTimeout_();
     notifyViewChanged();
