@@ -80,6 +80,10 @@ public:
 
     void setCursor(uint64_t window, int cursorSignal);
 
+    optional<pair<vector<string>, size_t>> qualitySelectorQuery(
+        uint64_t window
+    );
+
     bool needsClipboardButtonQuery(uint64_t window);
     void clipboardButtonPressed(uint64_t window);
 

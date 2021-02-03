@@ -242,6 +242,22 @@ void Window::setCursor(int cursorSignal) {
     });
 }
 
+optional<pair<vector<string>, size_t>> Window::qualitySelectorQuery() {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    vector<string> labels;
+    for(int i = 10; i <= 100; ++i) {
+        labels.push_back(toString(i));
+    }
+    if(allowPNG_) {
+        labels.push_back("PNG");
+    }
+    return pair<vector<string>, size_t>(
+        move(labels), (size_t)(imageCompressor_->quality() - 10)
+    );
+}
+
 void Window::clipboardButtonPressed() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);

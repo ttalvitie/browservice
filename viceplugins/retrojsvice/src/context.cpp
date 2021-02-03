@@ -387,6 +387,49 @@ void Context::setWindowCursor(
     windowManager_->setCursor(window, cursorSignal);
 }
 
+int Context::windowQualitySelectorQuery(
+    uint64_t window,
+    char** qualityListOut,
+    size_t* currentQualityOut
+) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+    REQUIRE(qualityListOut != nullptr);
+    REQUIRE(currentQualityOut != nullptr);
+
+    optional<pair<vector<string>, int>> result =
+        windowManager_->qualitySelectorQuery(window);
+
+    if(result) {
+        const vector<string>& labels = result->first;
+        size_t currentValue = result->second;
+
+        REQUIRE(!labels.empty());
+        string labelList;
+        for(const string& label : labels) {
+            REQUIRE(label.size() >= (size_t)1 && label.size() <= (size_t)3);
+            for(char c : label) {
+                REQUIRE(
+                    (c >= '0' && c <= '9') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= 'a' && c <= 'z')
+                );
+            }
+            labelList += label;
+            labelList.push_back('\n');
+        }
+
+        REQUIRE(currentValue < labels.size());
+
+        *qualityListOut = createMallocString(labelList);
+        *currentQualityOut = currentValue;
+
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 int Context::windowNeedsClipboardButtonQuery(uint64_t window) {
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);

@@ -148,6 +148,16 @@ void WindowManager::setCursor(uint64_t window, int cursorSignal) {
     it->second->setCursor(cursorSignal);
 }
 
+optional<pair<vector<string>, size_t>> WindowManager::qualitySelectorQuery(
+    uint64_t window
+) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    return it->second->qualitySelectorQuery();
+}
+
 bool WindowManager::needsClipboardButtonQuery(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(windows_.count(window));

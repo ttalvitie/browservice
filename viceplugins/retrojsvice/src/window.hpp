@@ -74,6 +74,8 @@ public:
 
     void setCursor(int cursorSignal);
 
+    optional<pair<vector<string>, size_t>> qualitySelectorQuery();
+
     void clipboardButtonPressed();
 
     // ImageCompressorEventHandler:

@@ -22,6 +22,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(closeWindow) \
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(setWindowCursor) \
+    FOREACH_VICE_API_FUNC_ITEM(windowQualitySelectorQuery) \
     FOREACH_VICE_API_FUNC_ITEM(windowNeedsClipboardButtonQuery) \
     FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
     FOREACH_VICE_API_FUNC_ITEM(putClipboardContent) \
@@ -560,6 +561,62 @@ void ViceContext::setWindowCursor(uint64_t window, int cursor) {
     }
 
     plugin_->apiFuncs_->setWindowCursor(ctx_, window, apiCursor);
+}
+
+optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
+    uint64_t window
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(window));
+
+    char* qualityList = nullptr;
+    size_t currentQuality = (size_t)-1;
+    int result = plugin_->apiFuncs_->windowQualitySelectorQuery(
+        ctx_, window, &qualityList, &currentQuality
+    );
+    REQUIRE(result == 0 || result == 1);
+
+    if(result) {
+        REQUIRE(qualityList != nullptr);
+        string labelStr = qualityList;
+        free(qualityList);
+
+        vector<string> labels;
+        size_t i = 0;
+        while(i < labelStr.size()) {
+            size_t j = i;
+            while(true) {
+                REQUIRE(j < labelStr.size());
+                if(labelStr[j] == '\n') {
+                    break;
+                }
+                ++j;
+            }
+            size_t len = j - i;
+            REQUIRE(len >= (size_t)1 && len <= (size_t)3);
+            labels.push_back(labelStr.substr(i, len));
+            i = j;
+            ++i;
+        }
+        REQUIRE(!labels.empty());
+        REQUIRE(currentQuality < labels.size());
+
+        for(const string& label : labels) {
+            for(char c : label) {
+                REQUIRE(
+                    (c >= '0' && c <= '9') ||
+                    (c >= 'A' && c <= 'Z') ||
+                    (c >= 'a' && c <= 'z')
+                );
+            }
+        }
+
+        return pair<vector<string>, size_t>(labels, currentQuality);
+    } else {
+        return {};
+    }
 }
 
 bool ViceContext::windowNeedsClipboardButtonQuery(uint64_t window) {

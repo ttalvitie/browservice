@@ -54,6 +54,12 @@ public:
 
     void setWindowCursor(uint64_t window, VicePluginAPI_MouseCursor cursor);
 
+    int windowQualitySelectorQuery(
+        uint64_t window,
+        char** qualityListOut,
+        size_t* currentQualityOut
+    );
+
     int windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);
     void putClipboardContent(const char* text);

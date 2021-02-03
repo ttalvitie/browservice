@@ -278,6 +278,16 @@ void Server::onWindowCursorChanged(uint64_t handle, int cursor) {
     viceCtx_->setWindowCursor(handle, cursor);
 }
 
+optional<pair<vector<string>, size_t>> Server::onWindowQualitySelectorQuery(
+    uint64_t handle
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    return viceCtx_->windowQualitySelectorQuery(handle);
+}
+
 bool Server::onWindowNeedsClipboardButtonQuery(uint64_t handle) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);

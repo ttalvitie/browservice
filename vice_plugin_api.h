@@ -475,6 +475,33 @@ void vicePluginAPI_setWindowCursor(
     VicePluginAPI_MouseCursor cursor
 );
 
+/* If the plugin needs a quality selector for given existing window, returns 1 and sets
+ * *qualityListOut and *currentQualityOut to describe the possible options and the currently
+ * selected option for the selector. Otherwise, returns 0 and ignores qualityListOut and
+ * currentQualityOut. The program is recommended to call this function for every window and if the
+ * result is 1, display a quality selector widget in the UI for the window with the specified
+ * options, relaying selection events to the plugin by calling vicePluginAPI_selectQuality. However,
+ * the program is also allowed to not call this function at all and omit the quality selector.
+ *
+ * If the function returns 1, it must point *qualityListOut to a null-terminated string that
+ * contains a concatenated list of quality option labels delimited by newline characters. Each
+ * quality label must be a string of 1-3 alphanumeric ASCII characters (A-Za-z0-9). There must be at
+ * least one quality label and the same label may occur multiple times. Each quality label must be
+ * followed by a single newline character ('\n'), including the last quality label. The calling
+ * program is responsible for freeing the string *qualityListOut using free(). The function must
+ * point *currentQualityOut to a valid 0-based index for the list of quality options.
+ *
+ * For example, if there are three qualities, "Bad", "OK" and "HD" and "OK" is the default, the
+ * function should return 1, set *qualityListOut to point to a new string "Bad\nOK\nHD\n" and set
+ * *currentQualityOut to 1.
+ */
+int vicePluginAPI_windowQualitySelectorQuery(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    char** qualityListOut,
+    size_t* currentQualityOut
+);
+
 /* Returns 1 if the plugin needs a clipboard button for given existing window; otherwise, returns 0.
  * The program is recommended to call this function for every window and if the result is 1, display
  * a clipboard button in the UI for the window (click events are relayed by calling

@@ -129,6 +129,10 @@ public:
 
     void setWindowCursor(uint64_t window, int cursor);
 
+    optional<pair<vector<string>, size_t>> windowQualitySelectorQuery(
+        uint64_t window
+    );
+
     bool windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);
     void putClipboardContent(string text);
