@@ -107,6 +107,7 @@ public:
 
 private:
     void handleClipboardHTTPRequest_(MCE, shared_ptr<HTTPRequest> request);
+    void startClipboardTimeout_();
 
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
@@ -131,6 +132,8 @@ private:
     shared_ptr<WindowManager> windowManager_;
 
     string clipboardCSRFToken_;
+    vector<shared_ptr<HTTPRequest>> clipboardRequests_;
+    shared_ptr<DelayedTaskTag> clipboardTimeout_;
 
     class APILock;
     class RunningAPILock;

@@ -281,6 +281,11 @@ void Context::shutdown() {
         PANIC("Requested shutdown of a plugin that is already shutting down");
     }
 
+    if(clipboardTimeout_) {
+        clipboardTimeout_->expedite();
+        clipboardTimeout_.reset();
+    }
+
     INFO_LOG("Shutting down plugin");
 
     shutdownPhase_ = WaitWindowManager;
@@ -383,7 +388,17 @@ void Context::putClipboardContent(const char* text) {
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);
 
-    INFO_LOG("TODO PUT CLIPBOARD CONTENT: ", text);
+    string sanitizedText = sanitizeUTF8String(text);
+
+    vector<shared_ptr<HTTPRequest>> requests;
+    swap(clipboardRequests_, requests);
+    for(shared_ptr<HTTPRequest> request : requests) {
+        request->sendHTMLResponse(
+            200,
+            writeClipboardHTML,
+            {programName_, htmlEscapeString(sanitizedText), clipboardCSRFToken_}
+        );
+    }
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
@@ -439,6 +454,11 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
             );
             return;
         }
+    }
+
+    if(shutdownPhase_ != NoPendingShutdown) {
+        request->sendTextResponse(503, "ERROR: Service is shutting down\n");
+        return;
     }
 
     if(request->path() == "/clipboard/") {
@@ -603,6 +623,8 @@ FORWARD_WINDOW_EVENT(
 void Context::handleClipboardHTTPRequest_(MCE,
     shared_ptr<HTTPRequest> request
 ) {
+    REQUIRE(state_ == Running);
+
     auto sendPage = [&](const string& text) {
         request->sendHTMLResponse(
             200,
@@ -628,7 +650,8 @@ void Context::handleClipboardHTTPRequest_(MCE,
             REQUIRE(result == 0 || result == 1);
 
             if(result) {
-                request->sendTextResponse(500, "ERROR: Getting clipboard not implemented (TODO)");
+                clipboardRequests_.push_back(request);
+                startClipboardTimeout_();
             } else {
                 sendPage("");
             }
@@ -646,6 +669,33 @@ void Context::handleClipboardHTTPRequest_(MCE,
     } else {
         request->sendTextResponse(400, "ERROR: Invalid request method");
     }
+}
+
+void Context::startClipboardTimeout_() {
+    REQUIRE(state_ == Running);
+
+    if(clipboardTimeout_) {
+        return;
+    }
+
+    shared_ptr<Context> self = shared_from_this();
+    clipboardTimeout_ = postDelayedTask(
+        milliseconds(1000),
+        [self]() {
+            REQUIRE(self->clipboardTimeout_);
+            self->clipboardTimeout_.reset();
+
+            vector<shared_ptr<HTTPRequest>> requests;
+            swap(self->clipboardRequests_, requests);
+            for(shared_ptr<HTTPRequest> request : requests) {
+                request->sendHTMLResponse(
+                    200,
+                    writeClipboardHTML,
+                    {self->programName_, "", self->clipboardCSRFToken_}
+                );
+            }
+        }
+    );
 }
 
 }

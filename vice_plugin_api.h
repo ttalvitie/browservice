@@ -264,8 +264,8 @@ struct VicePluginAPI_Callbacks {
     void (*navigate)(void*, uint64_t window, int direction);
 
     /* Called by the plugin to request that a given text should be copied to the clipboard of the
-     * program. The text should be encoded as UTF-8, but arbitrary null-terminated binary data is
-     * allowed; the program should either tolerate invalid UTF-8 or validate/sanitize the data
+     * program. While the text should be encoded as UTF-8, arbitrary null-terminated binary data is
+     * still allowed; the program should either tolerate invalid UTF-8 or validate/sanitize the data
      * before use. The program may ignore this request, allow it only in specific circumstances or
      * process it in any application-specific manner.
      */
@@ -489,8 +489,10 @@ int vicePluginAPI_windowNeedsClipboardButtonQuery(VicePluginAPI_Context* ctx, ui
 void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint64_t window);
 
 /* Sends the content of the program clipboard to the plugin. Typically called after the plugin has
- * requested the content using the requestClipboardContent callback, but the plugin is allowed to
- * call this function even if not requested to do so.
+ * requested the content using the requestClipboardContent callback; however, the program is allowed
+ * to call this function even if not requested to do so. While the encoding of the text should be
+ * UTF-8, arbitrary null-terminated binary data is still allowed, and thus the plugin should either
+ * tolerate invalid UTF-8 or validate/sanitize the data before use.
  */
 void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* text);
 
