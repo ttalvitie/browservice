@@ -24,6 +24,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(setWindowCursor) \
     FOREACH_VICE_API_FUNC_ITEM(windowNeedsClipboardButtonQuery) \
     FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
+    FOREACH_VICE_API_FUNC_ITEM(putClipboardContent) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -475,6 +476,11 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         self->eventHandler_->onViceContextCopyToClipboard(move(sanitizedText));
     });
 
+    callbacks.requestClipboardContent = CTX_CALLBACK(int, (), {
+        self->eventHandler_->onViceContextRequestClipboardContent();
+        return 1;
+    });
+
     plugin_->apiFuncs_->start(
         ctx_,
         callbacks,
@@ -575,6 +581,14 @@ void ViceContext::windowClipboardButtonPressed(uint64_t window) {
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->windowClipboardButtonPressed(ctx_, window);
+}
+
+void ViceContext::putClipboardContent(string text) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+
+    plugin_->apiFuncs_->putClipboardContent(ctx_, text.c_str());
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

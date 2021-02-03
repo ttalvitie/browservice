@@ -271,6 +271,17 @@ struct VicePluginAPI_Callbacks {
      */
     void (*copyToClipboard)(void*, const char* text);
 
+    /* Called by the plugin to request that the program should send the contents of its clipboard to
+     * the plugin by calling vicePluginAPI_putClipboardContent as soon as possible. If the program
+     * accepts the request, the function must return 1; otherwise the function must return 0 (for
+     * example if the program has no clipboard support). If the plugin waits for the clipboard
+     * content, it should have a reasonable timeout (such as 1 second) after which it aborts the
+     * wait, as the program may take a long time to fetch the clipboard. The program may respond
+     * multiple requestClipboardContent calls with only a single call to
+     * vicePluginAPI_putClipboardContent.
+     */
+    int (*requestClipboardContent)(void*);
+
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 
@@ -476,6 +487,12 @@ int vicePluginAPI_windowNeedsClipboardButtonQuery(VicePluginAPI_Context* ctx, ui
  * if vicePluginAPI_windowNeedsClipboardButtonQuery returns 0.
  */
 void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint64_t window);
+
+/* Sends the content of the program clipboard to the plugin. Typically called after the plugin has
+ * requested the content using the requestClipboardContent callback, but the plugin is allowed to
+ * call this function even if not requested to do so.
+ */
+void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* text);
 
 /**********************************
  * Non-context-specific functions *

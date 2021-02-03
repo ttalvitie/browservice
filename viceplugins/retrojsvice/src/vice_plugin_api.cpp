@@ -203,6 +203,12 @@ API_EXPORT void vicePluginAPI_windowClipboardButtonPressed(
 )
 WRAP_CTX_API(windowClipboardButtonPressed, window)
 
+API_EXPORT void vicePluginAPI_putClipboardContent(
+    VicePluginAPI_Context* ctx,
+    const char* text
+)
+WRAP_CTX_API(putClipboardContent, text)
+
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(

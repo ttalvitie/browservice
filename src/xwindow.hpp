@@ -12,8 +12,8 @@ public:
     ~XWindow();
 
     // Pasting from clipboard is a best-effort implementation; the callback may
-    // not be called if the value is not available within reasonable time or
-    // pasteFromClipboard or copyToClipboard is called again
+    // be dropped without calling it if the value is not available within
+    // reasonable time or pasteFromClipboard or copyToClipboard is called again
     void pasteFromClipboard(function<void(string)> callback);
     void copyToClipboard(string text);
 

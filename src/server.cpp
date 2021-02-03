@@ -15,6 +15,8 @@ Server::Server(CKey,
     state_ = Running;
     nextWindowHandle_ = 1;
     viceCtx_ = viceCtx;
+    clipboardContentRequested_ = false;
+
     // Setup is finished in afterConstruct_
 }
 
@@ -186,6 +188,46 @@ void Server::onViceContextCopyToClipboard(string text) {
     REQUIRE(state_ != ShutdownComplete);
 
     globals->xWindow->copyToClipboard(move(text));
+}
+
+void Server::onViceContextRequestClipboardContent() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    if(clipboardContentRequested_) {
+        return;
+    }
+
+    clipboardContentRequested_ = true;
+
+    // Make sure that response is written even if paste callback is dropped
+    // using custom destructor
+    struct Responder {
+        shared_ptr<Server> server;
+
+        void respond(string text) {
+            if(server) {
+                postTask([server{server}, text{move(text)}]() {
+                    if(server->state_ == Running) {
+                        server->clipboardContentRequested_ = false;
+                        server->viceCtx_->putClipboardContent(move(text));
+                    }
+                });
+                server.reset();
+            }
+        }
+
+        ~Responder() {
+            respond("");
+        }
+    };
+
+    shared_ptr<Responder> responder = make_shared<Responder>();
+    responder->server = shared_from_this();
+
+    globals->xWindow->pasteFromClipboard([responder](string text) {
+        responder->respond(text);
+    });
 }
 
 void Server::onViceContextShutdownComplete() {

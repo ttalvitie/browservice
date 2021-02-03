@@ -85,6 +85,7 @@ public:
     virtual void onViceContextNavigate(uint64_t window, int direction) = 0;
 
     virtual void onViceContextCopyToClipboard(string text) = 0;
+    virtual void onViceContextRequestClipboardContent() = 0;
 
     virtual void onViceContextShutdownComplete() = 0;
 };
@@ -130,6 +131,7 @@ public:
 
     bool windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);
+    void putClipboardContent(string text);
 
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);

@@ -55,6 +55,7 @@ public:
 
     int windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);
+    void putClipboardContent(const char* text);
 
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();

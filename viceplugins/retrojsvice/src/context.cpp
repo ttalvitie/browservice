@@ -379,6 +379,13 @@ void Context::windowClipboardButtonPressed(uint64_t window) {
     windowManager_->clipboardButtonPressed(window);
 }
 
+void Context::putClipboardContent(const char* text) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    INFO_LOG("TODO PUT CLIPBOARD CONTENT: ", text);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 
@@ -596,13 +603,17 @@ FORWARD_WINDOW_EVENT(
 void Context::handleClipboardHTTPRequest_(MCE,
     shared_ptr<HTTPRequest> request
 ) {
-    string method = request->method();
-    if(method == "GET") {
+    auto sendPage = [&](const string& text) {
         request->sendHTMLResponse(
             200,
             writeClipboardHTML,
-            {programName_, "", clipboardCSRFToken_}
+            {programName_, htmlEscapeString(text), clipboardCSRFToken_}
         );
+    };
+
+    string method = request->method();
+    if(method == "GET") {
+        sendPage("");
     } else if(method == "POST") {
         REQUIRE(!clipboardCSRFToken_.empty());
         if(request->getFormParam("csrftoken") != clipboardCSRFToken_) {
@@ -612,7 +623,15 @@ void Context::handleClipboardHTTPRequest_(MCE,
 
         string mode = request->getFormParam("mode");
         if(mode == "get") {
-            request->sendTextResponse(500, "ERROR: Getting clipboard not implemented (TODO)");
+            REQUIRE(callbacks_.requestClipboardContent != nullptr);
+            int result = callbacks_.requestClipboardContent(callbackData_);
+            REQUIRE(result == 0 || result == 1);
+
+            if(result) {
+                request->sendTextResponse(500, "ERROR: Getting clipboard not implemented (TODO)");
+            } else {
+                sendPage("");
+            }
         } else if(mode == "set") {
             string text = request->getFormParam("text");
             text = sanitizeUTF8String(text);
@@ -620,11 +639,7 @@ void Context::handleClipboardHTTPRequest_(MCE,
             REQUIRE(callbacks_.copyToClipboard != nullptr);
             callbacks_.copyToClipboard(callbackData_, text.c_str());
 
-            request->sendHTMLResponse(
-                200,
-                writeClipboardHTML,
-                {programName_, htmlEscapeString(text), clipboardCSRFToken_}
-            );
+            sendPage(text);
         } else {
             request->sendTextResponse(400, "ERROR: Invalid request parameters");
         }

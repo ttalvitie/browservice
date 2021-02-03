@@ -57,6 +57,7 @@ public:
     virtual void onViceContextLoseFocus(uint64_t window) override;
     virtual void onViceContextNavigate(uint64_t window, int direction) override;
     virtual void onViceContextCopyToClipboard(string text) override;
+    virtual void onViceContextRequestClipboardContent() override;
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:
@@ -84,6 +85,8 @@ private:
     shared_ptr<ViceContext> viceCtx_;
     map<uint64_t, shared_ptr<Window>> openWindows_;
     map<uint64_t, shared_ptr<Window>> cleanupWindows_;
+
+    bool clipboardContentRequested_;
 };
 
 }
