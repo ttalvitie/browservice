@@ -2,6 +2,7 @@
 
 #include "browser_area.hpp"
 #include "control_bar.hpp"
+#include "download_manager.hpp"
 #include "image_slice.hpp"
 #include "root_widget.hpp"
 
@@ -58,6 +59,7 @@ class Window :
     public WidgetParent,
     public ControlBarEventHandler,
     public BrowserAreaEventHandler,
+    public DownloadManagerEventHandler,
     public enable_shared_from_this<Window>
 {
 SHARED_ONLY_CLASS(Window);
@@ -101,13 +103,20 @@ public:
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;
     virtual void onQualityChanged(size_t idx) override;
-    virtual void onPendingDownloadAccepted() override {}
+    virtual void onPendingDownloadAccepted() override;
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;
     virtual void onClipboardButtonPressed() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
+
+    // DownloadManagerEventHandler:
+    virtual void onPendingDownloadCountChanged(int count) override;
+    virtual void onDownloadProgressChanged(vector<int> progress) override;
+    virtual void onDownloadCompleted(
+        shared_ptr<CompletedDownload> file
+    ) override;
 
 private:
     // Class that implements CefClient interfaces for the window.
@@ -148,6 +157,8 @@ private:
 
     ImageSlice rootViewport_;
     shared_ptr<RootWidget> rootWidget_;
+
+    shared_ptr<DownloadManager> downloadManager_;
 
     shared_ptr<Timeout> watchdogTimeout_;
 };

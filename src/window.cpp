@@ -28,6 +28,9 @@ public:
         renderHandler_ =
             window->rootWidget_->browserArea()->createCefRenderHandler();
 
+        REQUIRE(window->downloadManager_);
+        downloadHandler_ = window->downloadManager_->createCefDownloadHandler();
+
         lastFindID_ = -1;
         certificateErrorPageSignKey_ = generateDataURLSignKey();
     }
@@ -47,6 +50,9 @@ public:
     }
     virtual CefRefPtr<CefRequestHandler> GetRequestHandler() override {
         return this;
+    }
+    virtual CefRefPtr<CefDownloadHandler> GetDownloadHandler() override {
+        return downloadHandler_;
     }
     virtual CefRefPtr<CefFindHandler> GetFindHandler() override {
         return this;
@@ -366,6 +372,7 @@ public:
 private:
     shared_ptr<Window> window_;
     CefRefPtr<CefRenderHandler> renderHandler_;
+    CefRefPtr<CefDownloadHandler> downloadHandler_;
 
     int lastFindID_;
     optional<string> lastCertificateErrorURL_;
@@ -643,6 +650,14 @@ void Window::onQualityChanged(size_t idx) {
     }
 }
 
+void Window::onPendingDownloadAccepted() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        downloadManager_->acceptPendingDownload();
+    }
+}
+
 void Window::onFind(string text, bool forward, bool findNext) {
     REQUIRE_UI_THREAD();
 
@@ -676,6 +691,21 @@ void Window::onBrowserAreaViewDirty() {
     }
 }
 
+void Window::onPendingDownloadCountChanged(int count) {
+    REQUIRE_UI_THREAD();
+    rootWidget_->controlBar()->setPendingDownloadCount(count);
+}
+
+void Window::onDownloadProgressChanged(vector<int> progress) {
+    REQUIRE_UI_THREAD();
+    rootWidget_->controlBar()->setDownloadProgress(move(progress));
+}
+
+void Window::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
+    REQUIRE_UI_THREAD();
+    INFO_LOG("Download ", file->name(), " complete, TODO handle");
+}
+
 void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
@@ -692,6 +722,8 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle)
     rootViewport_ = ImageSlice::createImage(800, 600);
     rootWidget_ = RootWidget::create(self, self, self, true);
     rootWidget_->setViewport(rootViewport_);
+
+    downloadManager_ = DownloadManager::create(self);
 
     watchdogTimeout_ = Timeout::create(1000);
 }
