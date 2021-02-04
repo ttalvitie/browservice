@@ -258,6 +258,19 @@ optional<pair<vector<string>, size_t>> Window::qualitySelectorQuery() {
     );
 }
 
+void Window::qualityChanged(size_t qualityIdx) {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    int quality = (int)qualityIdx + 10;
+    REQUIRE(quality >= 10);
+    REQUIRE(quality <= (allowPNG_ ? 101 : 100));
+
+    postTask([quality, imageCompressor{imageCompressor_}]() {
+        imageCompressor->setQuality(mce, quality);
+    });
+}
+
 void Window::clipboardButtonPressed() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);

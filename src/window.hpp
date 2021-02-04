@@ -20,6 +20,7 @@ public:
     virtual optional<pair<vector<string>, size_t>> onWindowQualitySelectorQuery(
         uint64_t handle
     ) = 0;
+    virtual void onWindowQualityChanged(uint64_t handle, size_t idx) = 0;
     virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) = 0;
     virtual void onWindowClipboardButtonPressed(uint64_t handle) = 0;
 
@@ -99,9 +100,7 @@ public:
 
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;
-    virtual void onQualityChanged(size_t idx) override {
-        INFO_LOG("QUALITY CHANGED: ", idx);
-    }
+    virtual void onQualityChanged(size_t idx) override;
     virtual void onPendingDownloadAccepted() override {}
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;

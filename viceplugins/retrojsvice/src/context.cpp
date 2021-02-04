@@ -426,6 +426,13 @@ int Context::windowQualitySelectorQuery(
     }
 }
 
+void Context::windowQualityChanged(uint64_t window, size_t qualityIdx) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    windowManager_->qualityChanged(window, qualityIdx);
+}
+
 int Context::windowNeedsClipboardButtonQuery(uint64_t window) {
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);

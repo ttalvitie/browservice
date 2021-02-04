@@ -287,6 +287,14 @@ optional<pair<vector<string>, size_t>> Server::onWindowQualitySelectorQuery(
     return viceCtx_->windowQualitySelectorQuery(handle);
 }
 
+void Server::onWindowQualityChanged(uint64_t handle, size_t idx) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    return viceCtx_->windowQualityChanged(handle, idx);
+}
+
 bool Server::onWindowNeedsClipboardButtonQuery(uint64_t handle) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);

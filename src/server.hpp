@@ -68,6 +68,7 @@ public:
     virtual optional<pair<vector<string>, size_t>> onWindowQualitySelectorQuery(
         uint64_t handle
     ) override;
+    virtual void onWindowQualityChanged(uint64_t handle, size_t idx) override;
     virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) override;
     virtual void onWindowClipboardButtonPressed(uint64_t handle) override;
     virtual void onWindowCreatePopupRequest(

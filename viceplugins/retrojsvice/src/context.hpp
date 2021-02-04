@@ -59,6 +59,7 @@ public:
         char** qualityListOut,
         size_t* currentQualityOut
     );
+    void windowQualityChanged(uint64_t window, size_t qualityIdx);
 
     int windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);

@@ -132,6 +132,7 @@ public:
     optional<pair<vector<string>, size_t>> windowQualitySelectorQuery(
         uint64_t window
     );
+    void windowQualityChanged(uint64_t window, size_t idx);
 
     bool windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);

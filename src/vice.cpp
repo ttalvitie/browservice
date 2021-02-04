@@ -23,6 +23,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(notifyWindowViewChanged) \
     FOREACH_VICE_API_FUNC_ITEM(setWindowCursor) \
     FOREACH_VICE_API_FUNC_ITEM(windowQualitySelectorQuery) \
+    FOREACH_VICE_API_FUNC_ITEM(windowQualityChanged) \
     FOREACH_VICE_API_FUNC_ITEM(windowNeedsClipboardButtonQuery) \
     FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
     FOREACH_VICE_API_FUNC_ITEM(putClipboardContent) \
@@ -613,6 +614,15 @@ optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
     } else {
         return {};
     }
+}
+
+void ViceContext::windowQualityChanged(uint64_t window, size_t idx) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Running);
+    REQUIRE(threadActivePumpEventsContext == nullptr);
+    REQUIRE(openWindows_.count(window));
+
+    plugin_->apiFuncs_->windowQualityChanged(ctx_, window, idx);
 }
 
 bool ViceContext::windowNeedsClipboardButtonQuery(uint64_t window) {

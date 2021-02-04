@@ -158,6 +158,14 @@ optional<pair<vector<string>, size_t>> WindowManager::qualitySelectorQuery(
     return it->second->qualitySelectorQuery();
 }
 
+void WindowManager::qualityChanged(uint64_t window, size_t qualityIdx) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    return it->second->qualityChanged(qualityIdx);
+}
+
 bool WindowManager::needsClipboardButtonQuery(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(windows_.count(window));

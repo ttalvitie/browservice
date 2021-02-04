@@ -634,6 +634,15 @@ void Window::onAddressSubmitted(string url) {
     }
 }
 
+void Window::onQualityChanged(size_t idx) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowQualityChanged(handle_, idx);
+    }
+}
+
 void Window::onFind(string text, bool forward, bool findNext) {
     REQUIRE_UI_THREAD();
 

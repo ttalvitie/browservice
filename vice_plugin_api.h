@@ -480,8 +480,9 @@ void vicePluginAPI_setWindowCursor(
  * selected option for the selector. Otherwise, returns 0 and ignores qualityListOut and
  * currentQualityOut. The program is recommended to call this function for every window and if the
  * result is 1, display a quality selector widget in the UI for the window with the specified
- * options, relaying selection events to the plugin by calling vicePluginAPI_selectQuality. However,
- * the program is also allowed to not call this function at all and omit the quality selector.
+ * options, relaying selection events to the plugin by calling vicePluginAPI_windowQualityChanged.
+ * However, the program is also allowed to not call this function at all and omit the quality
+ * selector.
  *
  * If the function returns 1, it must point *qualityListOut to a null-terminated string that
  * contains a concatenated list of quality option labels delimited by newline characters. Each
@@ -501,6 +502,17 @@ int vicePluginAPI_windowQualitySelectorQuery(
     uint64_t window,
     char** qualityListOut,
     size_t* currentQualityOut
+);
+
+/* Called by the program to notify the plugin that the user has selected the quality with index
+ * qualityIdx in the quality selector widget of given window. The index qualityIdx must be a valid
+ * 0-based index to the list of quality options that were provided by the previous call to
+ * vicePluginAPI_windowQualitySelectorQuery for this window.
+ */
+void vicePluginAPI_windowQualityChanged(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    size_t qualityIdx
 );
 
 /* Returns 1 if the plugin needs a clipboard button for given existing window; otherwise, returns 0.

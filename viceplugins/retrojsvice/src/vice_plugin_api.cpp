@@ -201,6 +201,13 @@ WRAP_CTX_API(
     windowQualitySelectorQuery, window, qualityListOut, currentQualityOut
 )
 
+API_EXPORT void vicePluginAPI_windowQualityChanged(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    size_t qualityIdx
+)
+WRAP_CTX_API(windowQualityChanged, window, qualityIdx)
+
 API_EXPORT int vicePluginAPI_windowNeedsClipboardButtonQuery(
     VicePluginAPI_Context* ctx,
     uint64_t window
