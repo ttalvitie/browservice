@@ -605,11 +605,7 @@ optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
 
         for(const string& label : labels) {
             for(char c : label) {
-                REQUIRE(
-                    (c >= '0' && c <= '9') ||
-                    (c >= 'A' && c <= 'Z') ||
-                    (c >= 'a' && c <= 'z')
-                );
+                REQUIRE((int)c >= 33 && (int)c <= 126);
             }
         }
 

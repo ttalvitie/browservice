@@ -409,11 +409,7 @@ int Context::windowQualitySelectorQuery(
         for(const string& label : labels) {
             REQUIRE(label.size() >= (size_t)1 && label.size() <= (size_t)3);
             for(char c : label) {
-                REQUIRE(
-                    (c >= '0' && c <= '9') ||
-                    (c >= 'A' && c <= 'Z') ||
-                    (c >= 'a' && c <= 'z')
-                );
+                REQUIRE((int)c >= 33 && (int)c <= 126);
             }
             labelList += label;
             labelList.push_back('\n');

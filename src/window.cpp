@@ -701,23 +701,18 @@ void Window::createSuccessful_() {
 
         REQUIRE(self->eventHandler_);
 
+        optional<pair<vector<string>, size_t>> qualitySelector =
+            self->eventHandler_->onWindowQualitySelectorQuery(self->handle_);
+        if(qualitySelector) {
+            self->rootWidget_->controlBar()->enableQualitySelector(
+                move(qualitySelector->first), qualitySelector->second
+            );
+        }
+
         if(self->eventHandler_->onWindowNeedsClipboardButtonQuery(
             self->handle_
         )) {
             self->rootWidget_->controlBar()->enableClipboardButton();
-        }
-
-        optional<pair<vector<string>, size_t>> qualitySelector =
-            self->eventHandler_->onWindowQualitySelectorQuery(self->handle_);
-        if(qualitySelector) {
-            INFO_LOG("TODO: Needs quality selector");
-            for(const string& label : qualitySelector->first) {
-                INFO_LOG("LABEL: ", label);
-            }
-            REQUIRE(qualitySelector->second < qualitySelector->first.size());
-            INFO_LOG("DEFAULT: ", qualitySelector->first[qualitySelector->second]);
-        } else {
-            INFO_LOG("TODO: Does not need quality selector");
         }
     });
 }

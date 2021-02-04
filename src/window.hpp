@@ -99,7 +99,9 @@ public:
 
     // ControlBarEventHandler:
     virtual void onAddressSubmitted(string url) override;
-    virtual void onQualityChanged(int quality) override {}
+    virtual void onQualityChanged(size_t idx) override {
+        INFO_LOG("QUALITY CHANGED: ", idx);
+    }
     virtual void onPendingDownloadAccepted() override {}
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;

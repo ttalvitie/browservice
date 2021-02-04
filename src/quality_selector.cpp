@@ -2,7 +2,6 @@
 
 #include "globals.hpp"
 #include "key.hpp"
-#include "quality.hpp"
 #include "timeout.hpp"
 
 namespace browservice {
@@ -10,20 +9,22 @@ namespace browservice {
 QualitySelector::QualitySelector(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<QualitySelectorEventHandler> eventHandler,
-    bool allowPNG
+    vector<string> labels,
+    size_t choiceIdx
 )
     : Widget(widgetParent)
 {
     REQUIRE_UI_THREAD();
+    REQUIRE(!labels.empty());
+    REQUIRE(choiceIdx < labels.size());
 
     eventHandler_ = eventHandler;
-
-    allowPNG_ = allowPNG;
 
     longMouseRepeatTimeout_ = Timeout::create(500);
     shortMouseRepeatTimeout_ = Timeout::create(50);
 
-    quality_ = getDefaultQuality(allowPNG);
+    labels_ = move(labels);
+    choiceIdx_ = choiceIdx;
 
     hasFocus_ = false;
     upKeyPressed_ = false;
@@ -58,7 +59,7 @@ void QualitySelector::onTextFieldWheelEvent(int delta) {
     REQUIRE_UI_THREAD();
 
     if(delta != 0 && (hasFocus_ || textField_->hasFocus())) {
-        setQuality_(quality_ + (delta > 0 ? 1 : -1));
+        changeQuality_(delta > 0 ? 1 : -1);
     }
 }
 
@@ -68,31 +69,39 @@ void QualitySelector::afterConstruct_(shared_ptr<QualitySelector> self) {
 }
 
 void QualitySelector::setQuality_(string qualityStr) {
-    for(char& c : qualityStr) {
-        c = tolower(c);
-    }
-    if(qualityStr == "png") {
-        setQuality_(getMaxQuality(allowPNG_));
-    } else {
-        optional<int> quality = parseString<int>(qualityStr);
-        if(quality) {
-            setQuality_(*quality);
-        } else {
-            updateTextField_();
+    for(size_t i = 0; i < labels_.size(); ++i) {
+        if(labels_[i] == qualityStr) {
+            setQuality_(i);
+            return;
         }
     }
+    auto reduce = [&](const string& str) {
+        string ret;
+        for(char c : str) {
+            if(c == ' ') continue;
+            ret.push_back(tolower(c));
+        }
+        return ret;
+    };
+    qualityStr = reduce(qualityStr);
+    for(size_t i = 0; i < labels_.size(); ++i) {
+        if(reduce(labels_[i]) == qualityStr) {
+            setQuality_(i);
+            return;
+        }
+    }
+    updateTextField_();
 }
 
-void QualitySelector::setQuality_(int quality) {
-    quality = min(quality, getMaxQuality(allowPNG_));
-    quality = max(quality, MinQuality);
+void QualitySelector::setQuality_(size_t choiceIdx) {
+    REQUIRE(choiceIdx < labels_.size());
 
-    if(quality_ != quality) {
-        quality_ = quality;
+    if(choiceIdx != choiceIdx_) {
+        choiceIdx_ = choiceIdx;
         postTask(
             eventHandler_,
             &QualitySelectorEventHandler::onQualityChanged,
-            quality
+            choiceIdx
         );
         signalViewDirty_();
     }
@@ -100,23 +109,30 @@ void QualitySelector::setQuality_(int quality) {
     updateTextField_();
 }
 
-void QualitySelector::updateTextField_() {
-    REQUIRE(quality_ >= MinQuality && quality_ <= getMaxQuality(allowPNG_));
-
-    if(quality_ == MaxQuality) {
-        textField_->setText("PNG");
-    } else {
-        textField_->setText(toString(quality_));
+void QualitySelector::changeQuality_(int d) {
+    if(d > 0) {
+        size_t ds = (size_t)d;
+        if(labels_.size() - choiceIdx_ <= ds) {
+            setQuality_(labels_.size() - 1);
+        } else {
+            setQuality_(choiceIdx_ + ds);
+        }
     }
+    if(d < 0) {
+        size_t ds = (size_t)(-d);
+        setQuality_(ds > choiceIdx_ ? 0 : choiceIdx_ - ds);
+    }
+}
+
+void QualitySelector::updateTextField_() {
+    REQUIRE(choiceIdx_ < labels_.size());
+    textField_->setText(labels_[choiceIdx_]);
 }
 
 void QualitySelector::mouseRepeat_(int direction, bool first) {
     REQUIRE_UI_THREAD();
 
-    int quality = quality_ + direction;
-    if(quality >= MinQuality && quality <= getMaxQuality(allowPNG_)) {
-        setQuality_(quality);
-    }
+    changeQuality_(direction);
 
     weak_ptr<QualitySelector> selfWeak = shared_from_this();
     (first ? longMouseRepeatTimeout_ : shortMouseRepeatTimeout_)->set(
@@ -186,8 +202,8 @@ void QualitySelector::widgetRender_() {
         viewport.fill(arrowX - 1, arrowX + 2, arrowY, arrowY + 1, enabled ? 0 : 128);
         viewport.fill(arrowX - 2, arrowX + 3, arrowY - dy, arrowY + 1 - dy, enabled ? 0 : 128);
     };
-    drawButton(2, true, upKeyPressed_ || upButtonPressed_, quality_ < getMaxQuality(allowPNG_));
-    drawButton(11, false, downKeyPressed_ || downButtonPressed_, quality_ > MinQuality);
+    drawButton(2, true, upKeyPressed_ || upButtonPressed_, choiceIdx_ < labels_.size() - 1);
+    drawButton(11, false, downKeyPressed_ || downButtonPressed_, choiceIdx_ > (size_t)0);
 }
 
 vector<shared_ptr<Widget>> QualitySelector::widgetListChildren_() {
@@ -233,7 +249,7 @@ void QualitySelector::widgetMouseWheelEvent_(int x, int y, int delta) {
     REQUIRE_UI_THREAD();
 
     if(delta != 0 && (hasFocus_ || textField_->hasFocus())) {
-        setQuality_(quality_ + (delta > 0 ? 1 : -1));
+        changeQuality_(delta > 0 ? 1 : -1);
     }
 }
 
@@ -244,11 +260,8 @@ void QualitySelector::widgetKeyDownEvent_(int key) {
         downKeyPressed_ = key == keys::Down;
         upKeyPressed_ = key == keys::Up;
 
-        int quality = quality_ + (key == keys::Down ? -1 : 1);
-        if(quality >= MinQuality && quality <= getMaxQuality(allowPNG_)) {
-            setQuality_(quality);
-            signalViewDirty_();
-        }
+        changeQuality_(key == keys::Down ? -1 : 1);
+        signalViewDirty_();
     }
 }
 

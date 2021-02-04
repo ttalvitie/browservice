@@ -18,7 +18,7 @@ enum class SecurityStatus {
 class ControlBarEventHandler {
 public:
     virtual void onAddressSubmitted(string url) = 0;
-    virtual void onQualityChanged(int quality) = 0;
+    virtual void onQualityChanged(size_t idx) = 0;
     virtual void onPendingDownloadAccepted() = 0;
     virtual void onFind(string text, bool forward, bool findNext) = 0;
     virtual void onStopFind(bool clearSelection) = 0;
@@ -47,6 +47,7 @@ public:
         bool allowPNG
     );
 
+    void enableQualitySelector(vector<string> labels, size_t choiceIdx);
     void enableClipboardButton();
 
     void setSecurityStatus(SecurityStatus value);
@@ -69,7 +70,7 @@ public:
     virtual void onMenuButtonPressed(weak_ptr<MenuButton> button) override;
 
     // QualitySelectorEventHandler:
-    virtual void onQualityChanged(int quality) override;
+    virtual void onQualityChanged(size_t idx) override;
 
     // ButtonEventHandler:
     virtual void onButtonPressed() override;

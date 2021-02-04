@@ -273,6 +273,7 @@ const int BtnWidth = 22;
 struct ControlBar::Layout {
     Layout(
         int width,
+        bool isQualitySelectorVisible,
         bool isClipboardButtonVisible,
         bool isDownloadVisible,
         bool isFindBarVisible
@@ -317,10 +318,18 @@ struct ControlBar::Layout {
         int downloadSpacerStart = downloadSpacerEnd - downloadSpacerWidth;
 
         qualitySelectorEnd = downloadSpacerStart;
-        qualitySelectorStart = qualitySelectorEnd - QualitySelector::Width;
+        if(isQualitySelectorVisible) {
+            qualitySelectorStart = qualitySelectorEnd - QualitySelector::Width;
+        } else {
+            qualitySelectorStart = qualitySelectorEnd;
+        }
 
         qualityTextEnd = qualitySelectorStart;
-        qualityTextStart = qualityTextEnd - QualityTextWidth;
+        if(isQualitySelectorVisible) {
+            qualityTextStart = qualityTextEnd - QualityTextWidth;
+        } else {
+            qualityTextStart = qualityTextEnd;
+        }
 
         int separator2End = qualityTextStart;
         int separator2Start = separator2End - SeparatorWidth;
@@ -440,7 +449,24 @@ ControlBar::ControlBar(CKey,
     // Initialization is completed in afterConstruct_
 }
 
+void ControlBar::enableQualitySelector(
+    vector<string> labels,
+    size_t choiceIdx
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(!qualitySelector_);
+
+    shared_ptr<ControlBar> self = shared_from_this();
+    qualitySelector_ = QualitySelector::create(
+        self, self, move(labels), choiceIdx
+    );
+    widgetViewportUpdated_();
+    signalViewDirty_();
+}
+
 void ControlBar::enableClipboardButton() {
+    REQUIRE_UI_THREAD();
+
     if(!clipboardButtonEnabled_) {
         clipboardButtonEnabled_ = true;
 
@@ -561,9 +587,9 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     }
 }
 
-void ControlBar::onQualityChanged(int quality) {
+void ControlBar::onQualityChanged(size_t idx) {
     REQUIRE_UI_THREAD();
-    postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, quality);
+    postTask(eventHandler_, &ControlBarEventHandler::onQualityChanged, idx);
 }
 
 void ControlBar::onButtonPressed() {
@@ -607,7 +633,6 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     goButton_ = MenuButton::create(goIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
-    qualitySelector_ = QualitySelector::create(self, self, allowPNG_);
     downloadButton_ = Button::create(self, self);
     findBar_ = FindBar::create(self, self);
 }
@@ -619,6 +644,7 @@ bool ControlBar::isDownloadVisible_() {
 ControlBar::Layout ControlBar::layout_() {
     return Layout(
         getViewport().width(),
+        (bool)qualitySelector_,
         clipboardButtonEnabled_,
         isDownloadVisible_(),
         findBarVisible_
@@ -640,9 +666,14 @@ void ControlBar::widgetViewportUpdated_() {
     findButton_->setViewport(viewport.subRect(
         layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
     ));
-    qualitySelector_->setViewport(viewport.subRect(
-        layout.qualitySelectorStart, layout.qualitySelectorEnd, 1, Height - 4
-    ));
+    if(qualitySelector_) {
+        qualitySelector_->setViewport(viewport.subRect(
+            layout.qualitySelectorStart,
+            layout.qualitySelectorEnd,
+            1,
+            Height - 4
+        ));
+    }
     if(clipboardButtonEnabled_) {
         clipboardButton_->setViewport(viewport.subRect(
             layout.clipboardButtonStart, layout.clipboardButtonEnd, 1, Height - 4
@@ -717,10 +748,15 @@ void ControlBar::widgetRender_() {
     }
 
     // "Quality" text
-    qualityText_->render(
-        viewport.subRect(layout.qualityTextStart, layout.qualityTextEnd, 1, Height - 4),
-        3, -4
-    );
+    if(qualitySelector_) {
+        qualityText_->render(
+            viewport.subRect(
+                layout.qualityTextStart, layout.qualityTextEnd,
+                1, Height - 4
+            ),
+            3, -4
+        );
+    }
 
     // "Find" text
     if(findBarVisible_) {
@@ -800,9 +836,11 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     vector<shared_ptr<Widget>> children = {
         addrField_,
         goButton_,
-        findButton_,
-        qualitySelector_
+        findButton_
     };
+    if(qualitySelector_) {
+        children.push_back(qualitySelector_);
+    }
     if(clipboardButtonEnabled_) {
         children.push_back(clipboardButton_);
     }

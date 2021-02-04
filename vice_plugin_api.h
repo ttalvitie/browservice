@@ -485,15 +485,16 @@ void vicePluginAPI_setWindowCursor(
  *
  * If the function returns 1, it must point *qualityListOut to a null-terminated string that
  * contains a concatenated list of quality option labels delimited by newline characters. Each
- * quality label must be a string of 1-3 alphanumeric ASCII characters (A-Za-z0-9). There must be at
- * least one quality label and the same label may occur multiple times. Each quality label must be
- * followed by a single newline character ('\n'), including the last quality label. The calling
+ * quality label must be a string of 1-3 ASCII characters in range 33..126. There must be at least
+ * one quality label. Duplicate labels are not recommended but are allowed. Each quality label must
+ * be followed by a single newline character ('\n'), including the last quality label. The calling
  * program is responsible for freeing the string *qualityListOut using free(). The function must
- * point *currentQualityOut to a valid 0-based index for the list of quality options.
+ * point *currentQualityOut to a valid 0-based index for the list of quality options. By convention,
+ * the quality options should be ordered from the worst (fastest) to the best (slowest).
  *
- * For example, if there are three qualities, "Bad", "OK" and "HD" and "OK" is the default, the
- * function should return 1, set *qualityListOut to point to a new string "Bad\nOK\nHD\n" and set
- * *currentQualityOut to 1.
+ * For example, if there are four qualities, "Bad", "OK", "HD" and "5/5", and "OK" is the default,
+ * the function should return 1, set *qualityListOut to point to a new string "Bad\nOK\nHD\n5/5\n"
+ * and set *currentQualityOut to 1.
  */
 int vicePluginAPI_windowQualitySelectorQuery(
     VicePluginAPI_Context* ctx,

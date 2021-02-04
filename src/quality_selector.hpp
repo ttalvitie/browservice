@@ -7,7 +7,7 @@ namespace browservice {
 
 class QualitySelectorEventHandler {
 public:
-    virtual void onQualityChanged(int quality) = 0;
+    virtual void onQualityChanged(size_t idx) = 0;
 };
 
 class QualitySelector :
@@ -23,7 +23,8 @@ public:
     QualitySelector(CKey,
         weak_ptr<WidgetParent> widgetParent,
         weak_ptr<QualitySelectorEventHandler> eventHandler,
-        bool allowPNG
+        vector<string> labels,
+        size_t choiceIdx
     );
 
     // TextFieldEventHandler:
@@ -37,7 +38,8 @@ private:
     void afterConstruct_(shared_ptr<QualitySelector> self);
 
     void setQuality_(string qualityStr);
-    void setQuality_(int quality);
+    void setQuality_(size_t choiceIdx);
+    void changeQuality_(int d);
 
     void updateTextField_();
 
@@ -57,14 +59,13 @@ private:
 
     weak_ptr<QualitySelectorEventHandler> eventHandler_;
 
-    bool allowPNG_;
-
     shared_ptr<TextField> textField_;
 
     shared_ptr<Timeout> longMouseRepeatTimeout_;
     shared_ptr<Timeout> shortMouseRepeatTimeout_;
 
-    int quality_;
+    vector<string> labels_;
+    size_t choiceIdx_;
 
     bool hasFocus_;
     bool upKeyPressed_;

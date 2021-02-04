@@ -1,7 +1,6 @@
 #include "server.hpp"
 
 #include "globals.hpp"
-#include "quality.hpp"
 #include "xwindow.hpp"
 
 namespace browservice {

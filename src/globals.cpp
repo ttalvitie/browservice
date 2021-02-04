@@ -1,6 +1,5 @@
 #include "globals.hpp"
 
-#include "quality.hpp"
 #include "text.hpp"
 #include "xwindow.hpp"
 
