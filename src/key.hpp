@@ -17,10 +17,6 @@ struct UTF8Char {
 // key. If key < 0, the return value has length equal to 0.
 UTF8Char keyToUTF8(int key);
 
-// String containing a comma-separated list of the negations of valid negative
-// (that is, non-character) key IDs
-extern const string validNonCharKeyList;
-
 namespace keys {
 
 constexpr int Backspace = -8;

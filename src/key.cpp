@@ -48,19 +48,6 @@ vector<int> initSortedValidNonCharKeys() {
 
 vector<int> sortedValidNonCharKeys = initSortedValidNonCharKeys();
 
-string initValidNonCharKeyList() {
-    stringstream ss;
-    bool first = true;
-    for(int i = (int)sortedValidNonCharKeys.size() - 1; i >= 0; --i) {
-        if(!first) {
-            ss << ",";
-        }
-        first = false;
-        ss << -sortedValidNonCharKeys[i];
-    }
-    return ss.str();
-}
-
 }
 
 bool isValidKey(int key) {
@@ -108,7 +95,5 @@ UTF8Char keyToUTF8(int key) {
     }
     return ret;
 }
-
-const string validNonCharKeyList = initValidNonCharKeyList();
 
 }
