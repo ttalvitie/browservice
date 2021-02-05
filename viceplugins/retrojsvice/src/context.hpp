@@ -31,6 +31,7 @@ public:
         SocketAddress httpListenAddr,
         int httpMaxThreads,
         string httpAuthCredentials,
+        bool allowQualitySelector,
         string programName
     );
     ~Context();
@@ -129,6 +130,7 @@ private:
     SocketAddress httpListenAddr_;
     int httpMaxThreads_;
     string httpAuthCredentials_;
+    bool allowQualitySelector_;
     string programName_;
 
     enum {Pending, Running, ShutdownComplete} state_;

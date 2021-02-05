@@ -11,6 +11,9 @@ namespace {
 const string defaultHTTPListenAddr = "127.0.0.1:8080";
 const int defaultHTTPMaxThreads = 100;
 
+set<string> trueValues = {"1", "yes", "true", "enable", "enabled"};
+set<string> falseValues = {"0", "no", "false", "disable", "disabled"};
+
 // Returns (true, value) or (false, error message).
 pair<bool, string> parseHTTPAuthOption(string optValue) {
     if(optValue.empty()) {
@@ -167,6 +170,7 @@ variant<shared_ptr<Context>, string> Context::init(
         SocketAddress::parse(defaultHTTPListenAddr).value();
     int httpMaxThreads = defaultHTTPMaxThreads;
     string httpAuthCredentials;
+    bool allowQualitySelector = true;
 
     for(const pair<string, string>& option : options) {
         const string& name = option.first;
@@ -205,6 +209,18 @@ variant<shared_ptr<Context>, string> Context::init(
             } else {
                 return result.second;
             }
+        } else if(name == "quality-selector") {
+            string lowValue = value;
+            for(char& c : lowValue) {
+                c = tolower(c);
+            }
+            if(trueValues.count(lowValue)) {
+                allowQualitySelector = true;
+            } else if(falseValues.count(lowValue)) {
+                allowQualitySelector = false;
+            } else {
+                return "Invalid value '" + value + "' for option quality-selector";
+            }
         } else {
             return "Unrecognized option '" + name + "'";
         }
@@ -216,6 +232,7 @@ variant<shared_ptr<Context>, string> Context::init(
         httpListenAddr,
         httpMaxThreads,
         httpAuthCredentials,
+        allowQualitySelector,
         programName
     );
 }
@@ -225,6 +242,7 @@ Context::Context(CKey, CKey,
     SocketAddress httpListenAddr,
     int httpMaxThreads,
     string httpAuthCredentials,
+    bool allowQualitySelector,
     string programName
 )
     : httpListenAddr_(httpListenAddr)
@@ -234,6 +252,7 @@ Context::Context(CKey, CKey,
     defaultQuality_ = defaultQuality;
     httpMaxThreads_ = httpMaxThreads;
     httpAuthCredentials_ = httpAuthCredentials;
+    allowQualitySelector_ = allowQualitySelector;
     programName_ = sanitizeProgramName(programName);
 
     state_ = Pending;
@@ -398,6 +417,10 @@ int Context::windowQualitySelectorQuery(
     REQUIRE(qualityListOut != nullptr);
     REQUIRE(currentQualityOut != nullptr);
 
+    if(!allowQualitySelector_) {
+        return 0;
+    }
+
     optional<pair<vector<string>, int>> result =
         windowManager_->qualitySelectorQuery(window);
 
@@ -430,6 +453,7 @@ int Context::windowQualitySelectorQuery(
 void Context::windowQualityChanged(uint64_t window, size_t qualityIdx) {
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);
+    REQUIRE(allowQualitySelector_);
 
     windowManager_->qualityChanged(window, qualityIdx);
 }
@@ -514,6 +538,12 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
         "value is read from the environment variable "
         "HTTP_AUTH_CREDENTIALS",
         "default empty"
+    );
+    ret.emplace_back(
+        "quality-selector",
+        "YES/NO",
+        "make image quality adjustable using a quality selector widget",
+        "default: yes"
     );
 
     return ret;
