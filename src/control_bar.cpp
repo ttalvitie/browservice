@@ -287,7 +287,12 @@ struct ControlBar::Layout {
         const int FindTextWidth = 29;
 
         int downloadWidth = isDownloadVisible ? 88 : 0;
-        int downloadSpacerWidth = isDownloadVisible ? 2 : 0;
+        int downloadSpacerWidth;
+        if(isDownloadVisible && isQualitySelectorVisible) {
+            downloadSpacerWidth = 2;
+        } else {
+            downloadSpacerWidth = 0;
+        }
 
         int separator3Start;
         int separator3End;
@@ -332,7 +337,14 @@ struct ControlBar::Layout {
         }
 
         int separator2End = qualityTextStart;
-        int separator2Start = separator2End - SeparatorWidth;
+        int separator2Start;
+        if(isQualitySelectorVisible || isDownloadVisible) {
+            separator2Start = separator2End - SeparatorWidth;
+            separator2Visible = true;
+        } else {
+            separator2Start = separator2End;
+            separator2Visible = false;
+        }
         separator2Pos = separator2Start + SeparatorWidth / 2;
 
         clipboardButtonEnd = separator2Start;
@@ -390,6 +402,7 @@ struct ControlBar::Layout {
     int separator1Pos;
     int separator2Pos;
     int separator3Pos;
+    bool separator2Visible;
     bool separator3Visible;
 
     int qualityTextStart;
@@ -740,8 +753,10 @@ void ControlBar::widgetRender_() {
     // Separators
     viewport.fill(layout.separator1Pos - 1, layout.separator1Pos, 1, Height - 4, 128);
     viewport.fill(layout.separator1Pos, layout.separator1Pos + 1, 1, Height - 4, 255);
-    viewport.fill(layout.separator2Pos - 1, layout.separator2Pos, 1, Height - 4, 128);
-    viewport.fill(layout.separator2Pos, layout.separator2Pos + 1, 1, Height - 4, 255);
+    if(layout.separator2Visible) {
+        viewport.fill(layout.separator2Pos - 1, layout.separator2Pos, 1, Height - 4, 128);
+        viewport.fill(layout.separator2Pos, layout.separator2Pos + 1, 1, Height - 4, 255);
+    }
     if(layout.separator3Visible) {
         viewport.fill(layout.separator3Pos - 1, layout.separator3Pos, 1, Height - 4, 128);
         viewport.fill(layout.separator3Pos, layout.separator3Pos + 1, 1, Height - 4, 255);
