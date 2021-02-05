@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <exception>
+#include <fstream>
 #include <functional>
 #include <future>
 #include <iostream>
@@ -40,6 +41,7 @@ using std::future;
 using std::future_error;
 using std::get;
 using std::get_if;
+using std::ifstream;
 using std::lock_guard;
 using std::make_pair;
 using std::make_shared;

@@ -180,6 +180,16 @@ void WindowManager::clipboardButtonPressed(uint64_t window) {
     it->second->clipboardButtonPressed();
 }
 
+void WindowManager::putFileDownload(
+    uint64_t window, shared_ptr<FileDownload> file
+) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    it->second->putFileDownload(file);
+}
+
 void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);

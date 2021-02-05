@@ -61,4 +61,13 @@ struct ClipboardHTMLData {
 };
 void writeClipboardHTML(ostream& out, const ClipboardHTMLData& data);
 
+struct DownloadIframeHTMLData {
+    const string& programName;
+    const string& pathPrefix;
+    uint64_t downloadIdx;
+    string fileName;
+};
+
+void writeDownloadIframeHTML(ostream& out, const DownloadIframeHTMLData& data);
+
 }

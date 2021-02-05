@@ -1,5 +1,6 @@
 #include "window.hpp"
 
+#include "download.hpp"
 #include "html.hpp"
 #include "http.hpp"
 #include "key.hpp"
@@ -14,6 +15,9 @@ regex imagePathRegex(
 );
 regex iframePathRegex(
     "/iframe/([0-9]+)/[0-9]+/"
+);
+regex downloadPathRegex(
+    "/download/([0-9]+)/.*"
 );
 regex closePathRegex(
     "/close/([0-9]+)/"
@@ -59,6 +63,7 @@ Window::Window(CKey,
     curMainIdx_ = 0;
     curImgIdx_ = 0;
     curEventIdx_ = 0;
+    curDownloadIdx_ = 0;
 
     lastNavigateOperationTime_ = steady_clock::now();
 
@@ -82,6 +87,11 @@ void Window::close() {
 
     REQUIRE(eventHandler_);
     eventHandler_.reset();
+
+    while(!iframeQueue_.empty()) {
+        iframeQueue_.pop();
+    }
+    downloads_.clear();
 }
 
 void Window::handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request) {
@@ -155,6 +165,20 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
 
         if(mainIdx) {
             handleIframeRequest_(mce, request, *mainIdx);
+            return;
+        }
+    }
+
+    if(method == "GET" && regex_match(path, match, downloadPathRegex)) {
+        REQUIRE(match.size() == 2);
+        optional<uint64_t> downloadIdx = parseString<uint64_t>(match[1]);
+        if(downloadIdx) {
+            auto it = downloads_.find(*downloadIdx);
+            if(it == downloads_.end()) {
+                request->sendTextResponse(400, "ERROR: Outdated download index");
+            } else {
+                it->second.first->serve(request);
+            }
             return;
         }
     }
@@ -289,6 +313,42 @@ void Window::clipboardButtonPressed() {
                 );
             }
         );
+    });
+}
+
+void Window::putFileDownload(shared_ptr<FileDownload> file) {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self, file]() {
+        if(self->closed_) {
+            return;
+        }
+
+        self->addIframe_(mce, [self, file](shared_ptr<HTTPRequest> request) {
+            // Some browsers use multiple requests to download a file. Thus, we
+            // add the file to downloads_ to be kept a certain period of time,
+            // and forward the client to the actual download page.
+            uint64_t downloadIdx = ++self->curDownloadIdx_;
+
+            shared_ptr<DelayedTaskTag> tag = postDelayedTask(
+                milliseconds(10000),
+                [self, downloadIdx]() {
+                    self->downloads_.erase(downloadIdx);
+                }
+            );
+            REQUIRE(self->downloads_.insert({downloadIdx, {file, tag}}).second);
+
+            request->sendHTMLResponse(
+                200, writeDownloadIframeHTML, {
+                    self->programName_,
+                    self->pathPrefix_,
+                    downloadIdx,
+                    file->name()
+                }
+            );
+        });
     });
 }
 
@@ -749,6 +809,8 @@ void Window::handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
 }
 
 void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {
+    REQUIRE(!closed_);
+
     iframeQueue_.push(iframe);
     imageCompressor_->setIframeSignal(mce, ImageCompressor::IframeSignalTrue);
 }

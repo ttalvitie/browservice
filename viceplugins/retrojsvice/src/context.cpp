@@ -1,5 +1,6 @@
 #include "context.hpp"
 
+#include "download.hpp"
 #include "html.hpp"
 #include "secrets.hpp"
 
@@ -474,8 +475,13 @@ void Context::putFileDownload(
     RunningAPILock apiLock(this);
     REQUIRE(!threadRunningPumpEvents);
 
-    INFO_LOG("Got file download '", name, "' in path '", path, "', ignoring it");
-    cleanup(cleanupData);
+    function<void()> cleanupFunc = [cleanup, cleanupData]() {
+        cleanup(cleanupData);
+    };
+    shared_ptr<FileDownload> file =
+        FileDownload::create(name, path, cleanupFunc);
+
+    windowManager_->putFileDownload(window, file);
 }
 
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {

@@ -44,6 +44,7 @@ public:
     virtual void onWindowManagerNavigate(uint64_t window, int direction) = 0;
 };
 
+class FileDownload;
 class HTTPRequest;
 class SecretGenerator;
 
@@ -87,6 +88,8 @@ public:
 
     bool needsClipboardButtonQuery(uint64_t window);
     void clipboardButtonPressed(uint64_t window);
+
+    void putFileDownload(uint64_t window, shared_ptr<FileDownload> file);
 
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t window) override;

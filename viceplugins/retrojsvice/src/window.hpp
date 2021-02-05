@@ -39,6 +39,7 @@ public:
     virtual void onWindowNavigate(uint64_t window, int direction) = 0;
 };
 
+class FileDownload;
 class HTTPRequest;
 class SecretGenerator;
 
@@ -78,6 +79,8 @@ public:
     void qualityChanged(size_t qualityIdx);
 
     void clipboardButtonPressed();
+
+    void putFileDownload(shared_ptr<FileDownload> file);
 
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(
@@ -180,6 +183,14 @@ private:
     // of this to avoid replaying events; the client may send the same events
     // twice as it cannot know for sure which requests make it through.
     uint64_t curEventIdx_;
+
+    // Downloads whose iframe has been loaded; the actual file is kept available
+    // until a timeout has expired.
+    map<
+        uint64_t,
+        pair<shared_ptr<FileDownload>, shared_ptr<DelayedTaskTag>>
+    > downloads_;
+    uint64_t curDownloadIdx_;
 
     shared_ptr<DelayedTaskTag> inactivityTimeoutTag_;
 
