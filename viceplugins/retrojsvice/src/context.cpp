@@ -464,6 +464,20 @@ void Context::putClipboardContent(const char* text) {
     }
 }
 
+void Context::putFileDownload(
+    uint64_t window,
+    const char* name,
+    const char* path,
+    void (*cleanup)(void*),
+    void* cleanupData
+) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    INFO_LOG("Got file download '", name, "' in path '", path, "', ignoring it");
+    cleanup(cleanupData);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

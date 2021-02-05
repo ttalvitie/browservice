@@ -311,6 +311,16 @@ void Server::onWindowClipboardButtonPressed(uint64_t handle) {
     return viceCtx_->windowClipboardButtonPressed(handle);
 }
 
+void Server::onWindowDownloadCompleted(
+    uint64_t handle, shared_ptr<CompletedDownload> file
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    viceCtx_->putFileDownload(handle, file);
+}
+
 void Server::onWindowCreatePopupRequest(
     uint64_t handle,
     function<shared_ptr<Window>(uint64_t)> accept

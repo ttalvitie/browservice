@@ -1,5 +1,6 @@
 #include "vice.hpp"
 
+#include "download_manager.hpp"
 #include "globals.hpp"
 #include "widget.hpp"
 
@@ -27,6 +28,7 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(windowNeedsClipboardButtonQuery) \
     FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
     FOREACH_VICE_API_FUNC_ITEM(putClipboardContent) \
+    FOREACH_VICE_API_FUNC_ITEM(putFileDownload) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -499,14 +501,19 @@ void ViceContext::shutdown() {
     plugin_->apiFuncs_->shutdown(ctx_);
 }
 
+#define RUNNING_CONTEXT_FUNC_CHECKS() \
+    do { \
+        REQUIRE_UI_THREAD(); \
+        REQUIRE(state_ == Running); \
+        REQUIRE(threadActivePumpEventsContext == nullptr); \
+    } while(false)
+
 bool ViceContext::requestCreatePopup(
     uint64_t parentWindow,
     uint64_t popupWindow,
     string& msg
 ) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(parentWindow));
     REQUIRE(popupWindow);
     REQUIRE(!openWindows_.count(popupWindow));
@@ -528,27 +535,21 @@ bool ViceContext::requestCreatePopup(
 }
 
 void ViceContext::closeWindow(uint64_t window) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
 
     REQUIRE(openWindows_.erase(window));
     plugin_->apiFuncs_->closeWindow(ctx_, window);
 }
 
 void ViceContext::notifyWindowViewChanged(uint64_t window) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, window);
 }
 
 void ViceContext::setWindowCursor(uint64_t window, int cursor) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     VicePluginAPI_MouseCursor apiCursor;
@@ -567,9 +568,7 @@ void ViceContext::setWindowCursor(uint64_t window, int cursor) {
 optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
     uint64_t window
 ) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     char* qualityList = nullptr;
@@ -617,18 +616,14 @@ optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
 }
 
 void ViceContext::windowQualityChanged(uint64_t window, size_t idx) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->windowQualityChanged(ctx_, window, idx);
 }
 
 bool ViceContext::windowNeedsClipboardButtonQuery(uint64_t window) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     int result =
@@ -638,20 +633,39 @@ bool ViceContext::windowNeedsClipboardButtonQuery(uint64_t window) {
 }
 
 void ViceContext::windowClipboardButtonPressed(uint64_t window) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
+    RUNNING_CONTEXT_FUNC_CHECKS();
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->windowClipboardButtonPressed(ctx_, window);
 }
 
 void ViceContext::putClipboardContent(string text) {
-    REQUIRE_UI_THREAD();
-    REQUIRE(state_ == Running);
-    REQUIRE(threadActivePumpEventsContext == nullptr);
-
+    RUNNING_CONTEXT_FUNC_CHECKS();
     plugin_->apiFuncs_->putClipboardContent(ctx_, text.c_str());
+}
+
+void ViceContext::putFileDownload(
+    uint64_t window, shared_ptr<CompletedDownload> file
+) {
+    RUNNING_CONTEXT_FUNC_CHECKS();
+    REQUIRE(openWindows_.count(window));
+
+    string name = file->name();
+    string path = file->path();
+
+    plugin_->apiFuncs_->putFileDownload(
+        ctx_,
+        window,
+        name.c_str(),
+        path.c_str(),
+        [](void* cleanupData) {
+            REQUIRE(cleanupData != nullptr);
+            shared_ptr<CompletedDownload>* file =
+                (shared_ptr<CompletedDownload>*)cleanupData;
+            delete file;
+        },
+        (void*)new shared_ptr<CompletedDownload>(file)
+    );
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

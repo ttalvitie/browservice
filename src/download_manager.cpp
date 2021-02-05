@@ -6,88 +6,14 @@
 
 namespace browservice {
 
-namespace {
-
-pair<string, string> extractExtension(const string& filename) {
-    int lastDot = (int)filename.size() - 1;
-    while(lastDot >= 0 && filename[lastDot] != '.') {
-        --lastDot;
-    }
-    if(lastDot >= 0) {
-        int extLength = (int)filename.size() - 1 - lastDot;
-        if(extLength >= 1 && extLength <= 5) {
-            bool ok = true;
-            for(int i = lastDot + 1; i < (int)filename.size(); ++i) {
-                char c = filename[i];
-                if(!(
-                    (c >= 'a' && c <= 'z') ||
-                    (c >= 'A' && c <= 'Z') ||
-                    (c >= '0' && c <= '9')
-                )) {
-                    ok = false;
-                    break;
-                }
-            }
-            if(ok) {
-                return make_pair(
-                    filename.substr(0, lastDot),
-                    filename.substr(lastDot + 1)
-                );
-            }
-        }
-    }
-    return make_pair(filename, "bin");
-}
-
-string sanitizeBase(const string& base) {
-    string ret;
-    for(char c : base) {
-        if(
-            (c >= 'a' && c <= 'z') ||
-            (c >= 'A' && c <= 'Z') ||
-            (c >= '0' && c <= '9')
-        ) {
-            ret.push_back(c);
-        } else {
-            if(!ret.empty() && ret.back() != '_') {
-                ret.push_back('_');
-            }
-        }
-    }
-    if(ret.empty() || !(
-        (ret[0] >= 'a' && ret[0] <= 'z') ||
-        (ret[0] >= 'A' && ret[0] <= 'Z')
-    )) {
-        ret = "file_" + ret;
-    }
-    ret = ret.substr(0, 32);
-    if(ret.back() == '_') {
-        ret.pop_back();
-    }
-    return ret;
-}
-
-string sanitizeFilename(const string& filename) {
-    string base, ext;
-    tie(base, ext) = extractExtension(filename);
-
-    string sanitizedBase = sanitizeBase(base);
-
-    return sanitizedBase + "." + ext;
-}
-
-}
-
 CompletedDownload::CompletedDownload(CKey,
     shared_ptr<TempDir> tempDir,
     string path,
-    string name,
-    uint64_t length
+    string name
 ) {
     tempDir_ = tempDir;
     path_ = move(path);
     name_ = move(name);
-    length_ = length;
 }
 
 CompletedDownload::~CompletedDownload() {
@@ -96,53 +22,16 @@ CompletedDownload::~CompletedDownload() {
     }
 }
 
+string CompletedDownload::path() {
+    REQUIRE_UI_THREAD();
+    return path_;
+}
+
 string CompletedDownload::name() {
     REQUIRE_UI_THREAD();
     return name_;
 }
-/*
-void CompletedDownload::serve(shared_ptr<HTTPRequest> request) {
-    REQUIRE_UI_THREAD();
 
-    shared_ptr<CompletedDownload> self = shared_from_this();
-    function<void(ostream&)> body = [self](ostream& out) {
-        ifstream fp;
-        fp.open(self->path_, ifstream::binary);
-
-        if(!fp.good()) {
-            ERROR_LOG("Opening downloaded file ", self->path_, " failed");
-            return;
-        }
-
-        const uint64_t BufSize = 1 << 16;
-        char buf[BufSize];
-
-        uint64_t left = self->length_;
-        while(left) {
-            uint64_t readSize = min(left, BufSize);
-            fp.read(buf, readSize);
-
-            if(!fp.good()) {
-                ERROR_LOG("Reading downloaded file ", self->path_, " failed");
-                return;
-            }
-
-            out.write(buf, readSize);
-            left -= readSize;
-        }
-        fp.close();
-    };
-
-    request->sendResponse(
-        200,
-        "application/download",
-        length_,
-        body,
-        false,
-        {{"Content-Disposition", "attachment; filename=\"" + name_ + "\""}}
-    );
-}
-*/
 class DownloadManager::DownloadHandler : public CefDownloadHandler {
 public:
     DownloadHandler(shared_ptr<DownloadManager> downloadManager) {
@@ -164,7 +53,7 @@ public:
         DownloadInfo& info = downloadManager_->infos_[id];
 
         info.fileIdx = downloadManager_->nextFileIdx_++;
-        info.name = sanitizeFilename(suggestedName);
+        info.name = suggestedName;
         info.startCallback = callback;
         info.cancelCallback = nullptr;
         info.progress = 0;
@@ -192,14 +81,10 @@ public:
         info.cancelCallback = callback;
 
         if(downloadItem->IsComplete()) {
-            int64_t length = downloadItem->GetReceivedBytes();
-            REQUIRE(length >= 0);
-
             shared_ptr<CompletedDownload> file = CompletedDownload::create(
                 downloadManager_->tempDir_,
                 downloadManager_->getFilePath_(info.fileIdx),
-                move(info.name),
-                (uint64_t)length
+                move(info.name)
             );
             downloadManager_->infos_.erase(id);
             postTask(

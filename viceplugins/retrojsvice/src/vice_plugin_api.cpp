@@ -226,6 +226,16 @@ API_EXPORT void vicePluginAPI_putClipboardContent(
 )
 WRAP_CTX_API(putClipboardContent, text)
 
+API_EXPORT void vicePluginAPI_putFileDownload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    const char* name,
+    const char* path,
+    void (*cleanup)(void*),
+    void* cleanupData
+)
+WRAP_CTX_API(putFileDownload, window, name, path, cleanup, cleanupData)
+
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(

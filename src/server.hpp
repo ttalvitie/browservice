@@ -71,6 +71,9 @@ public:
     virtual void onWindowQualityChanged(uint64_t handle, size_t idx) override;
     virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) override;
     virtual void onWindowClipboardButtonPressed(uint64_t handle) override;
+    virtual void onWindowDownloadCompleted(
+        uint64_t handle, shared_ptr<CompletedDownload> file
+    ) override;
     virtual void onWindowCreatePopupRequest(
         uint64_t handle,
         function<shared_ptr<Window>(uint64_t)> accept

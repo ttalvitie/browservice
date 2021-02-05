@@ -24,6 +24,9 @@ public:
     virtual void onWindowQualityChanged(uint64_t handle, size_t idx) = 0;
     virtual bool onWindowNeedsClipboardButtonQuery(uint64_t handle) = 0;
     virtual void onWindowClipboardButtonPressed(uint64_t handle) = 0;
+    virtual void onWindowDownloadCompleted(
+        uint64_t handle, shared_ptr<CompletedDownload> file
+    ) = 0;
 
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before

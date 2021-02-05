@@ -16,23 +16,17 @@ public:
     CompletedDownload(CKey,
         shared_ptr<TempDir> tempDir,
         string path,
-        string name,
-        uint64_t length
+        string name
     );
     ~CompletedDownload();
 
+    string path();
     string name();
-
-    // Serve the downloaded file to as response to given request. Note that
-    // no-cache-headers are omitted, so the result may be cached (to circumvent
-    // bugs in IE).
-//    void serve(shared_ptr<HTTPRequest> request);
 
 private:
     shared_ptr<TempDir> tempDir_;
     string path_;
     string name_;
-    uint64_t length_;
 };
 
 class DownloadManagerEventHandler {

@@ -703,7 +703,11 @@ void Window::onDownloadProgressChanged(vector<int> progress) {
 
 void Window::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     REQUIRE_UI_THREAD();
-    INFO_LOG("Download ", file->name(), " complete, TODO handle");
+
+    if(state_ == Open) {
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowDownloadCompleted(handle_, file);
+    }
 }
 
 void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle) {

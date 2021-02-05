@@ -536,6 +536,25 @@ void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint
  */
 void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* text);
 
+/* Sends the plugin a file which the plugin may then allow the user to download through given
+ * window. The data of the file must be available in a readable local file with given path. Once the
+ * plugin does not need the file anymore, it must call the cleanup function with given cleanupData
+ * as the only argument from any thread at any time. The plugin must call the cleanup function
+ * exactly once, and it must do so before the context is destroyed. The plugin may only read the
+ * file; it must not modify, move or remove it, and it must close all file descriptors to it before
+ * calling the cleanup function. The name argument specifies the suggested name for the file, which
+ * may be an arbitrary null-terminated string; the plugin may sanitize the name or even ignore it.
+ * One valid implementation that ignores all downloads is { cleanup(cleanupData); }.
+ */
+void vicePluginAPI_putFileDownload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    const char* name,
+    const char* path,
+    void (*cleanup)(void*),
+    void* cleanupData
+);
+
 /**********************************
  * Non-context-specific functions *
  **********************************/

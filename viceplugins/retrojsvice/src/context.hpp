@@ -65,6 +65,14 @@ public:
     void windowClipboardButtonPressed(uint64_t window);
     void putClipboardContent(const char* text);
 
+    void putFileDownload(
+        uint64_t window,
+        const char* name,
+        const char* path,
+        void (*cleanup)(void*),
+        void* cleanupData
+    );
+
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 

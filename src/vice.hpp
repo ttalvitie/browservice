@@ -90,6 +90,8 @@ public:
     virtual void onViceContextShutdownComplete() = 0;
 };
 
+class CompletedDownload;
+
 // An initialized vice plugin context.
 class ViceContext : public enable_shared_from_this<ViceContext> {
 SHARED_ONLY_CLASS(ViceContext);
@@ -137,6 +139,8 @@ public:
     bool windowNeedsClipboardButtonQuery(uint64_t window);
     void windowClipboardButtonPressed(uint64_t window);
     void putClipboardContent(string text);
+
+    void putFileDownload(uint64_t window, shared_ptr<CompletedDownload> file);
 
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);
