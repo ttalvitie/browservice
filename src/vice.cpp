@@ -29,6 +29,8 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(windowClipboardButtonPressed) \
     FOREACH_VICE_API_FUNC_ITEM(putClipboardContent) \
     FOREACH_VICE_API_FUNC_ITEM(putFileDownload) \
+    FOREACH_VICE_API_FUNC_ITEM(startFileUpload) \
+    FOREACH_VICE_API_FUNC_ITEM(cancelFileUpload) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
@@ -232,6 +234,19 @@ vector<VicePlugin::OptionDocsItem> VicePlugin::getOptionDocs() {
     return ret;
 }
 
+ViceFileUpload::ViceFileUpload(CKey, string path, function<void()> cleanup) {
+    path_ = path;
+    cleanup_ = cleanup;
+}
+
+ViceFileUpload::~ViceFileUpload() {
+    cleanup_();
+}
+
+string ViceFileUpload::path() {
+    return path_;
+}
+
 namespace {
 
 thread_local ViceContext* threadActivePumpEventsContext = nullptr;
@@ -365,6 +380,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
 
     callbacks.closeWindow = CTX_CALLBACK(void, (uint64_t window), {
         REQUIRE(self->openWindows_.erase(window));
+        self->uploadModeWindows_.erase(window);
         self->eventHandler_->onViceContextCloseWindow(window);
     });
 
@@ -476,6 +492,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     });
 
     callbacks.copyToClipboard = CTX_CALLBACK(void, (const char* text), {
+        REQUIRE(text != nullptr);
         string sanitizedText = sanitizeUTF8String(text);
         self->eventHandler_->onViceContextCopyToClipboard(move(sanitizedText));
     });
@@ -483,6 +500,34 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     callbacks.requestClipboardContent = CTX_CALLBACK(int, (), {
         self->eventHandler_->onViceContextRequestClipboardContent();
         return 1;
+    });
+
+    callbacks.uploadFile = CTX_CALLBACK(void, (
+        uint64_t window,
+        const char* path,
+        void (*cleanup)(void*),
+        void* cleanupData
+    ), {
+        REQUIRE(path != nullptr);
+        REQUIRE(cleanup != nullptr);
+
+        REQUIRE(self->openWindows_.count(window));
+        REQUIRE(self->uploadModeWindows_.erase(window));
+
+        function<void()> cleanupFunc = [cleanup, cleanupData]() {
+            cleanup(cleanupData);
+        };
+        self->eventHandler_->onViceContextUploadFile(
+            window,
+            ViceFileUpload::create(path, cleanupFunc)
+        );
+    });
+
+    callbacks.cancelFileUpload = CTX_CALLBACK(void, (uint64_t window), {
+        REQUIRE(self->openWindows_.count(window));
+        REQUIRE(self->uploadModeWindows_.erase(window));
+
+        self->eventHandler_->onViceContextCancelFileUpload(window);
     });
 
     plugin_->apiFuncs_->start(
@@ -538,6 +583,7 @@ void ViceContext::closeWindow(uint64_t window) {
     RUNNING_CONTEXT_FUNC_CHECKS();
 
     REQUIRE(openWindows_.erase(window));
+    uploadModeWindows_.erase(window);
     plugin_->apiFuncs_->closeWindow(ctx_, window);
 }
 
@@ -666,6 +712,29 @@ void ViceContext::putFileDownload(
         },
         (void*)new shared_ptr<CompletedDownload>(file)
     );
+}
+
+bool ViceContext::startFileUpload(uint64_t window) {
+    RUNNING_CONTEXT_FUNC_CHECKS();
+    REQUIRE(openWindows_.count(window));
+    REQUIRE(!uploadModeWindows_.count(window));
+
+    int result = plugin_->apiFuncs_->startFileUpload(ctx_, window);
+    REQUIRE(result == 0 || result == 1);
+
+    if(result == 1) {
+        REQUIRE(uploadModeWindows_.insert(window).second);
+    }
+
+    return (bool)result;
+}
+
+void ViceContext::cancelFileUpload(uint64_t window) {
+    RUNNING_CONTEXT_FUNC_CHECKS();
+    REQUIRE(openWindows_.count(window));
+    REQUIRE(uploadModeWindows_.erase(window));
+
+    plugin_->apiFuncs_->cancelFileUpload(ctx_, window);
 }
 
 shared_ptr<ViceContext> ViceContext::getContext_(void* callbackData) {

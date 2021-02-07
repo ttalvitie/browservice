@@ -7,6 +7,7 @@
 #include "root_widget.hpp"
 
 class CefBrowser;
+class CefFileDialogCallback;
 
 namespace browservice {
 
@@ -27,6 +28,8 @@ public:
     virtual void onWindowDownloadCompleted(
         uint64_t handle, shared_ptr<CompletedDownload> file
     ) = 0;
+    virtual bool onWindowStartFileUpload(uint64_t handle) = 0;
+    virtual void onWindowCancelFileUpload(uint64_t handle) = 0;
 
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before
@@ -39,6 +42,7 @@ public:
 };
 
 class Timeout;
+class ViceFileUpload;
 
 // Lifecycle of a Window:
 //
@@ -85,6 +89,9 @@ public:
 
     // -1 = back, 0 = refresh, 1 = forward.
     void navigate(int direction);
+
+    void uploadFile(shared_ptr<ViceFileUpload> file);
+    void cancelFileUpload();
 
     // Functions for passing input events to the Window. The functions accept
     // all combinations of argument values (the values are sanitized).
@@ -138,6 +145,8 @@ private:
     void createSuccessful_();
     void createFailed_();
 
+    void afterClose_();
+
     void watchdog_();
     void updateSecurityStatus_();
 
@@ -164,6 +173,10 @@ private:
     shared_ptr<DownloadManager> downloadManager_;
 
     shared_ptr<Timeout> watchdogTimeout_;
+
+    CefRefPtr<CefFileDialogCallback> fileUploadCallback_;
+    int fileUploadAcceptFilter_;
+    vector<shared_ptr<ViceFileUpload>> retainedUploads_;
 };
 
 }

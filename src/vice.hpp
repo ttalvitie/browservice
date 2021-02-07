@@ -47,6 +47,19 @@ private:
     friend class ViceContext;
 };
 
+class ViceFileUpload {
+SHARED_ONLY_CLASS(ViceFileUpload);
+public:
+    ViceFileUpload(CKey, string path, function<void()> cleanup);
+    ~ViceFileUpload();
+
+    string path();
+
+private:
+    string path_;
+    function<void()> cleanup_;
+};
+
 // Implementations of these event handlers may NOT call functions of ViceContext
 // directly.
 class ViceContextEventHandler {
@@ -86,6 +99,11 @@ public:
 
     virtual void onViceContextCopyToClipboard(string text) = 0;
     virtual void onViceContextRequestClipboardContent() = 0;
+
+    virtual void onViceContextUploadFile(
+        uint64_t window, shared_ptr<ViceFileUpload> file
+    ) = 0;
+    virtual void onViceContextCancelFileUpload(uint64_t window) = 0;
 
     virtual void onViceContextShutdownComplete() = 0;
 };
@@ -142,6 +160,9 @@ public:
 
     void putFileDownload(uint64_t window, shared_ptr<CompletedDownload> file);
 
+    bool startFileUpload(uint64_t window);
+    void cancelFileUpload(uint64_t window);
+
 private:
     static shared_ptr<ViceContext> getContext_(void* callbackData);
 
@@ -170,6 +191,7 @@ private:
     };
     uint64_t nextWindowHandle_;
     set<uint64_t> openWindows_;
+    set<uint64_t> uploadModeWindows_;
 };
 
 }

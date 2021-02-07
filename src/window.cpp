@@ -5,6 +5,7 @@
 #include "key.hpp"
 #include "root_widget.hpp"
 #include "timeout.hpp"
+#include "vice.hpp"
 
 #include "include/cef_client.h"
 
@@ -17,7 +18,8 @@ class Window::Client :
     public CefDisplayHandler,
     public CefRequestHandler,
     public CefFindHandler,
-    public CefKeyboardHandler
+    public CefKeyboardHandler,
+    public CefDialogHandler
 {
 public:
     Client(shared_ptr<Window> window) {
@@ -58,6 +60,9 @@ public:
         return this;
     }
     virtual CefRefPtr<CefKeyboardHandler> GetKeyboardHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefDialogHandler> GetDialogHandler() override {
         return this;
     }
 
@@ -174,7 +179,7 @@ public:
             );
             REQUIRE(window_->eventHandler_);
             window_->state_ = Closed;
-            window_->watchdogTimeout_->clear(false);
+            window_->afterClose_();
             window_->eventHandler_->onWindowClose(window_->handle_);
         }
 
@@ -187,6 +192,7 @@ public:
 
         window_->state_ = CleanupComplete;
         window_->browser_ = nullptr;
+        window_->retainedUploads_.clear();
         window_->rootWidget_->browserArea()->setBrowser(nullptr);
         window_->eventHandler_->onWindowCleanupComplete(window_->handle_);
         window_->eventHandler_.reset();
@@ -369,6 +375,56 @@ public:
         return false;
     }
 
+    // CefDialogHandler:
+    virtual bool OnFileDialog(
+        CefRefPtr<CefBrowser> browser,
+        CefDialogHandler::FileDialogMode mode,
+        const CefString& title,
+        const CefString& defaultFilePath,
+        const vector<CefString>& acceptFilters,
+        int selectedAcceptFilter,
+        CefRefPtr<CefFileDialogCallback> callback
+    ) {
+        BROWSER_EVENT_HANDLER_CHECKS();
+        REQUIRE(callback);
+
+        if(
+            window_->state_ != Open ||
+            (
+                (mode & FILE_DIALOG_TYPE_MASK) != FILE_DIALOG_OPEN &&
+                (mode & FILE_DIALOG_TYPE_MASK) != FILE_DIALOG_OPEN_MULTIPLE
+            )
+        ) {
+            callback->Cancel();
+            return true;
+        }
+
+        if(window_->fileUploadCallback_) {
+            WARNING_LOG(
+                "Cannot upload in window ", window_->handle_,
+                " because the window is already in upload mode"
+            );
+            callback->Cancel();
+            return true;
+        }
+
+        REQUIRE(window_->eventHandler_);
+        if(window_->eventHandler_->onWindowStartFileUpload(
+            window_->handle_
+        )) {
+            window_->fileUploadCallback_ = callback;
+            window_->fileUploadAcceptFilter_ = selectedAcceptFilter;
+        } else {
+            WARNING_LOG(
+                "Cannot upload in window ", window_->handle_,
+                " because the vice plugin does not allow it"
+            );
+            callback->Cancel();
+        }
+
+        return true;
+    }
+
 private:
     shared_ptr<Window> window_;
     CefRefPtr<CefRenderHandler> renderHandler_;
@@ -435,7 +491,7 @@ void Window::close() {
 
     INFO_LOG("Closing window ", handle_);
     state_ = Closed;
-    watchdogTimeout_->clear(false);
+    afterClose_();
 
     // If the browser has been created, we start closing it; otherwise, we defer
     // closing it to Client::OnAfterCreated.
@@ -484,6 +540,33 @@ void Window::navigate(int direction) {
             browser_->GoForward();
         }
     }
+}
+
+void Window::uploadFile(shared_ptr<ViceFileUpload> file) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+    REQUIRE(file);
+
+    REQUIRE(fileUploadCallback_);
+
+    vector<CefString> paths;
+    paths.push_back(file->path());
+
+    fileUploadCallback_->Continue(fileUploadAcceptFilter_, paths);
+    fileUploadCallback_ = nullptr;
+
+    // We retain all file uploads until the window cleanup is complete, as we
+    // cannot know how long CEF uses them.
+    retainedUploads_.push_back(file);
+}
+
+void Window::cancelFileUpload() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    REQUIRE(fileUploadCallback_);
+    fileUploadCallback_->Cancel();
+    fileUploadCallback_ = nullptr;
 }
 
 void Window::sendMouseDownEvent(int x, int y, int button) {
@@ -730,6 +813,8 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle)
     downloadManager_ = DownloadManager::create(self);
 
     watchdogTimeout_ = Timeout::create(1000);
+
+    fileUploadAcceptFilter_ = 0;
 }
 
 void Window::createSuccessful_() {
@@ -767,6 +852,18 @@ void Window::createFailed_() {
 
     state_ = CleanupComplete;
     eventHandler_.reset();
+}
+
+void Window::afterClose_() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Closed);
+
+    watchdogTimeout_->clear(false);
+
+    if(fileUploadCallback_) {
+        fileUploadCallback_->Cancel();
+        fileUploadCallback_ = nullptr;
+    }
 }
 
 // Called every 1s for an Open window for various checks.

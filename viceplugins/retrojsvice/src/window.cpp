@@ -352,6 +352,20 @@ void Window::putFileDownload(shared_ptr<FileDownload> file) {
     });
 }
 
+bool Window::startFileUpload() {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    return false;
+}
+
+void Window::cancelFileUpload() {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    REQUIRE(false);
+}
+
 void Window::onImageCompressorFetchImage(
     function<void(const uint8_t*, size_t, size_t, size_t)> func
 ) {

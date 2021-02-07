@@ -42,6 +42,11 @@ public:
     virtual void onWindowManagerLoseFocus(uint64_t window) = 0;
 
     virtual void onWindowManagerNavigate(uint64_t window, int direction) = 0;
+
+    virtual void onWindowManagerUploadFile(
+        uint64_t window, shared_ptr<FileUpload> file
+    ) = 0;
+    virtual void onWindowManagerCancelFileUpload(uint64_t window) = 0;
 };
 
 class FileDownload;
@@ -91,6 +96,9 @@ public:
 
     void putFileDownload(uint64_t window, shared_ptr<FileDownload> file);
 
+    bool startFileUpload(uint64_t window);
+    void cancelFileUpload(uint64_t window);
+
     // WindowEventHandler:
     virtual void onWindowClose(uint64_t window) override;
     virtual void onWindowFetchImage(
@@ -120,6 +128,10 @@ public:
     virtual void onWindowKeyUp(uint64_t window, int key) override;
     virtual void onWindowLoseFocus(uint64_t window) override;
     virtual void onWindowNavigate(uint64_t window, int direction) override;
+    virtual void onWindowUploadFile(
+        uint64_t window, shared_ptr<FileUpload> file
+    ) override;
+    virtual void onWindowCancelFileUpload(uint64_t window) override;
 
 private:
     void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request);

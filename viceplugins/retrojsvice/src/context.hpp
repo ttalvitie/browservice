@@ -74,6 +74,9 @@ public:
         void* cleanupData
     );
 
+    int startFileUpload(uint64_t window);
+    void cancelFileUpload(uint64_t window);
+
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 
@@ -121,6 +124,10 @@ public:
     virtual void onWindowManagerNavigate(
         uint64_t window, int direction
     ) override;
+    virtual void onWindowManagerUploadFile(
+        uint64_t window, shared_ptr<FileUpload> file
+    ) override;
+    virtual void onWindowManagerCancelFileUpload(uint64_t window) override;
 
 private:
     void handleClipboardHTTPRequest_(MCE, shared_ptr<HTTPRequest> request);

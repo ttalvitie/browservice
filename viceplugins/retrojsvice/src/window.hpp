@@ -5,6 +5,21 @@
 
 namespace retrojsvice {
 
+class FileUpload {
+SHARED_ONLY_CLASS(FileUpload);
+public:
+    FileUpload(CKey, string path) {
+        path_ = path;
+    }
+
+    string path() {
+        return path_;
+    }
+
+private:
+    string path_;
+};
+
 class WindowEventHandler {
 public:
     // Called when window closes itself (i.e. is not closed by a call to
@@ -37,6 +52,11 @@ public:
     virtual void onWindowLoseFocus(uint64_t window) = 0;
 
     virtual void onWindowNavigate(uint64_t window, int direction) = 0;
+
+    virtual void onWindowUploadFile(
+        uint64_t window, shared_ptr<FileUpload> file
+    ) = 0;
+    virtual void onWindowCancelFileUpload(uint64_t window) = 0;
 };
 
 class FileDownload;
@@ -81,6 +101,9 @@ public:
     void clipboardButtonPressed();
 
     void putFileDownload(shared_ptr<FileDownload> file);
+
+    bool startFileUpload();
+    void cancelFileUpload();
 
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(

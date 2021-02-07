@@ -190,6 +190,22 @@ void WindowManager::putFileDownload(
     it->second->putFileDownload(file);
 }
 
+bool WindowManager::startFileUpload(uint64_t window) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    return it->second->startFileUpload();
+}
+
+void WindowManager::cancelFileUpload(uint64_t window) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    it->second->cancelFileUpload();
+}
+
 void WindowManager::onWindowClose(uint64_t window) {
     REQUIRE_API_THREAD();
     REQUIRE(eventHandler_);
@@ -257,6 +273,14 @@ FORWARD_WINDOW_EVENT(
 FORWARD_WINDOW_EVENT(
     onWindowNavigate(uint64_t window, int direction),
     onWindowManagerNavigate(window, direction)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowUploadFile(uint64_t window, shared_ptr<FileUpload> file),
+    onWindowManagerUploadFile(window, file)
+)
+FORWARD_WINDOW_EVENT(
+    onWindowCancelFileUpload(uint64_t window),
+    onWindowManagerCancelFileUpload(window)
 )
 
 namespace {

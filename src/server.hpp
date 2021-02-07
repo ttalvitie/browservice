@@ -58,6 +58,10 @@ public:
     virtual void onViceContextNavigate(uint64_t window, int direction) override;
     virtual void onViceContextCopyToClipboard(string text) override;
     virtual void onViceContextRequestClipboardContent() override;
+    virtual void onViceContextUploadFile(
+        uint64_t window, shared_ptr<ViceFileUpload> file
+    ) override;
+    virtual void onViceContextCancelFileUpload(uint64_t window) override;
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:
@@ -74,6 +78,8 @@ public:
     virtual void onWindowDownloadCompleted(
         uint64_t handle, shared_ptr<CompletedDownload> file
     ) override;
+    virtual bool onWindowStartFileUpload(uint64_t handle) override;
+    virtual void onWindowCancelFileUpload(uint64_t handle) override;
     virtual void onWindowCreatePopupRequest(
         uint64_t handle,
         function<shared_ptr<Window>(uint64_t)> accept

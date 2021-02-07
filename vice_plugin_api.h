@@ -282,6 +282,30 @@ struct VicePluginAPI_Callbacks {
      */
     int (*requestClipboardContent)(void*);
 
+    /* Uploads a file to the program. May only be called when the window is in file upload mode
+     * started by vicePluginAPI_startFileUpload. This function ends the file upload mode (and thus
+     * the program should not call vicePluginAPI_cancelFileUpload). After this, the modal file
+     * upload dialog should be closed. The data of the file must be available in a readable local
+     * file with given path. Once the program does not need the file anymore, it must call the
+     * cleanup function with given cleanupData as the only argument from any thread at any time. The
+     * program must call the cleanup function exactly once, and it must do so before the context is
+     * destroyed. The program may only read the file; it must not modify, move or remove it. The
+     * last component of the path may be used by the program as the file name.
+     */
+    void (*uploadFile)(
+        void*,
+        uint64_t window,
+        const char* path,
+        void (*cleanup)(void*),
+        void* cleanupData
+    );
+
+    /* Ends a currently active file upload mode (started by vicePluginAPI_startFileUpload) for given
+     * window by canceling the upload. The plugin should close the modal file upload dialog. As this
+     * call ends the file upload mode, the program should not call vicePluginAPI_cancelFileUpload.
+     */
+    void (*cancelFileUpload)(void*, uint64_t window);
+
 };
 typedef struct VicePluginAPI_Callbacks VicePluginAPI_Callbacks;
 
@@ -541,10 +565,9 @@ void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* t
  * plugin does not need the file anymore, it must call the cleanup function with given cleanupData
  * as the only argument from any thread at any time. The plugin must call the cleanup function
  * exactly once, and it must do so before the context is destroyed. The plugin may only read the
- * file; it must not modify, move or remove it, and it must close all file descriptors to it before
- * calling the cleanup function. The name argument specifies the suggested name for the file, which
- * may be an arbitrary null-terminated string; the plugin may sanitize the name or even ignore it.
- * One valid implementation that ignores all downloads is { cleanup(cleanupData); }.
+ * file; it must not modify, move or remove it. The name argument specifies the suggested name for
+ * the file, which may be an arbitrary null-terminated string; the plugin may sanitize the name or
+ * even ignore it. One valid implementation that ignores all downloads is { cleanup(cleanupData); }.
  */
 void vicePluginAPI_putFileDownload(
     VicePluginAPI_Context* ctx,
@@ -554,6 +577,27 @@ void vicePluginAPI_putFileDownload(
     void (*cleanup)(void*),
     void* cleanupData
 );
+
+/* If the function returns 1, it starts the file upload mode for an existing window, where the
+ * plugin should display a dialog (or similar) to select a file to upload to the program. This
+ * dialog should be modal, which means that the user should be prevented from using the window
+ * normally until the file upload mode is over, and the attention of the user should be pointed to
+ * the upload dialog. However, the plugin does not need to enforce this: it may still continue to
+ * relay input events to the program from the window. This function may not be called if the window
+ * is already in file upload mode. The file upload mode will end if the program cancels it by
+ * calling vicePluginAPI_cancelFileUpload or if the plugin uploads a file with the uploadFile
+ * callback or cancels the upload using the cancelFileUpload callback. The window may also be closed
+ * normally while in file upload mode; in that case, the file upload mode does not have to be ended
+ * separately. To deny the file upload, the plugin may return 0 from this function (for example if
+ * it does not support file uploads); in that case, the file upload mode is not started.
+ */
+int vicePluginAPI_startFileUpload(VicePluginAPI_Context* ctx, uint64_t window);
+
+/* Ends a currently active file upload mode (started by vicePluginAPI_startFileUpload) for given
+ * window by canceling the upload. The plugin should close the modal file upload dialog without
+ * calling any of the upload callbacks.
+ */
+void vicePluginAPI_cancelFileUpload(VicePluginAPI_Context* ctx, uint64_t window);
 
 /**********************************
  * Non-context-specific functions *

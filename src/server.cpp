@@ -229,6 +229,26 @@ void Server::onViceContextRequestClipboardContent() {
     });
 }
 
+void Server::onViceContextUploadFile(
+    uint64_t window, shared_ptr<ViceFileUpload> file
+) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+    it->second->uploadFile(file);
+}
+
+void Server::onViceContextCancelFileUpload(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+    it->second->cancelFileUpload();
+}
+
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == WaitViceContext);
@@ -319,6 +339,22 @@ void Server::onWindowDownloadCompleted(
     REQUIRE(openWindows_.count(handle));
 
     viceCtx_->putFileDownload(handle, file);
+}
+
+bool Server::onWindowStartFileUpload(uint64_t handle) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    return viceCtx_->startFileUpload(handle);
+}
+
+void Server::onWindowCancelFileUpload(uint64_t handle) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    viceCtx_->cancelFileUpload(handle);
 }
 
 void Server::onWindowCreatePopupRequest(

@@ -236,6 +236,18 @@ API_EXPORT void vicePluginAPI_putFileDownload(
 )
 WRAP_CTX_API(putFileDownload, window, name, path, cleanup, cleanupData)
 
+API_EXPORT int vicePluginAPI_startFileUpload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+)
+WRAP_CTX_API(startFileUpload, window)
+
+API_EXPORT void vicePluginAPI_cancelFileUpload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+)
+WRAP_CTX_API(cancelFileUpload, window)
+
 API_EXPORT void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(

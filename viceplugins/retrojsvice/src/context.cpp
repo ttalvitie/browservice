@@ -508,6 +508,20 @@ void Context::putFileDownload(
     windowManager_->putFileDownload(window, file);
 }
 
+int Context::startFileUpload(uint64_t window) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    return (int)windowManager_->startFileUpload(window);
+}
+
+void Context::cancelFileUpload(uint64_t window) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    windowManager_->cancelFileUpload(window);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 
@@ -731,6 +745,33 @@ FORWARD_WINDOW_EVENT(
 FORWARD_WINDOW_EVENT(
     onWindowManagerNavigate(uint64_t window, int direction),
     navigate, (callbackData_, window, direction)
+)
+
+void Context::onWindowManagerUploadFile(
+    uint64_t window, shared_ptr<FileUpload> file
+) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(window);
+
+    string path = file->path();
+
+    REQUIRE(callbacks_.uploadFile != nullptr);
+    callbacks_.uploadFile(
+        callbackData_,
+        window,
+        path.c_str(),
+        [](void* cleanupData) {
+            shared_ptr<FileUpload>* file = (shared_ptr<FileUpload>*)cleanupData;
+            delete file;
+        },
+        (void*)new shared_ptr<FileUpload>(file)
+    );
+}
+
+FORWARD_WINDOW_EVENT(
+    onWindowManagerCancelFileUpload(uint64_t window),
+    cancelFileUpload, (callbackData_, window)
 )
 
 void Context::handleClipboardHTTPRequest_(MCE,
