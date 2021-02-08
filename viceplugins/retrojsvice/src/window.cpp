@@ -365,6 +365,8 @@ bool Window::startFileUpload() {
     REQUIRE(!inFileUploadMode_);
 
     inFileUploadMode_ = true;
+    fileUploadModeButtonPressed_ = false;
+    fileUploadModeButtonDown_ = false;
     setCursor(ImageCompressor::CursorSignalNormal);
     notifyViewChanged();
 
@@ -400,7 +402,7 @@ void Window::onImageCompressorRenderGUI(
     REQUIRE_API_THREAD();
 
     if(!closed_ && inFileUploadMode_) {
-        renderUploadModeGUI(data, width, height);
+        renderUploadModeGUI(data, width, height, fileUploadModeButtonDown_);
     }
 }
 
@@ -469,6 +471,29 @@ bool Window::handleTokenizedEvent_(MCE,
         }
     };
 
+    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        if(inFileUploadMode_) {
+            if(
+                button == 0 &&
+                isOverUploadModeCancelButton(
+                    (size_t)x, (size_t)y, (size_t)width_, (size_t)height_
+                )
+            ) {
+                fileUploadModeButtonPressed_ = true;
+                fileUploadModeButtonDown_ = true;
+                notifyViewChanged();
+            }
+        } else {
+            if(mouseButtonsDown_.insert(button).second) {
+                eventHandler_->onWindowMouseDown(handle_, x, y, button);
+            }
+            eventHandler_->onWindowMouseMove(handle_, x, y);
+        }
+        return true;
+    }
     if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
         int x = args[0];
         int y = args[1];
@@ -476,7 +501,39 @@ bool Window::handleTokenizedEvent_(MCE,
         if(mouseButtonsDown_.erase(button)) {
             eventHandler_->onWindowMouseUp(handle_, x, y, button);
         }
-        eventHandler_->onWindowMouseMove(handle_, x, y);
+        if(inFileUploadMode_) {
+            if(button == 0 && fileUploadModeButtonPressed_) {
+                fileUploadModeButtonPressed_ = false;
+                fileUploadModeButtonDown_ = false;
+                notifyViewChanged();
+
+                if(isOverUploadModeCancelButton(
+                    (size_t)x, (size_t)y, (size_t)width_, (size_t)height_
+                )) {
+                    selfCancelFileUpload_(mce);
+                }
+            }
+        } else {
+            eventHandler_->onWindowMouseMove(handle_, x, y);
+        }
+        return true;
+    }
+    if(name == "MMO" && argCount == 2) {
+        int x = args[0];
+        int y = args[1];
+        if(inFileUploadMode_) {
+            if(fileUploadModeButtonPressed_) {
+                bool over = isOverUploadModeCancelButton(
+                    (size_t)x, (size_t)y, (size_t)width_, (size_t)height_
+                );
+                if(over != fileUploadModeButtonDown_) {
+                    fileUploadModeButtonDown_ = over;
+                    notifyViewChanged();
+                }
+            }
+        } else {
+            eventHandler_->onWindowMouseMove(handle_, x, y);
+        }
         return true;
     }
     if(name == "KUP" && argCount == 1) {
@@ -489,20 +546,10 @@ bool Window::handleTokenizedEvent_(MCE,
 
     if(inFileUploadMode_) {
         // All the events after this are such that we can safely ignore them in
-        // file upload mode to make it modal.
+        // file upload mode.
         return true;
     }
 
-    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
-        int x = args[0];
-        int y = args[1];
-        int button = args[2];
-        if(mouseButtonsDown_.insert(button).second) {
-            eventHandler_->onWindowMouseDown(handle_, x, y, button);
-        }
-        eventHandler_->onWindowMouseMove(handle_, x, y);
-        return true;
-    }
     if(name == "MDBL" && argCount == 2) {
         int x = args[0];
         int y = args[1];
@@ -515,12 +562,6 @@ bool Window::handleTokenizedEvent_(MCE,
         int delta = args[2];
         delta = max(-180, min(180, delta));
         eventHandler_->onWindowMouseWheel(handle_, x, y, delta);
-        return true;
-    }
-    if(name == "MMO" && argCount == 2) {
-        int x = args[0];
-        int y = args[1];
-        eventHandler_->onWindowMouseMove(handle_, x, y);
         return true;
     }
     if(name == "MOUT" && argCount == 2) {
@@ -768,6 +809,10 @@ void Window::handleImageRequest_(MCE,
                 (size_t)width,
                 (size_t)height
             );
+
+            if(inFileUploadMode_) {
+                notifyViewChanged();
+            }
         }
 
         if(immediate) {
@@ -858,6 +903,17 @@ void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {
 
     iframeQueue_.push(iframe);
     imageCompressor_->setIframeSignal(mce, ImageCompressor::IframeSignalTrue);
+}
+
+void Window::selfCancelFileUpload_(MCE) {
+    REQUIRE(!closed_);
+    REQUIRE(inFileUploadMode_);
+
+    inFileUploadMode_ = false;
+    notifyViewChanged();
+
+    REQUIRE(eventHandler_);
+    eventHandler_->onWindowCancelFileUpload(handle_);
 }
 
 }

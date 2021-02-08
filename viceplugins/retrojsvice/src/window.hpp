@@ -165,6 +165,8 @@ private:
 
     void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
+    void selfCancelFileUpload_(MCE);
+
     string programName_;
     bool allowPNG_;
     int initialQuality_;
@@ -228,6 +230,8 @@ private:
     queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
 
     bool inFileUploadMode_;
+    bool fileUploadModeButtonPressed_;
+    bool fileUploadModeButtonDown_;
 };
 
 }
