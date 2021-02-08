@@ -18,6 +18,10 @@ public:
     virtual void onImageCompressorFetchImage(
         function<void(const uint8_t*, size_t, size_t, size_t)> func
     ) = 0;
+
+    virtual void onImageCompressorRenderGUI(
+        vector<uint8_t>& data, size_t width, size_t height
+    ) = 0;
 };
 
 class DelayedTaskTag;

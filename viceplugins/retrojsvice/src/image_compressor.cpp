@@ -311,6 +311,8 @@ tuple<vector<uint8_t>, size_t, size_t> ImageCompressor::fetchImage_(MCE) {
         };
         eventHandler->onImageCompressorFetchImage(func);
         REQUIRE(funcCalled);
+
+        eventHandler->onImageCompressorRenderGUI(data, width, height);
     } else {
         data.resize(4, (uint8_t)255);
         width = 1;

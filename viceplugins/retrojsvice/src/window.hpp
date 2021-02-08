@@ -11,6 +11,9 @@ public:
     FileUpload(CKey, string path) {
         path_ = path;
     }
+    ~FileUpload() {
+        INFO_LOG("DESTROYED");
+    }
 
     string path() {
         return path_;
@@ -108,6 +111,9 @@ public:
     // ImageCompressorEventHandler:
     virtual void onImageCompressorFetchImage(
         function<void(const uint8_t*, size_t, size_t, size_t)> func
+    ) override;
+    virtual void onImageCompressorRenderGUI(
+        vector<uint8_t>& data, size_t width, size_t height
     ) override;
 
 private:
@@ -220,6 +226,8 @@ private:
     steady_clock::time_point lastNavigateOperationTime_;
 
     queue<function<void(shared_ptr<HTTPRequest>)>> iframeQueue_;
+
+    bool inFileUploadMode_;
 };
 
 }

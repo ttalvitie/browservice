@@ -1,6 +1,7 @@
 #include "window.hpp"
 
 #include "download.hpp"
+#include "gui.hpp"
 #include "html.hpp"
 #include "http.hpp"
 #include "key.hpp"
@@ -66,6 +67,8 @@ Window::Window(CKey,
     curDownloadIdx_ = 0;
 
     lastNavigateOperationTime_ = steady_clock::now();
+
+    inFileUploadMode_ = false;
 
     // Initialization is completed in afterConstruct_
 }
@@ -258,6 +261,10 @@ void Window::setCursor(int cursorSignal) {
         cursorSignal >= 0 && cursorSignal < ImageCompressor::CursorSignalCount
     );
 
+    if(inFileUploadMode_) {
+        cursorSignal = ImageCompressor::CursorSignalNormal;
+    }
+
     shared_ptr<Window> self = shared_from_this();
     postTask([self, cursorSignal]() {
         if(!self->closed_) {
@@ -355,15 +362,22 @@ void Window::putFileDownload(shared_ptr<FileDownload> file) {
 bool Window::startFileUpload() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
+    REQUIRE(!inFileUploadMode_);
 
-    return false;
+    inFileUploadMode_ = true;
+    setCursor(ImageCompressor::CursorSignalNormal);
+    notifyViewChanged();
+
+    return true;
 }
 
 void Window::cancelFileUpload() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);
+    REQUIRE(inFileUploadMode_);
 
-    REQUIRE(false);
+    inFileUploadMode_ = false;
+    notifyViewChanged();
 }
 
 void Window::onImageCompressorFetchImage(
@@ -377,6 +391,16 @@ void Window::onImageCompressorFetchImage(
     } else {
         REQUIRE(eventHandler_);
         eventHandler_->onWindowFetchImage(handle_, func);
+    }
+}
+
+void Window::onImageCompressorRenderGUI(
+    vector<uint8_t>& data, size_t width, size_t height
+) {
+    REQUIRE_API_THREAD();
+
+    if(!closed_ && inFileUploadMode_) {
+        renderUploadModeGUI(data, width, height);
     }
 }
 
@@ -435,22 +459,46 @@ bool Window::handleTokenizedEvent_(MCE,
 ) {
     REQUIRE(eventHandler_);
 
-    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
-        int x = args[0];
-        int y = args[1];
-        int button = args[2];
-        if(mouseButtonsDown_.insert(button).second) {
-            eventHandler_->onWindowMouseDown(handle_, x, y, button);
+    auto keyDown = [&](int key) {
+        keysDown_.insert(key);
+        eventHandler_->onWindowKeyDown(handle_, key);
+    };
+    auto keyUp = [&](int key) {
+        if(keysDown_.erase(key)) {
+            eventHandler_->onWindowKeyUp(handle_, key);
         }
-        eventHandler_->onWindowMouseMove(handle_, x, y);
-        return true;
-    }
+    };
+
     if(name == "MUP" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
         int x = args[0];
         int y = args[1];
         int button = args[2];
         if(mouseButtonsDown_.erase(button)) {
             eventHandler_->onWindowMouseUp(handle_, x, y, button);
+        }
+        eventHandler_->onWindowMouseMove(handle_, x, y);
+        return true;
+    }
+    if(name == "KUP" && argCount == 1) {
+        int key = -decodeKey_(eventIdx, args[0]);
+        if(key < 0 && isValidKey(key)) {
+            keyUp(key);
+        }
+        return true;
+    }
+
+    if(inFileUploadMode_) {
+        // All the events after this are such that we can safely ignore them in
+        // file upload mode to make it modal.
+        return true;
+    }
+
+    if(name == "MDN" && argCount == 3 && args[2] >= 0 && args[2] <= 2) {
+        int x = args[0];
+        int y = args[1];
+        int button = args[2];
+        if(mouseButtonsDown_.insert(button).second) {
+            eventHandler_->onWindowMouseDown(handle_, x, y, button);
         }
         eventHandler_->onWindowMouseMove(handle_, x, y);
         return true;
@@ -482,27 +530,10 @@ bool Window::handleTokenizedEvent_(MCE,
         return true;
     }
 
-    auto keyDown = [&](int key) {
-        keysDown_.insert(key);
-        eventHandler_->onWindowKeyDown(handle_, key);
-    };
-    auto keyUp = [&](int key) {
-        if(keysDown_.erase(key)) {
-            eventHandler_->onWindowKeyUp(handle_, key);
-        }
-    };
-
     if(name == "KDN" && argCount == 1) {
         int key = -decodeKey_(eventIdx, args[0]);
         if(key < 0 && isValidKey(key)) {
             keyDown(key);
-        }
-        return true;
-    }
-    if(name == "KUP" && argCount == 1) {
-        int key = -decodeKey_(eventIdx, args[0]);
-        if(key < 0 && isValidKey(key)) {
-            keyUp(key);
         }
         return true;
     }
