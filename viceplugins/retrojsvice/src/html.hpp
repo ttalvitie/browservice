@@ -70,4 +70,31 @@ struct DownloadIframeHTMLData {
 
 void writeDownloadIframeHTML(ostream& out, const DownloadIframeHTMLData& data);
 
+struct UploadIframeHTMLData {
+    const string& programName;
+    const string& pathPrefix;
+};
+
+void writeUploadIframeHTML(ostream& out, const UploadIframeHTMLData& data);
+
+struct UploadHTMLData {
+    const string& programName;
+    const string& pathPrefix;
+    const string& csrfToken;
+};
+
+void writeUploadHTML(ostream& out, const UploadHTMLData& data);
+
+struct UploadCancelHTMLData {
+    const string& programName;
+};
+
+void writeUploadCancelHTML(ostream& out, const UploadCancelHTMLData& data);
+
+struct UploadCompleteHTMLData {
+    const string& programName;
+};
+
+void writeUploadCompleteHTML(ostream& out, const UploadCompleteHTMLData& data);
+
 }

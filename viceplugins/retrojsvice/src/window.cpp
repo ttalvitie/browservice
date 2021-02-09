@@ -52,6 +52,7 @@ Window::Window(CKey,
     handle_ = handle;
     csrfToken_ = secretGen->generateCSRFToken();
     pathPrefix_ = "/" + toString(handle) + "/" + csrfToken_;
+    uploadCSRFToken_ = secretGen->generateCSRFToken();
     closed_ = false;
 
     width_ = -1;
@@ -184,6 +185,23 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
             }
             return;
         }
+    }
+
+    if(method == "GET" && path == "/upload/") {
+        request->sendHTMLResponse(
+            200, writeUploadHTML, {programName_, pathPrefix_, uploadCSRFToken_}
+        );
+        return;
+    }
+
+    if(method == "POST" && path == "/upload/upload/") {
+        handleUploadPostRequest_(mce, request);
+        return;
+    }
+
+    if(method == "POST" && path == "/upload/cancel/") {
+        handleUploadCancelRequest_(mce, request);
+        return;
     }
 
     if(method == "GET" && regex_match(path, match, closePathRegex)) {
@@ -369,6 +387,22 @@ bool Window::startFileUpload() {
     fileUploadModeButtonDown_ = false;
     setCursor(ImageCompressor::CursorSignalNormal);
     notifyViewChanged();
+
+    shared_ptr<Window> self = shared_from_this();
+    postTask([self]() {
+        if(self->closed_ || !self->inFileUploadMode_) {
+            return;
+        }
+        self->addIframe_(mce,
+            [self](shared_ptr<HTTPRequest> request) {
+                request->sendHTMLResponse(
+                    200,
+                    writeUploadIframeHTML,
+                    {self->programName_, self->pathPrefix_}
+                );
+            }
+        );
+    });
 
     return true;
 }
@@ -845,6 +879,32 @@ void Window::handleIframeRequest_(MCE,
 
         iframe(request);
     }
+}
+
+void Window::handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request) {
+    if(request->getFormParam("csrftoken") != uploadCSRFToken_) {
+        request->sendTextResponse(403, "ERROR: Invalid CSRF token\n");
+        return;
+    }
+
+    request->sendHTMLResponse(
+        200, writeUploadCompleteHTML, {programName_}
+    );
+}
+
+void Window::handleUploadCancelRequest_(MCE, shared_ptr<HTTPRequest> request) {
+    if(request->getFormParam("csrftoken") != uploadCSRFToken_) {
+        request->sendTextResponse(403, "ERROR: Invalid CSRF token\n");
+        return;
+    }
+
+    if(inFileUploadMode_) {
+        selfCancelFileUpload_(mce);
+    }
+
+    request->sendHTMLResponse(
+        200, writeUploadCancelHTML, {programName_}
+    );
 }
 
 void Window::handleCloseRequest_(

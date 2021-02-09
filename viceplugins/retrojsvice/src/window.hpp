@@ -156,6 +156,8 @@ private:
         shared_ptr<HTTPRequest> request,
         uint64_t mainIdx
     );
+    void handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request);
+    void handleUploadCancelRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleCloseRequest_(
         shared_ptr<HTTPRequest> request,
         uint64_t mainIdx
@@ -186,6 +188,7 @@ private:
     uint64_t handle_;
     string csrfToken_;
     string pathPrefix_;
+    string uploadCSRFToken_;
     bool closed_;
 
     shared_ptr<ImageCompressor> imageCompressor_;
