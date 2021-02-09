@@ -349,6 +349,10 @@ struct FormPartHandler : public Poco::Net::PartHandler {
         string name = disp.get("name", "");
         string filename = disp.get("filename", "");
 
+        if(filename.empty()) {
+            return;
+        }
+
         REQUIRE(storage);
         shared_ptr<FileUpload> file = storage->upload(filename, dataStream);
         if(file) {
