@@ -4,6 +4,8 @@
 
 namespace retrojsvice {
 
+class FileUpload;
+
 namespace http_ {
     class HTTPRequestHandler;
 }
@@ -25,7 +27,10 @@ public:
     string path();
     string userAgent();
 
+    // Form accessors return empty string/pointer if there is no entry with
+    // specified name.
     string getFormParam(string name);
+    shared_ptr<FileUpload> getFormFile(string name);
 
     optional<string> getBasicAuthCredentials();
 

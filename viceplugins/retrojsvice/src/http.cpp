@@ -1,6 +1,7 @@
 #include "http.hpp"
 
 #include "task_queue.hpp"
+#include "upload.hpp"
 
 #include <Poco/Base64Decoder.h>
 
@@ -10,6 +11,7 @@
 #include <Poco/Net/HTTPRequest.h>
 #include <Poco/Net/HTTPServerRequest.h>
 #include <Poco/Net/HTTPRequestHandler.h>
+#include <Poco/Net/PartHandler.h>
 #include <Poco/Net/SocketAddress.h>
 
 namespace retrojsvice {
@@ -53,6 +55,7 @@ public:
     Impl(
         Poco::Net::HTTPServerRequest& request,
         unique_ptr<Poco::Net::HTMLForm> form,
+        map<string, shared_ptr<FileUpload>> files,
         promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise,
         AliveToken aliveToken
     )
@@ -62,6 +65,7 @@ public:
           path_(request.getURI()),
           userAgent_(request.get("User-Agent", "")),
           form_(move(form)),
+          files_(move(files)),
           responderPromise_(move(responderPromise))
     {
         REQUIRE(request_ != nullptr);
@@ -108,6 +112,18 @@ public:
             }
         }
         return "";
+    }
+
+    shared_ptr<FileUpload> getFormFile(string name) {
+        REQUIRE(request_ != nullptr);
+
+        auto it = files_.find(name);
+        if(it == files_.end()) {
+            shared_ptr<FileUpload> empty;
+            return empty;
+        } else {
+            return it->second;
+        }
     }
 
     optional<string> getBasicAuthCredentials() {
@@ -236,6 +252,7 @@ private:
     string userAgent_;
 
     unique_ptr<Poco::Net::HTMLForm> form_;
+    map<string, shared_ptr<FileUpload>> files_;
 
     promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise_;
 };
@@ -264,6 +281,11 @@ string HTTPRequest::userAgent() {
 string HTTPRequest::getFormParam(string name) {
     REQUIRE_API_THREAD();
     return impl_->getFormParam(move(name));
+}
+
+shared_ptr<FileUpload> HTTPRequest::getFormFile(string name) {
+    REQUIRE_API_THREAD();
+    return impl_->getFormFile(move(name));
 }
 
 optional<string> HTTPRequest::getBasicAuthCredentials() {
@@ -307,16 +329,49 @@ void HTTPRequest::sendTextResponse(
 
 namespace http_ {
 
+struct FormPartHandler : public Poco::Net::PartHandler {
+    virtual void handlePart(
+        const Poco::Net::MessageHeader& header,
+        istream& dataStream
+    ) override {
+        string dispStr = header.get("Content-Disposition", "");
+        string dispVal;
+        Poco::Net::NameValueCollection disp;
+        header.splitParameters(dispStr, dispVal, disp);
+
+        for(char& c : dispVal) {
+            c = tolower(c);
+        }
+        if(dispVal != "form-data") {
+            return;
+        }
+
+        string name = disp.get("name", "");
+        string filename = disp.get("filename", "");
+
+        REQUIRE(storage);
+        shared_ptr<FileUpload> file = storage->upload(filename, dataStream);
+        if(file) {
+            files->emplace(name, file);
+        }
+    }
+
+    shared_ptr<UploadStorage> storage;
+    map<string, shared_ptr<FileUpload>>* files;
+};
+
 class HTTPRequestHandler : public Poco::Net::HTTPRequestHandler {
 public:
     HTTPRequestHandler(
         weak_ptr<HTTPServerEventHandler> eventHandler,
         shared_ptr<TaskQueue> taskQueue,
+        shared_ptr<UploadStorage> uploadStorage,
         AliveToken aliveToken
     )
         : aliveToken_(aliveToken),
           eventHandler_(eventHandler),
-          taskQueue_(taskQueue)
+          taskQueue_(taskQueue),
+          uploadStorage_(uploadStorage)
     {}
 
     virtual void handleRequest(
@@ -326,10 +381,14 @@ public:
         ActiveTaskQueueLock activeTaskQueueLock(taskQueue_);
 
         unique_ptr<Poco::Net::HTMLForm> form;
+        map<string, shared_ptr<FileUpload>> files;
         try {
             if(request.getMethod() == "POST") {
+                FormPartHandler partHandler;
+                partHandler.storage = uploadStorage_;
+                partHandler.files = &files;
                 form = make_unique<Poco::Net::HTMLForm>(
-                    request, request.stream()
+                    request, request.stream(), partHandler
                 );
             }
         } catch(const Poco::Exception& e) {
@@ -348,6 +407,7 @@ public:
                 make_unique<HTTPRequest::Impl>(
                     request,
                     move(form),
+                    move(files),
                     move(responderPromise),
                     aliveToken_
                 )
@@ -376,6 +436,7 @@ private:
     AliveToken aliveToken_;
     weak_ptr<HTTPServerEventHandler> eventHandler_;
     shared_ptr<TaskQueue> taskQueue_;
+    shared_ptr<UploadStorage> uploadStorage_;
 };
 
 }
@@ -394,18 +455,23 @@ public:
         : aliveToken_(aliveToken),
           eventHandler_(eventHandler),
           taskQueue_(taskQueue)
-    {}
+    {
+        uploadStorage_ = UploadStorage::create();
+    }
 
     virtual Poco::Net::HTTPRequestHandler* createRequestHandler(
         const Poco::Net::HTTPServerRequest& request
     ) override {
-        return new HTTPRequestHandler(eventHandler_, taskQueue_, aliveToken_);
+        return new HTTPRequestHandler(
+            eventHandler_, taskQueue_, uploadStorage_, aliveToken_
+        );
     }
 
 private:
     AliveToken aliveToken_;
     weak_ptr<HTTPServerEventHandler> eventHandler_;
     shared_ptr<TaskQueue> taskQueue_;
+    shared_ptr<UploadStorage> uploadStorage_;
 };
 
 }

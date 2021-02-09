@@ -42,6 +42,7 @@ using std::future_error;
 using std::get;
 using std::get_if;
 using std::ifstream;
+using std::istream;
 using std::lock_guard;
 using std::make_pair;
 using std::make_shared;

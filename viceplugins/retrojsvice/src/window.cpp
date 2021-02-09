@@ -884,9 +884,24 @@ void Window::handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request) {
 
     string mode = request->getFormParam("mode");
     if(mode == "upload") {
-        request->sendHTMLResponse(
-            200, writeUploadCompleteHTML, {programName_}
-        );
+        if(inFileUploadMode_) {
+            shared_ptr<FileUpload> file = request->getFormFile("file");
+            if(file) {
+                request->sendHTMLResponse(
+                    200, writeUploadCompleteHTML, {programName_}
+                );
+            } else {
+                request->sendHTMLResponse(
+                    200,
+                    writeUploadHTML,
+                    {programName_, pathPrefix_, uploadCSRFToken_}
+                );
+            }
+        } else {
+            request->sendHTMLResponse(
+                200, writeUploadCancelHTML, {programName_}
+            );
+        }
     } else if(mode == "cancel") {
         if(inFileUploadMode_) {
             selfCancelFileUpload_(mce);
