@@ -28,8 +28,11 @@ namespace {
 
 string sanitizeName(string src) {
     string ret;
+
     for(char c : src) {
-        if(c != '/' && c != '\0') {
+        if(c == '/' || c == '\\') {
+            ret = "";
+        } else if(c != '\0') {
             ret.push_back(c);
         }
     }
