@@ -52,6 +52,7 @@ public:
     // May throw Poco::Exception.
     Impl(
         Poco::Net::HTTPServerRequest& request,
+        unique_ptr<Poco::Net::HTMLForm> form,
         promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise,
         AliveToken aliveToken
     )
@@ -60,7 +61,7 @@ public:
           method_(request.getMethod()),
           path_(request.getURI()),
           userAgent_(request.get("User-Agent", "")),
-          formParsed_(false),
+          form_(move(form)),
           responderPromise_(move(responderPromise))
     {
         REQUIRE(request_ != nullptr);
@@ -95,22 +96,6 @@ public:
 
     string getFormParam(string name) {
         REQUIRE(request_ != nullptr);
-
-        if(!formParsed_) {
-            formParsed_ = true;
-            try {
-                if(method() == "POST") {
-                    form_.emplace(*request_, request_->stream());
-                } else {
-                    form_.emplace();
-                }
-            } catch(const Poco::Exception& e) {
-                WARNING_LOG(
-                    "Parsing HTML form with Poco failed with exception ",
-                    "(defaulting to empty): ", e.displayText()
-                );
-            }
-        }
 
         if(form_) {
             try {
@@ -250,8 +235,7 @@ private:
     string path_;
     string userAgent_;
 
-    bool formParsed_;
-    optional<Poco::Net::HTMLForm> form_;
+    unique_ptr<Poco::Net::HTMLForm> form_;
 
     promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise_;
 };
@@ -341,6 +325,20 @@ public:
     ) override {
         ActiveTaskQueueLock activeTaskQueueLock(taskQueue_);
 
+        unique_ptr<Poco::Net::HTMLForm> form;
+        try {
+            if(request.getMethod() == "POST") {
+                form = make_unique<Poco::Net::HTMLForm>(
+                    request, request.stream()
+                );
+            }
+        } catch(const Poco::Exception& e) {
+            WARNING_LOG(
+                "Parsing HTML form with Poco failed with exception ",
+                "(defaulting to empty): ", e.displayText()
+            );
+        }
+
         promise<function<void(Poco::Net::HTTPServerResponse&)>> responderPromise;
         future<function<void(Poco::Net::HTTPServerResponse&)>> responderFuture =
             responderPromise.get_future();
@@ -349,6 +347,7 @@ public:
             shared_ptr<HTTPRequest> reqObj = HTTPRequest::create(
                 make_unique<HTTPRequest::Impl>(
                     request,
+                    move(form),
                     move(responderPromise),
                     aliveToken_
                 )
