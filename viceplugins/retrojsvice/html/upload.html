@@ -5,20 +5,20 @@
 body {
     overflow: hidden;
 }
-input {
-    position: absolute;
-}
 .file {
+    position: absolute;
     top: 10px;
     left: 10px;
 }
 .cancel {
+    position: absolute;
     top: 60px;
     height: 40px;
     width: 150px;
     left: 0px;
 }
 .upload {
+    position: absolute;
     top: 60px;
     height: 40px;
     width: 150px;
@@ -33,12 +33,14 @@ window.onload = function() {
 </script>
 </head>
 <body>
-<form method="POST" action="%-pathPrefix-%/upload/upload/" enctype="multipart/form-data">
+<form method="POST" action="%-pathPrefix-%/upload/" enctype="multipart/form-data">
 <input type="file" class="file" name="file">
+<input type="hidden" name="mode" value="upload">
 <input type="hidden" name="csrftoken" value="%-csrfToken-%">
 <input type="submit" class="upload" value="Upload">
 </form>
-<form method="POST" action="%-pathPrefix-%/upload/cancel/">
+<form method="POST" action="%-pathPrefix-%/upload/">
+<input type="hidden" name="mode" value="cancel">
 <input type="hidden" name="csrftoken" value="%-csrfToken-%">
 <input type="submit" class="cancel" value="Cancel">
 </form>

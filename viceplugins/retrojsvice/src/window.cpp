@@ -194,13 +194,8 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
         return;
     }
 
-    if(method == "POST" && path == "/upload/upload/") {
+    if(method == "POST" && path == "/upload/") {
         handleUploadPostRequest_(mce, request);
-        return;
-    }
-
-    if(method == "POST" && path == "/upload/cancel/") {
-        handleUploadCancelRequest_(mce, request);
         return;
     }
 
@@ -887,24 +882,22 @@ void Window::handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request) {
         return;
     }
 
-    request->sendHTMLResponse(
-        200, writeUploadCompleteHTML, {programName_}
-    );
-}
+    string mode = request->getFormParam("mode");
+    if(mode == "upload") {
+        request->sendHTMLResponse(
+            200, writeUploadCompleteHTML, {programName_}
+        );
+    } else if(mode == "cancel") {
+        if(inFileUploadMode_) {
+            selfCancelFileUpload_(mce);
+        }
 
-void Window::handleUploadCancelRequest_(MCE, shared_ptr<HTTPRequest> request) {
-    if(request->getFormParam("csrftoken") != uploadCSRFToken_) {
-        request->sendTextResponse(403, "ERROR: Invalid CSRF token\n");
-        return;
+        request->sendHTMLResponse(
+            200, writeUploadCancelHTML, {programName_}
+        );
+    } else {
+        request->sendTextResponse(400, "ERROR: Invalid request parameters");
     }
-
-    if(inFileUploadMode_) {
-        selfCancelFileUpload_(mce);
-    }
-
-    request->sendHTMLResponse(
-        200, writeUploadCancelHTML, {programName_}
-    );
 }
 
 void Window::handleCloseRequest_(
