@@ -887,6 +887,8 @@ void Window::handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request) {
         if(inFileUploadMode_) {
             shared_ptr<FileUpload> file = request->getFormFile("file");
             if(file) {
+                completeFileUpload_(mce, file);
+
                 request->sendHTMLResponse(
                     200, writeUploadCompleteHTML, {programName_}
                 );
@@ -971,6 +973,17 @@ void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {
 
     iframeQueue_.push(iframe);
     imageCompressor_->setIframeSignal(mce, ImageCompressor::IframeSignalTrue);
+}
+
+void Window::completeFileUpload_(MCE, shared_ptr<FileUpload> file) {
+    REQUIRE(!closed_);
+    REQUIRE(inFileUploadMode_);
+
+    inFileUploadMode_ = false;
+    notifyViewChanged();
+
+    REQUIRE(eventHandler_);
+    eventHandler_->onWindowUploadFile(handle_, file);
 }
 
 void Window::selfCancelFileUpload_(MCE) {

@@ -16,14 +16,33 @@ private:
     string path_;
 };
 
-class FileUpload;
+class FileUpload {
+SHARED_ONLY_CLASS(FileUpload);
+private:
+    class Impl;
+
+public:
+    // Private constructor.
+    FileUpload(CKey, shared_ptr<Impl> impl);
+
+    ~FileUpload();
+
+    const string& path();
+
+private:
+    shared_ptr<Impl> impl_;
+
+    friend class UploadStorage;
+};
 
 // Shared storage for file uploads that deduplicates files that have the same
 // name and content. UploadStorages and FileUploads are thread-safe.
-class UploadStorage {
+class UploadStorage : public enable_shared_from_this<UploadStorage> {
 SHARED_ONLY_CLASS(UploadStorage);
 public:
     UploadStorage(CKey);
+
+    ~UploadStorage();
 
     // Returns the file upload object if the reading the file from dataStream
     // succeeds (badbit is not raised and no exceptions are thrown). Otherwise,
@@ -32,23 +51,11 @@ public:
 
 private:
     shared_ptr<TempDir> tempDir_;
+    atomic<uint64_t> nextIdx_;
+    mutex mutex_;
+    map<pair<string, string>, weak_ptr<FileUpload::Impl>> files_;
 
     friend class FileUpload;
-};
-
-class FileUpload {
-SHARED_ONLY_CLASS(FileUpload);
-public:
-    // Private constructor.
-    FileUpload(CKey, CKey);
-
-    const string& path();
-
-private:
-    shared_ptr<UploadStorage> storage_;
-    string path_;
-
-    friend class UploadStorage;
 };
 
 }

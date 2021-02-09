@@ -5,23 +5,7 @@
 
 namespace retrojsvice {
 
-class FileUpload {
-SHARED_ONLY_CLASS(FileUpload);
-public:
-    FileUpload(CKey, string path) {
-        path_ = path;
-    }
-    ~FileUpload() {
-        INFO_LOG("DESTROYED");
-    }
-
-    string path() {
-        return path_;
-    }
-
-private:
-    string path_;
-};
+class FileUpload;
 
 class WindowEventHandler {
 public:
@@ -166,6 +150,7 @@ private:
 
     void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
+    void completeFileUpload_(MCE, shared_ptr<FileUpload> file);
     void selfCancelFileUpload_(MCE);
 
     string programName_;

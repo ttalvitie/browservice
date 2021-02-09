@@ -3,6 +3,7 @@
 #include "download.hpp"
 #include "html.hpp"
 #include "secrets.hpp"
+#include "upload.hpp"
 
 namespace retrojsvice {
 

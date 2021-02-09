@@ -56,6 +56,7 @@ using std::mt19937;
 using std::multimap;
 using std::mutex;
 using std::optional;
+using std::ofstream;
 using std::ostream;
 using std::pair;
 using std::promise;
