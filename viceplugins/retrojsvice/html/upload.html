@@ -12,17 +12,22 @@ body {
 }
 .cancel {
     position: absolute;
-    top: 60px;
+    top: 80px;
     height: 40px;
-    width: 150px;
+    width: 175px;
     left: 0px;
 }
 .upload {
     position: absolute;
-    top: 60px;
+    top: 80px;
     height: 40px;
-    width: 150px;
-    left: 150px;
+    width: 175px;
+    left: 175px;
+}
+.msg {
+    position: absolute;
+    top: 45px;
+    left: 10px;
 }
 </style>
 <script type="text/javascript">
@@ -30,10 +35,15 @@ window.onload = function() {
     document.forms[0].elements[0].focus();
     document.forms[0].elements[0].select();
 };
+
+function onUpload() {
+    document.forms[2].innerHTML = "<span class=\"msg\">Uploading...</span>";
+    return true;
+}
 </script>
 </head>
 <body>
-<form method="POST" action="%-pathPrefix-%/upload/" enctype="multipart/form-data">
+<form method="POST" action="%-pathPrefix-%/upload/" enctype="multipart/form-data" onsubmit="return onUpload()">
 <input type="file" class="file" name="file" onchange="document.forms[0].elements[1].value = document.forms[0].elements[0].value">
 <input type="hidden" name="filename" value="">
 <input type="hidden" name="mode" value="upload">
@@ -45,5 +55,6 @@ window.onload = function() {
 <input type="hidden" name="csrftoken" value="%-csrfToken-%">
 <input type="submit" class="cancel" value="Cancel">
 </form>
+<form></form>
 </body>
 </html>
