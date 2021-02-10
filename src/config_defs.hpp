@@ -4,7 +4,8 @@
     CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
-    CONF_FOREACH_OPT_ITEM(windowLimit)
+    CONF_FOREACH_OPT_ITEM(windowLimit) \
+    CONF_FOREACH_OPT_ITEM(chromiumArgs)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -89,5 +90,66 @@ CONF_DEF_OPT_INFO(windowLimit) {
     }
     bool validate(int val) {
         return val >= 1;
+    }
+};
+
+CONF_DEF_OPT_INFO(chromiumArgs) {
+    const char* name = "chromium-args";
+    const char* valSpec = "NAME(=VAL),...";
+    string desc() {
+        return "comma-separated extra arguments to be forwarded to Chromium";
+    }
+    string defaultValStr() {
+        return "default empty";
+    }
+    vector<pair<string, optional<string>>> defaultVal() {
+        return vector<pair<string, optional<string>>>();
+    }
+    optional<vector<pair<string, optional<string>>>> parse(string str) {
+        if(str.empty()) {
+            return vector<pair<string, optional<string>>>();
+        }
+
+        optional<vector<pair<string, optional<string>>>> empty;
+        vector<pair<string, optional<string>>> ret;
+
+        size_t start = 0;
+        while(true) {
+            size_t end = start;
+            while(end != str.size() && str[end] != ',') {
+                ++end;
+            }
+
+            size_t eq = start;
+            while(eq != end && str[eq] != '=') {
+                ++eq;
+            }
+
+            string name;
+            optional<string> value;
+            if(eq == end) {
+                name = str.substr(start, end - start);
+            } else {
+                name = str.substr(start, eq - start);
+                value = str.substr(eq + 1, end - eq - 1);
+            }
+
+            for(int i = 0; i < 2; ++i) {
+                if(!name.empty() && name[0] == '-') {
+                    name = name.substr(1);
+                }
+            }
+            if(name.empty()) {
+                return empty;
+            }
+
+            ret.emplace_back(name, value);
+
+            if(end == str.size()) {
+                break;
+            }
+            start = end + 1;
+        }
+        return ret;
     }
 };

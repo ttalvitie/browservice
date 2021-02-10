@@ -57,6 +57,14 @@ public:
     ) override {
         commandLine->AppendSwitch("disable-smooth-scrolling");
         commandLine->AppendSwitchWithValue("use-gl", "desktop");
+
+        for(const pair<string, optional<string>>& arg : globals->config->chromiumArgs) {
+            if(arg.second) {
+                commandLine->AppendSwitchWithValue(arg.first, *arg.second);
+            } else {
+                commandLine->AppendSwitch(arg.first);
+            }
+        }
     }
 
     // CefBrowserProcessHandler:
