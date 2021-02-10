@@ -51,7 +51,6 @@ public:
     // The shared_ptr must expire when storage_->mutex_ is locked.
     ~Impl() {
         REQUIRE(storage_->files_.erase(hash_));
-
         unlinkFile(path_);
     }
 
@@ -144,10 +143,11 @@ shared_ptr<FileUpload> UploadStorage::upload(
 
     string hash = hasher.digestToHex(hasher.digest());
 
-    shared_ptr<FileUpload::Impl> impl;
+    shared_ptr<FileUpload> ret;
     {
         lock_guard<mutex> lock(mutex_);
         auto it = files_.find(hash);
+        shared_ptr<FileUpload::Impl> impl;
         if(it == files_.end()) {
             impl = FileUpload::Impl::create(
                 shared_from_this(),
@@ -161,8 +161,9 @@ shared_ptr<FileUpload> UploadStorage::upload(
             REQUIRE(impl);
             unlinkFile(path);
         }
+        ret = FileUpload::create(impl);
     }
-    return FileUpload::create(impl);
+    return ret;
 }
 
 string extractUploadFilename(string src) {
