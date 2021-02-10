@@ -359,6 +359,7 @@ void BrowserArea::widgetMouseDoubleClickEvent_(int x, int y) {
 
     CefMouseEvent event = createMouseEvent(x, y, eventModifiers_);
     browser_->GetHost()->SendMouseClickEvent(event, MBT_LEFT, false, 2);
+    browser_->GetHost()->SendMouseClickEvent(event, MBT_LEFT, true, 2);
 }
 
 void BrowserArea::widgetMouseWheelEvent_(int x, int y, int delta) {
