@@ -26,28 +26,6 @@ const string& TempDir::path() {
 
 namespace {
 
-string sanitizeName(string src) {
-    string ret;
-
-    for(char c : src) {
-        if(c == '/' || c == '\\') {
-            ret = "";
-        } else if(c != '\0') {
-            ret.push_back(c);
-        }
-    }
-    if(ret.size() > (size_t)200) {
-        ret.resize((size_t)200);
-    }
-    if(ret == "." || ret == "..") {
-        ret += "_file.bin";
-    }
-    if(ret.empty()) {
-        ret = "file.bin";
-    }
-    return ret;
-}
-
 void destroyFile(const string& dirPath, const string& filePath) {
     if(unlink(filePath.c_str())) {
         WARNING_LOG("Unlinking temporary file ", filePath, " failed");
@@ -109,6 +87,10 @@ const string& FileUpload::path() {
     return impl_->filePath_;
 }
 
+const string& FileUpload::name() {
+    return impl_->name_;
+}
+
 UploadStorage::UploadStorage(CKey) {
     tempDir_ = TempDir::create();
     nextIdx_.store((uint64_t)1, memory_order_relaxed);
@@ -122,12 +104,10 @@ shared_ptr<FileUpload> UploadStorage::upload(
     string name,
     istream& dataStream
 ) {
-    name = sanitizeName(move(name));
-
     uint64_t idx = nextIdx_.fetch_add(1, memory_order_relaxed);
 
     string dirPath = tempDir_->path() + "/" + toString(idx);
-    string filePath = dirPath + "/" + name;
+    string filePath = dirPath + "/file";
 
     REQUIRE(mkdir(dirPath.c_str(), 0777) == 0);
     ofstream fp;
@@ -196,6 +176,18 @@ shared_ptr<FileUpload> UploadStorage::upload(
         }
     }
     return FileUpload::create(impl);
+}
+
+string extractUploadFilename(string src) {
+    string ret;
+    for(char c : src) {
+        if(c == '/' || c == '\\') {
+            ret = "";
+        } else if(c != '\0') {
+            ret.push_back(c);
+        }
+    }
+    return ret;
 }
 
 }

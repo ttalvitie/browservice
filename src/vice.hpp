@@ -47,17 +47,28 @@ private:
     friend class ViceContext;
 };
 
+class TempDir;
+
 class ViceFileUpload {
 SHARED_ONLY_CLASS(ViceFileUpload);
 public:
-    ViceFileUpload(CKey, string path, function<void()> cleanup);
+    ViceFileUpload(CKey,
+        shared_ptr<TempDir> tempDir,
+        uint64_t uploadIdx,
+        string name,
+        string srcPath,
+        function<void()> srcCleanup
+    );
     ~ViceFileUpload();
 
     string path();
 
 private:
-    string path_;
-    function<void()> cleanup_;
+    shared_ptr<TempDir> tempDir_;
+    string linkDir_;
+    string linkPath_;
+    string srcPath_;
+    function<void()> srcCleanup_;
 };
 
 // Implementations of these event handlers may NOT call functions of ViceContext
@@ -192,6 +203,9 @@ private:
     uint64_t nextWindowHandle_;
     set<uint64_t> openWindows_;
     set<uint64_t> uploadModeWindows_;
+
+    shared_ptr<TempDir> uploadTempDir_;
+    uint64_t nextUploadIdx_;
 };
 
 }

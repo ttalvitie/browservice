@@ -6,6 +6,7 @@
 #include "http.hpp"
 #include "key.hpp"
 #include "secrets.hpp"
+#include "upload.hpp"
 
 namespace retrojsvice {
 
@@ -887,7 +888,11 @@ void Window::handleUploadPostRequest_(MCE, shared_ptr<HTTPRequest> request) {
         if(inFileUploadMode_) {
             shared_ptr<FileUpload> file = request->getFormFile("file");
             if(file) {
-                completeFileUpload_(mce, file);
+                string name = request->getFormParam("filename");
+                if(name.empty()) {
+                    name = file->name();
+                }
+                completeFileUpload_(mce, move(name), file);
 
                 request->sendHTMLResponse(
                     200, writeUploadCompleteHTML, {programName_}
@@ -975,15 +980,19 @@ void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {
     imageCompressor_->setIframeSignal(mce, ImageCompressor::IframeSignalTrue);
 }
 
-void Window::completeFileUpload_(MCE, shared_ptr<FileUpload> file) {
+void Window::completeFileUpload_(MCE,
+    string name, shared_ptr<FileUpload> file
+) {
     REQUIRE(!closed_);
     REQUIRE(inFileUploadMode_);
 
     inFileUploadMode_ = false;
     notifyViewChanged();
 
+    name = extractUploadFilename(move(name));
+
     REQUIRE(eventHandler_);
-    eventHandler_->onWindowUploadFile(handle_, file);
+    eventHandler_->onWindowUploadFile(handle_, move(name), file);
 }
 
 void Window::selfCancelFileUpload_(MCE) {

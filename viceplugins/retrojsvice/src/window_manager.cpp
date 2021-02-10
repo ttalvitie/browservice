@@ -275,8 +275,10 @@ FORWARD_WINDOW_EVENT(
     onWindowManagerNavigate(window, direction)
 )
 FORWARD_WINDOW_EVENT(
-    onWindowUploadFile(uint64_t window, shared_ptr<FileUpload> file),
-    onWindowManagerUploadFile(window, file)
+    onWindowUploadFile(
+        uint64_t window, string name, shared_ptr<FileUpload> file
+    ),
+    onWindowManagerUploadFile(window, move(name), file)
 )
 FORWARD_WINDOW_EVENT(
     onWindowCancelFileUpload(uint64_t window),

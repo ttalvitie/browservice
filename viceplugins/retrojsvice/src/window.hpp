@@ -41,7 +41,7 @@ public:
     virtual void onWindowNavigate(uint64_t window, int direction) = 0;
 
     virtual void onWindowUploadFile(
-        uint64_t window, shared_ptr<FileUpload> file
+        uint64_t window, string name, shared_ptr<FileUpload> file
     ) = 0;
     virtual void onWindowCancelFileUpload(uint64_t window) = 0;
 };
@@ -150,7 +150,7 @@ private:
 
     void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
-    void completeFileUpload_(MCE, shared_ptr<FileUpload> file);
+    void completeFileUpload_(MCE, string name, shared_ptr<FileUpload> file);
     void selfCancelFileUpload_(MCE);
 
     string programName_;

@@ -749,7 +749,7 @@ FORWARD_WINDOW_EVENT(
 )
 
 void Context::onWindowManagerUploadFile(
-    uint64_t window, shared_ptr<FileUpload> file
+    uint64_t window, string name, shared_ptr<FileUpload> file
 ) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
@@ -761,6 +761,7 @@ void Context::onWindowManagerUploadFile(
     callbacks_.uploadFile(
         callbackData_,
         window,
+        name.c_str(),
         path.c_str(),
         [](void* cleanupData) {
             shared_ptr<FileUpload>* file = (shared_ptr<FileUpload>*)cleanupData;

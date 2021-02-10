@@ -290,11 +290,13 @@ struct VicePluginAPI_Callbacks {
      * cleanup function with given cleanupData as the only argument from any thread at any time. The
      * program must call the cleanup function exactly once, and it must do so before the context is
      * destroyed. The program may only read the file; it must not modify, move or remove it. The
-     * last component of the path may be used by the program as the file name.
+     * name argument specifies the suggested name for the file, which may be an arbitrary
+     * null-terminated string; the program may sanitize the name or even ignore it.
      */
     void (*uploadFile)(
         void*,
         uint64_t window,
+        const char* name,
         const char* path,
         void (*cleanup)(void*),
         void* cleanupData

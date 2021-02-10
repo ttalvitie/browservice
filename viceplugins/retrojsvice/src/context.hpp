@@ -125,7 +125,7 @@ public:
         uint64_t window, int direction
     ) override;
     virtual void onWindowManagerUploadFile(
-        uint64_t window, shared_ptr<FileUpload> file
+        uint64_t window, string name, shared_ptr<FileUpload> file
     ) override;
     virtual void onWindowManagerCancelFileUpload(uint64_t window) override;
 

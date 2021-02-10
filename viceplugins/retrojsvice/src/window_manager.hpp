@@ -44,7 +44,7 @@ public:
     virtual void onWindowManagerNavigate(uint64_t window, int direction) = 0;
 
     virtual void onWindowManagerUploadFile(
-        uint64_t window, shared_ptr<FileUpload> file
+        uint64_t window, string name, shared_ptr<FileUpload> file
     ) = 0;
     virtual void onWindowManagerCancelFileUpload(uint64_t window) = 0;
 };
@@ -129,7 +129,7 @@ public:
     virtual void onWindowLoseFocus(uint64_t window) override;
     virtual void onWindowNavigate(uint64_t window, int direction) override;
     virtual void onWindowUploadFile(
-        uint64_t window, shared_ptr<FileUpload> file
+        uint64_t window, string name, shared_ptr<FileUpload> file
     ) override;
     virtual void onWindowCancelFileUpload(uint64_t window) override;
 

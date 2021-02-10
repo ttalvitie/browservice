@@ -28,6 +28,7 @@ public:
     ~FileUpload();
 
     const string& path();
+    const string& name();
 
 private:
     shared_ptr<Impl> impl_;
@@ -57,5 +58,7 @@ private:
 
     friend class FileUpload;
 };
+
+string extractUploadFilename(string src);
 
 }

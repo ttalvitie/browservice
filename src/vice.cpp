@@ -2,11 +2,15 @@
 
 #include "download_manager.hpp"
 #include "globals.hpp"
+#include "temp_dir.hpp"
 #include "widget.hpp"
 
 #include "../vice_plugin_api.h"
 
 #include <dlfcn.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 namespace browservice {
 
@@ -234,17 +238,65 @@ vector<VicePlugin::OptionDocsItem> VicePlugin::getOptionDocs() {
     return ret;
 }
 
-ViceFileUpload::ViceFileUpload(CKey, string path, function<void()> cleanup) {
-    path_ = path;
-    cleanup_ = cleanup;
+namespace {
+
+string sanitizeFilename(string src) {
+    string ret;
+
+    for(char c : src) {
+        if(c != '/' && c != '\\' && c != '\0') {
+            ret.push_back(c);
+        }
+    }
+    if(ret.size() > (size_t)200) {
+        ret.resize((size_t)200);
+    }
+    if(ret == "." || ret == "..") {
+        ret += "_file.bin";
+    }
+    if(ret.empty()) {
+        ret = "file.bin";
+    }
+    return ret;
+}
+
+}
+
+ViceFileUpload::ViceFileUpload(CKey,
+    shared_ptr<TempDir> tempDir,
+    uint64_t uploadIdx,
+    string name,
+    string srcPath,
+    function<void()> srcCleanup
+) {
+    REQUIRE_UI_THREAD();
+
+    name = sanitizeFilename(move(name));
+
+    tempDir_ = tempDir;
+    srcPath_ = move(srcPath);
+    srcCleanup_ = move(srcCleanup);
+
+    linkDir_ = tempDir_->path() + "/" + toString(uploadIdx);
+    linkPath_ = linkDir_ + "/" + name;
+
+    REQUIRE(mkdir(linkDir_.c_str(), 0777) == 0);
+    REQUIRE(symlink(srcPath_.c_str(), linkPath_.c_str()) == 0);
 }
 
 ViceFileUpload::~ViceFileUpload() {
-    cleanup_();
+    if(unlink(linkPath_.c_str()) != 0) {
+        WARNING_LOG("Unlinking temporary symlink ", linkPath_, " failed");
+    }
+    if(rmdir(linkDir_.c_str()) != 0) {
+        WARNING_LOG("Deleting temporary directory ", linkDir_, " failed");
+    }
+
+    srcCleanup_();
 }
 
 string ViceFileUpload::path() {
-    return path_;
+    return linkPath_;
 }
 
 namespace {
@@ -324,6 +376,9 @@ ViceContext::ViceContext(CKey, CKey,
     shutdownCompleteFlag_.store(false);
 
     nextWindowHandle_ = 1;
+
+    uploadTempDir_ = TempDir::create();
+    nextUploadIdx_ = (uint64_t)1;
 }
 
 ViceContext::~ViceContext() {
@@ -504,6 +559,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
 
     callbacks.uploadFile = CTX_CALLBACK(void, (
         uint64_t window,
+        const char* name,
         const char* path,
         void (*cleanup)(void*),
         void* cleanupData
@@ -519,7 +575,13 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         };
         self->eventHandler_->onViceContextUploadFile(
             window,
-            ViceFileUpload::create(path, cleanupFunc)
+            ViceFileUpload::create(
+                self->uploadTempDir_,
+                self->nextUploadIdx_++,
+                name,
+                path,
+                cleanupFunc
+            )
         );
     });
 

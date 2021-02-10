@@ -34,7 +34,8 @@ window.onload = function() {
 </head>
 <body>
 <form method="POST" action="%-pathPrefix-%/upload/" enctype="multipart/form-data">
-<input type="file" class="file" name="file">
+<input type="file" class="file" name="file" onchange="document.forms[0].elements[1].value = document.forms[0].elements[0].value">
+<input type="hidden" name="filename" value="">
 <input type="hidden" name="mode" value="upload">
 <input type="hidden" name="csrftoken" value="%-csrfToken-%">
 <input type="submit" class="upload" value="Upload">
