@@ -155,6 +155,12 @@ string helpLine(OptInfo<T, Var> info) {
     return helpLine(info.name, info.valSpec, info.desc(), info.defaultValStr());
 }
 
+const map<string, string> optAliases = {
+    {"default-quality", "vice-opt-default-quality"},
+    {"http-auth", "vice-opt-http-auth"},
+    {"http-listen-addr", "vice-opt-http-listen-addr"}
+};
+
 }
 
 class Config::Src {
@@ -226,6 +232,15 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
             }
             if(eqSignPos < (int)arg.size()) {
                 string optName = arg.substr(2, eqSignPos - 2);
+
+                auto aliasIt = optAliases.find(optName);
+                if(aliasIt != optAliases.end()) {
+                    WARNING_LOG(
+                        "The command line option --", optName,
+                        " is a deprecated alias for --", aliasIt->second
+                    );
+                    optName = aliasIt->second;
+                }
 
                 if(!optsSeen.insert(optName).second) {
                     cerr << "ERROR: Option --" << optName << " specified multiple times\n";
