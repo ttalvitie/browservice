@@ -4,8 +4,6 @@
 
 #include "include/cef_version.h"
 
-#include <Poco/Net/HTTPServer.h>
-
 namespace browservice {
 
 const char* BrowserviceVersion = "0.9.1.2";
