@@ -26,7 +26,7 @@ extern "C" {
  * The GUI shown by the plugin consists of multiple windows; the program supplies the plugin with
  * updates to a resizable 24-bit RGB image view for each window, and the plugin sends the keyboard
  * and mouse events concerning the windows back to the program. In addition, passing clipboard text
- * and file downloads through the plugin is supported by the API.
+ * and file downloads and uploads through the plugin is supported by the API.
  *
  * Typical API usage for API version 1000000:
  *
@@ -65,14 +65,21 @@ extern "C" {
  *
  *       - The plugin opens and closes windows using the createWindow and closeWindow callbacks.
  *
+ *       - The program opens popup windows from existing windows (if allowed by the plugin) and
+ *         closes windows by calling vicePluginAPI_createPopupWindow and vicePluginAPI_closeWindow.
+ *
  *       - The program supplies the window view image for each open window whenever the plugin
  *         requests it using the fetchWindowImage callback. The program notifies the plugin whenever
  *         the window image has changed by calling vicePluginAPI_notifyWindowViewChanged.
  *
  *       - The plugin sends various events to the program by calling callbacks, such as
  *           - window view resize requests with the resizeWindow callback,
- *           - user keyboard and mouse input events using TODO.
+ *           - input events using mouse*, key* and loseFocus callbacks.
  *         The program processes these events in an application-specific manner.
+ *
+ *       - Communication for other features, such as file uploads and downloads, mouse cursor
+ *         updates, clipboard text, optional plugin navigation buttons and program widgets; see the
+ *         function documentation comments for details.
  *
  *  5. To initiate the shutdown of the plugin context, the program must call vicePluginAPI_shutdown.
  *     When the plugin has shut down, it will respond by calling the shutdownComplete callback (in
