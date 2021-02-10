@@ -2,8 +2,6 @@
 
 #include <Poco/Crypto/DigestEngine.h>
 
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 namespace retrojsvice {
@@ -26,12 +24,9 @@ const string& TempDir::path() {
 
 namespace {
 
-void destroyFile(const string& dirPath, const string& filePath) {
-    if(unlink(filePath.c_str())) {
-        WARNING_LOG("Unlinking temporary file ", filePath, " failed");
-    }
-    if(rmdir(dirPath.c_str())) {
-        WARNING_LOG("Deleting temporary directory ", dirPath, " failed");
+void unlinkFile(const string& path) {
+    if(unlink(path.c_str())) {
+        WARNING_LOG("Unlinking temporary file ", path, " failed");
     }
 }
 
@@ -44,30 +39,26 @@ public:
         CKey,
         shared_ptr<UploadStorage> storage,
         string name,
-        string dirPath,
-        string filePath,
+        string path,
         string hash
     ) {
         storage_ = storage;
         name_ = move(name);
-        dirPath_ = move(dirPath);
-        filePath_ = move(filePath);
+        path_ = move(path);
         hash_ = move(hash);
     }
 
     // The shared_ptr must expire when storage_->mutex_ is locked.
     ~Impl() {
-        pair<string, string> key(name_, hash_);
-        REQUIRE(storage_->files_.erase(key));
+        REQUIRE(storage_->files_.erase(hash_));
 
-        destroyFile(dirPath_, filePath_);
+        unlinkFile(path_);
     }
 
 private:
     shared_ptr<UploadStorage> storage_;
     string name_;
-    string dirPath_;
-    string filePath_;
+    string path_;
     string hash_;
 
     friend class FileUpload;
@@ -84,7 +75,7 @@ FileUpload::~FileUpload() {
 }
 
 const string& FileUpload::path() {
-    return impl_->filePath_;
+    return impl_->path_;
 }
 
 const string& FileUpload::name() {
@@ -106,12 +97,10 @@ shared_ptr<FileUpload> UploadStorage::upload(
 ) {
     uint64_t idx = nextIdx_.fetch_add(1, memory_order_relaxed);
 
-    string dirPath = tempDir_->path() + "/" + toString(idx);
-    string filePath = dirPath + "/file";
+    string path = tempDir_->path() + "/" + toString(idx);
 
-    REQUIRE(mkdir(dirPath.c_str(), 0777) == 0);
     ofstream fp;
-    fp.open(filePath);
+    fp.open(path);
     REQUIRE(fp.good());
 
     Poco::Crypto::DigestEngine hasher("SHA256");
@@ -148,31 +137,29 @@ shared_ptr<FileUpload> UploadStorage::upload(
     REQUIRE(fp.good());
 
     if(!ok) {
-        destroyFile(dirPath, filePath);
+        unlinkFile(path);
         shared_ptr<FileUpload> empty;
         return empty;
     }
 
     string hash = hasher.digestToHex(hasher.digest());
-    pair<string, string> key(name, hash);
 
     shared_ptr<FileUpload::Impl> impl;
     {
         lock_guard<mutex> lock(mutex_);
-        auto it = files_.find(key);
+        auto it = files_.find(hash);
         if(it == files_.end()) {
             impl = FileUpload::Impl::create(
                 shared_from_this(),
                 move(name),
-                move(dirPath),
-                move(filePath),
-                move(hash)
+                move(path),
+                hash
             );
-            REQUIRE(files_.emplace(key, impl).second);
+            REQUIRE(files_.emplace(hash, impl).second);
         } else {
             impl = it->second.lock();
             REQUIRE(impl);
-            destroyFile(dirPath, filePath);
+            unlinkFile(path);
         }
     }
     return FileUpload::create(impl);

@@ -37,7 +37,7 @@ private:
 };
 
 // Shared storage for file uploads that deduplicates files that have the same
-// name and content. UploadStorages and FileUploads are thread-safe.
+// content. UploadStorages and FileUploads are thread-safe.
 class UploadStorage : public enable_shared_from_this<UploadStorage> {
 SHARED_ONLY_CLASS(UploadStorage);
 public:
@@ -54,7 +54,7 @@ private:
     shared_ptr<TempDir> tempDir_;
     atomic<uint64_t> nextIdx_;
     mutex mutex_;
-    map<pair<string, string>, weak_ptr<FileUpload::Impl>> files_;
+    map<string, weak_ptr<FileUpload::Impl>> files_;
 
     friend class FileUpload;
 };
