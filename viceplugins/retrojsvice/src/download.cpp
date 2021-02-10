@@ -75,13 +75,14 @@ string sanitizeFilename(const string& filename) {
 }
 
 optional<uint64_t> getFileSize(const string& path) {
+    optional<uint64_t> empty;
     ifstream fp;
     fp.open(path, ifstream::binary);
-    if(!fp.good()) return {};
+    if(!fp.good()) return empty;
     fp.seekg(0, ifstream::end);
-    if(!fp.good()) return {};
+    if(!fp.good()) return empty;
     uint64_t size = fp.tellg();
-    if(!fp.good()) return {};
+    if(!fp.good()) return empty;
     fp.close();
     return size;
 }
