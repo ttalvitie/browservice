@@ -57,9 +57,9 @@ extern "C" {
  *         specifically permitted by the documentation). Instead, it is synchronized to the program
  *         event loop as follows: The plugin notifies the program when it has events to process by
  *         calling the special eventNotify callback in any thread at any time. After a notification
- *         like this, the program should call vicePlugin_pumpEvents as soon as possible. The
- *         implementation of vicePlugin_pumpEvents may then advance the task queue of the plugin and
- *         call the callbacks provided by the program directly.
+ *         like this, the program should call vicePluginAPI_pumpEvents as soon as possible. The
+ *         implementation of vicePluginAPI_pumpEvents may then advance the task queue of the plugin
+ *         and call the callbacks provided by the program directly.
  *
  *     While the plugin context is running, the following kinds of things happen:
  *
@@ -83,7 +83,7 @@ extern "C" {
  *
  *  5. To initiate the shutdown of the plugin context, the program must call vicePluginAPI_shutdown.
  *     When the plugin has shut down, it will respond by calling the shutdownComplete callback (in
- *     vicePlugin_pumpEvents). After this, the program and the plugin must immediately cease all
+ *     vicePluginAPI_pumpEvents). After this, the program and the plugin must immediately cease all
  *     communication for this context.
  *
  *  6. The program destroys the plugin context using vicePluginAPI_destroyContext.
