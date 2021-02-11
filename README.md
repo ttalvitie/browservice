@@ -200,6 +200,8 @@ There are many other useful command line options in Browservice. To get a list o
 release/bin/browservice --help
 ```
 
+To run Browservice, you only need the contents of the `release/bin` directory; if you need to save disk space, you can delete the rest of the files.
+
 ## Usage
 
 To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
