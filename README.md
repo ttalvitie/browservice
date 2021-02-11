@@ -45,7 +45,7 @@ This idea of using a proxy to render the browser view into images has been used 
 
 ### Security
 
-It is always a security risk to work with untrusted data (such as web page content) with outdated software. If we assume that the proxy server is kept up to date, Browservice significantly reduces the attack surface, because the untrusted data reaches the client only as images that were compressed by Browservice or file downloads or clipboard data that were explicitly requested by the user. Not even the URLs of the accessed pages are sent to the client browser as text because the address bar is rendered on the server side (Browservice is not a real HTTP proxy). Despite the reduced attack surface, security is not guaranteed, and you should make sure to really know what you are doing before using Browservice for security-critical web browsing.
+It is always a security risk to work with untrusted data (such as web page content) with outdated software. If we assume that the proxy server is kept up to date, and the connection between the proxy server and the client is made through a trusted isolated network, Browservice significantly reduces the attack surface, because the untrusted data reaches the client only as images that were compressed by Browservice or file downloads or clipboard data that were explicitly requested by the user. Not even the URLs of the accessed pages are sent to the client browser as text because the address bar is rendered on the server side (Browservice is not a real HTTP proxy). Despite the reduced attack surface, security is not guaranteed, and you should make sure to really know what you are doing before using Browservice for security-critical web browsing.
 
 ## Supported client browsers
 
