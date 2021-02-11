@@ -23,6 +23,7 @@ The current features of Browservice include the following:
 - Control bar with an artisanal UI drawn in a style that blends well into a Windows 9x/NT4/IE6 environment
 - Address field implemented entirely on the proxy server
 - File downloads (with confirmation button on the control bar for security)
+- File uploads
 - Text search within the current page
 - Image compression quality selectable on the fly (JPEG compression levels or PNG)
 - Native Back/Forward/Refresh buttons on the client forwarded to the browser
@@ -34,7 +35,6 @@ The following features are currently missing but could be implemented in future 
 - Less hackish keyboard handling (different browsers send very different JavaScript key events)
 - Integration with web search engines
 - Bookmarks
-- File uploads
 - Page zooming
 
 ## Background
