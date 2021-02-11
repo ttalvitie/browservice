@@ -96,7 +96,7 @@ A Browservice setup consists of two machines; the Browservice proxy server and t
 
 For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Internet Explorer available for the system is typically the fastest.
 
-Only the proxy server needs an Internet connection; the client only needs to be able to connect to the proxy server. It is advisable not to expose the client directly to the Internet. One possible network setup is to have two interfaces on the proxy server: one for Internet and another for the local connection to the client. If both machines are virtual machines, host-only adapters can be used for the local connection between the proxy server and the client.
+Only the proxy server needs an Internet connection; the client only needs to be able to connect to the proxy server. It is advisable not to expose the client directly to the Internet. One possible network setup is to have two interfaces on the proxy server: one for Internet and another for the local connection to the client. If both machines are virtual machines, host-only adapters can be used for the local connection between the proxy server and the client. The proxy server should be configured to only accept connections from the isolated local network between the proxy and client machines to prevent unauthorized users from gaining access to the browser.
 
 Here is one example of a mobile hardware Browservice setup that has shown to be working well: The proxy server is running on a Raspberry Pi 4 (fitted with a fan and a battery) that connects to the Internet using Wi-Fi. The client is an IBM ThinkPad T40 running Windows NT 4.0 and Internet Explorer 6. The client connects to the proxy server through a direct patch cable between the Ethernet ports of the machines; the Ethernet interfaces are configured with static IPs in the same private subnet.
 
@@ -211,6 +211,8 @@ After this, you can browse the web as you typically would, as long as you rememb
 Some notes that might be useful:
 
 - If the page offers a file for download, you need to explicitly accept it by clicking the Download button that appears in the control bar (after making sure that you trust the page). Browservice then downloads the file into a temporary directory on the proxy server, after which it forwards the file to the client browser.
+
+- If the page requests a file upload, a separate upload popup window is automatically opened. After uploading the file in the upload window, the file will be placed in a temporary directory and forwarded to the page requesting the upload. Due to technical limitations, all the uploaded files will be stored in the temporary directory until the browser window is closed.
 
 - If the page opens a popup window, Browservice automatically opens a new client browser window for it. However, creating this window might be blocked by the popup blocker of the client browser, and you may need to explicitly allow it or change the blocker settings.
 
