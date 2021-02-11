@@ -229,8 +229,8 @@ Some notes that might be useful:
 ![Screenshot of Internet Explorer 6 on Windows NT 4.0 showing Hacker News](fig/nt4_ie6_hackernews.png)
 Browsing Hacker News using Windows NT 4.0 and Internet Explorer 6.
 
-![Screenshot of Internet Explorer 4.0 on Windows NT 4.0 uploading files to Google Drive](fig/nt4_ie4_driveupload.png)
-Uploading files to Google Drive using Windows NT 4.0 and Internet Explorer 4.0.
+![Screenshot of Internet Explorer 6 on Windows NT 4.0 uploading files to Google Drive](fig/nt4_ie6_driveupload.png)
+Uploading files to Google Drive using Windows NT 4.0 and Internet Explorer 6.
 
 ![Screenshot of Internet Explorer 4.0 on Windows for Workgroups 3.11 showing Hacker News](fig/w311_ie4_cloud.png)
 Managing Google Cloud virtual machines using Windows for Workgroups 3.11 and Internet Explorer 4.0.
