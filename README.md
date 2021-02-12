@@ -10,7 +10,7 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
-2021-02-XX: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization: the code for the view logic has been split off to a plugin. This should make it easier to add support for native Browservice clients in the future by replacing the default plugin with another plugin that implements the same [plugin API](#vice-plugin-api).
+2021-02-XX: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization in which the code has been split into two parts that communicate through a [plugin C API](#vice-plugin-api); this should make it easier to add support for native clients in the future.
 
 ## How does it work?
 
