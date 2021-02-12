@@ -47,6 +47,24 @@ mousebox.onmouseup = function(event) {
 };
 
 };
+
+function upload() {
+    var upload = document.getElementById("upload");
+    var reader = new FileReader();
+    reader.onloadend = function() {
+        var name = upload.value.split("/").pop().split("\\").pop();
+        if(name != "file.bin") return;
+        data = new Uint8Array(reader.result);
+        if(data.length != 65536) return;
+        var sum = 0;
+        for(var i = 0; i < data.length; ++i) {
+            sum += data[i];
+        }
+        if(sum != 8369113) return;
+        document.getElementById("uploadresult").value = "Success";
+    };
+    reader.readAsArrayBuffer(upload.files[0]);
+}
 </script>
 </head>
 <body>
@@ -99,7 +117,8 @@ INCLUDING THIS LINE<br>
 <li>Close the window/tab.
 </ul>
 <li>Click the browser viewport, and then Alt+Tab out of this window (to some other window; you might need to open it first). Return to this window without using Alt+Tab. Click the field <input> and check that you can write lowercase and uppercase letters and characters ! and @.
-<li>Click <a href="file.bin">this link</a>. A Download button should appear in the control bar. Press it. After this, your browser should get a native file download of a file with name "file.bin". Download it, and check that the size of the downloaded file is exactly 64 kilobytes (65536 bytes).
+<li>Click <a href="file.bin">this link</a>. A Download button should appear in the control bar. Press it. After this, your browser should get a native file download of a file with name "file.bin". Download the file.
+<li>Upload the file you just downloaded here: <input type="file" id="upload" onchange="upload()"> If the upload worked correctly (file name of the uploaded file is "file.bin" and it contains the correct data), the following box should contain the word "Success": <input id="uploadresult">
 <li>Cycle through the full range of available qualities using the Quality selector in the control bar. The range should include numbers from 10 to 100 and PNG as the highest value. The page should be visible and somewhat legible on all quality values. On 16-bit versions of Internet Explorer that do not support PNG, the PNG option should be missing.
 <li>Check that the YouTube video below starts playing when clicked, and that you can pause, seek and start playing again. While playing and mouse is moved outside the video, the video controls should disappear. Fullscreen mode does not need to work.<br>
 <iframe width="560" height="315" src="https://www.youtube.com/embed/oI6wJbMKjoQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
