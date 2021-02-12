@@ -8,6 +8,10 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 [See more screenshots](#screenshots)
 
+## News
+
+2021-02-XX: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization: the code for the view logic has been split off to a plugin. This should make it easier to add support for native Browservice clients in the future by replacing the default plugin with another plugin that implements the same [plugin API](#vice-plugin-api).
+
 ## How does it work?
 
 The Browservice server uses [CEF (Chromium Embedded Framework)](https://bitbucket.org/chromiumembedded/cef) to run a Chromium browser instance that renders the browser view into an off-screen buffer. The browser view, combined with a control UI bar, is then compressed as a PNG or JPEG image and served to the client using an embedded HTTP server. The client browser runs a JavaScript application that requests and shows the images. It also listens for keyboard and mouse events from the user and forwards them to the proxy by including them in the URLs of the image requests.
@@ -223,6 +227,10 @@ Some notes that might be useful:
 - If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
 
 - By default, Browservice can't play videos that use proprietary audio/video codecs such as H264 and AAC, as the prebuilt CEF distribution [provided by Spotify](http://opensource.spotify.com/cefbuilds/index.html) does not include them. To add the codecs, build the CEF distribution by following the [instructions](https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md) with the options `proprietary_codecs=true ffmpeg_branding=Chrome` appended to the environment variable `GN_DEFINES`. After this, you should repeat the Browservice installation process with one exception: prior to running `setup_cef.sh`, copy the CEF distribution produced by the build to `cef.tar.bz2` instead of using `download_cef.sh` to download it. Note that building CEF takes a lot of time, memory and disk space. Also note that you may have to pay license fees to use the proprietary codecs legally, as they are encumbered by patents.
+
+## Vice plugin API
+
+Starting from release 0.9.2.0, Browservice consists of two parts: the main Browservice program, which manages the web browser using CEF, and the Retrojsvice plugin, which serves the browser GUI to the clients (historical browsers) over HTTP. These two parts communicate using the vice plugin C API, which is documented in the header file [vice_plugin_api.h](vice_plugin_api.h). Both of these parts can be reused independently. By replacing the vice plugin, the way the Browservice web browser is accessed can be changed; for example, servers for native clients for historical operating systems could be implemented as vice plugins. The Retrojsvice plugin could be used to show the GUI of any program that has support for vice plugins. In Browservice, the vice plugin selected using the `--vice-plugin` command line option; all the command options that start with `--vice-opt-` are sent directly to the vice plugin.
 
 ## Screenshots
 
