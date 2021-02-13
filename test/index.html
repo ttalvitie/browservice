@@ -53,7 +53,7 @@ function upload() {
     var reader = new FileReader();
     reader.onloadend = function() {
         var name = upload.value.split("/").pop().split("\\").pop();
-        if(name != "file.bin") return;
+        if(name.toLowerCase() != "file.bin") return;
         data = new Uint8Array(reader.result);
         if(data.length != 65536) return;
         var sum = 0;
