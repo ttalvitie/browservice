@@ -164,7 +164,7 @@ WRAP_CTX_API(shutdown)
 API_EXPORT void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx)
 WRAP_CTX_API(pumpEvents)
 
-API_EXPORT bool vicePluginAPI_createPopupWindow(
+API_EXPORT int vicePluginAPI_createPopupWindow(
     VicePluginAPI_Context* ctx,
     uint64_t parentWindow,
     uint64_t popupWindow,

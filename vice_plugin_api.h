@@ -383,6 +383,7 @@ enum VicePluginAPI_MouseCursor {
      */
     VICE_PLUGIN_API_MOUSE_CURSOR_HUGE_UNUSED = 1000000000
 };
+typedef enum VicePluginAPI_MouseCursor VicePluginAPI_MouseCursor;
 
 /**************************************
  * General context handling functions *
@@ -477,13 +478,13 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 
 /* Create a popup window with handle popupWindow (a nonzero uint64_t value that is not already in
  * use by a window) from an existing window parentWindow. To allow the creation of the window, the
- * function must return true and ignore msg; the created window begins its existence immediately.
- * The created window works in exactly the same way as windows created by the plugin, and it exists
- * independently of parentWindow. To deny the creation of the window, the function must return false
- * and if msg is not NULL, it must point *msg to a short human-readable string describing the reason
- * for the denial; the calling program is responsible for freeing the string using free().
+ * function must return 1 and ignore msg; the created window begins its existence immediately. The
+ * created window works in exactly the same way as windows created by the plugin, and it exists
+ * independently of parentWindow. To deny the creation of the window, the function must return 0 and
+ * if msg is not NULL, it must point *msg to a short human-readable string describing the reason for
+ * the denial; the calling program is responsible for freeing the string using free().
  */
-bool vicePluginAPI_createPopupWindow(
+int vicePluginAPI_createPopupWindow(
     VicePluginAPI_Context* ctx,
     uint64_t parentWindow,
     uint64_t popupWindow,

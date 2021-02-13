@@ -627,9 +627,12 @@ bool ViceContext::requestCreatePopup(
 
     char* msgC = nullptr;
 
-    if(plugin_->apiFuncs_->createPopupWindow(
-        ctx_, parentWindow, popupWindow, &msgC)
-    ) {
+    int result = plugin_->apiFuncs_->createPopupWindow(
+        ctx_, parentWindow, popupWindow, &msgC
+    );
+    REQUIRE(result == 0 || result == 1);
+
+    if(result == 1) {
         REQUIRE(msgC == nullptr);
         REQUIRE(openWindows_.insert(popupWindow).second);
         return true;

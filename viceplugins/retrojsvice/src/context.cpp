@@ -355,7 +355,7 @@ void Context::pumpEvents() {
     threadRunningPumpEvents = false;
 }
 
-bool Context::createPopupWindow(
+int Context::createPopupWindow(
     uint64_t parentWindow,
     uint64_t popupWindow,
     char** msg
@@ -365,12 +365,12 @@ bool Context::createPopupWindow(
 
     string reason = "Unknown reason";
     if(windowManager_->createPopupWindow(parentWindow, popupWindow, reason)) {
-        return true;
+        return 1;
     } else {
         if(msg != nullptr) {
             *msg = createMallocString(reason);
         }
-        return false;
+        return 0;
     }
 }
 

@@ -45,7 +45,7 @@ public:
 
     void pumpEvents();
 
-    bool createPopupWindow(
+    int createPopupWindow(
         uint64_t parentWindow,
         uint64_t popupWindow,
         char** msg
