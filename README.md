@@ -31,7 +31,7 @@ The current features of Browservice include the following:
 - Text search within the current page
 - Image compression quality selectable on the fly (JPEG compression levels or PNG)
 - Native Back/Forward/Refresh buttons on the client forwarded to the browser
-- Custom multithreaded implementation of PNG compression (standalone library; you just need `src/png.hpp` and `src/png.cpp`)
+- Custom multithreaded implementation of PNG compression (standalone library; you just need `png.hpp` and `png.cpp` from directory `viceplugins/retrojsvice/src`)
 
 The following features are currently missing but could be implemented in future versions:
 
