@@ -2,15 +2,15 @@
 
 A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
+## News
+
+2021-02-13: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization in which the code has been split into two parts that communicate through a [plugin C API](#vice-plugin-api); this should make it easier to add support for native clients in the future.
+
 ![Screenshot of IE6 showing an Instagram page through Browservice](fig/nt4_ie6_instagram.png)
 
 [<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
 
 [See more screenshots](#screenshots)
-
-## News
-
-2021-02-13: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization in which the code has been split into two parts that communicate through a [plugin C API](#vice-plugin-api); this should make it easier to add support for native clients in the future.
 
 ## How does it work?
 
