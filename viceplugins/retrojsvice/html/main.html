@@ -59,6 +59,9 @@ function detectBrowserQuirks() {
     if(ua.indexOf("firefox") != -1) {
         useOnDOMMouseScroll = true;
     }
+    if(ua.indexOf("classilla") != -1) {
+        bodyOverflowHiddenNotSupported = true;
+    }
     var msie = ua.indexOf("msie ");
     if(msie > 0) {
         var ver = parseInt(ua.substring(msie + 5, ua.indexOf(".", msie)), 10);
