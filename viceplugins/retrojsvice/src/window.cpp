@@ -33,6 +33,7 @@ Window::Window(CKey,
     shared_ptr<SecretGenerator> secretGen,
     string programName,
     bool allowPNG,
+    bool useNativeNavigation,
     int initialQuality
 ) {
     REQUIRE_API_THREAD();
@@ -45,6 +46,7 @@ Window::Window(CKey,
 
     programName_ = move(programName);
     allowPNG_ = allowPNG;
+    useNativeNavigation_ = useNativeNavigation;
     initialQuality_ = initialQuality;
     secretGen_ = secretGen;
     snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
@@ -107,8 +109,12 @@ void Window::handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request) {
         return;
     }
 
+    string path = pathPrefix_ + "/";
+    if(useNativeNavigation_) {
+        path += "prev/";
+    }
     request->sendHTMLResponse(
-        200, writeNewWindowHTML, {programName_, pathPrefix_}
+        200, writeNewWindowHTML, {programName_, path}
     );
 }
 
@@ -210,13 +216,15 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
         }
     }
 
-    if(method == "GET" && path == "/prev/") {
-        handlePrevPageRequest_(mce, request);
-        return;
-    }
-    if(method == "GET" && path == "/next/") {
-        handleNextPageRequest_(mce, request);
-        return;
+    if(useNativeNavigation_) {
+        if(method == "GET" && path == "/prev/") {
+            handlePrevPageRequest_(mce, request);
+            return;
+        }
+        if(method == "GET" && path == "/next/") {
+            handleNextPageRequest_(mce, request);
+            return;
+        }
     }
 
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");
@@ -234,6 +242,7 @@ shared_ptr<Window> Window::createPopup(uint64_t popupHandle) {
         secretGen_,
         programName_,
         allowPNG_,
+        useNativeNavigation_,
         imageCompressor_->quality()
     );
 
@@ -741,7 +750,7 @@ void Window::navigate_(MCE, int direction) {
 void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
-    if(preMainVisited_) {
+    if(!useNativeNavigation_ || preMainVisited_) {
         ++curMainIdx_;
 
         if(curMainIdx_ > 1 && !prevNextClicked_) {

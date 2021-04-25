@@ -297,6 +297,18 @@ bool hasPNGSupport(string userAgent) {
         userAgent.find("windows 16-bit") == string::npos;
 }
 
+bool hasNativeNavigationSupport(string userAgent) {
+    for(char& c : userAgent) {
+        c = tolower(c);
+    }
+    return
+        userAgent.find("msie ") == string::npos ||
+        (
+            userAgent.find("mac ") == string::npos &&
+            userAgent.find("macintosh") == string::npos
+        );
+}
+
 }
 
 void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
@@ -316,12 +328,14 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
             REQUIRE(!windows_.count(handle));
 
             bool allowPNG = hasPNGSupport(request->userAgent());
+            bool useNativeNavigation = hasNativeNavigationSupport(request->userAgent());
             shared_ptr<Window> window = Window::create(
                 shared_from_this(),
                 handle,
                 secretGen_,
                 programName_,
                 allowPNG,
+                useNativeNavigation,
                 defaultQuality_
             );
             REQUIRE(windows_.emplace(handle, window).second);

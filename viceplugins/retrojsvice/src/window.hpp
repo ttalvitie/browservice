@@ -64,6 +64,7 @@ public:
         shared_ptr<SecretGenerator> secretGen,
         string programName,
         bool allowPNG,
+        bool useNativeNavigation,
         int initialQuality
     );
     ~Window();
@@ -155,6 +156,7 @@ private:
 
     string programName_;
     bool allowPNG_;
+    bool useNativeNavigation_;
     int initialQuality_;
     shared_ptr<SecretGenerator> secretGen_;
 
