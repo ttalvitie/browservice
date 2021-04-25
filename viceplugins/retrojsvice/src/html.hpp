@@ -6,7 +6,7 @@ namespace retrojsvice {
 
 struct NewWindowHTMLData {
     const string& programName;
-    const string& pathPrefix;
+    const string& path;
 };
 void writeNewWindowHTML(ostream& out, const NewWindowHTMLData& data);
 
