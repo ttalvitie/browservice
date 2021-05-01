@@ -329,6 +329,10 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
 
             bool allowPNG = hasPNGSupport(request->userAgent());
             bool useNativeNavigation = hasNativeNavigationSupport(request->userAgent());
+
+            INFO_LOG("DEBUG: User agent: ", request->userAgent());
+            INFO_LOG("DEBUG: Using native navigation: ", useNativeNavigation);
+
             shared_ptr<Window> window = Window::create(
                 shared_from_this(),
                 handle,

@@ -568,6 +568,8 @@ void Context::onHTTPServerRequest(shared_ptr<HTTPRequest> request) {
     REQUIRE_API_THREAD();
     REQUIRE(state_ == Running);
 
+    INFO_LOG("DEBUG: Request: ", request->path());
+
     if(!httpAuthCredentials_.empty()) {
         optional<string> reqCred = request->getBasicAuthCredentials();
         if(!reqCred || !passwordsEqual(*reqCred, httpAuthCredentials_)) {
