@@ -5,16 +5,16 @@ set -o pipefail
 
 msg() { cat <<< "$@" 1>&2; }
 
-if [ -z "$1" ] || ! [ -z "$2" ]
+if [ -z "${1}" ] || ! [ -z "${2}" ]
 then
         msg "Invalid arguments"
-        msg "Usage: <source bin directory>"
+        msg "Usage: collect_appimage.sh <source bin directory>"
         exit 1
 fi
 
 SRCDIR="${1}"
 
-if [ "$UID" -eq "0" ]
+if [ "${UID}" -eq "0" ]
 then
     msg "ERROR: running as root"
     exit 1
@@ -47,7 +47,7 @@ fi
 TMPDIR="$(mktemp -d)"
 
 onexit() {
-    msg "Creating AppImage failed"
+    msg "Collecting AppImage failed"
     rm -rf -- "${TMPDIR}" > /dev/null 2>&1 || true
 }
 trap onexit EXIT
