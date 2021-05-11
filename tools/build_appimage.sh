@@ -23,6 +23,7 @@ then
     QEMU="qemu-system-x86_64"
     QEMU_ARCH_OPTS=""
     QEMU_DISK_DEV="virtio-blk-pci"
+    QEMU_9P_DEV="virtio-9p-pci"
 elif [ "${ARCH}" == "i386" ]
 then
     UBUNTU_ARCH="i386"
@@ -31,6 +32,7 @@ then
     QEMU="qemu-system-i386"
     QEMU_ARCH_OPTS=""
     QEMU_DISK_DEV="virtio-blk-pci"
+    QEMU_9P_DEV="virtio-9p-pci"
 elif [ "${ARCH}" == "armhf" ]
 then
     UBUNTU_ARCH="armhf"
@@ -39,6 +41,7 @@ then
     QEMU="qemu-system-arm"
     QEMU_ARCH_OPTS="-machine virt"
     QEMU_DISK_DEV="virtio-blk-device"
+    QEMU_9P_DEV="virtio-9p-device"
 elif [ "${ARCH}" == "aarch64" ]
 then
     UBUNTU_ARCH="arm64"
@@ -47,6 +50,7 @@ then
     QEMU="qemu-system-aarch64"
     QEMU_ARCH_OPTS="-machine virt -cpu cortex-a57"
     QEMU_DISK_DEV="virtio-blk-device"
+    QEMU_9P_DEV="virtio-9p-device"
 else
     msg "ERROR: unsupported architecture '${ARCH}'"
     exit 1
@@ -84,37 +88,38 @@ onexit() {
 }
 trap onexit EXIT
 
-mkdir "${TMPDIR}/wrk"
+mkdir "${TMPDIR}/shared"
 mkdir "${TMPDIR}/vm"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "$(git rev-parse --show-toplevel)" > /dev/null
-git archive --output="${TMPDIR}/wrk/src.tar" "${SRC}"
+git archive --output="${TMPDIR}/shared/src.tar" "${SRC}"
 popd > /dev/null
 
 msg "Downloading Ubuntu Bionic Cloud VM image"
-wget "https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-${UBUNTU_ARCH}.img" -O "${TMPDIR}/vm/root.img"
+wget "https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-${UBUNTU_ARCH}.img" -O "${TMPDIR}/vm/disk.img"
 wget "https://cloud-images.ubuntu.com/bionic/current/unpacked/bionic-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_KERNEL}" -O "${TMPDIR}/vm/kernel"
 wget "https://cloud-images.ubuntu.com/bionic/current/unpacked/bionic-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_INITRD}" -O "${TMPDIR}/vm/initrd"
 
 msg "Creating cloud-init user data image"
 cat << EOF > "${TMPDIR}/vm/user-data"
 #!/bin/bash
-df -h > /moikka
-echo "root:asdfqwer" | chpasswd
+mkdir /shared
+mount -t 9p -o trans=virtio shared /shared -oversion=9p2000.L
+echo SUCCESS > /shared/result
 poweroff
 EOF
 cloud-localds "${TMPDIR}/vm/user-data.img" "${TMPDIR}/vm/user-data"
 
 msg "Enlarging VM disk image"
-qemu-img resize "${TMPDIR}/vm/root.img" +20G
+qemu-img resize "${TMPDIR}/vm/disk.img" +20G
 
 msg "Starting Ubuntu in QEMU"
 "${QEMU}" \
     -m 2048 \
     -smp 2 \
     ${QEMU_ARCH_OPTS} \
-    -drive "file=${TMPDIR}/vm/root.img,format=qcow2,if=none,id=hd0" \
+    -drive "file=${TMPDIR}/vm/disk.img,format=qcow2,if=none,id=hd0" \
     -drive "file=${TMPDIR}/vm/user-data.img,format=raw,if=none,id=hd1" \
     -device "${QEMU_DISK_DEV},drive=hd0,serial=hd0" \
     -device "${QEMU_DISK_DEV},drive=hd1,serial=hd1" \
@@ -123,7 +128,11 @@ msg "Starting Ubuntu in QEMU"
     -kernel "${TMPDIR}/vm/kernel" \
     -initrd "${TMPDIR}/vm/initrd" \
     -append "rw root=/dev/disk/by-id/virtio-hd0-part1" \
+    -fsdev "local,path=${TMPDIR}/shared,security_model=mapped-xattr,id=shared,writeout=immediate,fmode=0644,dmode=0755" \
+    -device "${QEMU_9P_DEV},fsdev=shared,mount_tag=shared" \
     -display none
+
+cat "${TMPDIR}/shared/result"
 
 trap - EXIT
 rm -rf -- "${TMPDIR}" > /dev/null 2>&1
