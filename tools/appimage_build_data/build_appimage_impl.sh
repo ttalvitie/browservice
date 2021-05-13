@@ -4,7 +4,7 @@ set -e
 set -o pipefail
 shopt -s expand_aliases
 
-msg() { cat <<< "$@" 1>&2; }
+msg() { cat <<< "--- $@" 1>&2; }
 
 onexit() {
     msg "Building AppImage failed"

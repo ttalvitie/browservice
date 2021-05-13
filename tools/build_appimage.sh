@@ -3,7 +3,7 @@
 set -e
 set -o pipefail
 
-msg() { cat <<< "$@" 1>&2; }
+msg() { cat <<< "--- $@" 1>&2; }
 
 if [ -z "${1}" ] || [ -z "${2}" ] || ! [ -z "${3}" ]
 then
@@ -25,6 +25,7 @@ then
     QEMU_ARCH_OPTS=""
     QEMU_DISK_DEV="virtio-blk-pci"
     QEMU_9P_DEV="virtio-9p-pci"
+    QEMU_NET_DEV="virtio-net-pci"
 elif [ "${ARCH}" == "i386" ]
 then
     UBUNTU_ARCH="i386"
@@ -34,6 +35,7 @@ then
     QEMU_ARCH_OPTS=""
     QEMU_DISK_DEV="virtio-blk-pci"
     QEMU_9P_DEV="virtio-9p-pci"
+    QEMU_NET_DEV="virtio-net-pci"
 elif [ "${ARCH}" == "armhf" ]
 then
     UBUNTU_ARCH="armhf"
@@ -43,6 +45,7 @@ then
     QEMU_ARCH_OPTS="-machine virt"
     QEMU_DISK_DEV="virtio-blk-device"
     QEMU_9P_DEV="virtio-9p-device"
+    QEMU_NET_DEV="virtio-net-device"
 elif [ "${ARCH}" == "aarch64" ]
 then
     UBUNTU_ARCH="arm64"
@@ -52,6 +55,7 @@ then
     QEMU_ARCH_OPTS="-machine virt -cpu cortex-a57"
     QEMU_DISK_DEV="virtio-blk-device"
     QEMU_9P_DEV="virtio-9p-device"
+    QEMU_NET_DEV="virtio-net-device"
 else
     msg "ERROR: unsupported architecture '${ARCH}'"
     exit 1
@@ -63,11 +67,13 @@ then
     exit 1
 fi
 
+pushd "${SCRIPT_DIR}" &> /dev/null
 if [ "$(git rev-parse --is-inside-work-tree)" != "true" ]
 then
-    msg "ERROR: cwd is not a git work tree"
+    msg "ERROR: script is not inside a git work tree"
     exit 1
 fi
+popd &> /dev/null
 
 if ! "${QEMU}" --version &> /dev/null
 then
@@ -102,11 +108,13 @@ trap onexit EXIT
 msg "Populating shared directory for QEMU machine"
 mkdir "${TMPDIR}/shared"
 touch "${TMPDIR}/shared/log"
-cp "${SCRIPT_DIR}/gen_appimage_data/build_appimage_impl.sh" "${TMPDIR}/shared"
+cp "${SCRIPT_DIR}/appimage_build_data/build_appimage_impl.sh" "${TMPDIR}/shared"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
+pushd "${SCRIPT_DIR}" &> /dev/null
 pushd "$(git rev-parse --show-toplevel)" &> /dev/null
 git archive --output="${TMPDIR}/shared/src.tar" "${SRC}"
+popd &> /dev/null
 popd &> /dev/null
 
 msg "Downloading Ubuntu Bionic Cloud VM image"
@@ -120,22 +128,22 @@ cat << EOF > "${TMPDIR}/vm/user-data"
 #!/bin/bash
 mkdir /shared
 mount -t 9p -o trans=virtio shared /shared -oversion=9p2000.L
-echo "Machine started up successfully" >> /shared/log
+echo "--- Machine started up successfully" >> /shared/log
 chmod 700 /shared/build_appimage_impl.sh
 if /shared/build_appimage_impl.sh &>> /shared/log
 then
     touch /shared/success
 fi
-echo "Shutting down machine" >> /shared/log
+echo "--- Shutting down the machine" >> /shared/log
 poweroff
 EOF
 cloud-localds "${TMPDIR}/vm/user-data.img" "${TMPDIR}/vm/user-data"
 
 msg "Enlarging VM disk image"
-qemu-img resize "${TMPDIR}/vm/disk.img" +20G
+qemu-img resize "${TMPDIR}/vm/disk.img" +20G &> /dev/null
 
 msg "Starting Ubuntu in QEMU"
-echo "Starting up the machine" >> "${TMPDIR}/shared/log"
+echo "--- Starting up the machine" >> "${TMPDIR}/shared/log"
 "${QEMU}" \
     -m 2048 \
     -smp 2 \
@@ -145,7 +153,7 @@ echo "Starting up the machine" >> "${TMPDIR}/shared/log"
     -device "${QEMU_DISK_DEV},drive=hd0,serial=hd0" \
     -device "${QEMU_DISK_DEV},drive=hd1,serial=hd1" \
     -netdev user,id=net0 \
-    -device virtio-net-pci,netdev=net0 \
+    -device "${QEMU_NET_DEV},netdev=net0" \
     -kernel "${TMPDIR}/vm/kernel" \
     -initrd "${TMPDIR}/vm/initrd" \
     -append "rw root=/dev/disk/by-id/virtio-hd0-part1" \
