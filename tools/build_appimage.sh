@@ -105,10 +105,15 @@ onexit() {
 }
 trap onexit EXIT
 
+NAME="browservice-${SRC//\//-}-${ARCH}.AppImage"
+msg "Building ${NAME}"
+
 msg "Populating shared directory for QEMU machine"
 mkdir "${TMPDIR}/shared"
 touch "${TMPDIR}/shared/log"
 cp "${SCRIPT_DIR}/appimage_build_data/build_appimage_impl.sh" "${TMPDIR}/shared"
+cp "${SCRIPT_DIR}/appimage_build_data/browservice.png" "${TMPDIR}/shared/browservice.png"
+cp "${SCRIPT_DIR}/appimage_build_data/browservice.desktop" "${TMPDIR}/shared/browservice.desktop"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "${SCRIPT_DIR}" &> /dev/null
@@ -130,7 +135,7 @@ mkdir /shared
 mount -t 9p -o trans=virtio shared /shared -oversion=9p2000.L
 echo "--- Machine started up successfully" >> /shared/log
 chmod 700 /shared/build_appimage_impl.sh
-if /shared/build_appimage_impl.sh &>> /shared/log
+if /shared/build_appimage_impl.sh "${ARCH}" "${NAME}" &>> /shared/log
 then
     touch /shared/success
 fi
@@ -185,7 +190,8 @@ msg "------------------------------------"
 msg "QEMU machine shut down successfully, checking build result"
 [ -e "${TMPDIR}/shared/success" ]
 
-msg "Build completed successfully, TODO"
+msg "Writing output to ${NAME}"
+cp ${TMPDIR}/shared/${NAME}" "${NAME}"
 
 trap - EXIT
 rm -rf -- "${TMPDIR}" &> /dev/null 2>&1
