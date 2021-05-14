@@ -58,7 +58,7 @@ apt-get update
 apt-get upgrade -y
 
 msg "Installing Browservice dependencies"
-apt-get install -y wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0
+apt-get install -y wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils
 
 msg "Downloading CEF"
 U bash -c "echo progress=bar:force:noscroll > /home/user/.wgetrc"
@@ -69,6 +69,9 @@ U ./setup_cef.sh
 
 msg "Compiling Browservice"
 U make -j2 release
+
+msg "Stripping Browservice binaries"
+U strip release/bin/browservice release/bin/retrojsvice.so release/bin/libEGL.so release/bin/libGLESv2.so
 
 msg "Collecting binary dependencies"
 cd /home/user
@@ -93,6 +96,9 @@ U rm deps/libc.so.*
 U bash -c "echo \$(ls deps | sort) > deplist"
 msg "Filtered binary dependencies: $(cat deplist)"
 
+msg "Stripping binary dependencies"
+U strip deps/*
+
 msg "Preparing AppDir"
 U mkdir AppDir
 U ln -s usr/bin/browservice AppDir/AppRun
@@ -108,14 +114,11 @@ U mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
 U cp /shared/browservice.png AppDir/usr/share/icons/hicolor/32x32/apps
 U mkdir -p AppDir/usr/share/applications
 U cp /shared/browservice.desktop AppDir/usr/share/applications/browservice.desktop
-U mkdir -p AppDir/usr/bin
-U cp -r browservice/release/bin/* AppDir/usr/bin
-U mkdir -p AppDir/usr/lib
-U cp deps/* AppDir/usr/lib
+U mv browservice/release/bin AppDir/usr/bin
+U mv deps AppDir/usr/lib
 
 U "./${APPIMAGETOOL}" AppDir "${NAME}"
 cp "${NAME}" "/shared/${NAME}"
-touch /share/success
 
 trap - EXIT
 msg "Success"

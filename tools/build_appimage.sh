@@ -191,7 +191,7 @@ msg "QEMU machine shut down successfully, checking build result"
 [ -e "${TMPDIR}/shared/success" ]
 
 msg "Writing output to ${NAME}"
-cp ${TMPDIR}/shared/${NAME}" "${NAME}"
+cp "${TMPDIR}/shared/${NAME}" "${NAME}"
 
 trap - EXIT
 rm -rf -- "${TMPDIR}" &> /dev/null 2>&1
