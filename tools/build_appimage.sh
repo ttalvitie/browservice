@@ -114,6 +114,7 @@ touch "${TMPDIR}/shared/log"
 cp "${SCRIPT_DIR}/appimage_build_data/build_appimage_impl.sh" "${TMPDIR}/shared"
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.png" "${TMPDIR}/shared/browservice.png"
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.desktop" "${TMPDIR}/shared/browservice.desktop"
+cp "${SCRIPT_DIR}/appimage_build_data/run_browservice" "${TMPDIR}/shared/run_browservice"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "${SCRIPT_DIR}" &> /dev/null

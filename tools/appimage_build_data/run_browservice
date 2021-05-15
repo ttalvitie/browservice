@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export PATH="${APPDIR}/usr/bin:${PATH}"
+exec "${APPDIR}/opt/browservice/browservice" "$@"
