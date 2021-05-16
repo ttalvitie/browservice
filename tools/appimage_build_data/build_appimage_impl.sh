@@ -59,6 +59,7 @@ apt-get upgrade -y
 
 msg "Installing dependencies"
 apt-get install -y wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils patchelf
+apt-get install -y fonts-beng-extra fonts-dejavu-core fonts-deva-extra fonts-droid-fallback fonts-freefont-ttf fonts-gargi fonts-gubbi fonts-gujr-extra fonts-guru-extra fonts-kacst fonts-kacst-one fonts-kalapi fonts-khmeros-core fonts-lao fonts-liberation fonts-liberation2 fonts-lklug-sinhala fonts-lohit-beng-assamese fonts-lohit-beng-bengali fonts-lohit-deva fonts-lohit-gujr fonts-lohit-guru fonts-lohit-knda fonts-lohit-mlym fonts-lohit-orya fonts-lohit-taml fonts-lohit-taml-classical fonts-lohit-telu fonts-nakula fonts-navilu fonts-noto-cjk fonts-noto-color-emoji fonts-noto-mono fonts-opensymbol fonts-orya-extra fonts-pagul fonts-sahadeva fonts-samyak-deva fonts-samyak-gujr fonts-samyak-mlym fonts-samyak-taml fonts-sarai fonts-sil-abyssinica fonts-sil-padauk fonts-smc-anjalioldlipi fonts-smc-chilanka fonts-smc-dyuthi fonts-smc-karumbi fonts-smc-keraleeyam fonts-smc-manjari fonts-smc-meera fonts-smc-rachana fonts-smc-raghumalayalamsans fonts-smc-suruma fonts-smc-uroob fonts-telu-extra fonts-tibetan-machine fonts-tlwg-garuda-ttf fonts-tlwg-kinnari-ttf fonts-tlwg-laksaman-ttf fonts-tlwg-loma-ttf fonts-tlwg-mono-ttf fonts-tlwg-norasi-ttf fonts-tlwg-purisa-ttf fonts-tlwg-sawasdee-ttf fonts-tlwg-typewriter-ttf fonts-tlwg-typist-ttf fonts-tlwg-typo-ttf fonts-tlwg-umpush-ttf fonts-tlwg-waree-ttf fonts-ubuntu gsfonts xfonts-base xfonts-encodings xfonts-scalable xfonts-utils
 
 msg "Downloading CEF"
 U bash -c "echo progress=bar:force:noscroll > /home/user/.wgetrc"
@@ -185,6 +186,15 @@ msg "Setting RPATH for helper executables"
 U patchelf --set-rpath '$ORIGIN/../lib' bin/Xvfb
 U patchelf --set-rpath '$ORIGIN/../lib' bin/xauth
 
+msg "Recording font copyright information"
+U mkdir doc
+for pkg in $((dpkg -S $(find /usr/share/fonts/ -type f) 2> /dev/null || true) | awk '{ print $1 }' | sort | uniq)
+do
+    pkg="${pkg%:}"
+    U mkdir "doc/${pkg}"
+    U cp "/usr/share/doc/${pkg}/copyright" "doc/${pkg}/copyright"
+done
+
 msg "Preparing AppDir"
 U mkdir AppDir
 U ln -s usr/bin/run_browservice AppDir/AppRun
@@ -205,6 +215,8 @@ U mv browservice/release/bin AppDir/opt/browservice
 U mv deps AppDir/usr/lib
 U mv bin AppDir/usr/bin
 U mv hack AppDir/usr/share/hack
+U mv doc AppDir/usr/share/doc
+U cp -r /usr/share/fonts AppDir/usr/share/fonts
 
 U "./${APPIMAGETOOL}" AppDir "${NAME}"
 cp "${NAME}" "/shared/${NAME}"
