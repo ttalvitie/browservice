@@ -1,4 +1,30 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+TMPDIR="$(mktemp -d)"
+
+onexit() {
+    rm -r -- "${TMPDIR}"
+}
+trap onexit EXIT
+
+mkdir "${TMPDIR}/etc"
+cp -r "${APPDIR}/etc/fonts" "${TMPDIR}/etc/fonts"
+mkdir -p "${TMPDIR}/var/cache/fontconfig"
+
+fontconfreplace() {
+    sed -i "s/${1//\//\\/}/${2//\//\\/}/g" "${TMPDIR}/etc/fonts/fonts.conf"
+}
+fontconfreplace "<dir>/usr/share/fonts</dir>" "<dir>${APPDIR}/usr/share/fonts</dir>"
+fontconfreplace "<dir>/usr/local/share/fonts</dir>" ""
+fontconfreplace "<dir prefix=\"xdg\">fonts</dir>" ""
+fontconfreplace "<dir>~/.fonts</dir>" ""
+fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>${TMPDIR}/var/cache/fontconfig</cachedir>"
+fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
+fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
 
 export PATH="${APPDIR}/usr/bin:${PATH}"
-exec "${APPDIR}/opt/browservice/browservice" "$@"
+export FONTCONFIG_PATH="${TMPDIR}/etc/fonts"
+"${APPDIR}/opt/browservice/browservice" "$@"

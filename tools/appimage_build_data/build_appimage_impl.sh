@@ -195,6 +195,10 @@ do
     U cp "/usr/share/doc/${pkg}/copyright" "doc/${pkg}/copyright"
 done
 
+msg "Preparing configuration directory"
+U mkdir etc
+U cp -Lr /etc/fonts etc/fonts
+
 msg "Preparing AppDir"
 U mkdir AppDir
 U ln -s usr/bin/run_browservice AppDir/AppRun
@@ -217,6 +221,7 @@ U mv bin AppDir/usr/bin
 U mv hack AppDir/usr/share/hack
 U mv doc AppDir/usr/share/doc
 U cp -r /usr/share/fonts AppDir/usr/share/fonts
+U mv etc AppDir/etc
 
 U "./${APPIMAGETOOL}" AppDir "${NAME}"
 cp "${NAME}" "/shared/${NAME}"
