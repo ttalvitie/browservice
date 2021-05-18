@@ -129,7 +129,6 @@ U rm deps/libm.so.*
 U rm deps/libpthread.so.*
 U rm deps/libresolv.so.*
 U rm deps/librt.so.*
-U rm deps/libselinux.so.*
 U rm deps/libstdc++.so.*
 
 U bash -c "echo \$(ls deps | sort) > deplist"
@@ -158,9 +157,7 @@ U cp /usr/bin/Xvfb /usr/bin/xauth /shared/run_browservice bin
 U chmod 755 bin/run_browservice
 
 msg "Setting up hack where Xvfb is binary patched to use fixed xkm file to manage without xkbcomp"
-POS="$(grep -FobUa '"%s%sxkbcomp" -w %d %s -xkm "%s" -em1 %s -emp %s -eml %s "%s%s.xkm"' bin/Xvfb)"
-POS="${POS%:\"%s%sxkbcomp\" -w %d %s -xkm \"%s\" -em1 %s -emp %s -eml %s \"%s%s.xkm\"}"
-echo -n 'IGNORED="%s%s"%d%s"%s"%s%s%s write_default_xkm.sh "%s%s.xkm"       ' | dd bs=1 of=bin/Xvfb seek="${POS}" conv=notrunc
+sed -i 's/"%s%sxkbcomp" -w %d %s -xkm "%s" -em1 %s -emp %s -eml %s "%s%s.xkm"/IGNORED="%s%s"%d%s"%s"%s%s%s write_default_xkm.sh "%s%s.xkm"       /' bin/Xvfb
 U tee bin/write_default_xkm.sh << EOF > /dev/null
 #!/bin/sh
 SCRIPTPATH="\$(readlink -f "\$0")"
