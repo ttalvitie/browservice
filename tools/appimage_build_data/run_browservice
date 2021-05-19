@@ -3,6 +3,16 @@
 set -e
 set -o pipefail
 
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+while [ -h "${SCRIPT_PATH}" ]
+do
+    SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" &> /dev/null && pwd)"
+    SCRIPT_PATH="$(readlink "${SCRIPT_PATH}")"
+    [[ ${SCRIPT_PATH} != /* ]] && SCRIPT_PATH="${SCRIPT_DIR}/${SCRIPT_PATH}"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "${SCRIPT_PATH}")" &> /dev/null && pwd)"
+ROOT="$(cd -P "${SCRIPT_DIR}/../.." &> /dev/null && pwd)"
+
 TMPDIR="$(mktemp -d)"
 
 onexit() {
@@ -11,13 +21,13 @@ onexit() {
 trap onexit EXIT
 
 mkdir "${TMPDIR}/etc"
-cp -r "${APPDIR}/etc/fonts" "${TMPDIR}/etc/fonts"
+cp -r "${ROOT}/etc/fonts" "${TMPDIR}/etc/fonts"
 mkdir -p "${TMPDIR}/var/cache/fontconfig"
 
 fontconfreplace() {
     sed -i "s/${1//\//\\/}/${2//\//\\/}/g" "${TMPDIR}/etc/fonts/fonts.conf"
 }
-fontconfreplace "<dir>/usr/share/fonts</dir>" "<dir>${APPDIR}/usr/share/fonts</dir>"
+fontconfreplace "<dir>/usr/share/fonts</dir>" "<dir>${ROOT}/usr/share/fonts</dir>"
 fontconfreplace "<dir>/usr/local/share/fonts</dir>" ""
 fontconfreplace "<dir prefix=\"xdg\">fonts</dir>" ""
 fontconfreplace "<dir>~/.fonts</dir>" ""
@@ -25,6 +35,6 @@ fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>${TMPDIR
 fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
 fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
 
-export PATH="${APPDIR}/usr/bin:${PATH}"
+export PATH="${ROOT}/usr/bin:${PATH}"
 export FONTCONFIG_PATH="${TMPDIR}/etc/fonts"
-"${APPDIR}/opt/browservice/browservice" "$@"
+"${ROOT}/opt/browservice/browservice" "$@"
