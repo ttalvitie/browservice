@@ -156,17 +156,21 @@ U mkdir bin
 U cp /usr/bin/Xvfb /usr/bin/xauth /shared/run_browservice bin
 U chmod 755 bin/run_browservice
 
-msg "Setting up hack where Xvfb is binary patched to use fixed xkm file to manage without xkbcomp"
-sed -i 's/"%s%sxkbcomp" -w %d %s -xkm "%s" -em1 %s -emp %s -eml %s "%s%s.xkm"/IGNORED="%s%s"%d%s"%s"%s%s%s write_default_xkm.sh "%s%s.xkm"       /' bin/Xvfb
-U tee bin/write_default_xkm.sh << EOF > /dev/null
-#!/bin/sh
-SCRIPTPATH="\$(readlink -f "\$0")"
-SCRIPTDIR="\$(dirname "\${SCRIPTPATH}")"
-cat "\${SCRIPTDIR}/../share/hack/default.xkm" > "\$1"
+msg "Setting up hacks to make Xvfb find the required files inside the AppDir"
+U sed -i 's/"%s%sxkbcomp" -w %d %s -xkm "%s" -em1 %s -emp %s -eml %s "%s%s.xkm"/IGNORED="%s%s"%d%s"%s"%s%s%s cp usr\/share\/hack\/xkm "%s%s.xkm"      /g' bin/Xvfb
+U sed -i 's/\/usr\/share\/X11\/xkb/usr\/\/share\/X11\/xkb/g' bin/Xvfb
+U sed -i 's/\/usr\/share\/fonts/usr\/\/share\/fonts/g' bin/Xvfb
+U sed -i 's/\/usr\/lib\/xorg/usr\/\/lib\/xorg/g' bin/Xvfb
+U mv bin/Xvfb bin/Xvfb.bin
+U tee bin/Xvfb << EOF > /dev/null
+#!/bin/bash
+cd "\$(dirname "\${BASH_SOURCE[0]}")"
+cd ../..
+exec usr/bin/Xvfb.bin "\$@"
 EOF
-U chmod +x bin/write_default_xkm.sh
+U chmod +x bin/Xvfb
 U mkdir hack
-U xkbcomp -xkm - hack/default.xkm << EOF
+U xkbcomp -xkm - hack/xkm << EOF
 xkb_keymap "default" {
     xkb_keycodes             { include "evdev+aliases(qwerty)" };
     xkb_types                { include "complete" };
@@ -177,10 +181,10 @@ xkb_keymap "default" {
 EOF
 
 msg "Stripping helper executables"
-U strip bin/Xvfb bin/xauth
+U strip bin/Xvfb.bin bin/xauth
 
 msg "Setting RPATH for helper executables"
-U patchelf --set-rpath '$ORIGIN/../lib' bin/Xvfb
+U patchelf --set-rpath '$ORIGIN/../lib' bin/Xvfb.bin
 U patchelf --set-rpath '$ORIGIN/../lib' bin/xauth
 
 msg "Recording font copyright information"
@@ -219,6 +223,10 @@ U mv hack AppDir/usr/share/hack
 U mv doc AppDir/usr/share/doc
 U cp -r /usr/share/fonts AppDir/usr/share/fonts
 U mv etc AppDir/etc
+U mkdir AppDir/usr/share/X11
+U cp -r /usr/share/X11/xkb AppDir/usr/share/X11/xkb
+U mkdir AppDir/usr/lib/xorg
+U cp /usr/lib/xorg/protocol.txt AppDir/usr/lib/xorg/protocol.txt
 
 U "./${APPIMAGETOOL}" AppDir "${NAME}"
 cp "${NAME}" "/shared/${NAME}"
