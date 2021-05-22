@@ -35,6 +35,8 @@ fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>${TMPDIR
 fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
 fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
 
+"${ROOT}/usr/bin/relocate_fontconfig_cache" "${ROOT}" "${ROOT}/var/cache/fontconfig" "${TMPDIR}/var/cache/fontconfig" || true
+
 export PATH="${ROOT}/usr/bin:${PATH}"
 export FONTCONFIG_PATH="${TMPDIR}/etc/fonts"
 "${ROOT}/opt/browservice/browservice" "$@"

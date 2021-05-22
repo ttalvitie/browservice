@@ -161,12 +161,13 @@ U sed -i 's/"%s%sxkbcomp" -w %d %s -xkm "%s" -em1 %s -emp %s -eml %s "%s%s.xkm"/
 U sed -i 's/\/usr\/share\/X11\/xkb/usr\/\/share\/X11\/xkb/g' bin/Xvfb
 U sed -i 's/\/usr\/share\/fonts/usr\/\/share\/fonts/g' bin/Xvfb
 U sed -i 's/\/usr\/lib\/xorg/usr\/\/lib\/xorg/g' bin/Xvfb
-U mv bin/Xvfb bin/Xvfb.bin
+U mkdir bin/hack
+U mv bin/Xvfb bin/hack/Xvfb
 U tee bin/Xvfb << EOF > /dev/null
 #!/bin/bash
 cd "\$(dirname "\${BASH_SOURCE[0]}")"
 cd ../..
-exec usr/bin/Xvfb.bin "\$@"
+exec usr/bin/hack/Xvfb "\$@"
 EOF
 U chmod +x bin/Xvfb
 U mkdir hack
@@ -180,12 +181,16 @@ xkb_keymap "default" {
 };
 EOF
 
+msg "Compiling helper executable for fontconfig cache relocation hack"
+U gcc /shared/relocate_fontconfig_cache.c -o bin/relocate_fontconfig_cache -O2 -Wall -Wextra -lcrypto
+
 msg "Stripping helper executables"
-U strip bin/Xvfb.bin bin/xauth
+U strip bin/hack/Xvfb bin/xauth bin/relocate_fontconfig_cache
 
 msg "Setting RPATH for helper executables"
-U patchelf --set-rpath '$ORIGIN/../lib' bin/Xvfb.bin
+U patchelf --set-rpath '$ORIGIN/../../lib' bin/hack/Xvfb
 U patchelf --set-rpath '$ORIGIN/../lib' bin/xauth
+U patchelf --set-rpath '$ORIGIN/../lib' bin/relocate_fontconfig_cache
 
 msg "Recording font copyright information"
 U mkdir doc
@@ -199,6 +204,24 @@ done
 msg "Preparing configuration directory"
 U mkdir etc
 U cp -Lr /etc/fonts etc/fonts
+
+msg "Creating fontconfig cache for use with the relocation hack"
+RANDOM_PATH="/LVT3hhSkcNc5zRqVUNYsPhi04ynbyA6OsunvGAvCq8VDd2RFcLbbHjzU6IXzT47/19GtB0Wo248j5HohiIpAjFJGD6lVfPpPjmUZiyUzY3Xv90dz1n9qjrlXD2rR8EK/dEwsBnoucPaBCN2L3Lrmrf2FcIIeG4puJ28rizYQRX0mofs5CnYiqe8jFGuVJ76/bmC6XM33HnRR9S3QAtMB7iSrQlvT91CMhlTzdmrose41798QltC0TstZpRPIBOL/nhsRVVU6I9VcV0YRg3zz8gqfwe7ZJyaatzrAtjlXK30D07mNnQMD7a9DDcnPp7z/svKScD6FKcpn9fMm0k40BNr6dFqhRyXDU6dkCech3Pp9lqjeuQ4YzbvPqwzowmq/R5X4u2OMXpz6k08a6AcHv6z7TkzfnzsKcq0w303Z6Yz47zOUbZv7TCSuvKvT5LS/IDHXUis1UKrlOqPZkQy2gYVbjdfcfzXtZDm466vseM35dyatcsBcqIqvbpLbz9X/IZznU2HilLp36sEH9jLqdWkScpLOLekIPWSb7gMYP4uwATYhjeM02AXFgH23YkC/p5mAd5HE0Otgsh5gqcdDzzcG7A4umjgX17YqCiFlqTAHUprlCFQePrmE4iqfqmY/lQD5FJflFrWwFIDMRgjhU18yJvrPMvpdpypbt2XPF2sPb18YWUe5wWC6SUAngzO/9wNmfDXrqnlBAmuEuhPvz4d3bvw2BUjhQ56zRn5znvq887C5d8mMm3NrcwX16p9/dY9Kz64wsfnKpaYDN2Y2zvGp7TkHPUYaIsc12FpZc225OaPTyRaZThs9JHJLCln/pqYp5DmZPe68YCf94B8eL73nVXd1KCAgq34qplWtuAHeAQsIrbC7M7ZqGU3OYXH/npKMe4Uj3mORt69rKTOmddFUJBLw6JjYUAFFgnUDbb6OBNvjv2roucHFPACjdPS/PNO2C2YVB8pW5CMP7LgfKUbzXpehDzFjs4q93hS0yiSIzeT6sACnZoEyIGlKwbu"
+mkdir -p "$(dirname "${RANDOM_PATH}")"
+ln -s / "${RANDOM_PATH}"
+U cp -r /etc/fonts fontconfig_config
+fontconfreplace() {
+    U sed -i "s/${1//\//\\/}/${2//\//\\/}/g" fontconfig_config/fonts.conf
+}
+fontconfreplace "<dir>/usr/share/fonts</dir>" "<dir>${RANDOM_PATH}/usr/share/fonts</dir>"
+fontconfreplace "<dir>/usr/local/share/fonts</dir>" ""
+fontconfreplace "<dir prefix=\"xdg\">fonts</dir>" ""
+fontconfreplace "<dir>~/.fonts</dir>" ""
+fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>/home/user/fontconfig_cache</cachedir>"
+fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
+fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
+U mkdir fontconfig_cache
+U FONTCONFIG_PATH="/home/user/fontconfig_config" fc-cache
 
 msg "Preparing AppDir"
 U mkdir AppDir
@@ -227,6 +250,8 @@ U mkdir AppDir/usr/share/X11
 U cp -r /usr/share/X11/xkb AppDir/usr/share/X11/xkb
 U mkdir AppDir/usr/lib/xorg
 U cp /usr/lib/xorg/protocol.txt AppDir/usr/lib/xorg/protocol.txt
+U mkdir -p AppDir/var/cache
+U mv fontconfig_cache AppDir/var/cache/fontconfig
 
 U "./${APPIMAGETOOL}" AppDir "${NAME}"
 cp "${NAME}" "/shared/${NAME}"

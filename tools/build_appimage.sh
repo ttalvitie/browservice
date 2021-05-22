@@ -115,6 +115,7 @@ cp "${SCRIPT_DIR}/appimage_build_data/build_appimage_impl.sh" "${TMPDIR}/shared"
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.png" "${TMPDIR}/shared/browservice.png"
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.desktop" "${TMPDIR}/shared/browservice.desktop"
 cp "${SCRIPT_DIR}/appimage_build_data/run_browservice" "${TMPDIR}/shared/run_browservice"
+cp "${SCRIPT_DIR}/appimage_build_data/relocate_fontconfig_cache.c" "${TMPDIR}/shared/relocate_fontconfig_cache.c"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "${SCRIPT_DIR}" &> /dev/null
