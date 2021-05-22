@@ -58,7 +58,7 @@ apt-get update
 apt-get upgrade -y
 
 msg "Installing dependencies"
-apt-get install -y wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils patchelf
+apt-get install -y wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils patchelf cabextract
 apt-get install -y fonts-beng-extra fonts-dejavu-core fonts-deva-extra fonts-droid-fallback fonts-freefont-ttf fonts-gargi fonts-gubbi fonts-gujr-extra fonts-guru-extra fonts-kacst fonts-kacst-one fonts-kalapi fonts-khmeros-core fonts-lao fonts-liberation fonts-liberation2 fonts-lklug-sinhala fonts-lohit-beng-assamese fonts-lohit-beng-bengali fonts-lohit-deva fonts-lohit-gujr fonts-lohit-guru fonts-lohit-knda fonts-lohit-mlym fonts-lohit-orya fonts-lohit-taml fonts-lohit-taml-classical fonts-lohit-telu fonts-nakula fonts-navilu fonts-noto-cjk fonts-noto-color-emoji fonts-noto-mono fonts-opensymbol fonts-orya-extra fonts-pagul fonts-sahadeva fonts-samyak-deva fonts-samyak-gujr fonts-samyak-mlym fonts-samyak-taml fonts-sarai fonts-sil-abyssinica fonts-sil-padauk fonts-smc-anjalioldlipi fonts-smc-chilanka fonts-smc-dyuthi fonts-smc-karumbi fonts-smc-keraleeyam fonts-smc-manjari fonts-smc-meera fonts-smc-rachana fonts-smc-raghumalayalamsans fonts-smc-suruma fonts-smc-uroob fonts-telu-extra fonts-tibetan-machine fonts-tlwg-garuda-ttf fonts-tlwg-kinnari-ttf fonts-tlwg-laksaman-ttf fonts-tlwg-loma-ttf fonts-tlwg-mono-ttf fonts-tlwg-norasi-ttf fonts-tlwg-purisa-ttf fonts-tlwg-sawasdee-ttf fonts-tlwg-typewriter-ttf fonts-tlwg-typist-ttf fonts-tlwg-typo-ttf fonts-tlwg-umpush-ttf fonts-tlwg-waree-ttf fonts-ubuntu gsfonts xfonts-base xfonts-encodings xfonts-scalable xfonts-utils
 
 msg "Downloading CEF"
@@ -94,6 +94,9 @@ for f in \
     browservice/release/bin/chrome-sandbox \
     /usr/bin/Xvfb \
     /usr/bin/xauth \
+    /usr/bin/wget \
+    /usr/bin/cabextract \
+    /usr/bin/sha1sum \
     "${NSSDIR}/libfreebl3.so" \
     "${NSSDIR}/libfreeblpriv3.so" \
     "${NSSDIR}/libnssckbi.so" \
@@ -125,7 +128,7 @@ done
 U bash -c "echo \$(ls deps | sort) > depnamelist"
 msg "Library dependencies: $(cat depnamelist)"
 
-if [ "$(cat depnamelist)" != "libGL.so.1 libGLX.so.0 libGLdispatch.so.0 libPocoCrypto.so.50 libPocoFoundation.so.50 libPocoNet.so.50 libX11.so.6 libXau.so.6 libXcomposite.so.1 libXcursor.so.1 libXdamage.so.1 libXdmcp.so.6 libXext.so.6 libXfixes.so.3 libXfont2.so.2 libXi.so.6 libXinerama.so.1 libXmuu.so.1 libXrandr.so.2 libXrender.so.1 libasound.so.2 libatk-1.0.so.0 libatk-bridge-2.0.so.0 libatspi.so.0 libaudit.so.1 libavahi-client.so.3 libavahi-common.so.3 libblkid.so.1 libbsd.so.0 libbz2.so.1.0 libcairo-gobject.so.2 libcairo.so.2 libcap-ng.so.0 libcom_err.so.2 libcrypto.so.1.1 libcups.so.2 libdatrie.so.1 libdbus-1.so.3 libdrm.so.2 libepoxy.so.0 libexpat.so.1 libffi.so.6 libfontconfig.so.1 libfontenc.so.1 libfreetype.so.6 libgbm.so.1 libgcc_s.so.1 libgcrypt.so.20 libgdk-3.so.0 libgdk_pixbuf-2.0.so.0 libgio-2.0.so.0 libglib-2.0.so.0 libgmodule-2.0.so.0 libgnutls.so.30 libgobject-2.0.so.0 libgpg-error.so.0 libgraphite2.so.3 libgssapi_krb5.so.2 libgtk-3.so.0 libharfbuzz.so.0 libhogweed.so.4 libjpeg.so.8 libk5crypto.so.3 libkeyutils.so.1 libkrb5.so.3 libkrb5support.so.0 liblz4.so.1 liblzma.so.5 libmount.so.1 libnettle.so.6 libnspr4.so libnss3.so libnssutil3.so libp11-kit.so.0 libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 libpcre.so.3 libpixman-1.so.0 libplc4.so libplds4.so libpng16.so.16 libselinux.so.1 libsmime3.so libsqlite3.so.0 libssl.so.1.1 libsystemd.so.0 libtasn1.so.6 libthai.so.0 libunistring.so.2 libuuid.so.1 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1 libwayland-server.so.0 libxcb-render.so.0 libxcb-shm.so.0 libxcb.so.1 libxkbcommon.so.0 libxshmfence.so.1 libz.so.1" ]
+if [ "$(cat depnamelist)" != "libGL.so.1 libGLX.so.0 libGLdispatch.so.0 libPocoCrypto.so.50 libPocoFoundation.so.50 libPocoNet.so.50 libX11.so.6 libXau.so.6 libXcomposite.so.1 libXcursor.so.1 libXdamage.so.1 libXdmcp.so.6 libXext.so.6 libXfixes.so.3 libXfont2.so.2 libXi.so.6 libXinerama.so.1 libXmuu.so.1 libXrandr.so.2 libXrender.so.1 libasound.so.2 libatk-1.0.so.0 libatk-bridge-2.0.so.0 libatspi.so.0 libaudit.so.1 libavahi-client.so.3 libavahi-common.so.3 libblkid.so.1 libbsd.so.0 libbz2.so.1.0 libcairo-gobject.so.2 libcairo.so.2 libcap-ng.so.0 libcom_err.so.2 libcrypto.so.1.1 libcups.so.2 libdatrie.so.1 libdbus-1.so.3 libdrm.so.2 libepoxy.so.0 libexpat.so.1 libffi.so.6 libfontconfig.so.1 libfontenc.so.1 libfreetype.so.6 libgbm.so.1 libgcc_s.so.1 libgcrypt.so.20 libgdk-3.so.0 libgdk_pixbuf-2.0.so.0 libgio-2.0.so.0 libglib-2.0.so.0 libgmodule-2.0.so.0 libgnutls.so.30 libgobject-2.0.so.0 libgpg-error.so.0 libgraphite2.so.3 libgssapi_krb5.so.2 libgtk-3.so.0 libharfbuzz.so.0 libhogweed.so.4 libjpeg.so.8 libk5crypto.so.3 libkeyutils.so.1 libkrb5.so.3 libkrb5support.so.0 liblz4.so.1 liblzma.so.5 libmount.so.1 libmspack.so.0 libnettle.so.6 libnspr4.so libnss3.so libnssutil3.so libp11-kit.so.0 libpango-1.0.so.0 libpangocairo-1.0.so.0 libpangoft2-1.0.so.0 libpcre.so.3 libpixman-1.so.0 libplc4.so libplds4.so libpng16.so.16 libpsl.so.5 libselinux.so.1 libsmime3.so libsqlite3.so.0 libssl.so.1.1 libsystemd.so.0 libtasn1.so.6 libthai.so.0 libunistring.so.2 libuuid.so.1 libwayland-client.so.0 libwayland-cursor.so.0 libwayland-egl.so.1 libwayland-server.so.0 libxcb-render.so.0 libxcb-shm.so.0 libxcb.so.1 libxkbcommon.so.0 libxshmfence.so.1 libz.so.1" ]
 then
     msg "Error: Unexpected list of library dependencies; build_appimage_impl.sh must be updated"
     false
@@ -150,7 +153,7 @@ done
 
 msg "Collecting helper executables"
 U mkdir bin
-U cp /usr/bin/Xvfb /usr/bin/xauth /shared/run_browservice bin
+U cp /usr/bin/Xvfb /usr/bin/xauth /usr/bin/wget /usr/bin/cabextract /usr/bin/sha1sum /shared/run_browservice bin
 U chmod 755 bin/run_browservice
 
 msg "Setting up hacks to make Xvfb find the required files inside the AppDir"
@@ -182,16 +185,19 @@ msg "Compiling helper executable for fontconfig cache relocation hack"
 U gcc /shared/relocate_fontconfig_cache.c -o bin/relocate_fontconfig_cache -O2 -Wall -Wextra -lcrypto
 
 msg "Stripping helper executables"
-U strip bin/hack/Xvfb bin/xauth bin/relocate_fontconfig_cache
+U strip bin/hack/Xvfb bin/xauth bin/wget bin/cabextract bin/sha1sum bin/relocate_fontconfig_cache
 
 msg "Setting RPATH for helper executables"
 U patchelf --set-rpath '$ORIGIN/../../lib' bin/hack/Xvfb
 U patchelf --set-rpath '$ORIGIN/../lib' bin/xauth
+U patchelf --set-rpath '$ORIGIN/../lib' bin/wget
+U patchelf --set-rpath '$ORIGIN/../lib' bin/cabextract
+U patchelf --set-rpath '$ORIGIN/../lib' bin/sha1sum
 U patchelf --set-rpath '$ORIGIN/../lib' bin/relocate_fontconfig_cache
 
 msg "Recording dependency and font copyright information"
 U mkdir doc
-for pkg in $((dpkg -S /usr/bin/Xvfb /usr/bin/xauth $(cat deplist) $(find /usr/share/fonts/ -type f) $(find "${NSSDIR}" -type f) 2> /dev/null || true) | sed 's/:/ /g' | awk '{ print $1 }' | sort | uniq)
+for pkg in $((dpkg -S /usr/bin/Xvfb /usr/bin/xauth /usr/bin/wget /usr/bin/cabextract /usr/bin/sha1sum $(cat deplist) $(find /usr/share/fonts/ -type f) $(find "${NSSDIR}" -type f) 2> /dev/null || true) | sed 's/:/ /g' | awk '{ print $1 }' | sort | uniq)
 do
     U mkdir "doc/${pkg}"
     U cp "/usr/share/doc/${pkg}/copyright" "doc/${pkg}/copyright"
