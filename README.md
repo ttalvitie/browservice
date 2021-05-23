@@ -110,77 +110,22 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ![Photo of ThinkPad T40 showing a GitHub page, and a Raspberry Pi 4 running the Browservice proxy connected to the laptop with an Ethernet patch cable](fig/raspi4_t40.jpg)
 
-### Installing dependencies
+### Running the Browservice proxy
 
-The commands for installing the dependencies of the Browservice proxy on various Linux distributions are provided in this section.
+This section provides the instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work on the base installation of any up-to-date Linux distribution for the i386, x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in BUILD.md.
 
-#### Ubuntu 18.04/20.04, Debian 10 and Raspberry Pi OS
+On the proxy server, download the AppImage file `browservice-RELEASE-ARCHITECTURE.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCHITECTURE` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi, it is `aarch64`).
 
-```
-sudo apt install wget cmake make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 ttf-mscorefonts-installer xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0
-```
-
-- On Debian, in order to be able to install the `ttf-mscorefonts-installer` package, you need to add the `contrib` APT source by adding `contrib` to the end of each `deb` and `deb-src` line in `/etc/apt/sources.list` and running `sudo apt update`.
-
-- On Ubuntu, the installation of `ttf-mscorefonts-installer` often fails silently due to problems with the SourceForge mirrors. If the file `/usr/share/fonts/truetype/msttcorefonts/Verdana.ttf` exists, your installation was successful. Otherwise, the texts in the Browservice UI will not work correctly. To rectify this, switch to the Debian package by running the following:
-
-    ```
-    sudo apt remove ttf-mscorefonts-installer
-    wget https://www.nic.funet.fi/debian/pool/contrib/m/msttcorefonts/ttf-mscorefonts-installer_3.7_all.deb
-    sudo dpkg -i ttf-mscorefonts-installer_3.7_all.deb
-    ```
-
-#### Fedora 33
+Navigate to the directory containing the downloaded AppImage file and make it executable by running the following command (replacing `RELEASE` and `ARCHITECTURE` by the actual release and architecture in the downloaded file):
 
 ```
-sudo dnf install wget tar bzip2 cmake make g++ pkg-config poco-devel libjpeg-turbo-devel pango-devel Xvfb xauth at-spi2-atk alsa-lib libXScrnSaver libXrandr libgbm libXcomposite libXcursor curl cabextract xorg-x11-font-utils nss cups-libs libatomic gtk3
-sudo rpm -i https://downloads.sourceforge.net/project/mscorefonts2/rpms/msttcore-fonts-installer-2.6-1.noarch.rpm
-```
-
-#### Arch Linux
-
-```
-sudo pacman -S wget cmake make gcc pkgconf poco pango libjpeg-turbo libxcb libx11 python xorg-server-xvfb xorg-xauth fakeroot at-spi2-atk alsa-lib nss libcups libxrandr libxcursor libxss libxcomposite libxkbcommon gtk3
-
-# Install MS core fonts from AUR
-wget https://aur.archlinux.org/cgit/aur.git/snapshot/ttf-ms-fonts.tar.gz
-tar xf ttf-ms-fonts.tar.gz
-pushd ttf-ms-fonts
-makepkg -si
-popd
-rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
-```
-
-### Compiling and running Browservice
-
-On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF into `cef.tar.bz2`, run the following in the extracted Browservice release root directory to download and verify CEF:
-
-```
-./download_cef.sh
-```
-
-Then, extract CEF and build its DLL wrapper library:
-
-```
-./setup_cef.sh
-```
-
-Now, compile a release build of Browservice (you may adjust the number in the `-j` argument to set the number of parallel compile jobs):
-
-```
-make -j5
-```
-
-After the build has completed, it will ask you to set the SUID permissions for the `chrome-sandbox` binary to enable the sandbox features of Chromium:
-
-```
-sudo chown root:root release/bin/chrome-sandbox && sudo chmod 4755 release/bin/chrome-sandbox
+chmod +x browservice-RELEASE-ARCHITECTURE.AppImage
 ```
 
 Now you can start the Browservice proxy:
 
 ```
-release/bin/browservice
+./browservice-RELEASE-ARCHITECTURE.AppImage
 ```
 
 With the default arguments, the Browservice proxy listens for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
@@ -189,7 +134,7 @@ By default, the listening socket is bound to `127.0.0.1`, which means that the s
 
 ```
 # See WARNINGs below!
-release/bin/browservice --vice-opt-http-listen-addr=0.0.0.0:8080
+./browservice-RELEASE-ARCHITECTURE.AppImage --vice-opt-http-listen-addr=0.0.0.0:8080
 ```
 
 **WARNING**: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. Giving untrusted users access to the server is very dangerous; for example, they can access all the user accounts on websites to which you have logged in using Browservice. To avoid this, restrict the incoming connections to isolated local networks using a restrictive listen address and/or a firewall.
@@ -198,17 +143,21 @@ release/bin/browservice --vice-opt-http-listen-addr=0.0.0.0:8080
 
 **WARNING**: The trust between the client and the proxy server has to be mutual, as the client controls a web browser process running on the proxy server. For example, the client can use the `file://` protocol to read files on the proxy server that are accessible to the user running `browservice`.
 
-**WARNING**: The embedded Chromium browser does not update itself. To keep the browser up to date, you should periodically install the newest release of Browservice; on each release, the `download_cef.sh` script is updated to use the newest CEF release.
+**WARNING**: The AppImage (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
+
+The graphical user interface of Browservice is designed for use with the Verdana font. Due to licensing restrictions, the AppImage does not directly bundle it; instead, it uses a free font that works just as well but does not look as good. To install Verdana to `$HOME/.browservice/appimage/fonts` where Browservice will find it, run the following command and type `yes` to accept the license agreement:
+
+```
+./browservice-RELEASE-ARCHITECTURE.AppImage --install-verdana
+```
 
 The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
 
 There are many other useful command line options in Browservice. To get a list of them, run:
 
 ```
-release/bin/browservice --help
+./browservice-RELEASE-ARCHITECTURE.AppImage --help
 ```
-
-To run Browservice, you only need the contents of the `release/bin` directory; if you need to save disk space, you can delete the rest of the files.
 
 ## Usage
 
