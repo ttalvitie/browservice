@@ -159,9 +159,31 @@ There are many other useful command line options in Browservice. To get a list o
 ./browservice-RELEASE-ARCH.AppImage --help
 ```
 
-### Troubleshooting
+## Usage
 
-#### FUSE missing
+To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
+
+After this, you can browse the web as you typically would, as long as you remember to use the in-page Browservice "Address" text field instead of the native browser address field. In some client browsers, you can disable the native browser controls to free up screen space and avoid confusion.
+
+Some notes that might be useful:
+
+- If the page offers a file for download, you need to explicitly accept it by clicking the Download button that appears in the control bar (after making sure that you trust the page). Browservice then downloads the file into a temporary directory on the proxy server, after which it forwards the file to the client browser.
+
+- If the page requests a file upload, a separate upload popup window is automatically opened. After uploading the file in the upload window, the file will be placed in a temporary directory and forwarded to the page requesting the upload. Due to technical limitations, all the uploaded files will be stored in the temporary directory until the browser window is closed.
+
+- If the page opens a popup window, Browservice automatically opens a new client browser window for it. However, creating this window might be blocked by the popup blocker of the client browser, and you may need to explicitly allow it or change the blocker settings.
+
+- You can use Ctrl+C and Ctrl+V to copy and paste text between different Browservice windows (including the control bar). However, this clipboard is not automatically shared with the client system. To access the clipboard from the client, click the clipboard icon in the control bar to open a window that contains a text field and buttons for loading the clipboard into the text field and saving the contents of the text field into the clipboard. Note that it is a security risk to load text copied from an untrusted page into the native text field.
+
+- The most common browser hotkeys (Backspace, Shift+Backspace, Ctrl+F, Ctrl+L, Ctrl+A, Ctrl+R, F5, PgUp/PgDown, Home/End) work with Browservice. However, some client browsers capture these keys instead of sending them to Browservice. For some Ctrl-based shortcuts, you can get around this by adding Shift into the combination, for example using Ctrl+Shift+F instead of Ctrl+F.
+
+- If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
+
+- By default, Browservice can't play videos that use proprietary audio/video codecs such as H264 and AAC, as the prebuilt CEF distribution [provided by Spotify](https://cef-builds.spotifycdn.com/index.html) does not include them. To add the codecs, build the CEF distribution by following the [instructions](https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md) with the options `proprietary_codecs=true ffmpeg_branding=Chrome` appended to the environment variable `GN_DEFINES`. After this, you should repeat the Browservice installation process with one exception: prior to running `setup_cef.sh`, copy the CEF distribution produced by the build to `cef.tar.bz2` instead of using `download_cef.sh` to download it. Note that building CEF takes a lot of time, memory and disk space. Also note that you may have to pay license fees to use the proprietary codecs legally, as they are encumbered by patents.
+
+## Troubleshooting
+
+### FUSE missing
 
 ```
 fuse: failed to exec fusermount: No such file or directory
@@ -174,7 +196,7 @@ for more information
 open dir error: No such file or directory
 ```
 
-This error occurs if FUSE (Filesystem in Userspace) is not installed. To fix this, install FUSE using the package manager of your Linux distribution.
+This error occurs when starting the AppImage if FUSE (Filesystem in Userspace) is not installed. To fix this, install FUSE using the package manager of your Linux distribution.
 
 An alternative fix that does not require root privileges is to extract the contents of the AppImage into a directory, and run Browservice from there:
 
@@ -189,7 +211,7 @@ mv squashfs-root browservice-RELEASE-ARCH.AppDir
 browservice-RELEASE-ARCH.AppDir/AppRun
 ```
 
-#### SUID sandbox helper not found
+### SUID sandbox helper not found
 
 ```
 [0523/185347.885758:FATAL:setuid_sandbox_host.cc(158)] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /tmp/.mount_browsezuuVgT/opt/browservice/chrome-sandbox is owned by root and has mode 4755.
@@ -219,28 +241,6 @@ sudo chmod 4755 browservice-RELEASE-ARCH.AppDir/opt/browservice/chrome-sandbox
 # Start Browservice
 browservice-RELEASE-ARCH.AppDir/AppRun
 ```
-
-## Usage
-
-To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
-
-After this, you can browse the web as you typically would, as long as you remember to use the in-page Browservice "Address" text field instead of the native browser address field. In some client browsers, you can disable the native browser controls to free up screen space and avoid confusion.
-
-Some notes that might be useful:
-
-- If the page offers a file for download, you need to explicitly accept it by clicking the Download button that appears in the control bar (after making sure that you trust the page). Browservice then downloads the file into a temporary directory on the proxy server, after which it forwards the file to the client browser.
-
-- If the page requests a file upload, a separate upload popup window is automatically opened. After uploading the file in the upload window, the file will be placed in a temporary directory and forwarded to the page requesting the upload. Due to technical limitations, all the uploaded files will be stored in the temporary directory until the browser window is closed.
-
-- If the page opens a popup window, Browservice automatically opens a new client browser window for it. However, creating this window might be blocked by the popup blocker of the client browser, and you may need to explicitly allow it or change the blocker settings.
-
-- You can use Ctrl+C and Ctrl+V to copy and paste text between different Browservice windows (including the control bar). However, this clipboard is not automatically shared with the client system. To access the clipboard from the client, click the clipboard icon in the control bar to open a window that contains a text field and buttons for loading the clipboard into the text field and saving the contents of the text field into the clipboard. Note that it is a security risk to load text copied from an untrusted page into the native text field.
-
-- The most common browser hotkeys (Backspace, Shift+Backspace, Ctrl+F, Ctrl+L, Ctrl+A, Ctrl+R, F5, PgUp/PgDown, Home/End) work with Browservice. However, some client browsers capture these keys instead of sending them to Browservice. For some Ctrl-based shortcuts, you can get around this by adding Shift into the combination, for example using Ctrl+Shift+F instead of Ctrl+F.
-
-- If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
-
-- By default, Browservice can't play videos that use proprietary audio/video codecs such as H264 and AAC, as the prebuilt CEF distribution [provided by Spotify](https://cef-builds.spotifycdn.com/index.html) does not include them. To add the codecs, build the CEF distribution by following the [instructions](https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md) with the options `proprietary_codecs=true ffmpeg_branding=Chrome` appended to the environment variable `GN_DEFINES`. After this, you should repeat the Browservice installation process with one exception: prior to running `setup_cef.sh`, copy the CEF distribution produced by the build to `cef.tar.bz2` instead of using `download_cef.sh` to download it. Note that building CEF takes a lot of time, memory and disk space. Also note that you may have to pay license fees to use the proprietary codecs legally, as they are encumbered by patents.
 
 ## Vice plugin API
 
