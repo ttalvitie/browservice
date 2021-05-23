@@ -122,13 +122,13 @@ Navigate to the directory containing the downloaded AppImage file and make it ex
 chmod +x browservice-RELEASE-ARCH.AppImage
 ```
 
-Now you can start the Browservice proxy:
+Now you can start the Browservice proxy by running the following command as a normal user (do NOT use root):
 
 ```
 ./browservice-RELEASE-ARCH.AppImage
 ```
 
-With the default arguments, the Browservice proxy listens for HTTP connections on port 8080. If the server fails to start, see the [Troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
+With the default arguments, the Browservice proxy starts listening for HTTP connections on port 8080. If the server fails to start, see the [troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
 By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow other computers to connect to the server, you need to adjust the `--vice-opt-http-listen-addr` command line option; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
 
@@ -161,7 +161,64 @@ There are many other useful command line options in Browservice. To get a list o
 
 ### Troubleshooting
 
-TODO
+#### FUSE missing
+
+```
+fuse: failed to exec fusermount: No such file or directory
+
+Cannot mount AppImage, please check your FUSE setup.
+You might still be able to extract the contents of this AppImage
+if you run it with the --appimage-extract option.
+See https://github.com/AppImage/AppImageKit/wiki/FUSE
+for more information
+open dir error: No such file or directory
+```
+
+This error occurs if FUSE (Filesystem in Userspace) is not installed. To fix this, install FUSE using the package manager of your Linux distribution.
+
+An alternative fix that does not require root privileges is to extract the contents of the AppImage into a directory, and run Browservice from there:
+
+```
+# Extract the AppImage into directory 'squashfs-root'
+./browservice-RELEASE-ARCH.AppImage --appimage-extract
+
+# Give the directory a better name
+mv squashfs-root browservice-RELEASE-ARCH.AppDir
+
+# Start Browservice
+browservice-RELEASE-ARCH.AppDir/AppRun
+```
+
+#### SUID sandbox helper not found
+
+```
+[0523/185347.885758:FATAL:setuid_sandbox_host.cc(158)] The SUID sandbox helper binary was found, but is not configured correctly. Rather than run without sandboxing I'm aborting now. You need to make sure that /tmp/.mount_browsezuuVgT/opt/browservice/chrome-sandbox is owned by root and has mode 4755.
+```
+
+On kernels with user namespaces disabled (or old kernels without user namespace support), Chromium uses a sandbox helper executable that needs the SUID bit to function correctly. The AppImage cannot add this SUID bit automatically, as it requires root privileges.
+
+One possible fix is to enable user namespaces. On Debian-based distributions, this can be done by running the following command as root:
+
+```
+sysctl -w kernel.unprivileged_userns_clone=1
+```
+
+Another option is to extract the contents of the AppImage into a directory, add the SUID bit to the extracted helper executable and use the extracted Browservice executable:
+
+```
+# Extract the AppImage into directory 'squashfs-root'
+./browservice-RELEASE-ARCH.AppImage --appimage-extract
+
+# Give the directory a better name
+mv squashfs-root browservice-RELEASE-ARCH.AppDir
+
+# Set proper permissions for chrome-sandbox as root
+sudo chown root:root browservice-RELEASE-ARCH.AppDir/opt/browservice/chrome-sandbox
+sudo chmod 4755 browservice-RELEASE-ARCH.AppDir/opt/browservice/chrome-sandbox
+
+# Start Browservice
+browservice-RELEASE-ARCH.AppDir/AppRun
+```
 
 ## Usage
 
