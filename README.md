@@ -112,7 +112,7 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work on the base installation of any up-to-date Linux distribution for the i386, x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in BUILD.md.
+This section provides instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the i386, x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in BUILD.md.
 
 On the proxy server, download the AppImage file `browservice-RELEASE-ARCH.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCH` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi it is `aarch64`).
 
