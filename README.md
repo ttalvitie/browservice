@@ -114,27 +114,27 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 This section provides the instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work on the base installation of any up-to-date Linux distribution for the i386, x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in BUILD.md.
 
-On the proxy server, download the AppImage file `browservice-RELEASE-ARCHITECTURE.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCHITECTURE` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi, it is `aarch64`).
+On the proxy server, download the AppImage file `browservice-RELEASE-ARCH.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCH` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi it is `aarch64`).
 
-Navigate to the directory containing the downloaded AppImage file and make it executable by running the following command (replacing `RELEASE` and `ARCHITECTURE` by the actual release and architecture in the downloaded file):
+Navigate to the directory containing the downloaded AppImage file and make it executable by running the following command (replacing `RELEASE` and `ARCH` by the actual release and architecture in the downloaded file):
 
 ```
-chmod +x browservice-RELEASE-ARCHITECTURE.AppImage
+chmod +x browservice-RELEASE-ARCH.AppImage
 ```
 
 Now you can start the Browservice proxy:
 
 ```
-./browservice-RELEASE-ARCHITECTURE.AppImage
+./browservice-RELEASE-ARCH.AppImage
 ```
 
-With the default arguments, the Browservice proxy listens for HTTP connections on port 8080. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
+With the default arguments, the Browservice proxy listens for HTTP connections on port 8080. If the server fails to start, see the [Troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
 By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow other computers to connect to the server, you need to adjust the `--vice-opt-http-listen-addr` command line option; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
 
 ```
 # See WARNINGs below!
-./browservice-RELEASE-ARCHITECTURE.AppImage --vice-opt-http-listen-addr=0.0.0.0:8080
+./browservice-RELEASE-ARCH.AppImage --vice-opt-http-listen-addr=0.0.0.0:8080
 ```
 
 **WARNING**: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. Giving untrusted users access to the server is very dangerous; for example, they can access all the user accounts on websites to which you have logged in using Browservice. To avoid this, restrict the incoming connections to isolated local networks using a restrictive listen address and/or a firewall.
@@ -148,7 +148,7 @@ By default, the listening socket is bound to `127.0.0.1`, which means that the s
 The graphical user interface of Browservice is designed for use with the Verdana font. Due to licensing restrictions, the AppImage does not directly bundle it; instead, it uses a free font that works just as well but does not look as good. To install Verdana to `$HOME/.browservice/appimage/fonts` where Browservice will find it, run the following command and type `yes` to accept the license agreement:
 
 ```
-./browservice-RELEASE-ARCHITECTURE.AppImage --install-verdana
+./browservice-RELEASE-ARCH.AppImage --install-verdana
 ```
 
 The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
@@ -156,8 +156,12 @@ The clipboard and browser storage (cookies, local storage, cache, etc.) are shar
 There are many other useful command line options in Browservice. To get a list of them, run:
 
 ```
-./browservice-RELEASE-ARCHITECTURE.AppImage --help
+./browservice-RELEASE-ARCH.AppImage --help
 ```
+
+### Troubleshooting
+
+TODO
 
 ## Usage
 
