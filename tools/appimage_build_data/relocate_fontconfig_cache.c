@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
             if(sizeof(struct timespec) == 16) {
                 timePos = 0x30;
             } else if(sizeof(struct timespec) == 8) {
-                timePos = 0x15;
+                timePos = 0x1c;
             } else {
                 fail("Unsupported sizeof(struct timespec)");
             }
