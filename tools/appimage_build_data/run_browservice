@@ -86,7 +86,7 @@ EOF
     echo 1>&2
     mkdir -p "${TMPDIR}/tmp/verdana"
     cd "${TMPDIR}/tmp/verdana"
-    if ! "${ROOT}/usr/bin/wget" https://downloads.sourceforge.net/corefonts/verdan32.exe -O verdan32.exe
+    if ! "${ROOT}/usr/bin/wget" https://downloads.sourceforge.net/corefonts/verdan32.exe -O verdan32.exe --no-check-certificate
     then
         echo "ERROR: Downloading Verdana installer executable failed." 1>&2
         false
