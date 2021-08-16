@@ -15,7 +15,7 @@
 namespace browservice {
 
 struct VicePlugin::APIFuncs {
-#define FOREACH_VICE_API_FUNC \
+#define FOREACH_REQUIRED_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(getVersionString) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
@@ -39,8 +39,13 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
 
+#define FOREACH_VICE_API_FUNC \
+    FOREACH_REQUIRED_VICE_API_FUNC \
+    FOREACH_VICE_API_FUNC_ITEM(isExtensionSupported) \
+    FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable)
+
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
-    decltype(&vicePluginAPI_ ## name) name;
+    decltype(&vicePluginAPI_ ## name) name = nullptr;
 
     FOREACH_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
@@ -136,7 +141,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 
     void* sym;
 
-#define FOREACH_VICE_API_FUNC_ITEM(name) \
+#define LOAD_API_FUNC(name) \
     sym = dlsym(lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
         const char* err = dlerror(); \
@@ -149,18 +154,30 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     } \
     apiFuncs->name = (decltype(apiFuncs->name))sym;
 
-    FOREACH_VICE_API_FUNC
+#define FOREACH_VICE_API_FUNC_ITEM(name) LOAD_API_FUNC(name)
+    FOREACH_REQUIRED_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
 
-    uint64_t apiVersion = 1000000;
+    const uint64_t BasicAPIVersion = 1000000;
+    const uint64_t ExtensionAPIVersion = 1000001;
 
-    if(!apiFuncs->isAPIVersionSupported(apiVersion)) {
-        ERROR_LOG(
-            "Vice plugin ", filename,
-            " does not support API version ", apiVersion
-        );
-        REQUIRE(dlclose(lib) == 0);
-        return {};
+    uint64_t apiVersion;
+    if(apiFuncs->isAPIVersionSupported(ExtensionAPIVersion)) {
+        apiVersion = ExtensionAPIVersion;
+        LOAD_API_FUNC(isExtensionSupported);
+        if(apiFuncs->isExtensionSupported(apiVersion, "URINavigation")) {
+            LOAD_API_FUNC(URINavigation_enable);
+        }
+    } else {
+        apiVersion = BasicAPIVersion;
+        if(!apiFuncs->isAPIVersionSupported(apiVersion)) {
+            ERROR_LOG(
+                "Vice plugin ", filename,
+                " does not support API version ", apiVersion
+            );
+            REQUIRE(dlclose(lib) == 0);
+            return {};
+        }
     }
 
     apiFuncs->setGlobalLogCallback(
@@ -405,6 +422,35 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     void* callbackData = (void*)(new weak_ptr<ViceContext>(shared_from_this()));
 #endif
 
+    if(plugin_->apiFuncs_->URINavigation_enable != nullptr) {
+        VicePluginAPI_URINavigation_Callbacks uriNavigationCallbacks;
+        memset(&uriNavigationCallbacks, 0, sizeof(VicePluginAPI_URINavigation_Callbacks));
+
+        uriNavigationCallbacks.createWindowWithURI =
+            CTX_CALLBACK(uint64_t, (char** msg, const char* uri), {
+                string sanitizedURI = sanitizeUTF8String(uri);
+                string reason = "Unknown reason";
+                uint64_t window =
+                    self->eventHandler_->onViceContextCreateWindowRequest(reason, sanitizedURI);
+                if(window || msg == nullptr) {
+                    REQUIRE(self->openWindows_.insert(window).second);
+                    return window;
+                } else {
+                    *msg = createMallocString(reason);
+                    return 0;
+                }
+            });
+
+        uriNavigationCallbacks.navigateWindowToURI =
+            CTX_CALLBACK(void, (uint64_t window, const char* uri), {
+                REQUIRE(self->openWindows_.count(window));
+                string sanitizedURI = sanitizeUTF8String(uri);
+                self->eventHandler_->onViceContextNavigateToURI(window, sanitizedURI);
+            });
+
+        plugin_->apiFuncs_->URINavigation_enable(ctx_, uriNavigationCallbacks);
+    }
+
     VicePluginAPI_Callbacks callbacks;
     memset(&callbacks, 0, sizeof(VicePluginAPI_Callbacks));
 
@@ -423,7 +469,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
     callbacks.createWindow = CTX_CALLBACK(uint64_t, (char** msg), {
         string reason = "Unknown reason";
         uint64_t window =
-            self->eventHandler_->onViceContextCreateWindowRequest(reason);
+            self->eventHandler_->onViceContextCreateWindowRequest(reason, {});
         if(window || msg == nullptr) {
             REQUIRE(self->openWindows_.insert(window).second);
             return window;

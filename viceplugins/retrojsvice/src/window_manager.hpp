@@ -7,6 +7,7 @@ namespace retrojsvice {
 class WindowManagerEventHandler {
 public:
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() = 0;
+    virtual variant<uint64_t, string> onWindowManagerCreateWindowWithURIRequest(string uri) = 0;
     virtual void onWindowManagerCloseWindow(uint64_t window) = 0;
 
     // See ImageCompressorEventHandler::onImageCompressorFetchImage
@@ -42,6 +43,7 @@ public:
     virtual void onWindowManagerLoseFocus(uint64_t window) = 0;
 
     virtual void onWindowManagerNavigate(uint64_t window, int direction) = 0;
+    virtual void onWindowManagerNavigateToURI(uint64_t window, string uri) = 0;
 
     virtual void onWindowManagerUploadFile(
         uint64_t window, string name, shared_ptr<FileUpload> file
@@ -128,13 +130,14 @@ public:
     virtual void onWindowKeyUp(uint64_t window, int key) override;
     virtual void onWindowLoseFocus(uint64_t window) override;
     virtual void onWindowNavigate(uint64_t window, int direction) override;
+    virtual void onWindowNavigateToURI(uint64_t window, string uri) override;
     virtual void onWindowUploadFile(
         uint64_t window, string name, shared_ptr<FileUpload> file
     ) override;
     virtual void onWindowCancelFileUpload(uint64_t window) override;
 
 private:
-    void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request);
+    void handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request, optional<string> uri);
 
     shared_ptr<WindowManagerEventHandler> eventHandler_;
     bool closed_;

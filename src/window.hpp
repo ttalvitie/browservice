@@ -74,7 +74,8 @@ public:
     // Returns empty pointer if CEF browser creation fails.
     static shared_ptr<Window> tryCreate(
         shared_ptr<WindowEventHandler> eventHandler,
-        uint64_t handle
+        uint64_t handle,
+        optional<string> uri
     );
 
     // Private constructor.
@@ -89,6 +90,8 @@ public:
 
     // -1 = back, 0 = refresh, 1 = forward.
     void navigate(int direction);
+
+    void navigateToURI(string uri);
 
     void uploadFile(shared_ptr<ViceFileUpload> file);
     void cancelFileUpload();

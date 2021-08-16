@@ -61,7 +61,7 @@ Window::Window(CKey,
 
     prePrevVisited_ = false;
     preMainVisited_ = false;
-    prevNextClicked_ = false;
+    navigationInProgress_ = false;
 
     curMainIdx_ = 0;
     curImgIdx_ = 0;
@@ -216,6 +216,13 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     }
     if(method == "GET" && path == "/next/") {
         handleNextPageRequest_(mce, request);
+        return;
+    }
+
+    const string gotoPrefix = "/goto/";
+    if(method == "GET" && path.size() >= gotoPrefix.size() && path.substr(0, 6) == gotoPrefix) {
+        string uri = path.substr(gotoPrefix.size());
+        handleGotoURIRequest_(mce, request, uri);
         return;
     }
 
@@ -744,12 +751,12 @@ void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     if(preMainVisited_) {
         ++curMainIdx_;
 
-        if(curMainIdx_ > 1 && !prevNextClicked_) {
+        if(curMainIdx_ > 1 && !navigationInProgress_) {
             // This is not first main page load and no prev/next clicked,
             // so this must be a refresh
             navigate_(mce, 0);
         }
-        prevNextClicked_ = false;
+        navigationInProgress_ = false;
 
         if(curMainIdx_ > 1) {
             // Make sure that no mouse buttons or keys are stuck down and the
@@ -944,8 +951,8 @@ void Window::handleCloseRequest_(
 void Window::handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
-    if(curMainIdx_ > 0 && !prevNextClicked_) {
-        prevNextClicked_ = true;
+    if(curMainIdx_ > 0 && !navigationInProgress_) {
+        navigationInProgress_ = true;
         navigate_(mce, -1);
     }
 
@@ -964,13 +971,27 @@ void Window::handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
 void Window::handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
-    if(curMainIdx_ > 0 && !prevNextClicked_) {
-        prevNextClicked_ = true;
+    if(curMainIdx_ > 0 && !navigationInProgress_) {
+        navigationInProgress_ = true;
         navigate_(mce, 1);
     }
 
     request->sendHTMLResponse(200, writeNextHTML, {programName_, pathPrefix_});
-    return;
+}
+
+void Window::handleGotoURIRequest_(MCE, shared_ptr<HTTPRequest> request, string uri) {
+    updateInactivityTimeout_();
+
+    if(!closed_) {
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowNavigateToURI(handle_, uri);
+    }
+
+    navigationInProgress_ = true;
+    prePrevVisited_ = false;
+    preMainVisited_ = false;
+
+    request->sendHTMLResponse(200, writeNewWindowHTML, {programName_, pathPrefix_});
 }
 
 void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {

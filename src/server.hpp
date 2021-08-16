@@ -29,7 +29,7 @@ public:
     void shutdown();
 
     // ViceContextEventHandler:
-    virtual uint64_t onViceContextCreateWindowRequest(string& reason) override;
+    virtual uint64_t onViceContextCreateWindowRequest(string& reason, optional<string> uri) override;
     virtual void onViceContextCloseWindow(uint64_t window) override;
     virtual void onViceContextResizeWindow(
         uint64_t window, int width, int height
@@ -56,6 +56,7 @@ public:
     virtual void onViceContextKeyUp(uint64_t window, int key) override;
     virtual void onViceContextLoseFocus(uint64_t window) override;
     virtual void onViceContextNavigate(uint64_t window, int direction) override;
+    virtual void onViceContextNavigateToURI(uint64_t window, string uri) override;
     virtual void onViceContextCopyToClipboard(string text) override;
     virtual void onViceContextRequestClipboardContent() override;
     virtual void onViceContextUploadFile(

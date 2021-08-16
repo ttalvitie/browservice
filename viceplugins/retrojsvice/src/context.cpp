@@ -275,6 +275,15 @@ Context::~Context() {
     INFO_LOG("Destroying retrojsvice plugin context");
 }
 
+void Context::URINavigation_enable(VicePluginAPI_URINavigation_Callbacks callbacks) {
+    APILock apiLock(this);
+
+    REQUIRE(state_ == Pending);
+
+    REQUIRE(!uriNavigationCallbacks_.has_value());
+    uriNavigationCallbacks_ = callbacks;
+}
+
 void Context::start(
     VicePluginAPI_Callbacks callbacks,
     void* callbackData
@@ -647,6 +656,29 @@ variant<uint64_t, string> Context::onWindowManagerCreateWindowRequest() {
     }
 }
 
+variant<uint64_t, string> Context::onWindowManagerCreateWindowWithURIRequest(string uri) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+
+    if(!uriNavigationCallbacks_) {
+        return string("Program has not enabled URINavigation vice plugin API extension");
+    }
+
+    REQUIRE(uriNavigationCallbacks_->createWindowWithURI != nullptr);
+    char* msgC = nullptr;
+    uint64_t handle = uriNavigationCallbacks_->createWindowWithURI(callbackData_, &msgC, uri.c_str());
+
+    if(handle) {
+        REQUIRE(msgC == nullptr);
+        return handle;
+    } else {
+        REQUIRE(msgC != nullptr);
+        string msg = msgC;
+        free(msgC);
+        return msg;
+    }
+}
+
 void Context::onWindowManagerCloseWindow(uint64_t window) {
     REQUIRE(threadRunningPumpEvents);
     REQUIRE(state_ == Running);
@@ -747,6 +779,23 @@ FORWARD_WINDOW_EVENT(
     onWindowManagerNavigate(uint64_t window, int direction),
     navigate, (callbackData_, window, direction)
 )
+
+void Context::onWindowManagerNavigateToURI(uint64_t window, string uri) {
+    REQUIRE(threadRunningPumpEvents);
+    REQUIRE(state_ == Running);
+    REQUIRE(window);
+
+    if(!uriNavigationCallbacks_) {
+        WARNING_LOG(
+            "Window navigation to URI denied because the program has not enabled URINavigation "
+            "vice plugin API extension"
+        );
+        return;
+    }
+
+    REQUIRE(uriNavigationCallbacks_->navigateWindowToURI != nullptr);
+    uriNavigationCallbacks_->navigateWindowToURI(callbackData_, window, uri.c_str());
+}
 
 void Context::onWindowManagerUploadFile(
     uint64_t window, string name, shared_ptr<FileUpload> file

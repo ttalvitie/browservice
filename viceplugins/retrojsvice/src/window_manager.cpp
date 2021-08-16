@@ -64,7 +64,14 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     string path = request->path();
 
     if(method == "GET" && path == "/") {
-        handleNewWindowRequest_(mce, request);
+        handleNewWindowRequest_(mce, request, {});
+        return;
+    }
+
+    const string gotoPrefix = "/goto/";
+    if(method == "GET" && path.size() >= gotoPrefix.size() && path.substr(0, 6) == gotoPrefix) {
+        string uri = path.substr(gotoPrefix.size());
+        handleNewWindowRequest_(mce, request, uri);
         return;
     }
 
@@ -275,6 +282,10 @@ FORWARD_WINDOW_EVENT(
     onWindowManagerNavigate(window, direction)
 )
 FORWARD_WINDOW_EVENT(
+    onWindowNavigateToURI(uint64_t window, string uri),
+    onWindowManagerNavigateToURI(window, move(uri))
+)
+FORWARD_WINDOW_EVENT(
     onWindowUploadFile(
         uint64_t window, string name, shared_ptr<FileUpload> file
     ),
@@ -299,14 +310,18 @@ bool hasPNGSupport(string userAgent) {
 
 }
 
-void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request) {
+void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request, optional<string> uri) {
     REQUIRE(!closed_);
     REQUIRE(eventHandler_);
 
     INFO_LOG("New window requested by user");
 
-    variant<uint64_t, string> result =
-        eventHandler_->onWindowManagerCreateWindowRequest();
+    variant<uint64_t, string> result;
+    if(uri.has_value()) {
+        result = eventHandler_->onWindowManagerCreateWindowWithURIRequest(uri.value());
+    } else {
+        result = eventHandler_->onWindowManagerCreateWindowRequest();
+    }
 
     visit(Overloaded {
         [&](uint64_t handle) {
@@ -329,7 +344,7 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
             window->handleInitialForwardHTTPRequest(request);
         },
         [&](string msg) {
-            INFO_LOG("Window creation denied by program (reason: ", msg, ")");
+            INFO_LOG("Window creation denied (reason: ", msg, ")");
 
             request->sendTextResponse(
                 503, "ERROR: Could not create window, reason: " + msg + "\n"

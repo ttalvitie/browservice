@@ -440,7 +440,8 @@ private:
 
 shared_ptr<Window> Window::tryCreate(
     shared_ptr<WindowEventHandler> eventHandler,
-    uint64_t handle
+    uint64_t handle,
+    optional<string> uri
 ) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
@@ -462,7 +463,7 @@ shared_ptr<Window> Window::tryCreate(
     if(!CefBrowserHost::CreateBrowser(
         windowInfo,
         client,
-        globals->config->startPage,
+        (uri.has_value() && !uri.value().empty()) ? uri.value() : globals->config->startPage,
         browserSettings,
         nullptr,
         nullptr
@@ -539,6 +540,19 @@ void Window::navigate(int direction) {
         }
         if(direction == 1) {
             browser_->GoForward();
+        }
+    }
+}
+
+void Window::navigateToURI(string uri) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    if(!uri.empty() && browser_) {
+        CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
+        if(frame) {
+            frame->LoadURL(uri);
+            rootWidget_->browserArea()->takeFocus();
         }
     }
 }

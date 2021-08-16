@@ -37,6 +37,8 @@ public:
     ~Context();
 
     // Public API functions:
+    void URINavigation_enable(VicePluginAPI_URINavigation_Callbacks callbacks);
+
     void start(
         VicePluginAPI_Callbacks callbacks,
         void* callbackData
@@ -90,6 +92,7 @@ public:
 
     // WindowManagerEventHandler;
     virtual variant<uint64_t, string> onWindowManagerCreateWindowRequest() override;
+    virtual variant<uint64_t, string> onWindowManagerCreateWindowWithURIRequest(string uri) override;
     virtual void onWindowManagerCloseWindow(uint64_t window) override;
     virtual void onWindowManagerFetchImage(
         uint64_t window,
@@ -124,6 +127,9 @@ public:
     virtual void onWindowManagerNavigate(
         uint64_t window, int direction
     ) override;
+    virtual void onWindowManagerNavigateToURI(
+        uint64_t window, string uri
+    ) override;
     virtual void onWindowManagerUploadFile(
         uint64_t window, string name, shared_ptr<FileUpload> file
     ) override;
@@ -151,6 +157,8 @@ private:
 
     VicePluginAPI_Callbacks callbacks_;
     void* callbackData_;
+
+    optional<VicePluginAPI_URINavigation_Callbacks> uriNavigationCallbacks_;
 
     shared_ptr<TaskQueue> taskQueue_;
     shared_ptr<HTTPServer> httpServer_;

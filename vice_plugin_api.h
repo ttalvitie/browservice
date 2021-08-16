@@ -88,6 +88,9 @@ extern "C" {
  *
  *  6. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
+ * API version 1000001 adds support for extensions; see the section "API version 1000001" for more
+ * information.
+ *
  * General API conventions and rules:
  *
  *   - The program and plugin communicate bidirectionally using function calls. The program directly
@@ -685,6 +688,57 @@ void vicePluginAPI_setGlobalPanicCallback(
     void (*callback)(void* data, const char* location, const char* msg),
     void* data,
     void (*destructorCallback)(void* data)
+);
+
+/***************************************************************************************************
+ *** API version 1000001 ***
+ ***************************/
+
+/* API version 1000001 contains all the same functionality as API version 1000000, and adds support
+ * for API extensions through the function vicePluginAPI_isExtensionSupported.
+ */
+
+/* Returns 1 if the vice plugin supports API extension with given name (null-terminated and case
+ * sensitive), and 0 otherwise. This function may be called at any time from any thread, and the
+ * same plugin should always return the same result for the same extension name. If the return value
+ * is 1, the program may use the functions for that extensions as documented below or in other
+ * sources. Avoidance of name conflicts should be kept in mind when naming new extensions;
+ * organization names or other identifiers may be added as necessary, and extension function names
+ * should start with vicePluginAPI_EXTNAME_ (where EXTNAME is replaced by the name of the extension)
+ * where possible.
+ */
+int vicePluginAPI_isExtensionSupported(uint64_t apiVersion, const char* name);
+
+/***************************************************************************************************
+ *** API extension "URINavigation" ***
+ *************************************/
+
+/* Extension that allows the plugin to navigate windows (both existing and newly created) to
+ * arbitrary URIs (Uniform Resource Identifiers) through two additional callbacks in the
+ * VicePluginAPI_URINavigation_Callbacks structure. The extension is enabled by the program using
+ * vicePluginAPI_URINavigation_enable. The program should be able to handle arbitrary
+ * null-terminated binary data in the URI strings given by the plugin in addition to valid URIs,
+ * validating and sanitizing the strings if necessary.
+ */
+
+struct VicePluginAPI_URINavigation_Callbacks {
+    /* Variant of createWindow in VicePluginAPI_Callbacks that requests that the created window is
+     * initially navigated to given URI.
+     */
+    uint64_t (*createWindowWithURI)(void*, char** msg, const char* uri);
+
+    /* Called by the plugin to request that given existing window navigates to given URI. */
+    void (*navigateWindowToURI)(void*, uint64_t window, const char* uri);
+};
+typedef struct VicePluginAPI_URINavigation_Callbacks VicePluginAPI_URINavigation_Callbacks;
+
+/* Enables the URINavigation callbacks in given context. May only be called once for each context,
+ * after vicePluginAPI_initContext and before vicePluginAPI_start. The vice plugin uses the
+ * callbacks similarly to the callbacks given in vicePluginAPI_start.
+ */
+void vicePluginAPI_URINavigation_enable(
+    VicePluginAPI_Context* ctx,
+    VicePluginAPI_URINavigation_Callbacks callbacks
 );
 
 #ifdef __cplusplus

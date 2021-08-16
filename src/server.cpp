@@ -38,7 +38,7 @@ void Server::shutdown() {
     }
 }
 
-uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
+uint64_t Server::onViceContextCreateWindowRequest(string& reason, optional<string> uri) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
@@ -61,7 +61,7 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason) {
     uint64_t handle = nextWindowHandle_++;
     REQUIRE(handle);
 
-    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle);
+    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle, uri);
     if(window) {
         REQUIRE(openWindows_.emplace(handle, window).second);
         return handle;
@@ -180,6 +180,16 @@ void Server::onViceContextNavigate(uint64_t window, int direction) {
     REQUIRE(it != openWindows_.end());
 
     it->second->navigate(direction);
+}
+
+void Server::onViceContextNavigateToURI(uint64_t window, string uri) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    it->second->navigateToURI(uri);
 }
 
 void Server::onViceContextCopyToClipboard(string text) {

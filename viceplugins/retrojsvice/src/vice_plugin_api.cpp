@@ -70,13 +70,14 @@ void setOutString(char** out, string val) {
 extern "C" {
 
 struct VicePluginAPI_Context {
+    uint64_t apiVersion;
     shared_ptr<Context> impl;
 };
 
 API_EXPORT int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
 API_FUNC_START
 
-    return (int)(apiVersion == (uint64_t)1000000);
+    return (int)(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
 
 API_FUNC_END
 }
@@ -99,7 +100,7 @@ API_EXPORT VicePluginAPI_Context* vicePluginAPI_initContext(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000);
+    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
 
     REQUIRE(programName != nullptr);
 
@@ -126,6 +127,7 @@ API_FUNC_START
     }
 
     VicePluginAPI_Context* ctx = new VicePluginAPI_Context;
+    ctx->apiVersion = apiVersion;
     ctx->impl = impl;
     return ctx;
 
@@ -141,12 +143,21 @@ API_FUNC_START
 API_FUNC_END
 }
 
-// Convenience macro for creating implementations of API functions that forward
+// Convenience macros for creating implementations of API functions that forward
 // their arguments to corresponding member functions of the Context
 #define WRAP_CTX_API(funcName, ...) \
     { \
     API_FUNC_START \
         REQUIRE(ctx != nullptr); \
+        return ctx->impl->funcName(__VA_ARGS__); \
+    API_FUNC_END \
+    }
+
+#define WRAP_CTX_EXT_API(funcName, ...) \
+    { \
+    API_FUNC_START \
+        REQUIRE(ctx != nullptr); \
+        REQUIRE(ctx->apiVersion == (uint64_t)1000001); \
         return ctx->impl->funcName(__VA_ARGS__); \
     API_FUNC_END \
     }
@@ -261,7 +272,7 @@ API_EXPORT void vicePluginAPI_getOptionDocs(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000);
+    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
     REQUIRE(callback != nullptr);
 
     vector<tuple<string, string, string, string>> docs =
@@ -295,7 +306,7 @@ API_EXPORT void vicePluginAPI_setGlobalLogCallback(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000);
+    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
 
     if(callback == nullptr) {
         setLogCallback({});
@@ -334,7 +345,7 @@ API_EXPORT void vicePluginAPI_setGlobalPanicCallback(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000);
+    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
 
     if(callback == nullptr) {
         setPanicCallback({});
@@ -346,5 +357,26 @@ API_FUNC_START
 
 API_FUNC_END
 }
+
+API_EXPORT int vicePluginAPI_isExtensionSupported(uint64_t apiVersion, const char* name) {
+API_FUNC_START
+
+    REQUIRE(apiVersion == (uint64_t)1000001);
+
+    string nameStr = name;
+    if(nameStr == "URINavigation") {
+        return 1;
+    } else {
+        return 0;
+    }
+
+API_FUNC_END
+}
+
+API_EXPORT void vicePluginAPI_URINavigation_enable(
+    VicePluginAPI_Context* ctx,
+    VicePluginAPI_URINavigation_Callbacks callbacks
+)
+WRAP_CTX_EXT_API(URINavigation_enable, callbacks);
 
 }

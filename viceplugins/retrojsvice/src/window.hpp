@@ -39,6 +39,7 @@ public:
     virtual void onWindowLoseFocus(uint64_t window) = 0;
 
     virtual void onWindowNavigate(uint64_t window, int direction) = 0;
+    virtual void onWindowNavigateToURI(uint64_t window, string uri) = 0;
 
     virtual void onWindowUploadFile(
         uint64_t window, string name, shared_ptr<FileUpload> file
@@ -147,6 +148,7 @@ private:
     );
     void handlePrevPageRequest_(MCE, shared_ptr<HTTPRequest> request);
     void handleNextPageRequest_(MCE, shared_ptr<HTTPRequest> request);
+    void handleGotoURIRequest_(MCE, shared_ptr<HTTPRequest> request, string uri);
 
     void addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe);
 
@@ -186,7 +188,7 @@ private:
 
     bool prePrevVisited_;
     bool preMainVisited_;
-    bool prevNextClicked_;
+    bool navigationInProgress_;
 
     // How many times the main page has been requested. The main page mentions
     // its index to all the requests it makes, and we discard all the requests

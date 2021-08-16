@@ -77,7 +77,7 @@ class ViceContextEventHandler {
 public:
     // To deny window creation, return 0 and optionally set msg to short
     // human-readable reason for the denial.
-    virtual uint64_t onViceContextCreateWindowRequest(string& msg) = 0;
+    virtual uint64_t onViceContextCreateWindowRequest(string& msg, optional<string> uri) = 0;
 
     virtual void onViceContextCloseWindow(uint64_t window) = 0;
     virtual void onViceContextResizeWindow(
@@ -107,6 +107,7 @@ public:
     virtual void onViceContextLoseFocus(uint64_t window) = 0;
 
     virtual void onViceContextNavigate(uint64_t window, int direction) = 0;
+    virtual void onViceContextNavigateToURI(uint64_t window, string uri) = 0;
 
     virtual void onViceContextCopyToClipboard(string text) = 0;
     virtual void onViceContextRequestClipboardContent() = 0;
