@@ -364,6 +364,7 @@ public:
 
         if(
             window_->state_ == Open &&
+            event.type == KEYEVENT_RAWKEYDOWN &&
             event.windows_key_code == -keys::Backspace &&
             !event.focus_on_editable_field
         ) {
