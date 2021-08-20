@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "server.hpp"
+#include "scheme.hpp"
 #include "vice.hpp"
 #include "xvfb.hpp"
 
@@ -31,7 +32,14 @@ class App :
     public CefBrowserProcessHandler
 {
 public:
-    App(shared_ptr<ViceContext> viceCtx) {
+    App() {
+        initialized_ = false;
+    }
+
+    void initialize(shared_ptr<ViceContext> viceCtx) {
+        REQUIRE(!initialized_);
+
+        initialized_ = true;
         serverEventHandler_ = AppServerEventHandler::create();
         shutdown_ = false;
         viceCtx_ = viceCtx;
@@ -39,6 +47,7 @@ public:
 
     void shutdown() {
         REQUIRE_UI_THREAD();
+        REQUIRE(initialized_);
 
         if(server_) {
             server_->shutdown();
@@ -47,7 +56,7 @@ public:
         }
     }
 
-    // CefApp:
+    // CefApp (may be used with initialized_ = false in other processes):
     virtual CefRefPtr<CefBrowserProcessHandler> GetBrowserProcessHandler() override {
         return this;
     }
@@ -55,6 +64,10 @@ public:
         const CefString& processType,
         CefRefPtr<CefCommandLine> commandLine
     ) override {
+        if(!initialized_) {
+            return;
+        }
+
         commandLine->AppendSwitch("disable-smooth-scrolling");
         commandLine->AppendSwitchWithValue("use-gl", "desktop");
 
@@ -66,11 +79,21 @@ public:
             }
         }
     }
+    virtual void OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) {
+        registrar->AddCustomScheme("browservice", CEF_SCHEME_OPTION_LOCAL | CEF_SCHEME_OPTION_DISPLAY_ISOLATED);
+    }
 
-    // CefBrowserProcessHandler:
+    // CefBrowserProcessHandler (may be used with initialized_ = false in other processes):
     virtual void OnContextInitialized() override {
+        if(!initialized_) {
+            return;
+        }
+
         REQUIRE_UI_THREAD();
         REQUIRE(!server_);
+
+        CefRefPtr<BrowserviceSchemeHandlerFactory> schemeHandlerFactory = new BrowserviceSchemeHandlerFactory();
+        CefRegisterSchemeHandlerFactory("browservice", "", schemeHandlerFactory);
 
         server_ = Server::create(serverEventHandler_, viceCtx_);
         viceCtx_.reset();
@@ -80,6 +103,7 @@ public:
     }
 
 private:
+    bool initialized_;
     shared_ptr<Server> server_;
     shared_ptr<AppServerEventHandler> serverEventHandler_;
     bool shutdown_;
@@ -110,7 +134,9 @@ int main(int argc, char* argv[]) {
 
     CefMainArgs mainArgs(argc, argv);
 
-    int exitCode = CefExecuteProcess(mainArgs, nullptr, nullptr);
+    app = new App();
+
+    int exitCode = CefExecuteProcess(mainArgs, app, nullptr);
     if(exitCode >= 0) {
         return exitCode;
     }
@@ -152,7 +178,7 @@ int main(int argc, char* argv[]) {
         XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
         XSetIOErrorHandler([](Display*) { return 0; });
 
-        app = new App(viceCtx);
+        app->initialize(viceCtx);
         viceCtx.reset();
 
         CefSettings settings;
