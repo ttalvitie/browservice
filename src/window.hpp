@@ -34,7 +34,7 @@ public:
     // To accept popup creation, the implementation should call the accept
     // function once with the handle of the new window as argument before
     // returning. The accept function returns the new window that uses the same
-    // event handler as the original window.
+    // event handler as the original window, or empty if creation fails.
     virtual void onWindowCreatePopupRequest(
         uint64_t handle,
         function<shared_ptr<Window>(uint64_t)> accept
@@ -120,6 +120,7 @@ public:
     virtual void onFind(string text, bool forward, bool findNext) override;
     virtual void onStopFind(bool clearSelection) override;
     virtual void onClipboardButtonPressed() override;
+    virtual void onOpenBookmarksButtonPressed() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;

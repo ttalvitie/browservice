@@ -125,6 +125,7 @@ string toString(const T& obj) {
 }
 
 string sanitizeUTF8String(string str);
+vector<int> sanitizeUTF8StringToCodePoints(string str);
 
 // Logging macros that log given message along with severity, source file and
 // line information to stderr. Message is formed by calling toString for each

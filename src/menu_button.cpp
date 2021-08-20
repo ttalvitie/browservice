@@ -21,6 +21,13 @@ MenuButton::MenuButton(CKey,
     mouseDown_ = false;
 }
 
+void MenuButton::setIcon(MenuButtonIcon icon) {
+    REQUIRE_UI_THREAD();
+
+    icon_ = icon;
+    signalViewDirty_();
+}
+
 void MenuButton::mouseMove_(int x, int y) {
     ImageSlice viewport = getViewport();
 

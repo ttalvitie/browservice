@@ -405,8 +405,12 @@ void Server::onWindowCreatePopupRequest(
         );
 
         shared_ptr<Window> newWindow = accept(newHandle);
-        REQUIRE(newWindow);
-        REQUIRE(openWindows_.emplace(newHandle, newWindow).second);
+        if(newWindow) {
+            REQUIRE(openWindows_.emplace(newHandle, newWindow).second);
+        } else {
+            WARNING_LOG("Creating popup window ", newHandle, " failed, closing it in vice plugin");
+            viceCtx_->closeWindow(newHandle);
+        }
     } else {
         INFO_LOG(
             "Popup window ", newHandle,

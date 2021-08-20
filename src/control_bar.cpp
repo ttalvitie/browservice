@@ -1,7 +1,10 @@
 #include "control_bar.hpp"
 
+#include "bookmarks.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
+
+#include <time.h>
 
 namespace browservice {
 
@@ -142,6 +145,207 @@ MenuButtonIcon goIcon = {
             {'M', {200, 200, 200}},
             {'d', {172, 172, 172}},
             {'D', {144, 144, 144}},
+        }
+    )
+};
+
+vector<string> openBookmarksIconPattern = {
+    "...................",
+    "...................",
+    "...ggggggggggggg...",
+    "...ghwwwwwwwwwwH...",
+    "...gchwwDDDDDDDwH..",
+    "...gKqssDrrrrr*sH..",
+    "...gKkkkDrrrrr*k*..",
+    "...gKkkkDrrrrr*k*..",
+    "...gKk--Drrrrr*k*..",
+    "...gKkkkDrr*rr*k*..",
+    "...gKkkkDr*kmr*k*..",
+    "...gKk--D*---m*k*..",
+    "...gKkkkDkkkkk*k*..",
+    "...gKkkkkkkkkkkk*..",
+    "...gKk---------k*..",
+    "...gKkkkkkkkkkkk*..",
+    "....Hkkkkkkkkkkk*..",
+    "....*************..",
+    "..................."
+};
+
+MenuButtonIcon openBookmarksIcon = {
+    ImageSlice::createImageFromStrings(
+        openBookmarksIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'-', {160, 96, 0}},
+            {'w', {255, 255, 255}},
+            {'r', {255, 128, 128}},
+            {'D', {56, 30, 30}},
+            {'m', {23, 15, 15}},
+            {'k', {192, 128, 0}},
+            {'s', {66, 46, 0}},
+            {'q', {80, 48, 0}},
+            {'K', {128, 64, 0}},
+            {'c', {112, 56, 0}},
+            {'g', {56, 28, 0}},
+            {'h', {88, 46, 0}},
+            {'H', {44, 22, 0}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        openBookmarksIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'-', {128, 128, 128}},
+            {'w', {255, 255, 255}},
+            {'r', {224, 224, 224}},
+            {'D', {48, 48, 48}},
+            {'m', {24, 24, 24}},
+            {'k', {160, 160, 160}},
+            {'s', {58, 58, 58}},
+            {'q', {60, 60, 60}},
+            {'K', {96, 96, 96}},
+            {'c', {80, 80, 80}},
+            {'g', {48, 48, 48}},
+            {'h', {56, 56, 56}},
+            {'H', {40, 40, 40}}
+        }
+    )
+};
+
+vector<string> bookmarkOffIconPattern = {
+    "...................",
+    "...................",
+    ".....xSSSSSSSSP....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrrrrrrr*....",
+    ".....Drrr**rrr*....",
+    ".....Drr*..mrr*....",
+    ".....Dr*....mr*....",
+    ".....D*......m*....",
+    ".....D........*....",
+    "...................",
+    "..................."
+};
+
+MenuButtonIcon bookmarkOffIcon = {
+    ImageSlice::createImageFromStrings(
+        bookmarkOffIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {255, 128, 128}},
+            {'S', {80, 80, 80}},
+            {'P', {48, 48, 48}},
+            {'D', {72, 48, 48}},
+            {'m', {36, 24, 24}},
+            {'x', {76, 64, 64}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        bookmarkOffIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {212, 212, 212}},
+            {'S', {96, 96, 96}},
+            {'P', {64, 64, 64}},
+            {'D', {64, 64, 64}},
+            {'m', {32, 32, 32}},
+            {'x', {80, 80, 80}}
+        }
+    )
+};
+
+vector<string> bookmarkOnIconPattern = {
+    "...................",
+    "...................",
+    "......xxxxxxxg.....",
+    ".....gwvvvvvvv*....",
+    "....gdg8wwwwwwC*...",
+    "....grg8rrrrrrD*...",
+    "....grg8rrrrrrE*...",
+    "....grg7AAAAAAF*...",
+    "....grg6BBBBBBG*...",
+    "....grg5CCCCCCH*...",
+    "....g*grDDDDDDI*...",
+    "......gAEEGEEEJ*...",
+    "......gAEG**EEJ*...",
+    "......gAG*..mEJ*...",
+    "......gA*....mJ*...",
+    "......g*......m*...",
+    "......g........*...",
+    "...................",
+    "..................."
+};
+
+MenuButtonIcon bookmarkOnIcon = {
+    ImageSlice::createImageFromStrings(
+        bookmarkOnIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'5', {255, 131, 131}},
+            {'6', {255, 134, 134}},
+            {'7', {255, 137, 137}},
+            {'8', {255, 140, 140}},
+            {'r', {255, 128, 128}},
+            {'A', {253, 127, 127}},
+            {'B', {250, 125, 125}},
+            {'C', {247, 124, 124}},
+            {'D', {244, 122, 122}},
+            {'E', {241, 121, 121}},
+            {'F', {238, 119, 119}},
+            {'G', {235, 118, 118}},
+            {'H', {232, 116, 116}},
+            {'I', {229, 115, 115}},
+            {'J', {226, 113, 113}},
+            {'d', {216, 104, 104}},
+            {'2', {228, 112, 112}},
+            {'w', {255, 134, 134}},
+            {'v', {255, 148, 148}},
+            {'g', {96, 48, 48}},
+            {'m', {48, 32, 32}},
+            {'x', {96, 64, 64}},
+            {'p', {48, 32, 32}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        bookmarkOnIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'5', {227, 227, 227}},
+            {'6', {230, 230, 230}},
+            {'7', {233, 233, 233}},
+            {'8', {236, 236, 236}},
+            {'r', {224, 224, 224}},
+            {'A', {221, 221, 221}},
+            {'B', {218, 218, 218}},
+            {'C', {215, 215, 215}},
+            {'D', {212, 212, 212}},
+            {'E', {209, 209, 209}},
+            {'F', {206, 206, 206}},
+            {'G', {203, 203, 203}},
+            {'H', {200, 200, 200}},
+            {'I', {197, 197, 197}},
+            {'J', {194, 194, 194}},
+            {'d', {192, 192, 192}},
+            {'2', {200, 200, 200}},
+            {'w', {230, 230, 230}},
+            {'v', {240, 240, 240}},
+            {'g', {64, 64, 64}},
+            {'m', {40, 40, 40}},
+            {'x', {80, 80, 80}},
+            {'p', {40, 40, 40}}
         }
     )
 };
@@ -357,7 +561,10 @@ struct ControlBar::Layout {
         findButtonEnd = clipboardButtonStart;
         findButtonStart = findButtonEnd - BtnWidth;
 
-        int separator1End = findButtonStart;
+        openBookmarksButtonEnd = findButtonStart;
+        openBookmarksButtonStart = openBookmarksButtonEnd - BtnWidth;
+
+        int separator1End = openBookmarksButtonStart;
         int separator1Start = separator1End - SeparatorWidth;
         separator1Pos = separator1Start + SeparatorWidth / 2;
 
@@ -367,7 +574,10 @@ struct ControlBar::Layout {
         addrTextStart = addrStart;
         addrTextEnd = addrTextStart + AddressTextWidth;
 
-        goButtonEnd = addrEnd;
+        bookmarkToggleButtonEnd = addrEnd;
+        bookmarkToggleButtonStart = bookmarkToggleButtonEnd - BtnWidth;
+
+        goButtonEnd = bookmarkToggleButtonStart;
         goButtonStart = goButtonEnd - BtnWidth;
 
         addrBoxStart = addrTextEnd;
@@ -394,6 +604,9 @@ struct ControlBar::Layout {
     int goButtonStart;
     int goButtonEnd;
 
+    int bookmarkToggleButtonStart;
+    int bookmarkToggleButtonEnd;
+
     int securityIconStart;
 
     int addrFieldStart;
@@ -413,6 +626,9 @@ struct ControlBar::Layout {
 
     int downloadStart;
     int downloadEnd;
+
+    int openBookmarksButtonStart;
+    int openBookmarksButtonEnd;
 
     int findButtonStart;
     int findButtonEnd;
@@ -499,7 +715,14 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 
 void ControlBar::setAddress(string addr) {
     REQUIRE_UI_THREAD();
+    address_ = addr;
+    setBookmarkID_(getCachedBookmarkIDByURL(addr));
     addrField_->setText(move(addr));
+}
+
+void ControlBar::setPageTitle(string pageTitle) {
+    REQUIRE_UI_THREAD();
+    pageTitle_ = move(pageTitle);
 }
 
 void ControlBar::setLoading(bool loading) {
@@ -588,6 +811,37 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         );
     }
 
+    if(button.lock() == bookmarkToggleButton_ && !address_.empty()) {
+        shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+        if(bookmarks) {
+            if(bookmarkID_.has_value()) {
+                bookmarks->removeBookmark(bookmarkID_.value());
+                if(bookmarks->save()) {
+                    setBookmarkID_({});
+                }
+            } else if(address_ != "browservice:bookmarks") {
+                Bookmark bookmark;
+                bookmark.url = address_;
+                bookmark.title = pageTitle_;
+                if(bookmark.title.empty()) {
+                    bookmark.title = bookmark.url;
+                }
+                bookmark.time = time(nullptr);
+                uint64_t id = bookmarks->putBookmark(move(bookmark));
+                if(bookmarks->save()) {
+                    setBookmarkID_(id);
+                }
+            }
+        }
+    }
+
+    if(button.lock() == openBookmarksButton_) {
+        postTask(
+            eventHandler_,
+            &ControlBarEventHandler::onOpenBookmarksButtonPressed
+        );
+    }
+
     if(button.lock() == findButton_) {
         openFindBar();
     }
@@ -644,6 +898,8 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_->setAllowEmptySubmit(false);
 
     goButton_ = MenuButton::create(goIcon, self, self);
+    bookmarkToggleButton_ = MenuButton::create(bookmarkOffIcon, self, self);
+    openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
     downloadButton_ = Button::create(self, self);
@@ -664,6 +920,11 @@ ControlBar::Layout ControlBar::layout_() {
     );
 }
 
+void ControlBar::setBookmarkID_(optional<uint64_t> bookmarkID) {
+    bookmarkID_ = bookmarkID;
+    bookmarkToggleButton_->setIcon(bookmarkID_.has_value() ? bookmarkOnIcon : bookmarkOffIcon);
+}
+
 void ControlBar::widgetViewportUpdated_() {
     REQUIRE_UI_THREAD();
 
@@ -675,6 +936,12 @@ void ControlBar::widgetViewportUpdated_() {
     ));
     goButton_->setViewport(viewport.subRect(
         layout.goButtonStart, layout.goButtonEnd, 1, Height - 4
+    ));
+    bookmarkToggleButton_->setViewport(viewport.subRect(
+        layout.bookmarkToggleButtonStart, layout.bookmarkToggleButtonEnd, 1, Height - 4
+    ));
+    openBookmarksButton_->setViewport(viewport.subRect(
+        layout.openBookmarksButtonStart, layout.openBookmarksButtonEnd, 1, Height - 4
     ));
     findButton_->setViewport(viewport.subRect(
         layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
@@ -851,6 +1118,8 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     vector<shared_ptr<Widget>> children = {
         addrField_,
         goButton_,
+        bookmarkToggleButton_,
+        openBookmarksButton_,
         findButton_
     };
     if(qualitySelector_) {

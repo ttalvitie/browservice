@@ -6,15 +6,18 @@ namespace browservice {
 
 thread_local mt19937 rng(random_device{}());
 
-string sanitizeUTF8String(string str) {
-    string ret;
+namespace {
+
+template <typename A, typename B>
+void sanitizeUTF8StringImpl(const string& str, A byteHandler, B pointHandler) {
     for(size_t i = 0; i < str.size(); ++i) {
         int ch = (int)(uint8_t)str[i];
         if(ch == 0) {
             continue;
         }
         if(ch < 128) {
-            ret.push_back((char)ch);
+            byteHandler(str.data() + i, 1);
+            pointHandler(ch);
             continue;
         }
 
@@ -55,10 +58,36 @@ string sanitizeUTF8String(string str) {
             )) ||
             (length == (size_t)4 && point >= 0x10000 && point <= 0x10FFFF)
         ) {
-            ret.append(str.substr(i, length));
+            byteHandler(str.data() + i, length);
+            pointHandler(point);
             i += length - 1;
         }
     }
+}
+
+}
+
+string sanitizeUTF8String(string str) {
+    string ret;
+    sanitizeUTF8StringImpl(
+        str,
+        [&](const char* bytes, size_t count) {
+            str.insert(str.end(), bytes, bytes + count);
+        },
+        [](int) {}
+    );
+    return ret;
+}
+
+vector<int> sanitizeUTF8StringToCodePoints(string str) {
+    vector<int> ret;
+    sanitizeUTF8StringImpl(
+        str,
+        [](const char*, size_t) {},
+        [&](int point) {
+            ret.push_back(point);
+        }
+    );
     return ret;
 }
 

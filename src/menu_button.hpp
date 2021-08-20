@@ -30,6 +30,8 @@ public:
         weak_ptr<MenuButtonEventHandler> eventHandler
     );
 
+    void setIcon(MenuButtonIcon icon);
+
 private:
     void mouseMove_(int x, int y);
 

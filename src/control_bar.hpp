@@ -23,6 +23,7 @@ public:
     virtual void onFind(string text, bool forward, bool findNext) = 0;
     virtual void onStopFind(bool clearSelection) = 0;
     virtual void onClipboardButtonPressed() = 0;
+    virtual void onOpenBookmarksButtonPressed() = 0;
 };
 
 class TextLayout;
@@ -52,6 +53,7 @@ public:
 
     void setSecurityStatus(SecurityStatus value);
     void setAddress(string addr);
+    void setPageTitle(string pageTitle);
     void setLoading(bool loading);
 
     void setPendingDownloadCount(int count);
@@ -88,6 +90,8 @@ private:
     class Layout;
     Layout layout_();
 
+    void setBookmarkID_(optional<uint64_t> bookmarkID);
+
     // Widget:
     virtual void widgetViewportUpdated_() override;
     virtual void widgetRender_() override;
@@ -107,6 +111,8 @@ private:
     SecurityStatus securityStatus_;
 
     shared_ptr<MenuButton> goButton_;
+    shared_ptr<MenuButton> bookmarkToggleButton_;
+    shared_ptr<MenuButton> openBookmarksButton_;
     shared_ptr<MenuButton> findButton_;
     shared_ptr<MenuButton> clipboardButton_;
 
@@ -123,6 +129,10 @@ private:
 
     bool loading_;
     optional<steady_clock::time_point> loadingAnimationStartTime_;
+
+    string address_;
+    string pageTitle_;
+    optional<uint64_t> bookmarkID_;
 };
 
 }
