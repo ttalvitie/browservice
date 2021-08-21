@@ -146,6 +146,55 @@ MenuButtonIcon goIcon = {
     )
 };
 
+vector<string> openBookmarksIconPattern = {
+    "...................",
+    "...................",
+    "...*************...",
+    "...**wwwwwwwwww*...",
+    "...*K*ww*******w*..",
+    "...*K****rrrrr***..",
+    "...*Kkkk*rrrrr*k*..",
+    "...*Kkkk*rrrrr*k*..",
+    "...*Kk--*rrrrr*k*..",
+    "...*Kkkk*rr*rr*k*..",
+    "...*Kkkk*r*k*r*k*..",
+    "...*Kk--**---**k*..",
+    "...*Kkkk*kkkkk*k*..",
+    "...*Kkkkkkkkkkkk*..",
+    "...*Kk---------k*..",
+    "...*Kkkkkkkkkkkk*..",
+    "....*kkkkkkkkkkk*..",
+    "....*************..",
+    "..................."
+};
+
+MenuButtonIcon openBookmarksIcon = {
+    ImageSlice::createImageFromStrings(
+        openBookmarksIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'-', {160, 96, 0}},
+            {'w', {255, 255, 255}},
+            {'r', {255, 128, 128}},
+            {'k', {192, 128, 0}},
+            {'K', {128, 64, 0}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        openBookmarksIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'-', {128, 128, 128}},
+            {'w', {255, 255, 255}},
+            {'r', {224, 224, 224}},
+            {'k', {160, 160, 160}},
+            {'K', {96, 96, 96}}
+        }
+    )
+};
+
 vector<string> findIconPattern = {
     "...................",
     "...................",
@@ -669,7 +718,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
 
     goButton_ = MenuButton::create(goIcon, self, self);
     bookmarkToggleButton_ = MenuButton::create(isBookmarked_ ? goIcon : findIcon, self, self);
-    openBookmarksButton_ = MenuButton::create(goIcon, self, self);
+    openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
     downloadButton_ = Button::create(self, self);
