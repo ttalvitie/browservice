@@ -357,7 +357,10 @@ struct ControlBar::Layout {
         findButtonEnd = clipboardButtonStart;
         findButtonStart = findButtonEnd - BtnWidth;
 
-        int separator1End = findButtonStart;
+        openBookmarksButtonEnd = findButtonStart;
+        openBookmarksButtonStart = openBookmarksButtonEnd - BtnWidth;
+
+        int separator1End = openBookmarksButtonStart;
         int separator1Start = separator1End - SeparatorWidth;
         separator1Pos = separator1Start + SeparatorWidth / 2;
 
@@ -367,7 +370,10 @@ struct ControlBar::Layout {
         addrTextStart = addrStart;
         addrTextEnd = addrTextStart + AddressTextWidth;
 
-        goButtonEnd = addrEnd;
+        bookmarkToggleButtonEnd = addrEnd;
+        bookmarkToggleButtonStart = bookmarkToggleButtonEnd - BtnWidth;
+
+        goButtonEnd = bookmarkToggleButtonStart;
         goButtonStart = goButtonEnd - BtnWidth;
 
         addrBoxStart = addrTextEnd;
@@ -394,6 +400,9 @@ struct ControlBar::Layout {
     int goButtonStart;
     int goButtonEnd;
 
+    int bookmarkToggleButtonStart;
+    int bookmarkToggleButtonEnd;
+
     int securityIconStart;
 
     int addrFieldStart;
@@ -413,6 +422,9 @@ struct ControlBar::Layout {
 
     int downloadStart;
     int downloadEnd;
+
+    int openBookmarksButtonStart;
+    int openBookmarksButtonEnd;
 
     int findButtonStart;
     int findButtonEnd;
@@ -588,6 +600,14 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         );
     }
 
+    if(button.lock() == bookmarkToggleButton_) {
+        INFO_LOG("TODO: bookmark toggle");
+    }
+
+    if(button.lock() == openBookmarksButton_) {
+        INFO_LOG("TODO: open bookmarks");
+    }
+
     if(button.lock() == findButton_) {
         openFindBar();
     }
@@ -644,6 +664,8 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_->setAllowEmptySubmit(false);
 
     goButton_ = MenuButton::create(goIcon, self, self);
+    bookmarkToggleButton_ = MenuButton::create(goIcon, self, self);
+    openBookmarksButton_ = MenuButton::create(goIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
     downloadButton_ = Button::create(self, self);
@@ -675,6 +697,12 @@ void ControlBar::widgetViewportUpdated_() {
     ));
     goButton_->setViewport(viewport.subRect(
         layout.goButtonStart, layout.goButtonEnd, 1, Height - 4
+    ));
+    bookmarkToggleButton_->setViewport(viewport.subRect(
+        layout.bookmarkToggleButtonStart, layout.bookmarkToggleButtonEnd, 1, Height - 4
+    ));
+    openBookmarksButton_->setViewport(viewport.subRect(
+        layout.openBookmarksButtonStart, layout.openBookmarksButtonEnd, 1, Height - 4
     ));
     findButton_->setViewport(viewport.subRect(
         layout.findButtonStart, layout.findButtonEnd, 1, Height - 4
@@ -851,6 +879,8 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
     vector<shared_ptr<Widget>> children = {
         addrField_,
         goButton_,
+        bookmarkToggleButton_,
+        openBookmarksButton_,
         findButton_
     };
     if(qualitySelector_) {

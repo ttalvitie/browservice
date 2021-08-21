@@ -107,6 +107,8 @@ private:
     SecurityStatus securityStatus_;
 
     shared_ptr<MenuButton> goButton_;
+    shared_ptr<MenuButton> bookmarkToggleButton_;
+    shared_ptr<MenuButton> openBookmarksButton_;
     shared_ptr<MenuButton> findButton_;
     shared_ptr<MenuButton> clipboardButton_;
 
