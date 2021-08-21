@@ -125,6 +125,8 @@ private:
 
     bool loading_;
     optional<steady_clock::time_point> loadingAnimationStartTime_;
+
+    bool isBookmarked_;
 };
 
 }

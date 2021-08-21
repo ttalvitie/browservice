@@ -471,6 +471,8 @@ ControlBar::ControlBar(CKey,
 
     loading_ = false;
 
+    isBookmarked_ = false;
+
     // Initialization is completed in afterConstruct_
 }
 
@@ -602,6 +604,8 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 
     if(button.lock() == bookmarkToggleButton_) {
         INFO_LOG("TODO: bookmark toggle");
+        isBookmarked_ = !isBookmarked_;
+        bookmarkToggleButton_->setIcon(isBookmarked_ ? goIcon : findIcon);
     }
 
     if(button.lock() == openBookmarksButton_) {
@@ -664,7 +668,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_->setAllowEmptySubmit(false);
 
     goButton_ = MenuButton::create(goIcon, self, self);
-    bookmarkToggleButton_ = MenuButton::create(goIcon, self, self);
+    bookmarkToggleButton_ = MenuButton::create(isBookmarked_ ? goIcon : findIcon, self, self);
     openBookmarksButton_ = MenuButton::create(goIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
