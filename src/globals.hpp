@@ -15,6 +15,7 @@ public:
     const shared_ptr<Config> config;
     const shared_ptr<XWindow> xWindow;
     const shared_ptr<TextRenderContext> textRenderContext;
+    const string dotDirPath;
 };
 
 extern shared_ptr<Globals> globals;
