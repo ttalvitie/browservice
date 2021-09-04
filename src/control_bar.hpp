@@ -23,6 +23,7 @@ public:
     virtual void onFind(string text, bool forward, bool findNext) = 0;
     virtual void onStopFind(bool clearSelection) = 0;
     virtual void onClipboardButtonPressed() = 0;
+    virtual void onOpenBookmarksButtonPressed() = 0;
 };
 
 class TextLayout;

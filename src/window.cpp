@@ -781,6 +781,46 @@ void Window::onClipboardButtonPressed() {
     }
 }
 
+void Window::onOpenBookmarksButtonPressed() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        INFO_LOG("Bookmark button pressed in window ", handle_, ", opening bookmark popup");
+
+        shared_ptr<bool> allowAcceptCall(new bool);
+        bool acceptCalled = false;
+        bool popupDenied = true;
+
+        auto accept = [&, allowAcceptCall](
+            uint64_t newHandle
+        ) -> shared_ptr<Window> {
+            REQUIRE(*allowAcceptCall);
+            REQUIRE(!acceptCalled);
+            acceptCalled = true;
+
+            REQUIRE(newHandle);
+            REQUIRE(newHandle != handle_);
+
+            INFO_LOG("Creating bookmark popup window ", newHandle);
+
+            shared_ptr<Window> newWindow =
+                Window::tryCreate(eventHandler_, newHandle, "browservice:bookmarks");
+
+            popupDenied = false;
+            return newWindow;
+        };
+
+        REQUIRE(eventHandler_);
+        *allowAcceptCall = true;
+        eventHandler_->onWindowCreatePopupRequest(handle_, accept);
+        *allowAcceptCall = false;
+
+        if(popupDenied) {
+            WARNING_LOG("Creating bookmark popup window failed because request was denied");
+        }
+    }
+}
+
 void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
 

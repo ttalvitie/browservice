@@ -658,7 +658,10 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     }
 
     if(button.lock() == openBookmarksButton_) {
-        INFO_LOG("TODO: open bookmarks");
+        postTask(
+            eventHandler_,
+            &ControlBarEventHandler::onOpenBookmarksButtonPressed
+        );
     }
 
     if(button.lock() == findButton_) {
