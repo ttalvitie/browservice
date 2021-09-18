@@ -795,38 +795,54 @@ void Window::onOpenBookmarksButtonPressed() {
     REQUIRE_UI_THREAD();
 
     if(state_ == Open) {
-        INFO_LOG("Bookmark button pressed in window ", handle_, ", opening bookmark popup");
+        bool openPopup = true;
+        if(browser_) {
+            CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
+            if(frame) {
+                string url = frame->GetURL();
+                if(url == "about:blank" || url == "browservice:bookmarks") {
+                    openPopup = false;
+                }
+            }
+        }
 
-        shared_ptr<bool> allowAcceptCall(new bool);
-        bool acceptCalled = false;
-        bool popupDenied = true;
+        if(openPopup) {
+            INFO_LOG("Bookmark button pressed in window ", handle_, ", opening bookmark popup");
 
-        auto accept = [&, allowAcceptCall](
-            uint64_t newHandle
-        ) -> shared_ptr<Window> {
-            REQUIRE(*allowAcceptCall);
-            REQUIRE(!acceptCalled);
-            acceptCalled = true;
+            shared_ptr<bool> allowAcceptCall(new bool);
+            bool acceptCalled = false;
+            bool popupDenied = true;
 
-            REQUIRE(newHandle);
-            REQUIRE(newHandle != handle_);
+            auto accept = [&, allowAcceptCall](
+                uint64_t newHandle
+            ) -> shared_ptr<Window> {
+                REQUIRE(*allowAcceptCall);
+                REQUIRE(!acceptCalled);
+                acceptCalled = true;
 
-            INFO_LOG("Creating bookmark popup window ", newHandle);
+                REQUIRE(newHandle);
+                REQUIRE(newHandle != handle_);
 
-            shared_ptr<Window> newWindow =
-                Window::tryCreate(eventHandler_, newHandle, "browservice:bookmarks");
+                INFO_LOG("Creating bookmark popup window ", newHandle);
 
-            popupDenied = false;
-            return newWindow;
-        };
+                shared_ptr<Window> newWindow =
+                    Window::tryCreate(eventHandler_, newHandle, "browservice:bookmarks");
 
-        REQUIRE(eventHandler_);
-        *allowAcceptCall = true;
-        eventHandler_->onWindowCreatePopupRequest(handle_, accept);
-        *allowAcceptCall = false;
+                popupDenied = false;
+                return newWindow;
+            };
 
-        if(popupDenied) {
-            WARNING_LOG("Creating bookmark popup window failed because request was denied");
+            REQUIRE(eventHandler_);
+            *allowAcceptCall = true;
+            eventHandler_->onWindowCreatePopupRequest(handle_, accept);
+            *allowAcceptCall = false;
+
+            if(popupDenied) {
+                WARNING_LOG("Creating bookmark popup window failed because request was denied");
+            }
+        } else {
+            INFO_LOG("Bookmark button pressed in window ", handle_, ", navigating to bookmarks");
+            navigateToURI("browservice:bookmarks");
         }
     }
 }
