@@ -255,17 +255,79 @@ string htmlEscapeString(string str) {
     return ret;
 }
 
+void parseSelectedBookmarks(string formData, std::set<uint64_t>& selectedBookmarks) {
+    if(formData.empty()) {
+        return;
+    }
+
+    size_t start = 0;
+    while(true) {
+        size_t end = formData.find('&', start);
+        bool isLast = (end == string::npos);
+        if(isLast) {
+            end = formData.size();
+        }
+
+        string elem = formData.substr(start, end - start);
+        const string prefix = "bookmark";
+        const string suffix = "=on";
+        if(
+            elem.size() > prefix.size() + suffix.size() &&
+            elem.substr(0, prefix.size()) == prefix &&
+            elem.substr(elem.size() - suffix.size()) == suffix
+        ) {
+            optional<uint64_t> id = parseString<uint64_t>(
+                elem.substr(prefix.size(), elem.size() - prefix.size() - suffix.size())
+            );
+            if(id.has_value()) {
+                selectedBookmarks.insert(id.value());
+            }
+        }
+
+        if(isLast) {
+            return;
+        }
+        start = end + 1;
+    }
+}
+
 }
 
 string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
     CEF_REQUIRE_IO_THREAD();
 
+    shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+
+    if(request->GetMethod() == "POST") {
+        CefRefPtr<CefPostData> postData = request->GetPostData();
+        std::set<uint64_t> selectedBookmarks;
+        if(postData) {
+            std::vector<CefRefPtr<CefPostDataElement>> elements;
+            postData->GetElements(elements);
+            for(CefRefPtr<CefPostDataElement> elem : elements) {
+                if(elem->GetType() == PDE_TYPE_BYTES) {
+                    size_t dataSize = elem->GetBytesCount();
+                    std::vector<char> data(dataSize);
+                    if(elem->GetBytes(dataSize, data.data()) == dataSize) {
+                        parseSelectedBookmarks(string(data.begin(), data.end()), selectedBookmarks);
+                    }
+                }
+            }
+        }
+        if(!selectedBookmarks.empty() && bookmarks) {
+            for(uint64_t id : selectedBookmarks) {
+                bookmarks->removeBookmark(id);
+            }
+            bookmarks->save();
+        }
+    }
+
     string page =
         "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\">"
         "<title>Bookmarks</title></head><body>\n"
-        "<h1>Bookmarks</h1>\n";
+        "<h1>Bookmarks</h1>\n"
+        "<form action=\"browservice:bookmarks\" method=\"POST\">\n";
 
-    shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
     if(bookmarks) {
         const map<uint64_t, Bookmark>& bookmarkData = bookmarks->getData();
         vector<const pair<const uint64_t, Bookmark>*> items;
@@ -284,16 +346,29 @@ string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
             }
         );
         for(const auto* item : items) {
-            //uint64_t id = item->first;
+            uint64_t id = item->first;
             const Bookmark& bookmark = item->second;
+            page += "<p style=\"margin-bottom:3px; margin-top:3px;\">\n";
             page +=
-                "<p><a href=\"" + htmlEscapeString(bookmark.url) + "\">" +
-                htmlEscapeString(bookmark.title) + "</a></p>\n";
+                "<input type=\"checkbox\" id=\"bookmark" + toString(id) + "\" "
+                "name=\"bookmark" + toString(id) + "\">\n";
+            page += "<label for=\"bookmark" + toString(id) + "\">\n";
+            page +=
+                "<a href=\"" + htmlEscapeString(bookmark.url) + "\">" +
+                htmlEscapeString(bookmark.title) + "</a>\n";
+            page += "</label>\n";
+            page += "</p>\n";
+        }
+        if(items.empty()) {
+            page += "<p>You have no bookmarks</p>\n";
+        } else {
+            page += "<p><input type=\"submit\" value=\"Remove selected\"></p>\n";
         }
     } else {
         page += "<p style=\"color:#FF0000;\">Loading bookmarks failed (see log)</p>\n";
     }
 
+    page += "</form>\n";
     page += "</body></html>\n";
     return page;
 }
