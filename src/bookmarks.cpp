@@ -11,6 +11,19 @@ namespace browservice {
 
 namespace {
 
+mutex bookmarkCacheMutex;
+bool bookmarkCacheInitialized = false;
+std::map<string, uint64_t> bookmarkCache;
+
+// Caller needs to lock bookmarkCacheMutex
+void populateBookmarkCache(const Bookmarks& bookmarks) {
+    bookmarkCache.clear();
+    for(const auto& item : bookmarks.getData()) {
+        bookmarkCache[item.second.url] = item.first;
+    }
+    bookmarkCacheInitialized = true;
+}
+
 bool tryCreateDotDir() {
     if(mkdir(globals->dotDirPath.c_str(), 0700) == 0) {
         return true;
@@ -216,6 +229,12 @@ bool Bookmarks::save() {
     }
 
     INFO_LOG("Bookmarks successfully written to '", bookmarkPath, "'");
+
+    {
+        lock_guard lock(bookmarkCacheMutex);
+        populateBookmarkCache(*this);
+    }
+
     return true;
 }
 
@@ -235,6 +254,26 @@ uint64_t Bookmarks::putBookmark(Bookmark bookmark) {
 
 void Bookmarks::removeBookmark(uint64_t id) {
     data_.erase(id);
+}
+
+optional<uint64_t> getCachedBookmarkIDByURL(string url) {
+    lock_guard lock(bookmarkCacheMutex);
+    if(!bookmarkCacheInitialized) {
+        shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+        if(bookmarks) {
+            populateBookmarkCache(*bookmarks);
+        } else {
+            bookmarkCache.clear();
+            bookmarkCacheInitialized = true;
+        }
+    }
+    auto it = bookmarkCache.find(url);
+    if(it == bookmarkCache.end()) {
+        optional<uint64_t> empty;
+        return empty;
+    } else {
+        return it->second;
+    }
 }
 
 namespace {

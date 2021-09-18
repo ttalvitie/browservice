@@ -90,6 +90,8 @@ private:
     class Layout;
     Layout layout_();
 
+    void setBookmarkID_(optional<uint64_t> bookmarkID);
+
     // Widget:
     virtual void widgetViewportUpdated_() override;
     virtual void widgetRender_() override;
@@ -130,7 +132,7 @@ private:
 
     string address_;
     string pageTitle_;
-    bool isBookmarked_;
+    optional<uint64_t> bookmarkID_;
 };
 
 }

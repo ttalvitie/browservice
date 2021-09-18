@@ -523,8 +523,6 @@ ControlBar::ControlBar(CKey,
 
     loading_ = false;
 
-    isBookmarked_ = false;
-
     // Initialization is completed in afterConstruct_
 }
 
@@ -566,6 +564,7 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 void ControlBar::setAddress(string addr) {
     REQUIRE_UI_THREAD();
     address_ = addr;
+    setBookmarkID_(getCachedBookmarkIDByURL(addr));
     addrField_->setText(move(addr));
 }
 
@@ -660,12 +659,15 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
         );
     }
 
-    if(button.lock() == bookmarkToggleButton_) {
-        INFO_LOG("TODO: bookmark toggle");
-//        isBookmarked_ = !isBookmarked_;
-        if(!isBookmarked_ && !address_.empty()) {
-            shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
-            if(bookmarks) {
+    if(button.lock() == bookmarkToggleButton_ && !address_.empty()) {
+        shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+        if(bookmarks) {
+            if(bookmarkID_.has_value()) {
+                bookmarks->removeBookmark(bookmarkID_.value());
+                if(bookmarks->save()) {
+                    setBookmarkID_({});
+                }
+            } else {
                 Bookmark bookmark;
                 bookmark.url = address_;
                 bookmark.title = pageTitle_;
@@ -673,11 +675,12 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
                     bookmark.title = bookmark.url;
                 }
                 bookmark.time = time(nullptr);
-                bookmarks->putBookmark(move(bookmark));
-                isBookmarked_ = bookmarks->save();
+                uint64_t id = bookmarks->putBookmark(move(bookmark));
+                if(bookmarks->save()) {
+                    setBookmarkID_(id);
+                }
             }
         }
-        bookmarkToggleButton_->setIcon(isBookmarked_ ? goIcon : findIcon);
     }
 
     if(button.lock() == openBookmarksButton_) {
@@ -743,7 +746,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_->setAllowEmptySubmit(false);
 
     goButton_ = MenuButton::create(goIcon, self, self);
-    bookmarkToggleButton_ = MenuButton::create(isBookmarked_ ? goIcon : findIcon, self, self);
+    bookmarkToggleButton_ = MenuButton::create(findIcon, self, self);
     openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
@@ -763,6 +766,11 @@ ControlBar::Layout ControlBar::layout_() {
         isDownloadVisible_(),
         findBarVisible_
     );
+}
+
+void ControlBar::setBookmarkID_(optional<uint64_t> bookmarkID) {
+    bookmarkID_ = bookmarkID;
+    bookmarkToggleButton_->setIcon(bookmarkID_.has_value() ? goIcon : findIcon);
 }
 
 void ControlBar::widgetViewportUpdated_() {
