@@ -2,6 +2,8 @@
 
 #include "globals.hpp"
 
+#include "include/cef_request.h"
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -136,7 +138,7 @@ shared_ptr<Bookmarks> Bookmarks::load() {
 
         uint64_t id;
         Bookmark bookmark;
-        if(!readLE(fp, id) || !readStr(fp, bookmark.url) || !readStr(fp, bookmark.title)) {
+        if(!readLE(fp, id) || !readStr(fp, bookmark.url) || !readStr(fp, bookmark.title) || !readLE(fp, bookmark.time)) {
             return readError();
         }
 
@@ -188,6 +190,7 @@ bool Bookmarks::save() {
         writeLE(fp, id);
         writeStr(fp, bookmark.url);
         writeStr(fp, bookmark.title);
+        writeLE(fp, bookmark.time);
     }
 
     // No more items
@@ -232,6 +235,67 @@ uint64_t Bookmarks::putBookmark(Bookmark bookmark) {
 
 void Bookmarks::removeBookmark(uint64_t id) {
     data_.erase(id);
+}
+
+namespace {
+
+string htmlEscapeString(string str) {
+    string ret;
+    for(int point : sanitizeUTF8StringToCodePoints(move(str))) {
+        if(point <= 0 || point > 0x10FFFF) continue;
+        if(point == 0xD) continue;
+        if(
+            (point <= 0x1F || (point >= 0x7F && point <= 0x9F)) &&
+            point != 0x20 && point != 0x9 && point != 0xA && point != 0xC
+        ) continue;
+        if(point >= 0xFDD0 && point <= 0xFDEF) continue;
+        if((point & 0xFFFF) == 0xFFFE || (point & 0xFFFF) == 0xFFFF) continue;
+        ret += "&#" + toString(point) + ";";
+    }
+    return ret;
+}
+
+}
+
+string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
+    CEF_REQUIRE_IO_THREAD();
+
+    string page =
+        "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\">"
+        "<title>Bookmarks</title></head><body>\n"
+        "<h1>Bookmarks</h1>\n";
+
+    shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+    if(bookmarks) {
+        const map<uint64_t, Bookmark>& bookmarkData = bookmarks->getData();
+        vector<const pair<const uint64_t, Bookmark>*> items;
+        for(const auto& item : bookmarkData) {
+            items.push_back(&item);
+        }
+        sort(
+            items.begin(), items.end(),
+            [](
+                const pair<const uint64_t, Bookmark>* a,
+                const pair<const uint64_t, Bookmark>* b
+            ) {
+                return
+                    make_tuple(a->second.time, a->second.title, a->second.url) <
+                    make_tuple(b->second.time, b->second.title, b->second.url);
+            }
+        );
+        for(const auto* item : items) {
+            //uint64_t id = item->first;
+            const Bookmark& bookmark = item->second;
+            page +=
+                "<p><a href=\"" + htmlEscapeString(bookmark.url) + "\">" +
+                htmlEscapeString(bookmark.title) + "</a></p>\n";
+        }
+    } else {
+        page += "<p style=\"color:#FF0000;\">Loading bookmarks failed (see log)</p>\n";
+    }
+
+    page += "</body></html>\n";
+    return page;
 }
 
 }

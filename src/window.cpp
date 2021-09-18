@@ -285,6 +285,16 @@ public:
         window_->updateSecurityStatus_();
     }
 
+    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
+
+        if(window_->state_ != Open) {
+            return;
+        }
+
+        window_->rootWidget_->controlBar()->setPageTitle(title);
+    }
+
     virtual bool OnCursorChange(
         CefRefPtr<CefBrowser> browser,
         CefCursorHandle cursorHandle,

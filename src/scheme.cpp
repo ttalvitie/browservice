@@ -1,13 +1,17 @@
 #include "scheme.hpp"
 
+#include "bookmarks.hpp"
+
 namespace browservice {
 
 namespace {
 
 class StaticResponseResourceHandler : public CefResourceHandler {
 public:
-    StaticResponseResourceHandler(vector<char> response) {
-        response_ = std::move(response);
+    StaticResponseResourceHandler(int status, string statusText, string response) {
+        status_ = status;
+        statusText_ = move(statusText);
+        response_ = move(response);
         pos_ = 0;
     }
 
@@ -26,8 +30,8 @@ public:
         CefString& redirectUrl
     ) override{
         responseLength = (int64_t)response_.size();
-        response->SetStatus(200);
-        response->SetStatusText("OK");
+        response->SetStatus(status_);
+        response->SetStatusText(statusText_);
         response->SetMimeType("text/html");
         response->SetCharset("UTF-8");
     }
@@ -78,7 +82,9 @@ public:
     }
 
 private:
-    vector<char> response_;
+    int status_;
+    string statusText_;
+    string response_;
     size_t pos_;
 
     IMPLEMENT_REFCOUNTING(StaticResponseResourceHandler);
@@ -93,8 +99,19 @@ CefRefPtr<CefResourceHandler> BrowserviceSchemeHandlerFactory::Create(
     CefRefPtr<CefRequest> request
 ) {
     CEF_REQUIRE_IO_THREAD();
-    string responseStr = "TEST RESPONSE";
-    return new StaticResponseResourceHandler(vector<char>(responseStr.begin(), responseStr.end()));
+    REQUIRE(request);
+
+    int status = 404;
+    string statusText = "Not Found";
+    string response =
+        "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\">"
+        "<title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>\n";
+    if(request->GetURL() == "browservice:bookmarks") {
+        status = 200;
+        statusText = "OK";
+        response = handleBookmarksRequest(request);
+    }
+    return new StaticResponseResourceHandler(status, move(statusText), move(response));
 }
 
 }

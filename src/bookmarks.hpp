@@ -2,11 +2,14 @@
 
 #include "common.hpp"
 
+class CefRequest;
+
 namespace browservice {
 
 struct Bookmark {
     string url;
     string title;
+    uint64_t time;
 };
 
 class Bookmarks {
@@ -28,5 +31,7 @@ public:
 private:
     map<uint64_t, Bookmark> data_;
 };
+
+string handleBookmarksRequest(CefRefPtr<CefRequest> request);
 
 }

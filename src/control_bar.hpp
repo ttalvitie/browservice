@@ -53,6 +53,7 @@ public:
 
     void setSecurityStatus(SecurityStatus value);
     void setAddress(string addr);
+    void setPageTitle(string pageTitle);
     void setLoading(bool loading);
 
     void setPendingDownloadCount(int count);
@@ -127,6 +128,8 @@ private:
     bool loading_;
     optional<steady_clock::time_point> loadingAnimationStartTime_;
 
+    string address_;
+    string pageTitle_;
     bool isBookmarked_;
 };
 

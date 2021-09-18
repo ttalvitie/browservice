@@ -1,7 +1,10 @@
 #include "control_bar.hpp"
 
+#include "bookmarks.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
+
+#include <time.h>
 
 namespace browservice {
 
@@ -562,7 +565,13 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 
 void ControlBar::setAddress(string addr) {
     REQUIRE_UI_THREAD();
+    address_ = addr;
     addrField_->setText(move(addr));
+}
+
+void ControlBar::setPageTitle(string pageTitle) {
+    REQUIRE_UI_THREAD();
+    pageTitle_ = move(pageTitle);
 }
 
 void ControlBar::setLoading(bool loading) {
@@ -653,7 +662,21 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
 
     if(button.lock() == bookmarkToggleButton_) {
         INFO_LOG("TODO: bookmark toggle");
-        isBookmarked_ = !isBookmarked_;
+//        isBookmarked_ = !isBookmarked_;
+        if(!isBookmarked_ && !address_.empty()) {
+            shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
+            if(bookmarks) {
+                Bookmark bookmark;
+                bookmark.url = address_;
+                bookmark.title = pageTitle_;
+                if(bookmark.title.empty()) {
+                    bookmark.title = bookmark.url;
+                }
+                bookmark.time = time(nullptr);
+                bookmarks->putBookmark(move(bookmark));
+                isBookmarked_ = bookmarks->save();
+            }
+        }
         bookmarkToggleButton_->setIcon(isBookmarked_ ? goIcon : findIcon);
     }
 
