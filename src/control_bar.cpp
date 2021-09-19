@@ -198,6 +198,92 @@ MenuButtonIcon openBookmarksIcon = {
     )
 };
 
+vector<string> bookmarkOffIconPattern = {
+    "...................",
+    "...................",
+    ".....PSSSSSSSSP....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrrrrrrr*....",
+    ".....*rrr**rrr*....",
+    ".....*rr*..*rr*....",
+    ".....*r*....*r*....",
+    ".....**......**....",
+    ".....*........*....",
+    "...................",
+    "..................."
+};
+
+MenuButtonIcon bookmarkOffIcon = {
+    ImageSlice::createImageFromStrings(
+        bookmarkOffIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {255, 128, 128}},
+            {'S', {80, 80, 80}},
+            {'P', {48, 48, 48}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        bookmarkOffIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {224, 224, 224}},
+            {'S', {128, 128, 128}},
+            {'P', {96, 96, 96}}
+        }
+    )
+};
+
+vector<string> bookmarkOnIconPattern = {
+    "...................",
+    "...................",
+    "...................",
+    "......********.....",
+    ".....*rrrrrrrr*....",
+    "....*r*rrrrrrrr*...",
+    "....*r*rrrrrrrr*...",
+    "....*r*rrrrrrrr*...",
+    "....*r*rrrrrrrr*...",
+    "....*r*rrrrrrrr*...",
+    "....***rrrrrrrr*...",
+    "......*rrrrrrrr*...",
+    "......*rrrrrrrr*...",
+    "......*rrr**rrr*...",
+    "......*rr*..*rr*...",
+    "......*r*....*r*...",
+    "......**......**...",
+    "......*........*...",
+    "..................."
+};
+
+MenuButtonIcon bookmarkOnIcon = {
+    ImageSlice::createImageFromStrings(
+        bookmarkOnIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {255, 128, 128}}
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        bookmarkOnIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'*', {0, 0, 0}},
+            {'r', {224, 224, 224}}
+        }
+    )
+};
+
 vector<string> findIconPattern = {
     "...................",
     "...................",
@@ -746,7 +832,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_->setAllowEmptySubmit(false);
 
     goButton_ = MenuButton::create(goIcon, self, self);
-    bookmarkToggleButton_ = MenuButton::create(findIcon, self, self);
+    bookmarkToggleButton_ = MenuButton::create(bookmarkOffIcon, self, self);
     openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
     findButton_ = MenuButton::create(findIcon, self, self);
     clipboardButton_ = MenuButton::create(clipboardIcon, self, self);
@@ -770,7 +856,7 @@ ControlBar::Layout ControlBar::layout_() {
 
 void ControlBar::setBookmarkID_(optional<uint64_t> bookmarkID) {
     bookmarkID_ = bookmarkID;
-    bookmarkToggleButton_->setIcon(bookmarkID_.has_value() ? goIcon : findIcon);
+    bookmarkToggleButton_->setIcon(bookmarkID_.has_value() ? bookmarkOnIcon : bookmarkOffIcon);
 }
 
 void ControlBar::widgetViewportUpdated_() {
