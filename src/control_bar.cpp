@@ -268,7 +268,7 @@ MenuButtonIcon bookmarkOffIcon = {
 vector<string> bookmarkOnIconPattern = {
     "...................",
     "...................",
-    "......gxxxxxxp.....",
+    "......xxxxxxxg.....",
     ".....gwvvvvvvv*....",
     "....gdg8wwwwwwC*...",
     "....grg8rrrrrrD*...",
