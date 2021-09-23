@@ -8,6 +8,7 @@
 #include <cstdlib>
 
 #include "include/wrapper/cef_closure_task.h"
+#include "include/base/cef_callback.h"
 #include "include/cef_app.h"
 
 #include <X11/Xlib.h>

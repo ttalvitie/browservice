@@ -1,6 +1,7 @@
 #include "timeout.hpp"
 
 #include "include/wrapper/cef_closure_task.h"
+#include "include/base/cef_callback.h"
 
 namespace browservice {
 
