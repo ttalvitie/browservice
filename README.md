@@ -4,6 +4,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
+2021-09-24: [Browservice 0.9.3.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.3.0) has been released. This release adds support for bookmarks and changing URL from the client browser by appending `goto/URL` to the address.
+
 2021-05-28: [Browservice 0.9.2.2](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.2) has been released. This is the first release with self-contained prebuilt binaries available. The installation should be very simple; just download the correct AppImage, add execute permissions and run it ([see instructions](#running-the-browservice-proxy)).
 
 2021-02-13: [Browservice 0.9.2.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.0) has been released. This release adds support for file uploads. It also features a major internal reorganization in which the code has been split into two parts that communicate through a [plugin C API](#vice-plugin-api); this should make it easier to add support for native clients in the future.
@@ -31,6 +33,7 @@ The current features of Browservice include the following:
 - File downloads (with confirmation button on the control bar for security)
 - File uploads
 - Text search within the current page
+- Bookmarks
 - Image compression quality selectable on the fly (JPEG compression levels or PNG)
 - Native Back/Forward/Refresh buttons on the client forwarded to the browser
 - Custom multithreaded implementation of PNG compression (standalone library; you just need `png.hpp` and `png.cpp` from directory `viceplugins/retrojsvice/src`)
@@ -40,7 +43,6 @@ The following features are currently missing but could be implemented in future 
 - Streaming audio to client (currently audio is played locally by the proxy server)
 - Less hackish keyboard handling (different browsers send very different JavaScript key events)
 - Integration with web search engines
-- Bookmarks
 - Page zooming
 
 ## Background
@@ -176,6 +178,10 @@ Some notes that might be useful:
 - You can use Ctrl+C and Ctrl+V to copy and paste text between different Browservice windows (including the control bar). However, this clipboard is not automatically shared with the client system. To access the clipboard from the client, click the clipboard icon in the control bar to open a window that contains a text field and buttons for loading the clipboard into the text field and saving the contents of the text field into the clipboard. Note that it is a security risk to load text copied from an untrusted page into the native text field.
 
 - The most common browser hotkeys (Backspace, Shift+Backspace, Ctrl+F, Ctrl+L, Ctrl+A, Ctrl+R, F5, PgUp/PgDown, Home/End) work with Browservice. However, some client browsers capture these keys instead of sending them to Browservice. For some Ctrl-based shortcuts, you can get around this by adding Shift into the combination, for example using Ctrl+Shift+F instead of Ctrl+F.
+
+- You can navigate directly to given URL using the client browser address bar in two ways: 
+     - To open a new Browservice window to given URL, navigate the client browser to `http://BROWSERVICE/goto/URL`. For example, `http://192.168.56.1:8080/goto/google.com` opens a new Browservice window with `google.com` as start page.
+     - To navigate an existing Browservice window to given URL, append `goto/URL` to the address. For example, if the URL of the window shown by the client browser is `http://192.168.56.1:8080/1/qu7cHJCHqtYeHjasBedM3b42tlS4nEOM/`, then by changing it to `http://192.168.56.1:8080/1/qu7cHJCHqtYeHjasBedM3b42tlS4nEOM/goto/https://github.com/ttalvitie/browservice` you can navigate that Browservice window to `https://github.com/ttalvitie/browservice`.
 
 - If you have many browser windows open at the same time, your may experience lag due to the per-server keep-alive connection limit of the client browser, as Browservice uses long polling HTTP requests. If you use Internet Explorer version up to 6 on Windows, the limit can be set by creating/setting the `MaxConnectionsPerServer` DWORD value in registry key `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Internet Settings`. As a rule of thumb, the value should be at least the number of browser windows multiplied by two.
 
