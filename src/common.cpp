@@ -73,7 +73,7 @@ string sanitizeUTF8String(string str) {
     sanitizeUTF8StringImpl(
         str,
         [&](const char* bytes, size_t count) {
-            str.insert(str.end(), bytes, bytes + count);
+            ret.insert(ret.end(), bytes, bytes + count);
         },
         [](int) {}
     );

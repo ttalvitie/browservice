@@ -432,11 +432,13 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
                 string reason = "Unknown reason";
                 uint64_t window =
                     self->eventHandler_->onViceContextCreateWindowRequest(reason, sanitizedURI);
-                if(window || msg == nullptr) {
+                if(window) {
                     REQUIRE(self->openWindows_.insert(window).second);
                     return window;
                 } else {
-                    *msg = createMallocString(reason);
+                    if(msg != nullptr) {
+                        *msg = createMallocString(reason);
+                    }
                     return 0;
                 }
             });
@@ -470,11 +472,13 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         string reason = "Unknown reason";
         uint64_t window =
             self->eventHandler_->onViceContextCreateWindowRequest(reason, {});
-        if(window || msg == nullptr) {
+        if(window) {
             REQUIRE(self->openWindows_.insert(window).second);
             return window;
         } else {
-            *msg = createMallocString(reason);
+            if(msg != nullptr) {
+                *msg = createMallocString(reason);
+            }
             return 0;
         }
     });
