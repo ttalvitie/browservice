@@ -1,6 +1,6 @@
 #include "context.hpp"
 
-#include "../../../vice_plugin_api.h"
+#include "vice_plugin_api.hpp"
 
 namespace {
 
@@ -52,7 +52,11 @@ void setOutString(char** out, string val) {
     }
 }
 
+#ifdef _WIN32
+#define API_EXPORT __declspec(dllexport)
+#else
 #define API_EXPORT __attribute__((visibility("default")))
+#endif
 
 #define API_FUNC_START \
     try {

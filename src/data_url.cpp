@@ -1,6 +1,6 @@
 #include "data_url.hpp"
 
-#include "tiny_sha3/sha3.h"
+#include "tiny_sha3/sha3.hpp"
 
 #include "include/cef_parser.h"
 
@@ -56,10 +56,10 @@ string computeHash(string data) {
 }
 
 string generateDataURLSignKey() {
-    random_device rng;
+    random_device rngDev;
     string key;
     for(size_t i = 0; i < HashLength; ++i) {
-        key.push_back(uniform_int_distribution<char>(CHAR_MIN, CHAR_MAX)(rng));
+        key.push_back((char)uniform_int_distribution<int>(CHAR_MIN, CHAR_MAX)(rngDev));
     }
     return key;
 }

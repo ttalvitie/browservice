@@ -6,7 +6,7 @@
 
 // Modified for use with browservice (omit unused stuff, follow strict aliasing rules)
 
-#include "sha3.h"
+#include "sha3.hpp"
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error "Only little endian is supported"

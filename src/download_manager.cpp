@@ -160,11 +160,14 @@ CefRefPtr<CefDownloadHandler> DownloadManager::createCefDownloadHandler() {
 }
 
 string DownloadManager::getFilePath_(int fileIdx) {
-    if(!tempDir_) {
+    return "C:\"file_" + toString(fileIdx) + ".bin";
+/*
+    if (!tempDir_) {
         tempDir_ = TempDir::create();
     }
 
     return tempDir_->path() + "/file_" + toString(fileIdx) + ".bin";
+*/
 }
 
 void DownloadManager::unlinkFile_(int fileIdx) {

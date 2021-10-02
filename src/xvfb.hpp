@@ -1,5 +1,5 @@
+/*
 #pragma once
-
 #include "common.hpp"
 
 #include <sys/types.h>
@@ -31,3 +31,4 @@ private:
 };
 
 }
+*/

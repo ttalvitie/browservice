@@ -49,6 +49,7 @@ int jumpUTF8Chars(const string& str, int idx, int count) {
 class FreeType2SetEnv {
 public:
     FreeType2SetEnv() {
+/*
         char* oldValuePtr = getenv("FREETYPE_PROPERTIES");
         hasOldValue_ = oldValuePtr != nullptr;
         if(hasOldValue_) {
@@ -56,14 +57,17 @@ public:
         }
 
         REQUIRE(!setenv("FREETYPE_PROPERTIES", "truetype:interpreter-version=35", true));
+*/
     }
 
     ~FreeType2SetEnv() {
+/*
         if(hasOldValue_) {
             REQUIRE(!setenv("FREETYPE_PROPERTIES", oldValue_.c_str(), true));
         } else {
             REQUIRE(!unsetenv("FREETYPE_PROPERTIES"));
         }
+*/
     }
 
 private:
@@ -183,7 +187,7 @@ struct TextLayout::Impl {
     void setText(string newText) {
         graymap.reset();
 
-        pango_layout_set_text(layout, newText.data(), newText.size());
+        pango_layout_set_text(layout, newText.data(), (int)newText.size());
 
         // Check that Pango agrees that the text is valid UTF-8
         REQUIRE(!strcmp(pango_layout_get_text(layout), newText.c_str()));

@@ -2,20 +2,26 @@
 
 #include <Poco/Crypto/DigestEngine.h>
 
+#ifndef _WIN32
 #include <unistd.h>
+#endif
 
 namespace retrojsvice {
 
 TempDir::TempDir(CKey) {
+/*
     char path[] = "/tmp/retrojsvicetmp_XXXXXX";
     REQUIRE(mkdtemp(path) != nullptr);
     path_ = path;
+*/
 }
 
 TempDir::~TempDir() {
+/*
     if(rmdir(path_.c_str())) {
         WARNING_LOG("Deleting temporary directory ", path_, " failed");
     }
+*/
 }
 
 const string& TempDir::path() {
@@ -25,9 +31,11 @@ const string& TempDir::path() {
 namespace {
 
 void unlinkFile(const string& path) {
+/*
     if(unlink(path.c_str())) {
         WARNING_LOG("Unlinking temporary file ", path, " failed");
     }
+*/
 }
 
 }

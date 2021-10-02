@@ -4,6 +4,8 @@
 #include "vice.hpp"
 #include "xvfb.hpp"
 
+#include "text.hpp"
+
 #include <csignal>
 #include <cstdlib>
 
@@ -11,7 +13,7 @@
 #include "include/base/cef_callback.h"
 #include "include/cef_app.h"
 
-#include <X11/Xlib.h>
+//#include <X11/Xlib.h>
 
 namespace browservice {
 
@@ -130,9 +132,13 @@ void handleTermSignalInApp(int signalID) {
 
 }
 
-int main(int argc, char* argv[]) {
+int APIENTRY wWinMain(HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPTSTR lpCmdLine,
+    int nCmdShow) {
     using namespace browservice;
-
+    shared_ptr<TextRenderContext> textRenderContext = TextRenderContext::create();
+/*
     CefMainArgs mainArgs(argc, argv);
 
     app = new App();
@@ -217,4 +223,5 @@ int main(int argc, char* argv[]) {
     xvfb.reset();
 
     return 0;
+*/
 }

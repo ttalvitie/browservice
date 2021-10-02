@@ -1,3 +1,4 @@
+/*
 #pragma once
 
 #include "common.hpp"
@@ -23,3 +24,4 @@ private:
 };
 
 }
+*/

@@ -716,7 +716,7 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 void ControlBar::setAddress(string addr) {
     REQUIRE_UI_THREAD();
     address_ = addr;
-    setBookmarkID_(getCachedBookmarkIDByURL(addr));
+//    setBookmarkID_(getCachedBookmarkIDByURL(addr));
     addrField_->setText(move(addr));
 }
 
@@ -812,6 +812,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     }
 
     if(button.lock() == bookmarkToggleButton_ && !address_.empty()) {
+/*
         shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
         if(bookmarks) {
             if(bookmarkID_.has_value()) {
@@ -833,6 +834,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
                 }
             }
         }
+*/
     }
 
     if(button.lock() == openBookmarksButton_) {
@@ -1081,8 +1083,6 @@ void ControlBar::widgetRender_() {
             loadingAnimationStartTime_ = steady_clock::now();
         }
 
-        ImageSlice viewport = getViewport();
-        Layout layout = layout_();
         ImageSlice slice = viewport.subRect(
             layout.addrFieldStart - 2, layout.addrBoxEnd - 2,
             Height - 7, Height - 6

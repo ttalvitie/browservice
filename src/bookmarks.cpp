@@ -1,3 +1,4 @@
+/*
 #include "bookmarks.hpp"
 
 #include "globals.hpp"
@@ -413,3 +414,4 @@ string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
 }
 
 }
+*/

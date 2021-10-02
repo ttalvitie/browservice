@@ -1,4 +1,5 @@
-#include "xvfb.hpp"
+/*
+include "xvfb.hpp"
 
 #include "temp_dir.hpp"
 
@@ -174,3 +175,4 @@ void Xvfb::shutdown() {
 }
 
 }
+*/

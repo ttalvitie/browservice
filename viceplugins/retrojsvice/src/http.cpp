@@ -159,14 +159,14 @@ public:
             stringstream authInfoBase64SS(authInfoBase64);
             Poco::Base64Decoder decoder(authInfoBase64SS);
 
-            size_t BufSize = 1024;
+            const size_t BufSize = 1024;
             char buf[BufSize];
             while(decoder.good()) {
                 decoder.read(buf, BufSize);
                 if(decoder.bad()) {
                     return empty;
                 }
-                authInfo.append(buf, decoder.gcount());
+                authInfo.append(buf, (size_t)decoder.gcount());
             }
         } catch(const Poco::Exception& e) {
             WARNING_LOG(

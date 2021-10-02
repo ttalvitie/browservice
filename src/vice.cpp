@@ -7,8 +7,10 @@
 
 #include "../vice_plugin_api.h"
 
+/*
 #include <dlfcn.h>
 #include <unistd.h>
+*/
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -127,9 +129,9 @@ API_CALLBACK_HANDLE_EXCEPTIONS_END
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     REQUIRE_UI_THREAD();
 
-    void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+    void* lib = nullptr;// dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
     if(lib == nullptr) {
-        const char* err = dlerror();
+        const char* err = "NOT IMPLEMENTED";// dlerror();
         ERROR_LOG(
             "Loading vice plugin library '", filename,
             "' failed: ", err != nullptr ? err : "Unknown error"
@@ -142,14 +144,14 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     void* sym;
 
 #define LOAD_API_FUNC(name) \
-    sym = dlsym(lib, "vicePluginAPI_" #name); \
+    sym = nullptr; /*dlsym(lib, "vicePluginAPI_" #name);*/ \
     if(sym == nullptr) { \
-        const char* err = dlerror(); \
+        const char* err = "NOT IMPLEMENTED";/*dlerror();*/ \
         ERROR_LOG( \
             "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
             filename, " failed: ", err != nullptr ? err : "Unknown error" \
         ); \
-        REQUIRE(dlclose(lib) == 0); \
+        /*REQUIRE(dlclose(lib) == 0);*/ \
         return {}; \
     } \
     apiFuncs->name = (decltype(apiFuncs->name))sym;
@@ -175,7 +177,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
                 "Vice plugin ", filename,
                 " does not support API version ", apiVersion
             );
-            REQUIRE(dlclose(lib) == 0);
+            //REQUIRE(dlclose(lib) == 0);
             return {};
         }
     }
@@ -215,7 +217,7 @@ VicePlugin::VicePlugin(CKey, CKey,
 }
 
 VicePlugin::~VicePlugin() {
-    REQUIRE(dlclose(lib_) == 0);
+    //REQUIRE(dlclose(lib_) == 0);
 }
 
 string VicePlugin::getVersionString() {
@@ -287,7 +289,7 @@ ViceFileUpload::ViceFileUpload(CKey,
     function<void()> srcCleanup
 ) {
     REQUIRE_UI_THREAD();
-
+/*
     name = sanitizeFilename(move(name));
 
     tempDir_ = tempDir;
@@ -299,9 +301,11 @@ ViceFileUpload::ViceFileUpload(CKey,
 
     REQUIRE(mkdir(linkDir_.c_str(), 0777) == 0);
     REQUIRE(symlink(srcPath_.c_str(), linkPath_.c_str()) == 0);
+*/
 }
 
 ViceFileUpload::~ViceFileUpload() {
+/*
     if(unlink(linkPath_.c_str()) != 0) {
         WARNING_LOG("Unlinking temporary symlink ", linkPath_, " failed");
     }
@@ -310,6 +314,7 @@ ViceFileUpload::~ViceFileUpload() {
     }
 
     srcCleanup_();
+*/
 }
 
 string ViceFileUpload::path() {
@@ -394,7 +399,7 @@ ViceContext::ViceContext(CKey, CKey,
 
     nextWindowHandle_ = 1;
 
-    uploadTempDir_ = TempDir::create();
+//    uploadTempDir_ = TempDir::create();
     nextUploadIdx_ = (uint64_t)1;
 }
 

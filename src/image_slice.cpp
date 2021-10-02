@@ -35,8 +35,8 @@ ImageSlice ImageSlice::createImageFromStrings(
         return createImage(0, 0);
     }
 
-    int height = rows.size();
-    int width = rows[0].size();
+    int height = (int)rows.size();
+    int width = (int)rows[0].size();
     for(int y = 1; y < height; ++y) {
         REQUIRE(rows[y].size() == (size_t)width);
     }

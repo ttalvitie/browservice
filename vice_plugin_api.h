@@ -7,6 +7,10 @@
 extern "C" {
 #endif
 
+#ifndef VICE_PLUGIN_API_FUNC_DECLSPEC
+#define VICE_PLUGIN_API_FUNC_DECLSPEC
+#endif
+
 /***************************************************************************************************
  *** Vice Plugin API Definition ***
  **********************************/
@@ -136,12 +140,12 @@ extern "C" {
  ********************************************/
 
 /* Returns 1 if the plugin supports the given API version; otherwise, returns 0. */
-int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 
 /* Returns a string describing the name and version of the plugin. The caller is responsible for
  * freeing the string using free().
  */
-char* vicePluginAPI_getVersionString();
+VICE_PLUGIN_API_FUNC_DECLSPEC char* vicePluginAPI_getVersionString();
 
 /***************************************************************************************************
  *** API version 1000000 ***
@@ -411,7 +415,7 @@ typedef enum VicePluginAPI_MouseCursor VicePluginAPI_MouseCursor;
  * does not support this and the program attempts to create a second context, this function should
  * fail with a descriptive error message.
  */
-VicePluginAPI_Context* vicePluginAPI_initContext(
+VICE_PLUGIN_API_FUNC_DECLSPEC VicePluginAPI_Context* vicePluginAPI_initContext(
     uint64_t apiVersion,
     const char** optionNames,
     const char** optionValues,
@@ -425,7 +429,7 @@ VicePluginAPI_Context* vicePluginAPI_initContext(
  * be successfully shut down prior to calling this function (by calling vicePluginAPI_shutdown and
  * waiting for the shutdownComplete callback to be called).
  */
-void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
 
 /* Start running given plugin context. This function may be called only once per context. All the
  * fields of the given callbacks structure must be populated with valid function pointers (NULL
@@ -442,7 +446,7 @@ void vicePluginAPI_destroyContext(VicePluginAPI_Context* ctx);
  * must immediately stop calling API functions and callbacks for this context (except for
  * vicePluginAPI_destroyContext).
  */
-void vicePluginAPI_start(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_start(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_Callbacks callbacks,
     void* callbackData
@@ -454,7 +458,7 @@ void vicePluginAPI_start(
  * any further callbacks and the program must destroy the context using vicePluginAPI_destroyContext
  * (and not call any other API functions for this context).
  */
-void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
 
 /* Allows a running plugin context to make progress in its own task queue. May call callbacks
  * (supplied by the program in the callbacks argument of vicePluginAPI_start) directly in the
@@ -468,7 +472,7 @@ void vicePluginAPI_shutdown(VicePluginAPI_Context* ctx);
  * sufficient for the program to call this function only once even if eventNotify has been called
  * multiple times after the previous call to this function.
  */
-void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
 
 /**********************************************
  * API functions to use with running contexts *
@@ -487,7 +491,7 @@ void vicePluginAPI_pumpEvents(VicePluginAPI_Context* ctx);
  * if msg is not NULL, it must point *msg to a short human-readable string describing the reason for
  * the denial; the calling program is responsible for freeing the string using free().
  */
-int vicePluginAPI_createPopupWindow(
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_createPopupWindow(
     VicePluginAPI_Context* ctx,
     uint64_t parentWindow,
     uint64_t popupWindow,
@@ -497,16 +501,22 @@ int vicePluginAPI_createPopupWindow(
 /* Close an existing window. The window stops existing immediately and thus it must not be used in
  * any subsequent API/callback calls (including the closeWindow callback).
  */
-void vicePluginAPI_closeWindow(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_closeWindow(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /* Notifies the plugin that the view in an existing window has changed. After receiving this
  * notification, the plugin should use the fetchWindowImage callback to fetch the new view image and
  * show it to the user as soon as possible.
  */
-void vicePluginAPI_notifyWindowViewChanged(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_notifyWindowViewChanged(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /* Changes the currently active mouse cursor for given window. */
-void vicePluginAPI_setWindowCursor(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_setWindowCursor(
     VicePluginAPI_Context* ctx,
     uint64_t window,
     VicePluginAPI_MouseCursor cursor
@@ -534,7 +544,7 @@ void vicePluginAPI_setWindowCursor(
  * the function should return 1, set *qualityListOut to point to a new string "Bad\nOK\nHD\n5/5\n"
  * and set *currentQualityOut to 1.
  */
-int vicePluginAPI_windowQualitySelectorQuery(
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_windowQualitySelectorQuery(
     VicePluginAPI_Context* ctx,
     uint64_t window,
     char** qualityListOut,
@@ -546,7 +556,7 @@ int vicePluginAPI_windowQualitySelectorQuery(
  * 0-based index to the list of quality options that were provided by the previous call to
  * vicePluginAPI_windowQualitySelectorQuery for this window.
  */
-void vicePluginAPI_windowQualityChanged(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_windowQualityChanged(
     VicePluginAPI_Context* ctx,
     uint64_t window,
     size_t qualityIdx
@@ -558,12 +568,18 @@ void vicePluginAPI_windowQualityChanged(
  * vicePluginAPI_windowClipboardButtonPressed). However, the program is also allowed to not call
  * this function at all or to display/omit a clipboard button independent of the result.
  */
-int vicePluginAPI_windowNeedsClipboardButtonQuery(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_windowNeedsClipboardButtonQuery(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /* Signals to the plugin that the clipboard button in a window has been pressed. May be called even
  * if vicePluginAPI_windowNeedsClipboardButtonQuery returns 0.
  */
-void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_windowClipboardButtonPressed(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /* Sends the content of the program clipboard to the plugin. Typically called after the plugin has
  * requested the content using the requestClipboardContent callback; however, the program is allowed
@@ -571,7 +587,10 @@ void vicePluginAPI_windowClipboardButtonPressed(VicePluginAPI_Context* ctx, uint
  * UTF-8, arbitrary null-terminated binary data is still allowed, and thus the plugin should either
  * tolerate invalid UTF-8 or validate/sanitize the data before use.
  */
-void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* text);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_putClipboardContent(
+    VicePluginAPI_Context* ctx,
+    const char* text
+);
 
 /* Sends the plugin a file which the plugin may then allow the user to download through given
  * window. The data of the file must be available in a readable local file with given path. Once the
@@ -582,7 +601,7 @@ void vicePluginAPI_putClipboardContent(VicePluginAPI_Context* ctx, const char* t
  * the file, which may be an arbitrary null-terminated string; the plugin may sanitize the name or
  * even ignore it. One valid implementation that ignores all downloads is { cleanup(cleanupData); }.
  */
-void vicePluginAPI_putFileDownload(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_putFileDownload(
     VicePluginAPI_Context* ctx,
     uint64_t window,
     const char* name,
@@ -604,13 +623,19 @@ void vicePluginAPI_putFileDownload(
  * separately. To deny the file upload, the plugin may return 0 from this function (for example if
  * it does not support file uploads); in that case, the file upload mode is not started.
  */
-int vicePluginAPI_startFileUpload(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_startFileUpload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /* Ends a currently active file upload mode (started by vicePluginAPI_startFileUpload) for given
  * window by canceling the upload. The plugin should close the modal file upload dialog without
  * calling any of the upload callbacks.
  */
-void vicePluginAPI_cancelFileUpload(VicePluginAPI_Context* ctx, uint64_t window);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_cancelFileUpload(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
 
 /**********************************
  * Non-context-specific functions *
@@ -635,7 +660,7 @@ void vicePluginAPI_cancelFileUpload(VicePluginAPI_Context* ctx, uint64_t window)
  *     "default: 127.0.0.1:8080"
  *   );
  */
-void vicePluginAPI_getOptionDocs(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_getOptionDocs(
     uint64_t apiVersion,
     void (*callback)(
         void* data,
@@ -672,7 +697,7 @@ void vicePluginAPI_getOptionDocs(
  * for both of the functions is:
  * { if(callback && destructorCallback) destructorCallback(data); }
  */
-void vicePluginAPI_setGlobalLogCallback(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_setGlobalLogCallback(
     uint64_t apiVersion,
     void (*callback)(
         void* data,
@@ -683,7 +708,7 @@ void vicePluginAPI_setGlobalLogCallback(
     void* data,
     void (*destructorCallback)(void* data)
 );
-void vicePluginAPI_setGlobalPanicCallback(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_setGlobalPanicCallback(
     uint64_t apiVersion,
     void (*callback)(void* data, const char* location, const char* msg),
     void* data,
@@ -707,7 +732,10 @@ void vicePluginAPI_setGlobalPanicCallback(
  * should start with vicePluginAPI_EXTNAME_ (where EXTNAME is replaced by the name of the extension)
  * where possible.
  */
-int vicePluginAPI_isExtensionSupported(uint64_t apiVersion, const char* name);
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isExtensionSupported(
+    uint64_t apiVersion,
+    const char* name
+);
 
 /***************************************************************************************************
  *** API extension "URINavigation" ***
@@ -736,7 +764,7 @@ typedef struct VicePluginAPI_URINavigation_Callbacks VicePluginAPI_URINavigation
  * after vicePluginAPI_initContext and before vicePluginAPI_start. The vice plugin uses the
  * callbacks similarly to the callbacks given in vicePluginAPI_start.
  */
-void vicePluginAPI_URINavigation_enable(
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_URINavigation_enable(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_URINavigation_Callbacks callbacks
 );

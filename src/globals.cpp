@@ -3,12 +3,12 @@
 #include "text.hpp"
 #include "xwindow.hpp"
 
-#include <unistd.h>
-#include <pwd.h>
-#include <sys/types.h>
+//#include <unistd.h>
+//#include <pwd.h>
+//#include <sys/types.h>
 
 namespace browservice {
-
+/*
 namespace {
 
 string getHomeDirPath() {
@@ -45,12 +45,12 @@ string getDotDirPath() {
 }
 
 }
-
+*/
 Globals::Globals(CKey, shared_ptr<Config> config)
     : config(config),
-      xWindow(XWindow::create()),
-      textRenderContext(TextRenderContext::create()),
-      dotDirPath(getDotDirPath())
+//      xWindow(XWindow::create()),
+      textRenderContext(TextRenderContext::create())//,
+//      dotDirPath(getDotDirPath())
 {
     REQUIRE(config);
 }

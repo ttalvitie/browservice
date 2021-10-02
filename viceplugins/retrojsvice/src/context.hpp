@@ -3,7 +3,7 @@
 #include "http.hpp"
 #include "window_manager.hpp"
 
-#include "../../../vice_plugin_api.h"
+#include "vice_plugin_api.hpp"
 
 namespace retrojsvice {
 

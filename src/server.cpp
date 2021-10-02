@@ -196,7 +196,7 @@ void Server::onViceContextCopyToClipboard(string text) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-    globals->xWindow->copyToClipboard(move(text));
+//    globals->xWindow->copyToClipboard(move(text));
 }
 
 void Server::onViceContextRequestClipboardContent() {
@@ -234,9 +234,11 @@ void Server::onViceContextRequestClipboardContent() {
     shared_ptr<Responder> responder = make_shared<Responder>();
     responder->server = shared_from_this();
 
+/*
     globals->xWindow->pasteFromClipboard([responder](string text) {
         responder->respond(text);
     });
+*/
 }
 
 void Server::onViceContextUploadFile(

@@ -1,3 +1,4 @@
+/*
 #include "xwindow.hpp"
 
 #include "timeout.hpp"
@@ -378,3 +379,4 @@ void XWindow::copyToClipboard(string text) {
 }
 
 }
+*/

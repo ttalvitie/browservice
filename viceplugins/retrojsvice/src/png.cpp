@@ -33,7 +33,13 @@ SOFTWARE.
 #include <thread>
 #include <utility>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <winsock.h>
+#pragma comment(lib, "Ws2_32.lib")
+#else
 #include <arpa/inet.h>
+#endif
 
 #include <zlib.h>
 

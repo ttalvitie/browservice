@@ -87,7 +87,7 @@ private:
 
     bool isDownloadVisible_();
 
-    class Layout;
+    struct Layout;
     Layout layout_();
 
     void setBookmarkID_(optional<uint64_t> bookmarkID);

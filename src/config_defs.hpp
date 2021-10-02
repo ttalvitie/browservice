@@ -125,25 +125,25 @@ CONF_DEF_OPT_INFO(chromiumArgs) {
                 ++eq;
             }
 
-            string name;
+            string argName;
             optional<string> value;
             if(eq == end) {
-                name = str.substr(start, end - start);
+                argName = str.substr(start, end - start);
             } else {
-                name = str.substr(start, eq - start);
+                argName = str.substr(start, eq - start);
                 value = str.substr(eq + 1, end - eq - 1);
             }
 
             for(int i = 0; i < 2; ++i) {
-                if(!name.empty() && name[0] == '-') {
-                    name = name.substr(1);
+                if(!argName.empty() && argName[0] == '-') {
+                    argName = argName.substr(1);
                 }
             }
-            if(name.empty()) {
+            if(argName.empty()) {
                 return empty;
             }
 
-            ret.emplace_back(name, value);
+            ret.emplace_back(argName, value);
 
             if(end == str.size()) {
                 break;
