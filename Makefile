@@ -2,7 +2,7 @@ CXX ?= g++
 CFLAGS_COMMON := -std=c++17 -D_FILE_OFFSET_BITS=64 -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -fno-strict-aliasing -fPIC -fstack-protector -funwind-tables -fvisibility=hidden --param=ssp-buffer-size=4 -pipe -pthread -Wall -Werror -Wno-error=deprecated-declarations -fno-threadsafe-statics -fvisibility-inlines-hidden -Wsign-compare -Wno-psabi `pkg-config --cflags pangoft2`
 CFLAGS_debug := $(CFLAGS_COMMON) -g -O0
 CFLAGS_release := $(CFLAGS_COMMON) -O3 -DNDEBUG -fdata-sections -ffunction-sections -fno-ident -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=2
-LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so -lPocoFoundation -lPocoCrypto `pkg-config --libs pangoft2` -lX11 -lxcb -ldl
+LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-warnings -Wl,-z,noexecstack -Wl,-z,now -Wl,-z,relro -Wl,-rpath,"\$$$$ORIGIN" cef/Release/libcef.so `pkg-config --libs pangoft2` -lX11 -lxcb -ldl
 LDFLAGS_debug := $(LDFLAGS_COMMON) cef/debugbuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 LDFLAGS_release := $(LDFLAGS_COMMON) -Wl,-O1 -Wl,--as-needed -Wl,--gc-sections cef/releasebuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 SRCS := $(shell find src -name '*.cpp')
