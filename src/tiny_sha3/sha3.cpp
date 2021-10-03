@@ -4,7 +4,13 @@
 // Revised 07-Aug-15 to match with official release of FIPS PUB 202 "SHA3"
 // Revised 03-Sep-15 for portability + OpenSSL - style API
 
+// Modified for use with browservice (omit unused stuff, follow strict aliasing rules)
+
 #include "sha3.h"
+
+#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#error "Only little endian is supported"
+#endif
 
 // update the state with given number of rounds
 
@@ -33,19 +39,6 @@ void sha3_keccakf(uint64_t st[25])
     // variables
     int i, j, r;
     uint64_t t, bc[5];
-
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-    uint8_t *v;
-
-    // endianess conversion. this is redundant on little-endian targets
-    for (i = 0; i < 25; i++) {
-        v = (uint8_t *) &st[i];
-        st[i] = ((uint64_t) v[0])     | (((uint64_t) v[1]) << 8) |
-            (((uint64_t) v[2]) << 16) | (((uint64_t) v[3]) << 24) |
-            (((uint64_t) v[4]) << 32) | (((uint64_t) v[5]) << 40) |
-            (((uint64_t) v[6]) << 48) | (((uint64_t) v[7]) << 56);
-    }
-#endif
 
     // actual iteration
     for (r = 0; r < KECCAKF_ROUNDS; r++) {
@@ -80,22 +73,6 @@ void sha3_keccakf(uint64_t st[25])
         //  Iota
         st[0] ^= keccakf_rndc[r];
     }
-
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-    // endianess conversion. this is redundant on little-endian targets
-    for (i = 0; i < 25; i++) {
-        v = (uint8_t *) &st[i];
-        t = st[i];
-        v[0] = t & 0xFF;
-        v[1] = (t >> 8) & 0xFF;
-        v[2] = (t >> 16) & 0xFF;
-        v[3] = (t >> 24) & 0xFF;
-        v[4] = (t >> 32) & 0xFF;
-        v[5] = (t >> 40) & 0xFF;
-        v[6] = (t >> 48) & 0xFF;
-        v[7] = (t >> 56) & 0xFF;
-    }
-#endif
 }
 
 // Initialize the context for SHA3
@@ -105,7 +82,7 @@ int sha3_init(sha3_ctx_t *c, int mdlen)
     int i;
 
     for (i = 0; i < 25; i++)
-        c->st.q[i] = 0;
+        c->st[i] = 0;
     c->mdlen = mdlen;
     c->rsiz = 200 - 2 * mdlen;
     c->pt = 0;
@@ -115,16 +92,16 @@ int sha3_init(sha3_ctx_t *c, int mdlen)
 
 // update state with more data
 
-int sha3_update(sha3_ctx_t *c, const void *data, size_t len)
+int sha3_update(sha3_ctx_t *c, const unsigned char *data, size_t len)
 {
     size_t i;
     int j;
 
     j = c->pt;
     for (i = 0; i < len; i++) {
-        c->st.b[j++] ^= ((const uint8_t *) data)[i];
+        *((unsigned char*)c->st + j++) ^= data[i];
         if (j >= c->rsiz) {
-            sha3_keccakf(c->st.q);
+            sha3_keccakf(c->st);
             j = 0;
         }
     }
@@ -135,16 +112,16 @@ int sha3_update(sha3_ctx_t *c, const void *data, size_t len)
 
 // finalize and output a hash
 
-int sha3_final(void *md, sha3_ctx_t *c)
+int sha3_final(unsigned char *md, sha3_ctx_t *c)
 {
     int i;
 
-    c->st.b[c->pt] ^= 0x06;
-    c->st.b[c->rsiz - 1] ^= 0x80;
-    sha3_keccakf(c->st.q);
+    *((unsigned char*)c->st + c->pt) ^= 0x06;
+    *((unsigned char*)c->st + c->rsiz - 1) ^= 0x80;
+    sha3_keccakf(c->st);
 
     for (i = 0; i < c->mdlen; i++) {
-        ((uint8_t *) md)[i] = c->st.b[i];
+        md[i] = *((unsigned char*)c->st + i);
     }
 
     return 1;
@@ -152,7 +129,7 @@ int sha3_final(void *md, sha3_ctx_t *c)
 
 // compute a SHA-3 hash (md) of given byte length from "in"
 
-void *sha3(const void *in, size_t inlen, void *md, int mdlen)
+void *sha3(const unsigned char *in, size_t inlen, unsigned char *md, int mdlen)
 {
     sha3_ctx_t sha3;
 
@@ -162,30 +139,3 @@ void *sha3(const void *in, size_t inlen, void *md, int mdlen)
 
     return md;
 }
-
-// SHAKE128 and SHAKE256 extensible-output functionality
-
-void shake_xof(sha3_ctx_t *c)
-{
-    c->st.b[c->pt] ^= 0x1F;
-    c->st.b[c->rsiz - 1] ^= 0x80;
-    sha3_keccakf(c->st.q);
-    c->pt = 0;
-}
-
-void shake_out(sha3_ctx_t *c, void *out, size_t len)
-{
-    size_t i;
-    int j;
-
-    j = c->pt;
-    for (i = 0; i < len; i++) {
-        if (j >= c->rsiz) {
-            sha3_keccakf(c->st.q);
-            j = 0;
-        }
-        ((uint8_t *) out)[i] = c->st.b[j++];
-    }
-    c->pt = j;
-}
-
