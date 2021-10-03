@@ -1,8 +1,8 @@
 #include "data_url.hpp"
 
-#include "include/cef_parser.h"
+#include "tiny_sha3/sha3.h"
 
-#include <Poco/Crypto/DigestEngine.h>
+#include "include/cef_parser.h"
 
 namespace browservice {
 
@@ -33,11 +33,23 @@ optional<string> urlBase64Decode(string urlBase64) {
     return string(buf.begin(), buf.end());
 }
 
+char hexDigit(unsigned int val) {
+    val &= 15u;
+    if(val < 10) {
+        return (char)('0' + val);
+    } else {
+        return (char)('a' + (val - 10));
+    }
+}
+
 string computeHash(string data) {
-    Poco::Crypto::DigestEngine hasher("SHA3-256");
-    hasher.update(data);
-    string hash = hasher.digestToHex(hasher.digest());
-    REQUIRE(hash.size() == HexHashLength);
+    uint8_t hashRaw[32];
+    sha3((const unsigned char*)data.data(), data.size(), hashRaw, 32);
+    string hash;
+    for(uint8_t x : hashRaw) {
+        hash.push_back(hexDigit(x >> 4));
+        hash.push_back(hexDigit(x & 15u));
+    }
     return hash;
 }
 
