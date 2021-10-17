@@ -13,6 +13,12 @@
 #include "include/base/cef_callback.h"
 #include "include/cef_app.h"
 
+#include <windows.h>
+
+#pragma comment(lib, "cef_sandbox.lib")
+
+#include "include/cef_sandbox_win.h"
+
 //#include <X11/Xlib.h>
 
 namespace browservice {
@@ -132,33 +138,32 @@ void handleTermSignalInApp(int signalID) {
 
 }
 
-int APIENTRY wWinMain(HINSTANCE hInstance,
-    HINSTANCE hPrevInstance,
-    LPTSTR lpCmdLine,
-    int nCmdShow) {
+int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     using namespace browservice;
-    shared_ptr<TextRenderContext> textRenderContext = TextRenderContext::create();
-/*
-    CefMainArgs mainArgs(argc, argv);
+
+    CefScopedSandboxInfo scoped_sandbox;
+    void* sandboxInfo = scoped_sandbox.sandbox_info();
+
+    CefMainArgs mainArgs(GetModuleHandle(nullptr));
 
     app = new App();
 
-    int exitCode = CefExecuteProcess(mainArgs, app, nullptr);
-    if(exitCode >= 0) {
+    int exitCode = CefExecuteProcess(mainArgs, app, sandboxInfo);
+    if (exitCode >= 0) {
         return exitCode;
     }
 
     signal(SIGINT, handleTermSignalSetFlag);
     signal(SIGTERM, handleTermSignalSetFlag);
 
-    shared_ptr<Config> config = Config::read(argc, argv);
-    if(!config) {
+    shared_ptr<Config> config = Config::read(__argc, __argv);
+    if (!config) {
         return 1;
     }
 
     INFO_LOG("Loading vice plugin ", config->vicePlugin);
     shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
-    if(!vicePlugin) {
+    if (!vicePlugin) {
         cerr << "ERROR: Loading vice plugin " << config->vicePlugin << " failed\n";
         return 1;
     }
@@ -166,25 +171,15 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
     INFO_LOG("Initializing vice plugin ", config->vicePlugin);
     shared_ptr<ViceContext> viceCtx =
         ViceContext::init(vicePlugin, config->viceOpts);
-    if(!viceCtx) {
+    if (!viceCtx) {
         return 1;
     }
 
     vicePlugin.reset();
 
-    shared_ptr<Xvfb> xvfb;
-    if(config->useDedicatedXvfb) {
-        xvfb = Xvfb::create();
-        xvfb->setupEnv();
-    }
-
     globals = Globals::create(config);
 
     if(!termSignalReceived) {
-        // Ignore non-fatal X errors
-        XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
-        XSetIOErrorHandler([](Display*) { return 0; });
-
         app->initialize(viceCtx);
         viceCtx.reset();
 
@@ -220,8 +215,6 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
     }
 
     globals.reset();
-    xvfb.reset();
 
     return 0;
-*/
 }

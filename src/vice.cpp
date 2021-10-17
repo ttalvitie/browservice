@@ -7,12 +7,14 @@
 
 #include "../vice_plugin_api.h"
 
-/*
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <dlfcn.h>
 #include <unistd.h>
-*/
 #include <sys/stat.h>
 #include <sys/types.h>
+#endif
 
 namespace browservice {
 
@@ -129,32 +131,57 @@ API_CALLBACK_HANDLE_EXCEPTIONS_END
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     REQUIRE_UI_THREAD();
 
-    void* lib = nullptr;// dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+#ifdef _WIN32
+    void* lib = LoadLibraryA(filename.c_str());
+#else
+    void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+#endif
     if(lib == nullptr) {
-        const char* err = "NOT IMPLEMENTED";// dlerror();
+#ifdef _WIN32
+        const char* err = nullptr;
+#else
+        const char* err = dlerror();
+#endif
         ERROR_LOG(
             "Loading vice plugin library '", filename,
-            "' failed: ", err != nullptr ? err : "Unknown error"
+            "' failed: ", err != nullptr ? err : "Unknown error", "ASDFA ", GetLastError()
         );
         return {};
     }
 
     unique_ptr<APIFuncs> apiFuncs = make_unique<APIFuncs>();
 
-    void* sym;
+#ifdef _WIN32
+    FARPROC sym;
 
 #define LOAD_API_FUNC(name) \
-    sym = nullptr; /*dlsym(lib, "vicePluginAPI_" #name);*/ \
+    sym = GetProcAddress((HMODULE)lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
-        const char* err = "NOT IMPLEMENTED";/*dlerror();*/ \
+        const char* err = nullptr; \
         ERROR_LOG( \
             "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
             filename, " failed: ", err != nullptr ? err : "Unknown error" \
         ); \
-        /*REQUIRE(dlclose(lib) == 0);*/ \
+        REQUIRE(FreeLibrary((HMODULE)lib) != 0); \
         return {}; \
     } \
     apiFuncs->name = (decltype(apiFuncs->name))sym;
+#else
+    void* sym;
+
+#define LOAD_API_FUNC(name) \
+    sym = dlsym(lib, "vicePluginAPI_" #name); \
+    if(sym == nullptr) { \
+        const char* err = dlerror(); \
+        ERROR_LOG( \
+            "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
+            filename, " failed: ", err != nullptr ? err : "Unknown error" \
+        ); \
+        REQUIRE(dlclose(lib) == 0); \
+        return {}; \
+    } \
+    apiFuncs->name = (decltype(apiFuncs->name))sym;
+#endif
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) LOAD_API_FUNC(name)
     FOREACH_REQUIRED_VICE_API_FUNC
@@ -177,7 +204,11 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
                 "Vice plugin ", filename,
                 " does not support API version ", apiVersion
             );
-            //REQUIRE(dlclose(lib) == 0);
+#ifdef _WIN32
+            REQUIRE(FreeLibrary((HMODULE)lib) != 0);
+#else
+            REQUIRE(dlclose(lib) == 0);
+#endif
             return {};
         }
     }
@@ -217,7 +248,11 @@ VicePlugin::VicePlugin(CKey, CKey,
 }
 
 VicePlugin::~VicePlugin() {
-    //REQUIRE(dlclose(lib_) == 0);
+#ifdef _WIN32
+    REQUIRE(FreeLibrary((HMODULE)lib_) != 0);
+#else
+    REQUIRE(dlclose(lib_) == 0);
+#endif
 }
 
 string VicePlugin::getVersionString() {

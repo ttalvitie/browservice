@@ -14,7 +14,11 @@ CONF_DEF_OPT_INFO(vicePlugin) {
         return "vice plugin to use for the user interface";
     }
     string defaultVal() {
+#ifdef _WIN32
+        return "retrojsvice.dll";
+#else
         return "retrojsvice.so";
+#endif
     }
     bool validate(const string& val) {
         return !val.empty();
