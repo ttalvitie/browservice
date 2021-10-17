@@ -20,6 +20,7 @@ target_compile_options(${CEF_TARGET} PRIVATE [=[/I$(_ZVcpkgCurrentInstalledDir)$
 target_compile_options(${CEF_TARGET} PRIVATE [=[/I$(_ZVcpkgCurrentInstalledDir)$(VcpkgConfigSubdir)\include\glib-2.0]=])
 target_compile_options(${CEF_TARGET} PRIVATE [=[/I$(_ZVcpkgCurrentInstalledDir)$(VcpkgConfigSubdir)\lib\glib-2.0\include]=])
 target_compile_options(${CEF_TARGET} PRIVATE [=[/I$(_ZVcpkgCurrentInstalledDir)$(VcpkgConfigSubdir)\include\harfbuzz]=])
+target_link_options(${CEF_TARGET} PRIVATE [=[/IMPLIB:$(IntDir)\browservice.lib]=])
 
 file(GLOB_RECURSE RETROJSVICE_SRCS ../viceplugins/retrojsvice/src/*.cpp ../viceplugins/retrojsvice/src/*.hpp)
 set(RETROJSVICE_SRCS ${RETROJSVICE_SRCS} ../viceplugins/retrojsvice/gen/html.cpp)
