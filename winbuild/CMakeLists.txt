@@ -1,5 +1,5 @@
 file(GLOB_RECURSE BROWSERVICE_SRCS ../src/*.cpp ../src/*.hpp)
-set(BROWSERVICE_SRCS ${BROWSERVICE_SRCS} browservice.rc resource.h)
+set(BROWSERVICE_SRCS ${BROWSERVICE_SRCS})
 
 source_group(browservice FILES ${BROWSERVICE_SRCS})
 set(CEF_TARGET "browservice")
