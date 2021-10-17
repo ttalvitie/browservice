@@ -188,7 +188,7 @@ Config::Config(CKey, Src& src)
       #undef CONF_FOREACH_OPT_ITEM
 {}
 
-shared_ptr<Config> Config::read(int argc, char* argv[]) {
+shared_ptr<Config> Config::read(int argc, const char* const* argv) {
     REQUIRE(argc >= 1);
 
     Src src;
@@ -329,6 +329,20 @@ shared_ptr<Config> Config::read(int argc, char* argv[]) {
     }
 
     return Config::create(src);
+}
+
+shared_ptr<Config> Config::read(int argc, const wchar_t* const* argv) {
+    std::vector<std::string> args;
+    for (int i = 0; i < argc; ++i) {
+        CefString arg = argv[i];
+        args.push_back(arg);
+    }
+    std::vector<const char*> argPtrs;
+    for (std::string& arg : args) {
+        argPtrs.push_back(arg.c_str());
+    }
+    argPtrs.push_back(nullptr);
+    return read(argc, argPtrs.data());
 }
 
 }

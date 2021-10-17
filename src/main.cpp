@@ -156,7 +156,7 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     signal(SIGINT, handleTermSignalSetFlag);
     signal(SIGTERM, handleTermSignalSetFlag);
 
-    shared_ptr<Config> config = Config::read(__argc, __argv);
+    shared_ptr<Config> config = Config::read(argc, argv);
     if (!config) {
         return 1;
     }

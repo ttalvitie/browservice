@@ -17,7 +17,8 @@ public:
 
     // Returns empty pointer if reading the configuration failed or help/version
     // was shown and the program should be terminated
-    static shared_ptr<Config> read(int argc, char* argv[]);
+    static shared_ptr<Config> read(int argc, const char* const* argv);
+    static shared_ptr<Config> read(int argc, const wchar_t* const* argv);
 
 public:
     const vector<pair<string, string>> viceOpts;
