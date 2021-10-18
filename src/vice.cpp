@@ -21,7 +21,9 @@ namespace browservice {
 struct VicePlugin::APIFuncs {
 #define FOREACH_REQUIRED_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
-    FOREACH_VICE_API_FUNC_ITEM(getVersionString) \
+    FOREACH_VICE_API_FUNC_ITEM(createVersionString) \
+    FOREACH_VICE_API_FUNC_ITEM(malloc) \
+    FOREACH_VICE_API_FUNC_ITEM(free) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
     FOREACH_VICE_API_FUNC_ITEM(destroyContext) \
     FOREACH_VICE_API_FUNC_ITEM(start) \
@@ -41,11 +43,11 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(cancelFileUpload) \
     FOREACH_VICE_API_FUNC_ITEM(getOptionDocs) \
     FOREACH_VICE_API_FUNC_ITEM(setGlobalLogCallback) \
-    FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback)
+    FOREACH_VICE_API_FUNC_ITEM(setGlobalPanicCallback) \
+    FOREACH_VICE_API_FUNC_ITEM(isExtensionSupported)
 
 #define FOREACH_VICE_API_FUNC \
     FOREACH_REQUIRED_VICE_API_FUNC \
-    FOREACH_VICE_API_FUNC_ITEM(isExtensionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
@@ -57,9 +59,10 @@ struct VicePlugin::APIFuncs {
 
 namespace {
 
-char* createMallocString(string val) {
+char* createMallocString(string val, void* (*mallocFunc)(size_t)) {
     size_t size = val.size() + 1;
-    char* ret = (char*)malloc(size);
+    REQUIRE(mallocFunc != nullptr);
+    char* ret = (char*)mallocFunc(size);
     REQUIRE(ret != nullptr);
     memcpy(ret, val.c_str(), size);
     return ret;
@@ -187,40 +190,30 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     FOREACH_REQUIRED_VICE_API_FUNC
 #undef FOREACH_VICE_API_FUNC_ITEM
 
-    const uint64_t BasicAPIVersion = 1000000;
-    const uint64_t ExtensionAPIVersion = 1000001;
+    const uint64_t APIVersion = 2000000;
 
-    uint64_t apiVersion;
-    if(apiFuncs->isAPIVersionSupported(ExtensionAPIVersion)) {
-        apiVersion = ExtensionAPIVersion;
-        LOAD_API_FUNC(isExtensionSupported);
-        if(apiFuncs->isExtensionSupported(apiVersion, "URINavigation")) {
+    if(apiFuncs->isAPIVersionSupported(APIVersion)) {
+        if(apiFuncs->isExtensionSupported(APIVersion, "URINavigation")) {
             LOAD_API_FUNC(URINavigation_enable);
         }
     } else {
-        apiVersion = BasicAPIVersion;
-        if(!apiFuncs->isAPIVersionSupported(apiVersion)) {
-            ERROR_LOG(
-                "Vice plugin ", filename,
-                " does not support API version ", apiVersion
-            );
+        ERROR_LOG("Vice plugin ", filename, " does not support API version ", APIVersion);
 #ifdef _WIN32
-            REQUIRE(FreeLibrary((HMODULE)lib) != 0);
+        REQUIRE(FreeLibrary((HMODULE)lib) != 0);
 #else
-            REQUIRE(dlclose(lib) == 0);
+        REQUIRE(dlclose(lib) == 0);
 #endif
-            return {};
-        }
+        return {};
     }
 
     apiFuncs->setGlobalLogCallback(
-        apiVersion,
+        APIVersion,
         logCallback,
         new string(filename),
         destructorCallback
     );
     apiFuncs->setGlobalPanicCallback(
-        apiVersion,
+        APIVersion,
         panicCallback,
         new string(filename),
         destructorCallback
@@ -230,7 +223,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
         CKey(),
         filename,
         lib,
-        apiVersion,
+        APIVersion,
         move(apiFuncs)
     );
 }
@@ -258,9 +251,9 @@ VicePlugin::~VicePlugin() {
 string VicePlugin::getVersionString() {
     REQUIRE_UI_THREAD();
 
-    char* raw = apiFuncs_->getVersionString();
+    char* raw = apiFuncs_->createVersionString();
     string val = raw;
-    free(raw);
+    apiFuncs_->free(raw);
     return val;
 }
 
@@ -413,7 +406,7 @@ shared_ptr<ViceContext> ViceContext::init(
         cerr
             << "ERROR: Vice plugin " << plugin->filename_ <<
             " initialization failed: " << initErrorMsg << "\n";
-        free(initErrorMsg);
+        plugin->apiFuncs_->free(initErrorMsg);
         return {};
     }
 
@@ -477,7 +470,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
                     return window;
                 } else {
                     if(msg != nullptr) {
-                        *msg = createMallocString(reason);
+                        *msg = createMallocString(reason, self->plugin_->apiFuncs_->malloc);
                     }
                     return 0;
                 }
@@ -517,7 +510,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
             return window;
         } else {
             if(msg != nullptr) {
-                *msg = createMallocString(reason);
+                *msg = createMallocString(reason, self->plugin_->apiFuncs_->malloc);
             }
             return 0;
         }
@@ -729,7 +722,7 @@ bool ViceContext::requestCreatePopup(
     } else {
         REQUIRE(msgC != nullptr);
         msg = msgC;
-        free(msgC);
+        plugin_->apiFuncs_->free(msgC);
         return false;
     }
 }
@@ -782,7 +775,7 @@ optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(
     if(result) {
         REQUIRE(qualityList != nullptr);
         string labelStr = qualityList;
-        free(qualityList);
+        plugin_->apiFuncs_->free(qualityList);
 
         vector<string> labels;
         size_t i = 0;

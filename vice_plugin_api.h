@@ -32,9 +32,9 @@ extern "C" {
  * and mouse events concerning the windows back to the program. In addition, passing clipboard text
  * and file downloads and uploads through the plugin is supported by the API.
  *
- * Typical API usage for API version 1000000:
+ * Typical API usage for API version 2000000:
  *
- *  1. The program verifies that the plugin supports API version 1000000 by calling
+ *  1. The program verifies that the plugin supports API version 2000000 by calling
  *     vicePluginAPI_isAPIVersionSupported.
  *
  *  2. (optional) The program registers its logging and panicking functions to the plugin using
@@ -92,8 +92,8 @@ extern "C" {
  *
  *  6. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
- * API version 1000001 adds support for extensions; see the section "API version 1000001" for more
- * information.
+ * The API may be extended using extensions; see the documentation for function
+ * vicePluginAPI_isExtensionSupported for more information.
  *
  * General API conventions and rules:
  *
@@ -122,6 +122,11 @@ extern "C" {
  *     recovering from the error (and optionally logging a warning) or panicking and terminating the
  *     program.
  *
+ *   - The strings passed through the API should typically be encoded as UTF-8; however, neither the
+ *     plugin or the program should rely on this, and tolerate arbitrary null-terminated binary
+ *     data, validating or sanitizing it if necessary. Non-user data passed through the API (such as
+ *     error messages) should be mostly ASCII if possible in order to maximize compatibility.
+ *
  *   - This API is not thread safe for concurrent calls concerning the same plugin context. However,
  *     calls concerning different contexts and calls not related to plugin contexts may be made from
  *     different threads concurrently.
@@ -136,19 +141,44 @@ extern "C" {
  */
 
 /***************************************************************************************************
- *** Functions common to all API versions ***
- ********************************************/
+ *** Functions common to all API versions >= 2000000 ***
+ *******************************************************/
+
+/* These functions should continue to work similarly in all future versions of the API. Old API
+ * versions 1000000 and 1000001 are incompatible and have been deprecated; see the bottom of this
+ * file for more information.
+ */
 
 /* Returns 1 if the plugin supports the given API version; otherwise, returns 0. */
 VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 
-/* Returns a string describing the name and version of the plugin. The caller is responsible for
- * freeing the string using free().
+/* Returns a string describing the name and version of the plugin. The calling program is
+ * responsible for freeing the string using vicePluginAPI_free.
  */
-VICE_PLUGIN_API_FUNC_DECLSPEC char* vicePluginAPI_getVersionString();
+VICE_PLUGIN_API_FUNC_DECLSPEC char* vicePluginAPI_createVersionString();
+
+/* Memory allocation and deallocation functions. Necessary because the program and the plugin may
+ * use different heaps, and thus allocating a block of memory using malloc() in the plugin and then
+ * freeing that block with free() in the program may lead to crashes. May be implemented simply
+ * as wrappers for standard malloc() and free(); in any case, they should work similarly to standard
+ * malloc() and free() in the following sense:
+ *
+ *   - vicePluginAPI_malloc should allocate a memory block of given size and return a pointer to
+ *     its beginning; if an allocation error occurs, it should return a NULL pointer. If size is
+ *     zero, vicePluginAPI_malloc is allowed to return a NULL pointer upon successful allocation.
+ *
+ *   - vicePluginAPI_free should free a memory block previously allocated with vicePluginAPI_malloc
+ *     and not yet freed, given by the pointer to the beginning of the block. If the pointer is
+ *     NULL, the function should do nothing.
+ *
+ *   - Both functions may be called from any thread at any time (even from callbacks invoked by the
+ *     plugin).
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC void* vicePluginAPI_malloc(size_t size);
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_free(void* ptr);
 
 /***************************************************************************************************
- *** API version 1000000 ***
+ *** API version 2000000 ***
  ***************************/
 
 /*********
@@ -187,8 +217,9 @@ struct VicePluginAPI_Callbacks {
      * is not already in use by a window) and ignore msg; the window begins its existence
      * immediately, and the returned handle is used to identify it in subsequent API and callback
      * calls. To deny the creation of the window, the function must return 0 and if msg is not NULL,
-     * it must point *msg to a short human-readable string describing the reason for the denial; the
-     * plugin is responsible for freeing the string using free().
+     * it must point *msg to a short human-readable string describing the reason for the denial. The
+     * string must be allocated using vicePluginAPI_malloc and the plugin is responsible for freeing
+     * it using vicePluginAPI_free.
      */
     uint64_t (*createWindow)(void*, char** msg);
 
@@ -408,8 +439,8 @@ typedef enum VicePluginAPI_MouseCursor VicePluginAPI_MouseCursor;
  * special characters and the space may be limited.
  *
  * In case of failure, NULL is returned and if initErrorMsg is not NULL, *initErrorMsg is set to
- * point to a string describing the reason for the failure; the caller must free the string using
- * free().
+ * point to a string describing the reason for the failure; the calling program must free the string
+ * using vicePluginAPI_free.
  *
  * The program may attempt create multiple independent contexts for the same plugin; if the plugin
  * does not support this and the program attempts to create a second context, this function should
@@ -489,7 +520,7 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_pumpEvents(VicePluginAPI_Contex
  * created window works in exactly the same way as windows created by the plugin, and it exists
  * independently of parentWindow. To deny the creation of the window, the function must return 0 and
  * if msg is not NULL, it must point *msg to a short human-readable string describing the reason for
- * the denial; the calling program is responsible for freeing the string using free().
+ * the denial; the calling program is responsible for freeing the string using vicePluginAPI_free.
  */
 VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_createPopupWindow(
     VicePluginAPI_Context* ctx,
@@ -536,9 +567,10 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_setWindowCursor(
  * quality label must be a string of 1-3 ASCII characters in range 33..126. There must be at least
  * one quality label. Duplicate labels are not recommended but are allowed. Each quality label must
  * be followed by a single newline character ('\n'), including the last quality label. The calling
- * program is responsible for freeing the string *qualityListOut using free(). The function must
- * point *currentQualityOut to a valid 0-based index for the list of quality options. By convention,
- * the quality options should be ordered from the worst (fastest) to the best (slowest).
+ * program is responsible for freeing the string *qualityListOut using vicePluginAPI_free. The
+ * function must point *currentQualityOut to a valid 0-based index for the list of quality options.
+ * By convention, the quality options should be ordered from the worst (fastest) to the best
+ * (slowest).
  *
  * For example, if there are four qualities, "Bad", "OK", "HD" and "5/5", and "OK" is the default,
  * the function should return 1, set *qualityListOut to point to a new string "Bad\nOK\nHD\n5/5\n"
@@ -715,22 +747,20 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_setGlobalPanicCallback(
     void (*destructorCallback)(void* data)
 );
 
-/***************************************************************************************************
- *** API version 1000001 ***
- ***************************/
-
-/* API version 1000001 contains all the same functionality as API version 1000000, and adds support
- * for API extensions through the function vicePluginAPI_isExtensionSupported.
- */
+/*********************
+ * Extension support *
+ *********************/
 
 /* Returns 1 if the vice plugin supports API extension with given name (null-terminated and case
  * sensitive), and 0 otherwise. This function may be called at any time from any thread, and the
  * same plugin should always return the same result for the same extension name. If the return value
- * is 1, the program may use the functions for that extensions as documented below or in other
- * sources. Avoidance of name conflicts should be kept in mind when naming new extensions;
+ * is 1, the program may load and use the functions for that extension as documented below or in
+ * other sources. Avoidance of name conflicts should be kept in mind when naming new extensions;
  * organization names or other identifiers may be added as necessary, and extension function names
  * should start with vicePluginAPI_EXTNAME_ (where EXTNAME is replaced by the name of the extension)
- * where possible.
+ * where possible. To maintain compatibility with plugins that do not support some extensions, the
+ * program should dynamically load the extension functions only after it has used this function to
+ * ensure that the extension is supported by the plugin.
  */
 VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isExtensionSupported(
     uint64_t apiVersion,
@@ -745,8 +775,8 @@ VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isExtensionSupported(
  * arbitrary URIs (Uniform Resource Identifiers) through two additional callbacks in the
  * VicePluginAPI_URINavigation_Callbacks structure. The extension is enabled by the program using
  * vicePluginAPI_URINavigation_enable. The program should be able to handle arbitrary
- * null-terminated binary data in the URI strings given by the plugin in addition to valid URIs,
- * validating and sanitizing the strings if necessary.
+ * null-terminated binary data in the URI strings given by the plugin in addition to valid UTF-8
+ * encoded URIs, validating and sanitizing the strings if necessary.
  */
 
 struct VicePluginAPI_URINavigation_Callbacks {
@@ -768,6 +798,19 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_URINavigation_enable(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_URINavigation_Callbacks callbacks
 );
+
+/***************************************************************************************************
+ *** Deprecated API versions 1000000 and 1000001 ***
+ ***************************************************/
+
+/* The old API versions 1000000 and 1000001 have been deprecated due to a design flaw (freeing heap
+ * memory on different side of the API than where it was allocated) which led to crashes on Windows.
+ * This required breaking binary compatibility, as it affected the function
+ * vicePluginAPI_getVersionString (now renamed to vicePluginAPI_createVersionString) which is
+ * independent of API versions. Migrating from 1000001 to 2000000 should be straightforward: use
+ * vicePluginAPI_malloc and vicePluginAPI_free instead of malloc and free for strings that are sent
+ * through the API such that the recipient is responsible for freeing the string.
+ */
 
 #ifdef __cplusplus
 }

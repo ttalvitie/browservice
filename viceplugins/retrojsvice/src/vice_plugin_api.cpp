@@ -81,15 +81,33 @@ struct VicePluginAPI_Context {
 API_EXPORT int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion) {
 API_FUNC_START
 
-    return (int)(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
+    return (int)(apiVersion == (uint64_t)2000000);
 
 API_FUNC_END
 }
 
-API_EXPORT char* vicePluginAPI_getVersionString() {
+API_EXPORT char* vicePluginAPI_createVersionString() {
 API_FUNC_START
 
     return createMallocString(string("Retrojsvice ") + RetrojsviceVersion);
+
+API_FUNC_END
+}
+
+// Must be a wrapper for malloc() as the rest of the plugin implementation uses free() directly
+VICE_PLUGIN_API_FUNC_DECLSPEC void* vicePluginAPI_malloc(size_t size) {
+API_FUNC_START
+
+    return malloc(size);
+
+API_FUNC_END
+}
+
+// Must be a wrapper for free() as the rest of the plugin implementation uses malloc() directly
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_free(void* ptr) {
+API_FUNC_START
+
+    return free(ptr);
 
 API_FUNC_END
 }
@@ -104,7 +122,7 @@ API_EXPORT VicePluginAPI_Context* vicePluginAPI_initContext(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
+    REQUIRE(apiVersion == (uint64_t)2000000);
 
     REQUIRE(programName != nullptr);
 
@@ -153,15 +171,6 @@ API_FUNC_END
     { \
     API_FUNC_START \
         REQUIRE(ctx != nullptr); \
-        return ctx->impl->funcName(__VA_ARGS__); \
-    API_FUNC_END \
-    }
-
-#define WRAP_CTX_EXT_API(funcName, ...) \
-    { \
-    API_FUNC_START \
-        REQUIRE(ctx != nullptr); \
-        REQUIRE(ctx->apiVersion == (uint64_t)1000001); \
         return ctx->impl->funcName(__VA_ARGS__); \
     API_FUNC_END \
     }
@@ -276,7 +285,7 @@ API_EXPORT void vicePluginAPI_getOptionDocs(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
+    REQUIRE(apiVersion == (uint64_t)2000000);
     REQUIRE(callback != nullptr);
 
     vector<tuple<string, string, string, string>> docs =
@@ -310,7 +319,7 @@ API_EXPORT void vicePluginAPI_setGlobalLogCallback(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
+    REQUIRE(apiVersion == (uint64_t)2000000);
 
     if(callback == nullptr) {
         setLogCallback({});
@@ -349,7 +358,7 @@ API_EXPORT void vicePluginAPI_setGlobalPanicCallback(
 ) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000000 || apiVersion == (uint64_t)1000001);
+    REQUIRE(apiVersion == (uint64_t)2000000);
 
     if(callback == nullptr) {
         setPanicCallback({});
@@ -365,7 +374,7 @@ API_FUNC_END
 API_EXPORT int vicePluginAPI_isExtensionSupported(uint64_t apiVersion, const char* name) {
 API_FUNC_START
 
-    REQUIRE(apiVersion == (uint64_t)1000001);
+    REQUIRE(apiVersion == (uint64_t)2000000);
 
     string nameStr = name;
     if(nameStr == "URINavigation") {
@@ -381,6 +390,6 @@ API_EXPORT void vicePluginAPI_URINavigation_enable(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_URINavigation_Callbacks callbacks
 )
-WRAP_CTX_EXT_API(URINavigation_enable, callbacks);
+WRAP_CTX_API(URINavigation_enable, callbacks);
 
 }
