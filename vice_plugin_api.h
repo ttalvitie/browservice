@@ -92,7 +92,7 @@ extern "C" {
  *
  *  6. The program destroys the plugin context using vicePluginAPI_destroyContext.
  *
- * The API may be extended using extensions; see the documentation for function
+ * The API supports extensions; see the documentation for the function
  * vicePluginAPI_isExtensionSupported for more information.
  *
  * General API conventions and rules:
@@ -123,9 +123,10 @@ extern "C" {
  *     program.
  *
  *   - The strings passed through the API should typically be encoded as UTF-8; however, neither the
- *     plugin or the program should rely on this, and tolerate arbitrary null-terminated binary
- *     data, validating or sanitizing it if necessary. Non-user data passed through the API (such as
- *     error messages) should be mostly ASCII if possible in order to maximize compatibility.
+ *     plugin or the program should rely on this; instead, they should tolerate arbitrary
+ *     null-terminated binary data, validating or sanitizing it if necessary. Non-user data passed
+ *     through the API (such as error messages) should be mostly ASCII if possible in order to
+ *     maximize compatibility.
  *
  *   - This API is not thread safe for concurrent calls concerning the same plugin context. However,
  *     calls concerning different contexts and calls not related to plugin contexts may be made from
