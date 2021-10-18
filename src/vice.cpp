@@ -192,11 +192,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 
     const uint64_t APIVersion = 2000000;
 
-    if(apiFuncs->isAPIVersionSupported(APIVersion)) {
-        if(apiFuncs->isExtensionSupported(APIVersion, "URINavigation")) {
-            LOAD_API_FUNC(URINavigation_enable);
-        }
-    } else {
+    if(!apiFuncs->isAPIVersionSupported(APIVersion)) {
         ERROR_LOG("Vice plugin ", filename, " does not support API version ", APIVersion);
 #ifdef _WIN32
         REQUIRE(FreeLibrary((HMODULE)lib) != 0);
@@ -218,6 +214,10 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
         new string(filename),
         destructorCallback
     );
+
+    if (apiFuncs->isExtensionSupported(APIVersion, "URINavigation")) {
+        LOAD_API_FUNC(URINavigation_enable);
+    }
 
     return VicePlugin::create(
         CKey(),
