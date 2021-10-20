@@ -1,4 +1,3 @@
-/*
 #pragma once
 
 #include "common.hpp"
@@ -41,4 +40,3 @@ optional<uint64_t> getCachedBookmarkIDByURL(string url);
 string handleBookmarksRequest(CefRefPtr<CefRequest> request);
 
 }
-*/

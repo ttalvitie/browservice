@@ -716,7 +716,7 @@ void ControlBar::setSecurityStatus(SecurityStatus value) {
 void ControlBar::setAddress(string addr) {
     REQUIRE_UI_THREAD();
     address_ = addr;
-//    setBookmarkID_(getCachedBookmarkIDByURL(addr));
+    setBookmarkID_(getCachedBookmarkIDByURL(addr));
     addrField_->setText(move(addr));
 }
 
@@ -812,7 +812,6 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
     }
 
     if(button.lock() == bookmarkToggleButton_ && !address_.empty()) {
-/*
         shared_ptr<Bookmarks> bookmarks = Bookmarks::load();
         if(bookmarks) {
             if(bookmarkID_.has_value()) {
@@ -834,7 +833,6 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
                 }
             }
         }
-*/
     }
 
     if(button.lock() == openBookmarksButton_) {

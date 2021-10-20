@@ -3,14 +3,31 @@
 #include "text.hpp"
 #include "xwindow.hpp"
 
-//#include <unistd.h>
-//#include <pwd.h>
-//#include <sys/types.h>
+#ifdef _WIN32
+#include <shlobj.h>
+#else
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/types.h>
+#endif
 
 namespace browservice {
-/*
+
 namespace {
 
+#ifdef _WIN32
+wstring getAppDataPath() {
+    PWSTR str;
+    REQUIRE(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &str) == S_OK);
+    wstring ret = str;
+    CoTaskMemFree(str);
+    return ret;
+}
+
+wstring getDotDirPath() {
+    return getAppDataPath() + L"\\Browservice";
+}
+#else
 string getHomeDirPath() {
     const char* path = getenv("HOME");
     if(path != nullptr) {
@@ -43,14 +60,17 @@ string getHomeDirPath() {
 string getDotDirPath() {
     return getHomeDirPath() + "/.browservice";
 }
+#endif
 
 }
-*/
+
 Globals::Globals(CKey, shared_ptr<Config> config)
     : config(config),
-//      xWindow(XWindow::create()),
-      textRenderContext(TextRenderContext::create())//,
-//      dotDirPath(getDotDirPath())
+#ifndef _WIN32
+      xWindow(XWindow::create()),
+#endif
+      dotDirPath(getDotDirPath()),
+      textRenderContext(TextRenderContext::create())
 {
     REQUIRE(config);
 }

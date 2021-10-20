@@ -106,13 +106,11 @@ CefRefPtr<CefResourceHandler> BrowserviceSchemeHandlerFactory::Create(
     string response =
         "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\">"
         "<title>404 Not Found</title></head><body><h1>404 Not Found</h1></body></html>\n";
-/*
     if(request->GetURL() == "browservice:bookmarks") {
         status = 200;
         statusText = "OK";
         response = handleBookmarksRequest(request);
     }
-*/
     return new StaticResponseResourceHandler(status, move(statusText), move(response));
 }
 

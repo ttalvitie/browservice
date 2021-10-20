@@ -1,12 +1,15 @@
-/*
 #include "bookmarks.hpp"
 
 #include "globals.hpp"
 
 #include "include/cef_request.h"
 
+#ifdef _WIN32
+#include <fileapi.h>
+#else
 #include <sys/stat.h>
 #include <sys/types.h>
+#endif
 
 namespace browservice {
 
@@ -26,6 +29,19 @@ void populateBookmarkCache(const Bookmarks& bookmarks) {
 }
 
 bool tryCreateDotDir() {
+#ifdef _WIN32
+    if(CreateDirectory(globals->dotDirPath.c_str(), nullptr)) {
+        return true;
+    } else {
+        if(GetLastError() == ERROR_ALREADY_EXISTS) {
+            DWORD attrib = GetFileAttributes(globals->dotDirPath.c_str());
+            if(attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+#else
     if(mkdir(globals->dotDirPath.c_str(), 0700) == 0) {
         return true;
     } else {
@@ -37,6 +53,7 @@ bool tryCreateDotDir() {
         }
         return false;
     }
+#endif
 }
 
 void writeLE(ofstream& fp, uint64_t val) {
@@ -52,7 +69,7 @@ void writeStr(ofstream& fp, const string& val) {
     writeLE(fp, val.size());
     fp.write(val.data(), val.size());
 
-    size_t padCount = (-val.size()) & (size_t)7;
+    size_t padCount = ((size_t)0 - val.size()) & (size_t)7;
     if(padCount) {
         char zeros[8] = {};
         fp.write(zeros, padCount);
@@ -80,7 +97,7 @@ bool readStr(ifstream& fp, string& val) {
         return false;
     }
 
-    size_t padCount = (-size) & (size_t)7;
+    size_t padCount = ((uint64_t)0 - size) & (size_t)7;
     size_t paddedSize = size + padCount;
 
     vector<char> buf(paddedSize);
@@ -106,15 +123,24 @@ shared_ptr<Bookmarks> Bookmarks::load() {
         return {};
     }
 
-    string bookmarkPath = globals->dotDirPath + "/bookmarks";
-
     shared_ptr<Bookmarks> ret = Bookmarks::create();
+
+#ifdef _WIN32
+    wstring bookmarkPath = globals->dotDirPath + L"/bookmarks";
+
+    if(GetFileAttributes(bookmarkPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        INFO_LOG("Bookmark file '", bookmarkPath, "' does not exist, using empty set of bookmarks");
+        return ret;
+    }
+#else
+    string bookmarkPath = globals->dotDirPath + "/bookmarks";
 
     struct stat st;
     if(stat(bookmarkPath.c_str(), &st) == -1 && errno == ENOENT) {
         INFO_LOG("Bookmark file '", bookmarkPath, "' does not exist, using empty set of bookmarks");
         return ret;
     }
+#endif
 
     auto readError = [&]() -> shared_ptr<Bookmarks> {
         ERROR_LOG(
@@ -176,8 +202,12 @@ bool Bookmarks::save() {
         return false;
     }
 
+#ifdef _WIN32
+    wstring bookmarkPath = globals->dotDirPath + L"/bookmarks";
+    ofstream fp;
+    fp.open(bookmarkPath);
+#else
     string bookmarkPath = globals->dotDirPath + "/bookmarks";
-
     string bookmarkTmpPath = globals->dotDirPath + "/.tmp.bookmarks.";
     string charPalette = "abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
     for(int i = 0; i < 16; ++i) {
@@ -187,6 +217,7 @@ bool Bookmarks::save() {
 
     ofstream fp;
     fp.open(bookmarkTmpPath);
+#endif
 
     // File signature
     writeLE(fp, 0xBA0F5EAF1CEB00C3);
@@ -212,6 +243,14 @@ bool Bookmarks::save() {
 
     fp.close();
 
+#ifdef _WIN32
+    if(!fp.good()) {
+        ERROR_LOG(
+            "Saving bookmarks failed: Could not write file '", bookmarkPath, "'"
+        );
+        return false;
+    }
+#else
     if(!fp.good()) {
         ERROR_LOG(
             "Saving bookmarks failed: "
@@ -228,6 +267,7 @@ bool Bookmarks::save() {
         unlink(bookmarkTmpPath.c_str());
         return false;
     }
+#endif
 
     INFO_LOG("Bookmarks successfully written to '", bookmarkPath, "'");
 
@@ -414,4 +454,3 @@ string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
 }
 
 }
-*/

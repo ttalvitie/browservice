@@ -13,9 +13,13 @@ public:
     Globals(CKey, shared_ptr<Config> config);
 
     const shared_ptr<Config> config;
-//    const shared_ptr<XWindow> xWindow;
+#ifdef _WIN32
+    const wstring dotDirPath;
+#else
+    const shared_ptr<XWindow> xWindow;
+    const string dotDirPath;
+#endif
     const shared_ptr<TextRenderContext> textRenderContext;
-//    const string dotDirPath;
 };
 
 extern shared_ptr<Globals> globals;

@@ -80,6 +80,7 @@ using std::uniform_int_distribution;
 using std::unique_ptr;
 using std::vector;
 using std::weak_ptr;
+using std::wstring;
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
