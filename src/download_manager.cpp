@@ -122,7 +122,7 @@ DownloadManager::DownloadManager(CKey,
 }
 
 DownloadManager::~DownloadManager() {
-    for(const pair<uint32_t, DownloadInfo>& p : infos_) {
+    for(const auto& p : infos_) {
         const DownloadInfo& info = p.second;
         if(!info.startCallback) {
             if(info.cancelCallback) {
@@ -184,7 +184,7 @@ void DownloadManager::pendingDownloadCountChanged_() {
 
 void DownloadManager::downloadProgressChanged_() {
     vector<pair<int, int>> pairs;
-    for(const pair<uint32_t, DownloadInfo>& elem : infos_) {
+    for(const auto& elem : infos_) {
         if(!elem.second.startCallback) {
             pairs.emplace_back(elem.second.fileIdx, elem.second.progress);
         }

@@ -29,6 +29,7 @@ SOFTWARE.
 #include <cstring>
 #include <future>
 #include <iostream>
+#include <memory>
 #include <thread>
 #include <utility>
 
@@ -100,7 +101,7 @@ public:
         write(&valNB, 4);
     }
     void finish() {
-        uint32_t dataLength = buf_.size() - startPos_ - 8;
+        uint32_t dataLength = (uint32_t)(buf_.size() - startPos_ - 8);
         uint32_t dataLengthNB = htonl(dataLength);
         memcpy(buf_.data() + startPos_, &dataLengthNB, 4);
 
@@ -117,7 +118,11 @@ private:
     uint32_t crc32_;
 };
 
-struct Result;
+struct Result {
+    size_t uncompressedBytes;
+    uint32_t adler32;
+    std::vector<uint8_t> chunk;
+};
 
 struct JobData {
     const uint8_t* image;
@@ -131,19 +136,13 @@ struct JobData {
 struct Job {
     bool shutdown;
     std::promise<Result> resultPromise;
-    std::future<Job> nextJobFuture;
+    std::future<std::unique_ptr<Job>> nextJobFuture;
     JobData data;
-};
-
-struct Result {
-    size_t uncompressedBytes;
-    uint32_t adler32;
-    std::vector<uint8_t> chunk;
 };
 
 struct Worker {
     std::thread thread;
-    std::promise<Job> jobPromise;
+    std::promise<std::unique_ptr<Job>> jobPromise;
 };
 
 int paeth(int leftVal, int upVal, int upLeftVal) {
@@ -219,7 +218,7 @@ Result runJob(JobData jobData) {
     zStream.opaque = nullptr;
     CHECK(deflateInit2(&zStream, 1, Z_DEFLATED, 15, 8, Z_RLE) == Z_OK);
 
-    zStream.avail_in = uncompressedBytes;
+    zStream.avail_in = (unsigned int)uncompressedBytes;
     zStream.next_in = rawData.data();
 
     std::vector<uint8_t> chunk;
@@ -234,7 +233,7 @@ Result runJob(JobData jobData) {
         size_t pos = chunk.size();
         chunk.resize(pos + blockSize);
 
-        zStream.avail_out = blockSize;
+        zStream.avail_out = (unsigned int)blockSize;
         zStream.next_out = chunk.data() + pos;
 
         int flush;
@@ -286,14 +285,14 @@ Result runJob(JobData jobData) {
     return {uncompressedBytes, adler32, std::move(chunk)};
 }
 
-void workerThread(std::future<Job> jobFuture) {
+void workerThread(std::future<std::unique_ptr<Job>> jobFuture) {
     while(true) {
-        Job job = jobFuture.get();
-        if(job.shutdown) {
+        std::unique_ptr<Job> job = jobFuture.get();
+        if(job->shutdown) {
             break;
         }
-        jobFuture = std::move(job.nextJobFuture);
-        job.resultPromise.set_value(runJob(std::move(job.data)));
+        jobFuture = std::move(job->nextJobFuture);
+        job->resultPromise.set_value(runJob(std::move(job->data)));
     }
 }
 
@@ -318,8 +317,8 @@ private:
 PNGCompressor::Impl::Impl(size_t threadCount) {
     CHECK(threadCount >= 1);
     for(size_t i = 1; i < threadCount; ++i) {
-        std::promise<Job> jobPromise;
-        std::future<Job> jobFuture = jobPromise.get_future();
+        std::promise<std::unique_ptr<Job>> jobPromise;
+        std::future<std::unique_ptr<Job>> jobFuture = jobPromise.get_future();
         std::thread thread([jobFuture{std::move(jobFuture)}]() mutable {
             workerThread(std::move(jobFuture));
         });
@@ -328,8 +327,8 @@ PNGCompressor::Impl::Impl(size_t threadCount) {
 }
 PNGCompressor::Impl::~Impl() {
     for(Worker& worker : workers_) {
-        Job job;
-        job.shutdown = true;
+        std::unique_ptr<Job> job = std::make_unique<Job>();
+        job->shutdown = true;
         worker.jobPromise.set_value(std::move(job));
         worker.thread.join();
     }
@@ -358,12 +357,12 @@ std::vector<std::vector<uint8_t>> PNGCompressor::Impl::compress(
 
     std::vector<std::future<Result>> resultFutures(threadCount - 1);
     for(size_t i = 1; i < threadCount; ++i) {
-        std::promise<Job> nextJobPromise;
-        Job job;
-        job.shutdown = false;
-        resultFutures[i - 1] = job.resultPromise.get_future();
-        job.nextJobFuture = nextJobPromise.get_future();
-        job.data = std::move(jobDatas[i]);
+        std::promise<std::unique_ptr<Job>> nextJobPromise;
+        std::unique_ptr<Job> job = std::make_unique<Job>();
+        job->shutdown = false;
+        resultFutures[i - 1] = job->resultPromise.get_future();
+        job->nextJobFuture = nextJobPromise.get_future();
+        job->data = std::move(jobDatas[i]);
 
         workers_[i - 1].jobPromise.set_value(std::move(job));
         workers_[i - 1].jobPromise = std::move(nextJobPromise);
@@ -390,8 +389,8 @@ std::vector<std::vector<uint8_t>> PNGCompressor::Impl::compress(
 
     {
         ChunkWriter writer(headerData, "IHDR");
-        writer.writeU32(width);
-        writer.writeU32(height);
+        writer.writeU32((uint32_t)width);
+        writer.writeU32((uint32_t)height);
         writer.writeU8(8); // bit depth 8
         writer.writeU8(2); // color type RGB
         writer.writeU8(0); // compression method standard
@@ -421,7 +420,7 @@ std::vector<std::vector<uint8_t>> PNGCompressor::Impl::compress(
         // Combined adler32 value terminates the ZLIB stream
         uint32_t adler32 = 1;
         for(const Result& result : results) {
-            adler32 = adler32_combine(adler32, result.adler32, result.uncompressedBytes);
+            adler32 = adler32_combine(adler32, result.adler32, (long)result.uncompressedBytes);
         }
         writer.writeU32(adler32);
 
