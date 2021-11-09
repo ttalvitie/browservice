@@ -406,7 +406,7 @@ string handleBookmarksRequest(CefRefPtr<CefRequest> request) {
         "<!DOCTYPE html>\n<html lang=\"en\"><head><meta charset=\"UTF-8\">"
         "<title>Bookmarks</title></head><body>\n"
         "<h1>Bookmarks</h1>\n"
-        "<form action=\"browservice:bookmarks\" method=\"POST\">\n";
+        "<form action=\"browservice://bookmarks/\" method=\"POST\">\n";
 
     if(bookmarks) {
         const map<uint64_t, Bookmark>& bookmarkData = bookmarks->getData();

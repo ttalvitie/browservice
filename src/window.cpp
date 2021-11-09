@@ -800,7 +800,7 @@ void Window::onOpenBookmarksButtonPressed() {
             CefRefPtr<CefFrame> frame = browser_->GetMainFrame();
             if(frame) {
                 string url = frame->GetURL();
-                if(url == "about:blank" || url == "browservice:bookmarks") {
+                if(url == "about:blank" || url == "browservice://bookmarks/") {
                     openPopup = false;
                 }
             }
@@ -826,7 +826,7 @@ void Window::onOpenBookmarksButtonPressed() {
                 INFO_LOG("Creating bookmark popup window ", newHandle);
 
                 shared_ptr<Window> newWindow =
-                    Window::tryCreate(eventHandler_, newHandle, "browservice:bookmarks");
+                    Window::tryCreate(eventHandler_, newHandle, "browservice://bookmarks/");
 
                 popupDenied = false;
                 return newWindow;
@@ -842,7 +842,7 @@ void Window::onOpenBookmarksButtonPressed() {
             }
         } else {
             INFO_LOG("Bookmark button pressed in window ", handle_, ", navigating to bookmarks");
-            navigateToURI("browservice:bookmarks");
+            navigateToURI("browservice://bookmarks/");
         }
     }
 }

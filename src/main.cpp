@@ -89,7 +89,10 @@ public:
         }
     }
     virtual void OnRegisterCustomSchemes(CefRawPtr<CefSchemeRegistrar> registrar) {
-        registrar->AddCustomScheme("browservice", CEF_SCHEME_OPTION_LOCAL | CEF_SCHEME_OPTION_DISPLAY_ISOLATED);
+        registrar->AddCustomScheme(
+            "browservice",
+            CEF_SCHEME_OPTION_STANDARD | CEF_SCHEME_OPTION_LOCAL | CEF_SCHEME_OPTION_DISPLAY_ISOLATED
+        );
     }
 
     // CefBrowserProcessHandler (may be used with initialized_ = false in other processes):
