@@ -9,19 +9,23 @@
 namespace retrojsvice {
 
 TempDir::TempDir(CKey) {
-/*
+#ifdef _WIN32
+// TODO
+#else
     char path[] = "/tmp/retrojsvicetmp_XXXXXX";
     REQUIRE(mkdtemp(path) != nullptr);
     path_ = path;
-*/
+#endif
 }
 
 TempDir::~TempDir() {
-/*
+#ifdef _WIN32
+// TODO
+#else
     if(rmdir(path_.c_str())) {
         WARNING_LOG("Deleting temporary directory ", path_, " failed");
     }
-*/
+#endif
 }
 
 const string& TempDir::path() {
@@ -31,11 +35,13 @@ const string& TempDir::path() {
 namespace {
 
 void unlinkFile(const string& path) {
-/*
+#ifdef _WIN32
+// TODO
+#else
     if(unlink(path.c_str())) {
         WARNING_LOG("Unlinking temporary file ", path, " failed");
     }
-*/
+#endif
 }
 
 }

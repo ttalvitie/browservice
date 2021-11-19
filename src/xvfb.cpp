@@ -1,5 +1,6 @@
-/*
-include "xvfb.hpp"
+#ifndef _WIN32
+
+#include "xvfb.hpp"
 
 #include "temp_dir.hpp"
 
@@ -175,4 +176,5 @@ void Xvfb::shutdown() {
 }
 
 }
-*/
+
+#endif

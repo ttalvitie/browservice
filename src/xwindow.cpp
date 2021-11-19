@@ -1,4 +1,5 @@
-/*
+#ifndef _WIN32
+
 #include "xwindow.hpp"
 
 #include "timeout.hpp"
@@ -379,4 +380,5 @@ void XWindow::copyToClipboard(string text) {
 }
 
 }
-*/
+
+#endif

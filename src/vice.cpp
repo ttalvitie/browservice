@@ -141,13 +141,13 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #endif
     if(lib == nullptr) {
 #ifdef _WIN32
-        const char* err = nullptr;
+        const char* err = nullptr; // TODO
 #else
         const char* err = dlerror();
 #endif
         ERROR_LOG(
             "Loading vice plugin library '", filename,
-            "' failed: ", err != nullptr ? err : "Unknown error", "ASDFA ", GetLastError()
+            "' failed: ", err != nullptr ? err : "Unknown error"
         );
         return {};
     }
@@ -157,6 +157,7 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #ifdef _WIN32
     FARPROC sym;
 
+    // TODO: error handling
 #define LOAD_API_FUNC(name) \
     sym = GetProcAddress((HMODULE)lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
@@ -317,7 +318,9 @@ ViceFileUpload::ViceFileUpload(CKey,
     function<void()> srcCleanup
 ) {
     REQUIRE_UI_THREAD();
-/*
+#ifdef _WIN32
+// TODO
+#else
     name = sanitizeFilename(move(name));
 
     tempDir_ = tempDir;
@@ -329,11 +332,13 @@ ViceFileUpload::ViceFileUpload(CKey,
 
     REQUIRE(mkdir(linkDir_.c_str(), 0777) == 0);
     REQUIRE(symlink(srcPath_.c_str(), linkPath_.c_str()) == 0);
-*/
+#endif
 }
 
 ViceFileUpload::~ViceFileUpload() {
-/*
+#ifdef _WIN32
+// TODO
+#else
     if(unlink(linkPath_.c_str()) != 0) {
         WARNING_LOG("Unlinking temporary symlink ", linkPath_, " failed");
     }
@@ -342,7 +347,7 @@ ViceFileUpload::~ViceFileUpload() {
     }
 
     srcCleanup_();
-*/
+#endif
 }
 
 string ViceFileUpload::path() {
@@ -427,7 +432,11 @@ ViceContext::ViceContext(CKey, CKey,
 
     nextWindowHandle_ = 1;
 
-//    uploadTempDir_ = TempDir::create();
+#ifdef _WIN32
+// TODO
+#else
+    uploadTempDir_ = TempDir::create();
+#endif
     nextUploadIdx_ = (uint64_t)1;
 }
 

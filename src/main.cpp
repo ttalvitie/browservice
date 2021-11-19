@@ -4,8 +4,6 @@
 #include "vice.hpp"
 #include "xvfb.hpp"
 
-#include "text.hpp"
-
 #include <csignal>
 #include <cstdlib>
 
@@ -13,13 +11,13 @@
 #include "include/base/cef_callback.h"
 #include "include/cef_app.h"
 
+#ifdef _WIN32
 #include <windows.h>
-
 #pragma comment(lib, "cef_sandbox.lib")
-
 #include "include/cef_sandbox_win.h"
-
-//#include <X11/Xlib.h>
+#else
+#include <X11/Xlib.h>
+#endif
 
 namespace browservice {
 
@@ -141,6 +139,7 @@ void handleTermSignalInApp(int signalID) {
 
 }
 
+#ifdef _WIN32
 int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     using namespace browservice;
 
@@ -148,11 +147,19 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     void* sandboxInfo = scoped_sandbox.sandbox_info();
 
     CefMainArgs mainArgs(GetModuleHandle(nullptr));
+#else
+int main(int argc, char* argv[]) {
+    using namespace browservice;
+
+    void* sandboxInfo = nullptr;
+
+    CefMainArgs mainArgs(argc, argv);
+#endif
 
     app = new App();
 
     int exitCode = CefExecuteProcess(mainArgs, app, sandboxInfo);
-    if (exitCode >= 0) {
+    if(exitCode >= 0) {
         return exitCode;
     }
 
@@ -160,13 +167,13 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     signal(SIGTERM, handleTermSignalSetFlag);
 
     shared_ptr<Config> config = Config::read(argc, argv);
-    if (!config) {
+    if(!config) {
         return 1;
     }
 
     INFO_LOG("Loading vice plugin ", config->vicePlugin);
     shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
-    if (!vicePlugin) {
+    if(!vicePlugin) {
         cerr << "ERROR: Loading vice plugin " << config->vicePlugin << " failed\n";
         return 1;
     }
@@ -174,15 +181,29 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     INFO_LOG("Initializing vice plugin ", config->vicePlugin);
     shared_ptr<ViceContext> viceCtx =
         ViceContext::init(vicePlugin, config->viceOpts);
-    if (!viceCtx) {
+    if(!viceCtx) {
         return 1;
     }
 
     vicePlugin.reset();
 
+#ifndef _WIN32
+    shared_ptr<Xvfb> xvfb;
+    if(config->useDedicatedXvfb) {
+        xvfb = Xvfb::create();
+        xvfb->setupEnv();
+    }
+#endif
+
     globals = Globals::create(config);
 
     if(!termSignalReceived) {
+#ifndef _WIN32
+        // Ignore non-fatal X errors
+        XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
+        XSetIOErrorHandler([](Display*) { return 0; });
+#endif
+
         app->initialize(viceCtx);
         viceCtx.reset();
 
@@ -218,6 +239,10 @@ int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
     }
 
     globals.reset();
+
+#ifndef _WIN32
+    xvfb.reset();
+#endif
 
     return 0;
 }

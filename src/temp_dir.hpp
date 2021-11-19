@@ -1,6 +1,8 @@
-/*
 #pragma once
 
+#ifdef _WIN32
+// TODO
+#else
 #include "common.hpp"
 
 namespace browservice {
@@ -18,4 +20,4 @@ private:
 };
 
 }
-*/
+#endif

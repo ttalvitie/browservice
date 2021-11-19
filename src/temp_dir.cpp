@@ -1,4 +1,6 @@
-/*
+#ifdef _WIN32
+// TODO
+#else
 #include "temp_dir.hpp"
 
 #include <sys/stat.h>
@@ -23,4 +25,4 @@ const string& TempDir::path() {
 }
 
 }
-*/
+#endif

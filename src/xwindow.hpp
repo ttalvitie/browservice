@@ -1,5 +1,6 @@
-/*
 #pragma once
+
+#ifndef _WIN32
 
 #include "common.hpp"
 
@@ -24,4 +25,5 @@ private:
 };
 
 }
-*/
+
+#endif

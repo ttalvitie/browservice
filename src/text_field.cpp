@@ -172,7 +172,9 @@ void TextField::eraseRange_() {
 
 void TextField::pasteFromClipboard_() {
     if(caretActive_) {
-/*
+#ifdef _WIN32
+// TODO
+#else
         weak_ptr<TextField> selfWeak = shared_from_this();
         globals->xWindow->pasteFromClipboard([selfWeak](string text) {
             REQUIRE_UI_THREAD();
@@ -180,13 +182,15 @@ void TextField::pasteFromClipboard_() {
                 self->typeText_(text.data(), text.size());
             }
         });
-*/
+#endif
     }
 }
 
 void TextField::copyToClipboard_() {
     if(caretActive_) {
-/*
+#ifdef _WIN32
+// TODO
+#else
         int idx1 = min(caretStart_, caretEnd_);
         int idx2 = max(caretStart_, caretEnd_);
         if(idx1 < idx2) {
@@ -194,7 +198,7 @@ void TextField::copyToClipboard_() {
             REQUIRE(idx1 >= 0 && idx2 <= (int)text.size());
             globals->xWindow->copyToClipboard(text.substr(idx1, idx2 - idx1));
         }
-*/
+#endif
     }
 }
 

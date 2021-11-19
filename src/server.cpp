@@ -196,7 +196,11 @@ void Server::onViceContextCopyToClipboard(string text) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-//    globals->xWindow->copyToClipboard(move(text));
+#ifdef _WIN32
+    // TODO
+#else
+    globals->xWindow->copyToClipboard(move(text));
+#endif
 }
 
 void Server::onViceContextRequestClipboardContent() {
@@ -234,11 +238,13 @@ void Server::onViceContextRequestClipboardContent() {
     shared_ptr<Responder> responder = make_shared<Responder>();
     responder->server = shared_from_this();
 
-/*
+#ifdef _WIN32
+    // TODO
+#else
     globals->xWindow->pasteFromClipboard([responder](string text) {
         responder->respond(text);
     });
-*/
+#endif
 }
 
 void Server::onViceContextUploadFile(

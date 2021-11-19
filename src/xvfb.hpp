@@ -1,5 +1,7 @@
-/*
 #pragma once
+
+#ifndef _WIN32
+
 #include "common.hpp"
 
 #include <sys/types.h>
@@ -31,4 +33,5 @@ private:
 };
 
 }
-*/
+
+#endif
