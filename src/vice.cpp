@@ -129,6 +129,28 @@ API_CALLBACK_HANDLE_EXCEPTIONS_START
 API_CALLBACK_HANDLE_EXCEPTIONS_END
 }
 
+#ifdef _WIN32
+string getLastErrorString() {
+    LPSTR errBuf;
+    DWORD size = FormatMessageA(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        nullptr,
+        GetLastError(),
+        0,
+        (LPSTR)&errBuf,
+        0,
+        nullptr
+    );
+    if(size <= 0) {
+        return "Unknown error";
+    }
+
+    string err(errBuf, (size_t)size);
+    LocalFree(errBuf);
+    return err;
+}
+#endif
+
 }
 
 shared_ptr<VicePlugin> VicePlugin::load(string filename) {
@@ -141,14 +163,12 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #endif
     if(lib == nullptr) {
 #ifdef _WIN32
-        const char* err = nullptr; // TODO
+        string err = getLastErrorString();
 #else
-        const char* err = dlerror();
+        const char* rawErr = dlerror();
+        string err = rawErr != nullptr ? rawErr : "Unknown error";
 #endif
-        ERROR_LOG(
-            "Loading vice plugin library '", filename,
-            "' failed: ", err != nullptr ? err : "Unknown error"
-        );
+        ERROR_LOG("Loading vice plugin library '", filename, "' failed: ", err);
         return {};
     }
 
@@ -157,14 +177,13 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #ifdef _WIN32
     FARPROC sym;
 
-    // TODO: error handling
 #define LOAD_API_FUNC(name) \
     sym = GetProcAddress((HMODULE)lib, "vicePluginAPI_" #name); \
     if(sym == nullptr) { \
-        const char* err = nullptr; \
+        string err = getLastErrorString(); \
         ERROR_LOG( \
             "Loading symbol 'vicePluginAPI_" #name "' from vice plugin ", \
-            filename, " failed: ", err != nullptr ? err : "Unknown error" \
+            filename, " failed: ", err \
         ); \
         REQUIRE(FreeLibrary((HMODULE)lib) != 0); \
         return {}; \
