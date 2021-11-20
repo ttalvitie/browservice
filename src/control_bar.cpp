@@ -819,7 +819,7 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
                 if(bookmarks->save()) {
                     setBookmarkID_({});
                 }
-            } else if(address_ != "browservice:bookmarks") {
+            } else if(address_ != "browservice://bookmarks/") {
                 Bookmark bookmark;
                 bookmark.url = address_;
                 bookmark.title = pageTitle_;
