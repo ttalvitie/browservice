@@ -49,22 +49,27 @@ int jumpUTF8Chars(const string& str, int idx, int count) {
 class FreeType2SetEnv {
 public:
     FreeType2SetEnv() {
-#ifdef _WIN32
-// TODO
-#else
         char* oldValuePtr = getenv("FREETYPE_PROPERTIES");
         hasOldValue_ = oldValuePtr != nullptr;
         if(hasOldValue_) {
             oldValue_ = oldValuePtr;
         }
 
+#ifdef _WIN32
+        REQUIRE(!_putenv_s("FREETYPE_PROPERTIES", "truetype:interpreter-version=35"));
+#else
         REQUIRE(!setenv("FREETYPE_PROPERTIES", "truetype:interpreter-version=35", true));
 #endif
     }
 
     ~FreeType2SetEnv() {
 #ifdef _WIN32
-// TODO
+        if(hasOldValue_) {
+            REQUIRE(!_putenv_s("FREETYPE_PROPERTIES", oldValue_.c_str()));
+        }
+        else {
+            REQUIRE(!_putenv_s("FREETYPE_PROPERTIES", ""));
+        }
 #else
         if(hasOldValue_) {
             REQUIRE(!setenv("FREETYPE_PROPERTIES", oldValue_.c_str(), true));
