@@ -34,7 +34,7 @@ bool tryCreateDotDir() {
         return true;
     } else {
         if(GetLastError() == ERROR_ALREADY_EXISTS) {
-            DWORD attrib = GetFileAttributes(globals->dotDirPath.c_str());
+            DWORD attrib = GetFileAttributesW(globals->dotDirPath.c_str());
             if(attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY)) {
                 return true;
             }
@@ -126,7 +126,7 @@ shared_ptr<Bookmarks> Bookmarks::load() {
     shared_ptr<Bookmarks> ret = Bookmarks::create();
 
 #ifdef _WIN32
-    wstring bookmarkPath = globals->dotDirPath + L"/bookmarks";
+    wstring bookmarkPath = globals->dotDirPath + L"\\bookmarks";
 
     if(GetFileAttributes(bookmarkPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
         INFO_LOG("Bookmark file '", bookmarkPath, "' does not exist, using empty set of bookmarks");
@@ -203,21 +203,21 @@ bool Bookmarks::save() {
     }
 
 #ifdef _WIN32
-    wstring bookmarkPath = globals->dotDirPath + L"/bookmarks";
-    ofstream fp;
-    fp.open(bookmarkPath);
+    wstring bookmarkPath = globals->dotDirPath + L"\\bookmarks";
+    wstring bookmarkTmpPath = globals->dotDirPath + L"\\.tmp.bookmarks.";
+    wstring charPalette = L"abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
 #else
     string bookmarkPath = globals->dotDirPath + "/bookmarks";
     string bookmarkTmpPath = globals->dotDirPath + "/.tmp.bookmarks.";
     string charPalette = "abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
+#endif
     for(int i = 0; i < 16; ++i) {
-        char c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng)];
+        auto c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng)];
         bookmarkTmpPath.push_back(c);
     }
 
     ofstream fp;
-    fp.open(bookmarkTmpPath);
-#endif
+    fp.open(bookmarkTmpPath, fp.binary);
 
     // File signature
     writeLE(fp, 0xBA0F5EAF1CEB00C3);
@@ -243,14 +243,6 @@ bool Bookmarks::save() {
 
     fp.close();
 
-#ifdef _WIN32
-    if(!fp.good()) {
-        ERROR_LOG(
-            "Saving bookmarks failed: Could not write file '", bookmarkPath, "'"
-        );
-        return false;
-    }
-#else
     if(!fp.good()) {
         ERROR_LOG(
             "Saving bookmarks failed: "
@@ -259,15 +251,35 @@ bool Bookmarks::save() {
         return false;
     }
 
-    if(rename(bookmarkTmpPath.c_str(), bookmarkPath.c_str()) != 0) {
+    bool renameSuccessful = false;
+
+#ifdef _WIN32
+    if(GetFileAttributesW(bookmarkPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
+        renameSuccessful = MoveFileW(bookmarkTmpPath.c_str(), bookmarkPath.c_str()) != 0;
+    } else {
+        renameSuccessful = ReplaceFileW(
+            bookmarkPath.c_str(),
+            bookmarkTmpPath.c_str(),
+            nullptr,
+            REPLACEFILE_IGNORE_MERGE_ERRORS | REPLACEFILE_IGNORE_ACL_ERRORS,
+            nullptr,
+            nullptr
+        ) != 0;
+    }
+#else
+    renameSuccessful = rename(bookmarkTmpPath.c_str(), bookmarkPath.c_str()) == 0;
+#endif
+
+    if(!renameSuccessful) {
         ERROR_LOG(
             "Saving bookmarks failed: "
             "Renaming temporary file '", bookmarkTmpPath, "' to '", bookmarkPath, "' failed"
         );
+#ifndef _WIN32
         unlink(bookmarkTmpPath.c_str());
+#endif
         return false;
     }
-#endif
 
     INFO_LOG("Bookmarks successfully written to '", bookmarkPath, "'");
 
