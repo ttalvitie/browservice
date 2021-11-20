@@ -1,8 +1,5 @@
 #pragma once
 
-#ifdef _WIN32
-// TODO
-#else
 #include "common.hpp"
 
 namespace browservice {
@@ -10,14 +7,19 @@ namespace browservice {
 class TempDir {
 SHARED_ONLY_CLASS(TempDir);
 public:
+#ifdef _WIN32
+    typedef wstring PathStr;
+#else
+    typedef string PathStr;
+#endif
+
     TempDir(CKey);
     ~TempDir();
 
-    const string& path();
+    const PathStr& path();
 
 private:
-    string path_;
+    PathStr path_;
 };
 
 }
-#endif
