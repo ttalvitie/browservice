@@ -90,6 +90,7 @@ using std::vector;
 using std::visit;
 using std::weak_ptr;
 using std::wstring;
+using std::wstringstream;
 using std::wstring_convert;
 
 using std::chrono::duration_cast;
@@ -135,6 +136,17 @@ static string toString(const wstring& obj) {
     return ss.str();
 }
 #endif
+
+template <typename T>
+PathStr toPathStr(const T& obj) {
+#ifdef _WIN32
+    wstringstream ss;
+#else
+    stringstream ss;
+#endif
+    ss << obj;
+    return ss.str();
+}
 
 string sanitizeUTF8String(string str);
 

@@ -834,14 +834,15 @@ void Context::onWindowManagerUploadFile(
     REQUIRE(state_ == Running);
     REQUIRE(window);
 
-    string path = file->path();
+    PathStr path = file->path();
+    string pathUTF8 = pathToUTF8(path);
 
     REQUIRE(callbacks_.uploadFile != nullptr);
     callbacks_.uploadFile(
         callbackData_,
         window,
         name.c_str(),
-        path.c_str(),
+        pathUTF8.c_str(),
         [](void* cleanupData) {
             shared_ptr<FileUpload>* file = (shared_ptr<FileUpload>*)cleanupData;
             delete file;

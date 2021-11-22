@@ -56,18 +56,18 @@ public:
         shared_ptr<TempDir> tempDir,
         uint64_t uploadIdx,
         string name,
-        string srcPath,
+        PathStr srcPath,
         function<void()> srcCleanup
     );
     ~ViceFileUpload();
 
-    string path();
+    PathStr path();
 
 private:
     shared_ptr<TempDir> tempDir_;
-    string linkDir_;
-    string linkPath_;
-    string srcPath_;
+    PathStr linkDir_;
+    PathStr linkPath_;
+    PathStr srcPath_;
     function<void()> srcCleanup_;
 };
 

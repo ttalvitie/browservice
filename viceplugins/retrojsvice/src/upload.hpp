@@ -10,10 +10,10 @@ public:
     TempDir(CKey);
     ~TempDir();
 
-    const string& path();
+    const PathStr& path();
 
 private:
-    string path_;
+    PathStr path_;
 };
 
 class FileUpload {
@@ -27,7 +27,7 @@ public:
 
     ~FileUpload();
 
-    const string& path();
+    const PathStr& path();
     const string& name();
 
 private:

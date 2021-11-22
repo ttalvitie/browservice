@@ -25,7 +25,6 @@ TempDir::TempDir(CKey) {
     }
 
     REQUIRE(CreateDirectoryW(path.c_str(), nullptr));
-
 #else
     char path[] = "/tmp/browservicetmp_XXXXXX";
     REQUIRE(mkdtemp(path) != nullptr);
@@ -46,7 +45,7 @@ TempDir::~TempDir() {
 #endif
 }
 
-const TempDir::PathStr& TempDir::path() {
+const PathStr& TempDir::path() {
     return path_;
 }
 

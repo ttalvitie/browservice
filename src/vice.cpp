@@ -361,22 +361,50 @@ ViceFileUpload::ViceFileUpload(CKey,
     shared_ptr<TempDir> tempDir,
     uint64_t uploadIdx,
     string name,
-    string srcPath,
+    PathStr srcPath,
     function<void()> srcCleanup
 ) {
     REQUIRE_UI_THREAD();
-#ifdef _WIN32
-// TODO
-#else
     name = sanitizeFilename(move(name));
 
     tempDir_ = tempDir;
     srcPath_ = move(srcPath);
     srcCleanup_ = move(srcCleanup);
 
-    linkDir_ = tempDir_->path() + "/" + toString(uploadIdx);
-    linkPath_ = linkDir_ + "/" + name;
+    linkDir_ = tempDir_->path() + PathSep + toPathStr(uploadIdx);
+    linkPath_ = linkDir_ + PathSep + pathFromUTF8(name);
 
+#ifdef _WIN32
+    REQUIRE(CreateDirectoryW(linkDir_.c_str(), nullptr));
+
+    // On Windows, symbolic links require special permissions, so we just copy the file
+    ifstream inFp;
+    inFp.open(srcPath_, inFp.binary);
+    REQUIRE(inFp.good());
+
+    ofstream outFp;
+    outFp.open(linkPath_, outFp.binary);
+    REQUIRE(outFp.good());
+
+    const size_t BufSize = 8192;
+    char buf[BufSize];
+    while(true) {
+        inFp.read(buf, BufSize);
+        REQUIRE(!inFp.bad());
+        size_t count = (size_t)inFp.gcount();
+        if(count) {
+            outFp.write(buf, count);
+            REQUIRE(outFp.good());
+        }
+        if(inFp.eof()) {
+            break;
+        }
+    }
+
+    outFp.close();
+    REQUIRE(outFp.good());
+    inFp.close();
+#else
     REQUIRE(mkdir(linkDir_.c_str(), 0777) == 0);
     REQUIRE(symlink(srcPath_.c_str(), linkPath_.c_str()) == 0);
 #endif
@@ -384,7 +412,12 @@ ViceFileUpload::ViceFileUpload(CKey,
 
 ViceFileUpload::~ViceFileUpload() {
 #ifdef _WIN32
-// TODO
+    if(!DeleteFileW(linkPath_.c_str())) {
+        WARNING_LOG("Deleting temporary file ", linkPath_, " failed");
+    }
+    if(!RemoveDirectoryW(linkDir_.c_str())) {
+        WARNING_LOG("Deleting temporary directory ", linkDir_, " failed");
+    }
 #else
     if(unlink(linkPath_.c_str()) != 0) {
         WARNING_LOG("Unlinking temporary symlink ", linkPath_, " failed");
@@ -392,12 +425,12 @@ ViceFileUpload::~ViceFileUpload() {
     if(rmdir(linkDir_.c_str()) != 0) {
         WARNING_LOG("Deleting temporary directory ", linkDir_, " failed");
     }
+#endif
 
     srcCleanup_();
-#endif
 }
 
-string ViceFileUpload::path() {
+PathStr ViceFileUpload::path() {
     return linkPath_;
 }
 
@@ -479,11 +512,7 @@ ViceContext::ViceContext(CKey, CKey,
 
     nextWindowHandle_ = 1;
 
-#ifdef _WIN32
-// TODO
-#else
     uploadTempDir_ = TempDir::create();
-#endif
     nextUploadIdx_ = (uint64_t)1;
 }
 
@@ -718,7 +747,7 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
                 self->uploadTempDir_,
                 self->nextUploadIdx_++,
                 name,
-                path,
+                pathFromUTF8(path),
                 cleanupFunc
             )
         );

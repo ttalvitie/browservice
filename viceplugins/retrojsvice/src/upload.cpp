@@ -2,7 +2,10 @@
 
 #include <Poco/Crypto/DigestEngine.h>
 
-#ifndef _WIN32
+#ifdef _WIN32
+#include <fileapi.h>
+#else
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -10,17 +13,35 @@ namespace retrojsvice {
 
 TempDir::TempDir(CKey) {
 #ifdef _WIN32
-// TODO
+    const DWORD bufSize = MAX_PATH + 2;
+    wchar_t baseBuf[bufSize];
+    DWORD baseLen = GetTempPathW(bufSize, baseBuf);
+    REQUIRE(baseLen > 0);
+    wstring path(baseBuf, (size_t)baseLen);
+
+    mt19937 rng(random_device{}());
+
+    path += L"retrojsvicetmp_";
+    wstring charPalette = L"abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
+    for(int i = 0; i < 16; ++i) {
+        wchar_t c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng)];
+        path.push_back(c);
+    }
+
+    REQUIRE(CreateDirectoryW(path.c_str(), nullptr));
 #else
     char path[] = "/tmp/retrojsvicetmp_XXXXXX";
     REQUIRE(mkdtemp(path) != nullptr);
-    path_ = path;
 #endif
+
+    path_ = path;
 }
 
 TempDir::~TempDir() {
 #ifdef _WIN32
-// TODO
+    if(!RemoveDirectoryW(path_.c_str())) {
+        WARNING_LOG("Deleting temporary directory ", path_, " failed");
+    }
 #else
     if(rmdir(path_.c_str())) {
         WARNING_LOG("Deleting temporary directory ", path_, " failed");
@@ -28,15 +49,17 @@ TempDir::~TempDir() {
 #endif
 }
 
-const string& TempDir::path() {
+const PathStr& TempDir::path() {
     return path_;
 }
 
 namespace {
 
-void unlinkFile(const string& path) {
+void unlinkFile(const PathStr& path) {
 #ifdef _WIN32
-// TODO
+    if(!DeleteFileW(path.c_str())) {
+        WARNING_LOG("Deleting temporary file ", path, " failed");
+    }
 #else
     if(unlink(path.c_str())) {
         WARNING_LOG("Unlinking temporary file ", path, " failed");
@@ -53,7 +76,7 @@ public:
         CKey,
         shared_ptr<UploadStorage> storage,
         string name,
-        string path,
+        PathStr path,
         string hash
     ) {
         storage_ = storage;
@@ -71,7 +94,7 @@ public:
 private:
     shared_ptr<UploadStorage> storage_;
     string name_;
-    string path_;
+    PathStr path_;
     string hash_;
 
     friend class FileUpload;
@@ -87,7 +110,7 @@ FileUpload::~FileUpload() {
     impl_.reset();
 }
 
-const string& FileUpload::path() {
+const PathStr& FileUpload::path() {
     return impl_->path_;
 }
 
@@ -110,10 +133,10 @@ shared_ptr<FileUpload> UploadStorage::upload(
 ) {
     uint64_t idx = nextIdx_.fetch_add(1, memory_order_relaxed);
 
-    string path = tempDir_->path() + "/" + toString(idx);
+    PathStr path = tempDir_->path() + PathSep + toPathStr(idx);
 
     ofstream fp;
-    fp.open(path);
+    fp.open(path, fp.binary);
     REQUIRE(fp.good());
 
     Poco::Crypto::DigestEngine hasher("SHA256");
