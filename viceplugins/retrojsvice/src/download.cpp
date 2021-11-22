@@ -74,7 +74,7 @@ string sanitizeFilename(const string& filename) {
     return sanitizedBase + "." + ext;
 }
 
-optional<uint64_t> getFileSize(const string& path) {
+optional<uint64_t> getFileSize(const PathStr& path) {
     optional<uint64_t> empty;
     ifstream fp;
     fp.open(path, ifstream::binary);
@@ -90,7 +90,7 @@ optional<uint64_t> getFileSize(const string& path) {
 }
 
 FileDownload::FileDownload(CKey,
-    string name, string path, function<void()> cleanup
+    string name, PathStr path, function<void()> cleanup
 ) {
     REQUIRE_API_THREAD();
 

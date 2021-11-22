@@ -15,17 +15,17 @@ SHARED_ONLY_CLASS(CompletedDownload);
 public:
     CompletedDownload(CKey,
         shared_ptr<TempDir> tempDir,
-        string path,
+        PathStr path,
         string name
     );
     ~CompletedDownload();
 
-    string path();
+    PathStr path();
     string name();
 
 private:
     shared_ptr<TempDir> tempDir_;
-    string path_;
+    PathStr path_;
     string name_;
 };
 
@@ -59,7 +59,7 @@ private:
         int progress;
     };
 
-    string getFilePath_(int fileIdx);
+    PathStr getFilePath_(int fileIdx);
     void unlinkFile_(int fileIdx);
 
     void pendingDownloadCountChanged_();

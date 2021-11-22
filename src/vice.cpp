@@ -68,6 +68,34 @@ char* createMallocString(string val, void* (*mallocFunc)(size_t)) {
     return ret;
 }
 
+string pathToUTF8(PathStr path) {
+#ifdef _WIN32
+    try {
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        return conv.to_bytes(path);
+    } catch(const range_error&) {
+        PANIC("Could not convert path to UTF-8");
+        return "";
+    }
+#else
+    return move(path);
+#endif
+}
+
+PathStr pathFromUTF8(string utf8) {
+#ifdef _WIN32
+    try {
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        return conv.from_bytes(utf8);
+    } catch(const range_error&) {
+        PANIC("Could not convert UTF-8 to path");
+        return L"";
+    }
+#else
+    return move(utf8);
+#endif
+}
+
 #define API_CALLBACK_HANDLE_EXCEPTIONS_START try {
 #define API_CALLBACK_HANDLE_EXCEPTIONS_END \
     } catch(const exception& e) { \
@@ -873,13 +901,14 @@ void ViceContext::putFileDownload(
     REQUIRE(openWindows_.count(window));
 
     string name = file->name();
-    string path = file->path();
+    PathStr path = file->path();
+    string pathUTF8 = pathToUTF8(path);
 
     plugin_->apiFuncs_->putFileDownload(
         ctx_,
         window,
         name.c_str(),
-        path.c_str(),
+        pathUTF8.c_str(),
         [](void* cleanupData) {
             REQUIRE(cleanupData != nullptr);
             shared_ptr<CompletedDownload>* file =

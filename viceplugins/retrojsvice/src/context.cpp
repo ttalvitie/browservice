@@ -85,6 +85,36 @@ string htmlEscapeString(string src) {
     return ret;
 }
 
+string pathToUTF8(PathStr path) {
+#ifdef _WIN32
+    try {
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        return conv.to_bytes(path);
+    }
+    catch(const range_error&) {
+        PANIC("Could not convert path to UTF-8");
+        return "";
+    }
+#else
+    return move(path);
+#endif
+}
+
+PathStr pathFromUTF8(string utf8) {
+#ifdef _WIN32
+    try {
+        wstring_convert<codecvt_utf8<wchar_t>> conv;
+        return conv.from_bytes(utf8);
+    }
+    catch(const range_error&) {
+        PANIC("Could not convert UTF-8 to path");
+        return L"";
+    }
+#else
+    return move(utf8);
+#endif
+}
+
 thread_local bool threadRunningPumpEvents = false;
 
 }
@@ -513,7 +543,7 @@ void Context::putFileDownload(
         cleanup(cleanupData);
     };
     shared_ptr<FileDownload> file =
-        FileDownload::create(name, path, cleanupFunc);
+        FileDownload::create(name, pathFromUTF8(path), cleanupFunc);
 
     windowManager_->putFileDownload(window, file);
 }

@@ -1,9 +1,14 @@
 #pragma once
 
+#ifdef _WIN32
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#endif
+
 #include <algorithm>
 #include <atomic>
 #include <cctype>
 #include <chrono>
+#include <codecvt>
 #include <condition_variable>
 #include <cstdlib>
 #include <cstring>
@@ -21,6 +26,7 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -32,6 +38,7 @@ namespace retrojsvice {
 
 using std::atomic;
 using std::cerr;
+using std::codecvt_utf8;
 using std::condition_variable;
 using std::enable_shared_from_this;
 using std::exception;
@@ -62,6 +69,7 @@ using std::pair;
 using std::promise;
 using std::queue;
 using std::random_device;
+using std::range_error;
 using std::regex;
 using std::regex_match;
 using std::seed_seq;
@@ -81,12 +89,24 @@ using std::variant;
 using std::vector;
 using std::visit;
 using std::weak_ptr;
+using std::wstring;
+using std::wstring_convert;
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
 using std::this_thread::sleep_for;
+
+#ifdef _WIN32
+typedef wstring PathStr;
+const wchar_t PathSep = L'\\';
+#define PATHSTR(x) L ## x
+#else
+typedef string PathStr;
+const char PathSep = '/';
+#define PATHSTR(x) x
+#endif
 
 template <typename T>
 optional<T> parseString(const string& str) {
@@ -107,6 +127,14 @@ string toString(const T& obj) {
     ss << obj;
     return ss.str();
 }
+
+#ifdef _WIN32
+static string toString(const wstring& obj) {
+    stringstream ss;
+    ss << obj.c_str();
+    return ss.str();
+}
+#endif
 
 string sanitizeUTF8String(string str);
 

@@ -1,11 +1,16 @@
 #pragma once
 
+#ifdef _WIN32
+#define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING
+#endif
+
 #include <algorithm>
 #include <array>
 #include <atomic>
 #include <cctype>
 #include <chrono>
 #include <climits>
+#include <codecvt>
 #include <cstdlib>
 #include <exception>
 #include <fstream>
@@ -21,6 +26,7 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <thread>
 #include <tuple>
 #include <type_traits>
@@ -36,6 +42,7 @@ using std::array;
 using std::atomic;
 using std::binary_search;
 using std::cerr;
+using std::codecvt_utf8;
 using std::cout;
 using std::declval;
 using std::enable_shared_from_this;
@@ -62,6 +69,7 @@ using std::pair;
 using std::promise;
 using std::queue;
 using std::random_device;
+using std::range_error;
 using std::regex;
 using std::regex_match;
 using std::remove_const;
@@ -81,6 +89,8 @@ using std::unique_ptr;
 using std::vector;
 using std::weak_ptr;
 using std::wstring;
+using std::wstringstream;
+using std::wstring_convert;
 
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -89,6 +99,16 @@ using std::chrono::steady_clock;
 using std::this_thread::sleep_for;
 
 extern thread_local mt19937 rng;
+
+#ifdef _WIN32
+typedef wstring PathStr;
+const wchar_t PathSep = L'\\';
+#define PATHSTR(x) L ## x
+#else
+typedef string PathStr;
+const char PathSep = '/';
+#define PATHSTR(x) x
+#endif
 
 template <typename T>
 optional<T> parseString(const string& str) {
@@ -121,6 +141,17 @@ optional<T> parseString(
 template <typename T>
 string toString(const T& obj) {
     stringstream ss;
+    ss << obj;
+    return ss.str();
+}
+
+template <typename T>
+PathStr toPathStr(const T& obj) {
+#ifdef _WIN32
+    wstringstream ss;
+#else
+    stringstream ss;
+#endif
     ss << obj;
     return ss.str();
 }

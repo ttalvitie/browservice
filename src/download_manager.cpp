@@ -8,7 +8,7 @@ namespace browservice {
 
 CompletedDownload::CompletedDownload(CKey,
     shared_ptr<TempDir> tempDir,
-    string path,
+    PathStr path,
     string name
 ) {
     tempDir_ = tempDir;
@@ -17,12 +17,18 @@ CompletedDownload::CompletedDownload(CKey,
 }
 
 CompletedDownload::~CompletedDownload() {
+#ifdef _WIN32
+    if(!DeleteFileW(path_.c_str())) {
+        WARNING_LOG("Deleting file ", path_, " failed");
+    }
+#else
     if(unlink(path_.c_str())) {
         WARNING_LOG("Unlinking file ", path_, " failed");
     }
+#endif
 }
 
-string CompletedDownload::path() {
+PathStr CompletedDownload::path() {
     REQUIRE_UI_THREAD();
     return path_;
 }
@@ -144,7 +150,7 @@ void DownloadManager::acceptPendingDownload() {
         REQUIRE(infos_.count(id));
         DownloadInfo& info = infos_[id];
         
-        string path = getFilePath_(info.fileIdx);
+        PathStr path = getFilePath_(info.fileIdx);
 
         REQUIRE(info.startCallback);
         info.startCallback->Continue(path, false);
@@ -159,22 +165,25 @@ CefRefPtr<CefDownloadHandler> DownloadManager::createCefDownloadHandler() {
     return new DownloadHandler(shared_from_this());
 }
 
-string DownloadManager::getFilePath_(int fileIdx) {
-    return "C:\"file_" + toString(fileIdx) + ".bin";
-/*
+PathStr DownloadManager::getFilePath_(int fileIdx) {
     if (!tempDir_) {
         tempDir_ = TempDir::create();
     }
 
-    return tempDir_->path() + "/file_" + toString(fileIdx) + ".bin";
-*/
+    return tempDir_->path() + PathSep + PATHSTR("file_") + toPathStr(fileIdx) + PATHSTR(".bin");
 }
 
 void DownloadManager::unlinkFile_(int fileIdx) {
-    string path = getFilePath_(fileIdx);
+    PathStr path = getFilePath_(fileIdx);
+#ifdef _WIN32
+    if(!DeleteFileW(path.c_str())) {
+        WARNING_LOG("Deleting file ", path, " failed");
+    }
+#else
     if(unlink(path.c_str())) {
         WARNING_LOG("Unlinking file ", path, " failed");
     }
+#endif
 }
 
 void DownloadManager::pendingDownloadCountChanged_() {

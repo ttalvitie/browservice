@@ -9,7 +9,7 @@ class HTTPRequest;
 class FileDownload : public enable_shared_from_this<FileDownload> {
 SHARED_ONLY_CLASS(FileDownload);
 public:
-    FileDownload(CKey, string name, string path, function<void()> cleanup);
+    FileDownload(CKey, string name, PathStr path, function<void()> cleanup);
     ~FileDownload();
 
     string name();
@@ -21,7 +21,7 @@ public:
 
 private:
     string name_;
-    string path_;
+    PathStr path_;
     function<void()> cleanup_;
 };
 
