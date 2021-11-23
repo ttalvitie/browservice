@@ -125,16 +125,14 @@ shared_ptr<Bookmarks> Bookmarks::load() {
 
     shared_ptr<Bookmarks> ret = Bookmarks::create();
 
-#ifdef _WIN32
-    wstring bookmarkPath = globals->dotDirPath + L"\\bookmarks";
+    PathStr bookmarkPath = globals->dotDirPath + PathSep + PATHSTR("bookmarks");
 
+#ifdef _WIN32
     if(GetFileAttributes(bookmarkPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
         INFO_LOG("Bookmark file '", bookmarkPath, "' does not exist, using empty set of bookmarks");
         return ret;
     }
 #else
-    string bookmarkPath = globals->dotDirPath + "/bookmarks";
-
     struct stat st;
     if(stat(bookmarkPath.c_str(), &st) == -1 && errno == ENOENT) {
         INFO_LOG("Bookmark file '", bookmarkPath, "' does not exist, using empty set of bookmarks");
@@ -202,15 +200,9 @@ bool Bookmarks::save() {
         return false;
     }
 
-#ifdef _WIN32
-    wstring bookmarkPath = globals->dotDirPath + L"\\bookmarks";
-    wstring bookmarkTmpPath = globals->dotDirPath + L"\\.tmp.bookmarks.";
-    wstring charPalette = L"abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
-#else
-    string bookmarkPath = globals->dotDirPath + "/bookmarks";
-    string bookmarkTmpPath = globals->dotDirPath + "/.tmp.bookmarks.";
-    string charPalette = "abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
-#endif
+    PathStr bookmarkPath = globals->dotDirPath + PathSep + PATHSTR("bookmarks");
+    PathStr bookmarkTmpPath = globals->dotDirPath + PathSep + PATHSTR(".tmp.bookmarks.");
+    PathStr charPalette = PATHSTR("abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789");
     for(int i = 0; i < 16; ++i) {
         auto c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng)];
         bookmarkTmpPath.push_back(c);

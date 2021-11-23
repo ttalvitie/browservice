@@ -66,8 +66,7 @@ public:
 #ifdef _WIN32
         if(hasOldValue_) {
             REQUIRE(!_putenv_s("FREETYPE_PROPERTIES", oldValue_.c_str()));
-        }
-        else {
+        } else {
             REQUIRE(!_putenv_s("FREETYPE_PROPERTIES", ""));
         }
 #else

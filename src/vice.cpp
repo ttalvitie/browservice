@@ -365,6 +365,7 @@ ViceFileUpload::ViceFileUpload(CKey,
     function<void()> srcCleanup
 ) {
     REQUIRE_UI_THREAD();
+
     name = sanitizeFilename(move(name));
 
     tempDir_ = tempDir;

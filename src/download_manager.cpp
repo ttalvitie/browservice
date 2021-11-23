@@ -166,7 +166,7 @@ CefRefPtr<CefDownloadHandler> DownloadManager::createCefDownloadHandler() {
 }
 
 PathStr DownloadManager::getFilePath_(int fileIdx) {
-    if (!tempDir_) {
+    if(!tempDir_) {
         tempDir_ = TempDir::create();
     }
 
