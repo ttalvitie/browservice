@@ -136,7 +136,7 @@ shared_ptr<FileUpload> UploadStorage::upload(
     PathStr path = tempDir_->path() + PathSep + toPathStr(idx);
 
     ofstream fp;
-    fp.open(path, fp.binary);
+    fp.open(path, ofstream::binary);
     REQUIRE(fp.good());
 
     Poco::Crypto::DigestEngine hasher("SHA256");

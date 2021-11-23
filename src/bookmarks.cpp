@@ -154,7 +154,7 @@ shared_ptr<Bookmarks> Bookmarks::load() {
     };
 
     ifstream fp;
-    fp.open(bookmarkPath);
+    fp.open(bookmarkPath, ifstream::binary);
     if(!fp.good()) return readError();
 
     uint64_t signature;
@@ -209,7 +209,7 @@ bool Bookmarks::save() {
     }
 
     ofstream fp;
-    fp.open(bookmarkTmpPath, fp.binary);
+    fp.open(bookmarkTmpPath, ofstream::binary);
 
     // File signature
     writeLE(fp, 0xBA0F5EAF1CEB00C3);

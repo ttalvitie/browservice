@@ -380,11 +380,11 @@ ViceFileUpload::ViceFileUpload(CKey,
 
     // On Windows, symbolic links require special permissions, so we just copy the file
     ifstream inFp;
-    inFp.open(srcPath_, inFp.binary);
+    inFp.open(srcPath_, ifstream::binary);
     REQUIRE(inFp.good());
 
     ofstream outFp;
-    outFp.open(linkPath_, outFp.binary);
+    outFp.open(linkPath_, ofstream::binary);
     REQUIRE(outFp.good());
 
     const size_t BufSize = 8192;
