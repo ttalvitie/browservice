@@ -95,7 +95,7 @@ API_FUNC_END
 }
 
 // Must be a wrapper for malloc() as the rest of the plugin implementation uses free() directly
-VICE_PLUGIN_API_FUNC_DECLSPEC void* vicePluginAPI_malloc(size_t size) {
+API_EXPORT void* vicePluginAPI_malloc(size_t size) {
 API_FUNC_START
 
     return malloc(size);
@@ -104,7 +104,7 @@ API_FUNC_END
 }
 
 // Must be a wrapper for free() as the rest of the plugin implementation uses malloc() directly
-VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_free(void* ptr) {
+API_EXPORT void vicePluginAPI_free(void* ptr) {
 API_FUNC_START
 
     return free(ptr);
