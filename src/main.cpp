@@ -141,6 +141,15 @@ void handleTermSignal(int signalID) {
 }
 #endif
 
+void registerTermSignalHandler() {
+#ifdef _WIN32
+    REQUIRE(SetConsoleCtrlHandler(handleTermSignal, TRUE));
+#else
+    signal(SIGINT, handleTermSignal);
+    signal(SIGTERM, handleTermSignal);
+#endif
+}
+
 void pollTermSignal() {
     REQUIRE_UI_THREAD();
 
@@ -181,12 +190,7 @@ int main(int argc, char* argv[]) {
         return exitCode;
     }
 
-#ifdef _WIN32
-    REQUIRE(SetConsoleCtrlHandler(handleTermSignal, TRUE));
-#else
-    signal(SIGINT, handleTermSignal);
-    signal(SIGTERM, handleTermSignal);
-#endif
+    registerTermSignalHandler();
 
     shared_ptr<Config> config = Config::read(argc, argv);
     if(!config) {
@@ -240,6 +244,10 @@ int main(int argc, char* argv[]) {
         }
 
         enablePanicUsingCEFFatalError();
+
+        // Re-register termination handlers as CEF initialization may have
+        // interfered with the previous registrations
+        registerTermSignalHandler();
 
         CefPostTask(TID_UI, base::Bind(pollTermSignal));
 
