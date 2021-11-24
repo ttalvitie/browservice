@@ -23,6 +23,8 @@ namespace browservice {
 
 namespace {
 
+bool cefQuitMessageLoopCalled = false;
+
 class AppServerEventHandler : public ServerEventHandler {
 SHARED_ONLY_CLASS(AppServerEventHandler);
 public:
@@ -30,6 +32,7 @@ public:
 
     virtual void onServerShutdownComplete() override {
         INFO_LOG("Quitting CEF message loop");
+        cefQuitMessageLoopCalled = true;
         CefQuitMessageLoop();
     }
 };
@@ -123,16 +126,31 @@ private:
 };
 
 CefRefPtr<App> app;
-bool termSignalReceived = false;
+atomic<bool> termSignalReceived = false;
 
-void handleTermSignalSetFlag(int signalID) {
-    INFO_LOG("Got signal ", signalID, ", initiating shutdown");
-    termSignalReceived = true;
+#ifdef _WIN32
+BOOL WINAPI handleTermSignal(DWORD dwCtrlType) {
+    INFO_LOG("Got control signal ", dwCtrlType, ", initiating shutdown");
+    termSignalReceived.store(true);
+    return TRUE;
 }
-
-void handleTermSignalInApp(int signalID) {
+#else
+void handleTermSignal(int signalID) {
     INFO_LOG("Got signal ", signalID, ", initiating shutdown");
-    CefPostTask(TID_UI, base::Bind(&App::shutdown, app));
+    termSignalReceived.store(true);
+}
+#endif
+
+void pollTermSignal() {
+    REQUIRE_UI_THREAD();
+
+    if(app) {
+        if(termSignalReceived.load()) {
+            app->shutdown();
+        } else {
+            CefPostDelayedTask(TID_UI, base::Bind(pollTermSignal), 200);
+        }
+    }
 }
 
 }
@@ -163,8 +181,12 @@ int main(int argc, char* argv[]) {
         return exitCode;
     }
 
-    signal(SIGINT, handleTermSignalSetFlag);
-    signal(SIGTERM, handleTermSignalSetFlag);
+#ifdef _WIN32
+    REQUIRE(SetConsoleCtrlHandler(handleTermSignal, TRUE));
+#else
+    signal(SIGINT, handleTermSignal);
+    signal(SIGTERM, handleTermSignal);
+#endif
 
     shared_ptr<Config> config = Config::read(argc, argv);
     if(!config) {
@@ -197,7 +219,7 @@ int main(int argc, char* argv[]) {
 
     globals = Globals::create(config);
 
-    if(!termSignalReceived) {
+    if(!termSignalReceived.load()) {
 #ifndef _WIN32
         // Ignore non-fatal X errors
         XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
@@ -219,19 +241,13 @@ int main(int argc, char* argv[]) {
 
         enablePanicUsingCEFFatalError();
 
-        signal(SIGINT, handleTermSignalInApp);
-        signal(SIGTERM, handleTermSignalInApp);
-
-        if(termSignalReceived) {
-            app->shutdown();
-        }
+        CefPostTask(TID_UI, base::Bind(pollTermSignal));
 
         setRequireUIThreadEnabled(true);
         CefRunMessageLoop();
         setRequireUIThreadEnabled(false);
 
-        signal(SIGINT, [](int) {});
-        signal(SIGTERM, [](int) {});
+        REQUIRE(cefQuitMessageLoopCalled);
 
         CefShutdown();
 
