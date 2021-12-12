@@ -19,7 +19,8 @@ class Window::Client :
     public CefRequestHandler,
     public CefFindHandler,
     public CefKeyboardHandler,
-    public CefDialogHandler
+    public CefDialogHandler,
+    public CefContextMenuHandler
 {
 public:
     Client(shared_ptr<Window> window) {
@@ -63,6 +64,9 @@ public:
         return this;
     }
     virtual CefRefPtr<CefDialogHandler> GetDialogHandler() override {
+        return this;
+    }
+    virtual CefRefPtr<CefContextMenuHandler> GetContextMenuHandler() override {
         return this;
     }
 
@@ -395,7 +399,7 @@ public:
         const vector<CefString>& acceptFilters,
         int selectedAcceptFilter,
         CefRefPtr<CefFileDialogCallback> callback
-    ) {
+    ) override {
         BROWSER_EVENT_HANDLER_CHECKS();
         REQUIRE(callback);
 
@@ -434,6 +438,19 @@ public:
         }
 
         return true;
+    }
+
+    // CefContextMenuHandler:
+    virtual void OnBeforeContextMenu(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        CefRefPtr<CefContextMenuParams> params,
+        CefRefPtr<CefMenuModel> model
+    ) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
+        REQUIRE(model);
+
+        model->Clear();
     }
 
 private:
