@@ -15,6 +15,11 @@
         vcpkg install pango:x86-windows pango:x64-windows poco[netssl]:x86-windows poco[netssl]:x64-windows libjpeg-turbo:x86-windows libjpeg-turbo:x64-windows
         ```
 - Generate files needed to build Browservice:
+    - Generate HTML template files by opening a command prompt in the `viceplugins\retrojsvice` directory of the working copy and running the following commands:
+        ```
+        mkdir gen
+        python gen_html_cpp.py > gen/html.cpp
+        ```
     - Extract the previously built CEF binary distribution tarball to this directory (this tarball contains the CEF binary distribution in a single directory, named similarly to the tarball).
     - Edit the `CMakeLists.txt` file in the CEF binary distribution directory, appending the line `add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/browservice)` to the end of the file.
     - Create a subdirectory named ´build´ for the CEF binary distribution directory, navigate to it in a commmand prompt and run one of the commands below:
