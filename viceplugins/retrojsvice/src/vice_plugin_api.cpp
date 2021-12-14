@@ -6,7 +6,7 @@ namespace {
 
 using namespace retrojsvice;
 
-const char* RetrojsviceVersion = "0.9.3.0";
+const char* RetrojsviceVersion = "0.9.4.0";
 
 template <typename T>
 class GlobalCallback {
