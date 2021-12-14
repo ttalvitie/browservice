@@ -8,7 +8,7 @@ msg() { cat <<< "--- $@" 1>&2; }
 if [ -z "${1}" ] || [ -z "${2}" ] || ! [ -z "${3}" ]
 then
     msg "Invalid arguments"
-    msg "Usage: build_appimage.sh x86_64|i386|armhf|aarch64 BRANCH|COMMIT|TAG"
+    msg "Usage: build_appimage.sh x86_64|armhf|aarch64 BRANCH|COMMIT|TAG"
     exit 1
 fi
 
@@ -22,16 +22,6 @@ then
     UBUNTU_KERNEL="vmlinuz-generic"
     UBUNTU_INITRD="initrd-generic"
     QEMU="qemu-system-x86_64"
-    QEMU_ARCH_OPTS=""
-    QEMU_DISK_DEV="virtio-blk-pci"
-    QEMU_9P_DEV="virtio-9p-pci"
-    QEMU_NET_DEV="virtio-net-pci"
-elif [ "${ARCH}" == "i386" ]
-then
-    UBUNTU_ARCH="i386"
-    UBUNTU_KERNEL="vmlinuz-generic"
-    UBUNTU_INITRD="initrd-generic"
-    QEMU="qemu-system-i386"
     QEMU_ARCH_OPTS=""
     QEMU_DISK_DEV="virtio-blk-pci"
     QEMU_9P_DEV="virtio-9p-pci"

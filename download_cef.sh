@@ -14,10 +14,6 @@ if [ "$ARCH" == "x86_64" ]
 then
     wget "https://cef-builds.spotifycdn.com/cef_binary_94.3.0%2Bgffef496%2Bchromium-94.0.4606.54_linux64.tar.bz2" -O cef_unverified.tar.bz2
     SHA1="1b1d834449aa54ae8887d8056eb9a6b961c1c997"
-elif [[ "$ARCH" =~ ^i[3-7]86$ ]]
-then
-    wget "https://cef-builds.spotifycdn.com/cef_binary_94.3.0%2Bgffef496%2Bchromium-94.0.4606.54_linux32.tar.bz2" -O cef_unverified.tar.bz2
-    SHA1="0806720a62a05e4da1269c335b15d7c13feb87cf"
 elif [ "$ARCH" == "armv7l" ]
 then
     wget "https://cef-builds.spotifycdn.com/cef_binary_94.3.0%2Bgffef496%2Bchromium-94.0.4606.54_linuxarm.tar.bz2" -O cef_unverified.tar.bz2

@@ -102,7 +102,7 @@ The client support has been tested using the procedure documented in the `test` 
 
 ## Setup
 
-A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are i386, x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead (or WSL 2 on Windows).
+A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead (or WSL 2 on Windows).
 
 For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Internet Explorer available for the system is typically the fastest.
 
@@ -114,7 +114,7 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the i386, x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+This section provides instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
 
 On the proxy server, download the AppImage file `browservice-RELEASE-ARCH.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCH` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi it is `aarch64`).
 
