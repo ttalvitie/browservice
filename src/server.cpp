@@ -1,5 +1,6 @@
 #include "server.hpp"
 
+#include "clipboard.hpp"
 #include "globals.hpp"
 #include "xwindow.hpp"
 
@@ -197,7 +198,7 @@ void Server::onViceContextCopyToClipboard(string text) {
     REQUIRE(state_ != ShutdownComplete);
 
 #ifdef _WIN32
-    // TODO
+    copyToClipboard(move(text));
 #else
     globals->xWindow->copyToClipboard(move(text));
 #endif
@@ -239,7 +240,7 @@ void Server::onViceContextRequestClipboardContent() {
     responder->server = shared_from_this();
 
 #ifdef _WIN32
-    // TODO
+    responder->respond(pasteFromClipboard());
 #else
     globals->xWindow->pasteFromClipboard([responder](string text) {
         responder->respond(text);

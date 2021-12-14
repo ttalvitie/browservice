@@ -1,5 +1,6 @@
 #include "text_field.hpp"
 
+#include "clipboard.hpp"
 #include "globals.hpp"
 #include "key.hpp"
 #include "text.hpp"
@@ -172,14 +173,20 @@ void TextField::eraseRange_() {
 
 void TextField::pasteFromClipboard_() {
     if(caretActive_) {
-#ifdef _WIN32
-// TODO
-#else
         weak_ptr<TextField> selfWeak = shared_from_this();
+#ifdef _WIN32
+        string text = pasteFromClipboard();
+        postTask([selfWeak, text]() {
+            REQUIRE_UI_THREAD();
+            if(shared_ptr<TextField> self = selfWeak.lock()) {
+                self->typeText_(text.data(), (int)text.size());
+            }
+        });
+#else
         globals->xWindow->pasteFromClipboard([selfWeak](string text) {
             REQUIRE_UI_THREAD();
             if(shared_ptr<TextField> self = selfWeak.lock()) {
-                self->typeText_(text.data(), text.size());
+                self->typeText_(text.data(), (int)text.size());
             }
         });
 #endif
@@ -188,17 +195,18 @@ void TextField::pasteFromClipboard_() {
 
 void TextField::copyToClipboard_() {
     if(caretActive_) {
-#ifdef _WIN32
-// TODO
-#else
         int idx1 = min(caretStart_, caretEnd_);
         int idx2 = max(caretStart_, caretEnd_);
         if(idx1 < idx2) {
             string text = textLayout_->text();
             REQUIRE(idx1 >= 0 && idx2 <= (int)text.size());
-            globals->xWindow->copyToClipboard(text.substr(idx1, idx2 - idx1));
-        }
+            string slice = text.substr(idx1, idx2 - idx1);
+#ifdef _WIN32
+            copyToClipboard(slice);
+#else
+            globals->xWindow->copyToClipboard(slice);
 #endif
+        }
     }
 }
 
