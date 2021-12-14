@@ -276,7 +276,7 @@ void BrowserArea::refreshStatusEvents() {
     REQUIRE_UI_THREAD();
     if(!browser_) return;
 
-    browser_->GetHost()->SendFocusEvent(isFocused_());
+    browser_->GetHost()->SetFocus(isFocused_());
 
     int x, y;
     tie(x, y) = getLastMousePos_();
@@ -441,14 +441,14 @@ void BrowserArea::widgetGainFocusEvent_(int x, int y) {
     REQUIRE_UI_THREAD();
     if(!browser_) return;
 
-    browser_->GetHost()->SendFocusEvent(true);
+    browser_->GetHost()->SetFocus(true);
 }
 
 void BrowserArea::widgetLoseFocusEvent_() {
     REQUIRE_UI_THREAD();
     if(!browser_) return;
 
-    browser_->GetHost()->SendFocusEvent(false);
+    browser_->GetHost()->SetFocus(false);
 }
 
 }

@@ -340,7 +340,7 @@ public:
         cef_errorcode_t certError,
         const CefString& requestURL,
         CefRefPtr<CefSSLInfo> sslInfo,
-        CefRefPtr<CefRequestCallback> callback
+        CefRefPtr<CefCallback> callback
     ) override {
         BROWSER_EVENT_HANDLER_CHECKS();
 

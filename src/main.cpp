@@ -157,7 +157,7 @@ void pollTermSignal() {
         if(termSignalReceived.load()) {
             app->shutdown();
         } else {
-            CefPostDelayedTask(TID_UI, base::Bind(pollTermSignal), 200);
+            CefPostDelayedTask(TID_UI, base::BindOnce(pollTermSignal), 200);
         }
     }
 }
@@ -249,7 +249,7 @@ int main(int argc, char* argv[]) {
         // interfered with the previous registrations
         registerTermSignalHandler();
 
-        CefPostTask(TID_UI, base::Bind(pollTermSignal));
+        CefPostTask(TID_UI, base::BindOnce(pollTermSignal));
 
         setRequireUIThreadEnabled(true);
         CefRunMessageLoop();

@@ -33,7 +33,7 @@ void Timeout::set(Func func) {
         void (*call)(function<void()>) = [](function<void()> func) {
             func();
         };
-        CefPostDelayedTask(TID_UI, base::Bind(call, task), delayMs_);
+        CefPostDelayedTask(TID_UI, base::BindOnce(call, task), delayMs_);
     }
 }
 
@@ -91,7 +91,7 @@ void Timeout::delayedTask_() {
         void (*call)(function<void()>) = [](function<void()> func) {
             func();
         };
-        CefPostDelayedTask(TID_UI, base::Bind(call, task), addDelayMs);
+        CefPostDelayedTask(TID_UI, base::BindOnce(call, task), addDelayMs);
     }
 }
 

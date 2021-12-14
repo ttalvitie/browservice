@@ -120,7 +120,7 @@ void postTask(function<void()> func) {
     void (*call)(function<void()>) = [](function<void()> func) {
         func();
     };
-    CefPostTask(TID_UI, base::Bind(call, func));
+    CefPostTask(TID_UI, base::BindOnce(call, func));
 }
 
 atomic<bool> requireUIThreadEnabled_(false);
