@@ -1,7 +1,13 @@
+#ifdef _WIN32
+#define CONF_FOREACH_OPT_ITEM_USE_DEDICATED_XVFB
+#else
+#define CONF_FOREACH_OPT_ITEM_USE_DEDICATED_XVFB CONF_FOREACH_OPT_ITEM(useDedicatedXvfb)
+#endif
+
 #define CONF_FOREACH_OPT \
     CONF_FOREACH_OPT_ITEM(vicePlugin) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
-    CONF_FOREACH_OPT_ITEM(useDedicatedXvfb) \
+    CONF_FOREACH_OPT_ITEM_USE_DEDICATED_XVFB \
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
     CONF_FOREACH_OPT_ITEM(windowLimit) \
@@ -42,6 +48,7 @@ CONF_DEF_OPT_INFO(userAgent) {
     }
 };
 
+#ifndef _WIN32
 CONF_DEF_OPT_INFO(useDedicatedXvfb) {
     const char* name = "use-dedicated-xvfb";
     const char* valSpec = "YES/NO";
@@ -54,6 +61,7 @@ CONF_DEF_OPT_INFO(useDedicatedXvfb) {
         return true;
     }
 };
+#endif
 
 CONF_DEF_OPT_INFO(startPage) {
     const char* name = "start-page";

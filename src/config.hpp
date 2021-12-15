@@ -24,7 +24,9 @@ public:
     const vector<pair<string, string>> viceOpts;
     const string vicePlugin;
     const string userAgent;
+#ifndef _WIN32
     const bool useDedicatedXvfb;
+#endif
     const string startPage;
     const string dataDir;
     const int windowLimit;
