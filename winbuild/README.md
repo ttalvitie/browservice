@@ -18,7 +18,7 @@
     - Generate HTML template files by opening a command prompt in the `viceplugins\retrojsvice` directory of the working copy and running the following commands:
         ```
         mkdir gen
-        python gen_html_cpp.py > gen/html.cpp
+        python gen_html_cpp.py > gen\html.cpp
         ```
     - Extract the previously built CEF binary distribution tarball to this directory (this tarball contains the CEF binary distribution in a single directory, named similarly to the tarball).
     - Edit the `CMakeLists.txt` file in the CEF binary distribution directory, appending the line `add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/browservice)` to the end of the file.
