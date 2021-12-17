@@ -239,7 +239,7 @@ int main(int argc, char* argv[]) {
         CefString(&settings.cache_path).FromString(globals->config->dataDir);
         CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
-        if(!CefInitialize(mainArgs, settings, app, nullptr)) {
+        if(!CefInitialize(mainArgs, settings, app, sandboxInfo)) {
             PANIC("Initializing CEF failed");
         }
 
