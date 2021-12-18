@@ -22,6 +22,7 @@ struct VicePlugin::APIFuncs {
 #define FOREACH_REQUIRED_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(isAPIVersionSupported) \
     FOREACH_VICE_API_FUNC_ITEM(createVersionString) \
+    FOREACH_VICE_API_FUNC_ITEM(createCreditsString) \
     FOREACH_VICE_API_FUNC_ITEM(malloc) \
     FOREACH_VICE_API_FUNC_ITEM(free) \
     FOREACH_VICE_API_FUNC_ITEM(initContext) \
@@ -300,6 +301,15 @@ string VicePlugin::getVersionString() {
     REQUIRE_UI_THREAD();
 
     char* raw = apiFuncs_->createVersionString();
+    string val = raw;
+    apiFuncs_->free(raw);
+    return val;
+}
+
+string VicePlugin::getCreditsString() {
+    REQUIRE_UI_THREAD();
+
+    char* raw = apiFuncs_->createCreditsString();
     string val = raw;
     apiFuncs_->free(raw);
     return val;

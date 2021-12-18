@@ -1,6 +1,7 @@
-#include "context.hpp"
-
 #include "vice_plugin_api.hpp"
+
+#include "context.hpp"
+#include "credits.hpp"
 
 namespace {
 
@@ -90,6 +91,14 @@ API_EXPORT char* vicePluginAPI_createVersionString() {
 API_FUNC_START
 
     return createMallocString(string("Retrojsvice ") + RetrojsviceVersion);
+
+API_FUNC_END
+}
+
+API_EXPORT char* vicePluginAPI_createCreditsString() {
+API_FUNC_START
+
+    return createMallocString(credits);
 
 API_FUNC_END
 }

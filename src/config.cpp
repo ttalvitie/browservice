@@ -1,5 +1,6 @@
 #include "config.hpp"
 
+#include "credits.hpp"
 #include "vice.hpp"
 
 #include "include/cef_version.h"
@@ -210,7 +211,7 @@ shared_ptr<Config> Config::read(int argc, const char* const* argv) {
 
     set<string> optsSeen;
 
-    enum {Normal, Help, Version} mode = Normal;
+    enum {Normal, Help, Version, Credits} mode = Normal;
 
     for(int argi = 1; argi < argc; ++argi) {
         string arg = argv[argi];
@@ -220,6 +221,10 @@ shared_ptr<Config> Config::read(int argc, const char* const* argv) {
         }
         if(arg == "--version") {
             mode = Version;
+            continue;
+        }
+        if(arg == "--credits") {
+            mode = Credits;
             continue;
         }
 
@@ -286,6 +291,7 @@ shared_ptr<Config> Config::read(int argc, const char* const* argv) {
         #undef CONF_FOREACH_OPT_ITEM
         lines.push_back("  --help                                show this help and exit");
         lines.push_back("  --version                             show the version and exit");
+        lines.push_back("  --credits                             show copyright information and exit");
 
         sort(lines.begin(), lines.end());
         for(const string& line : lines) {
@@ -323,6 +329,24 @@ shared_ptr<Config> Config::read(int argc, const char* const* argv) {
             string version = plugin->getVersionString();
             cout << "Vice plugin " << src.vicePlugin << ": " << version << "\n";
         }
+        cout << "For copyright information, use --credits\n";
+        return {};
+    } else if(mode == Credits) {
+        cout << "------------------------\n";
+        cout << "Credits for browservice:\n";
+        cout << "------------------------\n\n";
+        cout << credits;
+        shared_ptr<VicePlugin> plugin = VicePlugin::load(src.vicePlugin);
+        if(plugin) {
+            string pluginCredits = plugin->getCreditsString();
+            cout << "\n";
+            string line(25 + src.vicePlugin.size(), '-');
+            cout << line << "\n";
+            cout << "Credits for vice plugin " << src.vicePlugin << ":\n";
+            cout << line << "\n\n";
+            cout << pluginCredits;
+        }
+        cout << "\n";
         return {};
     } else {
         REQUIRE(mode == Normal);

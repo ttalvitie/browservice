@@ -28,6 +28,7 @@ public:
     ~VicePlugin();
 
     string getVersionString();
+    string getCreditsString();
 
     struct OptionDocsItem {
         string name;

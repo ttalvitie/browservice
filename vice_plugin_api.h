@@ -154,9 +154,17 @@ extern "C" {
 VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_isAPIVersionSupported(uint64_t apiVersion);
 
 /* Returns a string describing the name and version of the plugin. The calling program is
- * responsible for freeing the string using vicePluginAPI_free.
+ * responsible for freeing the string using vicePluginAPI_free. Typically, the returned string
+ * is a single-line string (i.e. it does not contain line breaks).
  */
 VICE_PLUGIN_API_FUNC_DECLSPEC char* vicePluginAPI_createVersionString();
+
+/* Returns a string containing the necessary credits (such as copyright notices) for the program to
+ * show along with its own credits or when requested. The calling program is responsible for freeing
+ * the string using vicePluginAPI_free. Typically, the returned string is a multi-line string, with
+ * double line breaks separating credits for different components.
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC char* vicePluginAPI_createCreditsString();
 
 /* Memory allocation and deallocation functions. Necessary because the program and the plugin may
  * use different heaps, and thus allocating a block of memory using malloc() in the plugin and then
