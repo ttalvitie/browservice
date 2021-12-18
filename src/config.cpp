@@ -333,7 +333,7 @@ shared_ptr<Config> Config::read(int argc, const char* const* argv) {
         return {};
     } else if(mode == Credits) {
         cout << "------------------------\n";
-        cout << "Credits for browservice:\n";
+        cout << "Credits for Browservice:\n";
         cout << "------------------------\n\n";
         cout << credits;
         shared_ptr<VicePlugin> plugin = VicePlugin::load(src.vicePlugin);
