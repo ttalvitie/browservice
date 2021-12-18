@@ -48,7 +48,9 @@ CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
     auto it = keyCodes.find(key);
     if(it != keyCodes.end()) {
         event.windows_key_code = it->second.first;
+#ifndef _WIN32
         event.native_key_code = it->second.second;
+#endif
     }
 
     if(key < 0) {
@@ -416,8 +418,17 @@ void BrowserArea::widgetKeyDownEvent_(int key) {
             CefKeyEvent event = createKeyEvent(key, eventModifiers_);
             event.type = KEYEVENT_RAWKEYDOWN;
             browser_->GetHost()->SendKeyEvent(event);
+#ifdef _WIN32
+            if(event.character) {
+                CefKeyEvent charEvent = event;
+                charEvent.type = KEYEVENT_CHAR;
+                charEvent.windows_key_code = charEvent.character;
+                browser_->GetHost()->SendKeyEvent(charEvent);
+            }
+#else
             event.type = KEYEVENT_CHAR;
             browser_->GetHost()->SendKeyEvent(event);
+#endif
         }
     }
 
