@@ -35,4 +35,7 @@
     - Use Visual Studio to open the solution `cef.sln` in the `build` subdirectory of the CEF directory.
     - If you want to do a release build instead of a debug build, change the build configuration to `Release`.
     - In the Solution Explorer, right-click `browservice` project and click Build. The complete Browservice binary distribution is generated in the subdirectory `browservice\Release` (or `browservice\Debug` for debug builds) under `build`.
-- To create an official binary distribution, rename the `Release` folder to `browservice-v0.9.4.0-windowsXX` (replace `XX` by 32 or 64 depending on the target) and compress it into a zip file with same name with `.zip` appended.
+- If you want to create an official binary distribution:
+    - Rename the `Release` directory to `browservice-v0.9.4.0-windowsXX` (replace `XX` by 32 or 64 depending on the target architecture)
+    - Copy the redistributable DLL files `msvcp140.dll`, `vcruntime140.dll` and `vcruntime140_1.dll` (the last one only on 64-bit builds; it does not exist on 32-bit) to the directory from MSVC redist folder of the correct architecture (something like `C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\xYY` where `YY` is `86` or `64` depending on the target architecture).
+    - Compress the directory into a zip file with same name with `.zip` appended.
