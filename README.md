@@ -4,7 +4,7 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
-2021-12-19: [Browservice 0.9.4.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.4.0) has been released. This release adds support for running the proxy server on Windows (both 32-bit and 64-bit) and drops support for the i386 architecture on Linux (as Chromium no longer supports it). The new [vice plugin API](#vice-plugin-api) version 2000000 contains small changes that break compatibility with the previous versions.
+2021-12-19: [Browservice 0.9.4.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.4.0) has been released. This release adds support for running the proxy server on Windows (both 32-bit and 64-bit) and drops support for the i386 architecture on Linux (as Chromium no longer supports it).
 
 2021-09-24: [Browservice 0.9.3.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.3.0) has been released. This release adds support for bookmarks and changing URL from the client browser by appending `goto/URL` to the address.
 
@@ -116,7 +116,7 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server on using prebuilt binary bundles [Linux](#linux) and [Windows](#windows). If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+This section provides instructions for running the Browservice proxy server using prebuilt binary bundles on [Linux](#linux) and [Windows](#windows). If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
 
 #### Linux
 
