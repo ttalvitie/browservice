@@ -116,9 +116,9 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server using prebuilt binaries that are available on the [Releases page](https://github.com/ttalvitie/browservice/releases); these binaries bundle all the required dependencies. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+This section provides instructions for running the Browservice proxy server on [Linux](#linux) or [Windows](#windows) using prebuilt binary bundles that are available on the [Releases page](https://github.com/ttalvitie/browservice/releases). If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
 
-## Linux
+#### Linux
 
 The AppImage is the easiest way to get the Browservice proxy server running on Linux starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the x86_64, ARM or ARM64 CPU architecture. 
 
@@ -142,7 +142,9 @@ The graphical user interface of Browservice is designed for use with the Verdana
 ./browservice-RELEASE-ARCH.AppImage --install-verdana
 ```
 
-## Windows
+For more information on running and configuring the proxy server, continue to the [proxy configuration](#proxy-configuration) section.
+
+#### Windows
 
 For Windows, the prebuilt binaries are distributed in a zip file `browservice-RELEASE-windowsBITS.zip` (`BITS` is either `32` or `64`; the 64-bit version should be used on most modern Windows PCs). To run Browservice, download the correct zip file for the [latest release](https://github.com/ttalvitie/browservice/releases), extract, open a Command Prompt, navigate to the extracted directory and run the following command:
 
@@ -152,7 +154,9 @@ browservice.exe
 
 If you do not want to use the Command Prompt, you may also click `browservice.exe` directly from File Explorer (a console window containing the log opens automatically); to pass command line options, you can use a shortcut or a batch file.
 
-## Usage
+For more information on running and configuring the proxy server, continue to the next section.
+
+#### Proxy configuration
 
 With the default arguments, the Browservice proxy starts listening for HTTP connections on port 8080. If the server fails to start, see the [troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
