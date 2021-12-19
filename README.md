@@ -146,7 +146,7 @@ For more information on running and configuring the proxy server, continue to th
 
 #### Windows
 
-For Windows, the prebuilt binaries are distributed in a zip file `browservice-RELEASE-windowsBITS.zip` (`BITS` is either `32` or `64`; the 64-bit version should be used on most modern Windows PCs). To run Browservice, download the correct zip file for the [latest release](https://github.com/ttalvitie/browservice/releases), extract, open a Command Prompt, navigate to the extracted directory and run the following command:
+For Windows, the prebuilt binaries are distributed in a zip file `browservice-RELEASE-windowsBITS.zip` (BITS is either 32 or 64; the 64-bit version should be used on most modern Windows PCs). To run Browservice, download the correct zip file for the [latest release](https://github.com/ttalvitie/browservice/releases), extract, open a Command Prompt, navigate to the extracted directory and run the following command:
 
 ```
 browservice.exe
