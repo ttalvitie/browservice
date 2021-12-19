@@ -4,6 +4,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
+2021-12-19: [Browservice 0.9.4.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.4.0) has been released. This release adds support for running the proxy server on Windows (both 32-bit and 64-bit) and drops support for the i386 architecture on Linux (as Chromium no longer supports it). The new vice plugin API version 2000000 breaks compatibility with the previous versions.
+
 2021-09-24: [Browservice 0.9.3.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.3.0) has been released. This release adds support for bookmarks and changing URL from the client browser by appending `goto/URL` to the address.
 
 2021-05-28: [Browservice 0.9.2.2](https://github.com/ttalvitie/browservice/releases/tag/v0.9.2.2) has been released. This is the first release with self-contained prebuilt binaries available. The installation should be very simple; just download the correct AppImage, add execute permissions and run it ([see instructions](#running-the-browservice-proxy)).
@@ -102,7 +104,7 @@ The client support has been tested using the procedure documented in the `test` 
 
 ## Setup
 
-A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, Linux is the only supported operating system for the proxy server; the supported CPU architectures are x86_64, ARM and ARM64. The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; you should use a Linux virtual machine instead (or WSL 2 on Windows).
+A Browservice setup consists of two machines; the Browservice proxy server and the client. Currently, supported operating systems for the proxy server are Linux (x86_64, ARM and ARM64) and Windows (x86 and x86_64). The proxy server should also have sufficient memory and CPU performance to run the Chromium browser. Due to the Linux kernel features required by the Chromium security sandbox, it is difficult to get the Browservice proxy to run in a Docker container; users of operating systems other than Linux or Windows should typically run the Browservice proxy server in a Linux virtual machine.
 
 For the client, many different operating systems and browsers should work, but the greatest chance of success is achieved using an OS-browser-combination that is close to one of the entries in the [table of supported client browsers](#supported-client-browsers). The performance of the different client browsers have not been benchmarked, but as a rule of thumb for Windows systems, the newest version of Internet Explorer available for the system is typically the fastest.
 
@@ -114,7 +116,11 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server using a prebuilt AppImage that bundles all the required binaries. The AppImage is the easiest way to get the Browservice proxy server running starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the x86_64, ARM or ARM64 CPU architecture. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+This section provides instructions for running the Browservice proxy server using prebuilt binaries that are available on the [Releases page](https://github.com/ttalvitie/browservice/releases); these binaries bundle all the required dependencies. If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+
+## Linux
+
+The AppImage is the easiest way to get the Browservice proxy server running on Linux starting from version 0.9.2.2, and it should work directly on any up-to-date Linux distribution for the x86_64, ARM or ARM64 CPU architecture. 
 
 On the proxy server, download the AppImage file `browservice-RELEASE-ARCH.AppImage` for the [latest release](https://github.com/ttalvitie/browservice/releases). `ARCH` should match the architecture of your Linux installation (for most modern PCs it is `x86_64`; for Raspberry Pi OS it is `armhf`, and for 64-bit Linux installations on Raspberry Pi it is `aarch64`).
 
@@ -130,13 +136,36 @@ Now you can start the Browservice proxy by running the following command as a no
 ./browservice-RELEASE-ARCH.AppImage
 ```
 
+The graphical user interface of Browservice is designed for use with the Verdana font. Due to licensing restrictions, the AppImage does not directly bundle it; instead, it uses a free font that works just as well but does not look as good. To install Verdana to `$HOME/.browservice/appimage/fonts` where Browservice will find it, run the following command and type `yes` to accept the license agreement:
+
+```
+./browservice-RELEASE-ARCH.AppImage --install-verdana
+```
+
+## Windows
+
+For Windows, the prebuilt binaries are distributed in a zip file `browservice-RELEASE-windowsBITS.zip` (`BITS` is either `32` or `64`; the 64-bit version should be used on most modern Windows PCs). To run Browservice, download the correct zip file for the [latest release](https://github.com/ttalvitie/browservice/releases), extract, open a Command Prompt, navigate to the extracted directory and run the following command:
+
+```
+browservice.exe
+```
+
+If you do not want to use the Command Prompt, you may also click `browservice.exe` directly from File Explorer (a console window containing the log opens automatically); to pass command line options, you can use a shortcut or a batch file.
+
+## Usage
+
 With the default arguments, the Browservice proxy starts listening for HTTP connections on port 8080. If the server fails to start, see the [troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
 By default, the listening socket is bound to `127.0.0.1`, which means that the server only accepts local connections. To allow other computers to connect to the server, you need to adjust the `--vice-opt-http-listen-addr` command line option; for example, to accept connections on all interfaces, bind to `0.0.0.0` as follows:
 
 ```
 # See WARNINGs below!
+
+# Linux:
 ./browservice-RELEASE-ARCH.AppImage --vice-opt-http-listen-addr=0.0.0.0:8080
+
+# Windows:
+browservice.exe --vice-opt-http-listen-addr=0.0.0.0:8080
 ```
 
 **WARNING**: Binding to `0.0.0.0` may allow unauthorized users to connect to the server. Giving untrusted users access to the server is very dangerous; for example, they can access all the user accounts on websites to which you have logged in using Browservice. To avoid this, restrict the incoming connections to isolated local networks using a restrictive listen address and/or a firewall.
@@ -145,20 +174,18 @@ By default, the listening socket is bound to `127.0.0.1`, which means that the s
 
 **WARNING**: The trust between the client and the proxy server has to be mutual, as the client controls a web browser process running on the proxy server. For example, the client can use the `file://` protocol to read files on the proxy server that are accessible to the user running `browservice`.
 
-**WARNING**: The AppImage (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
-
-The graphical user interface of Browservice is designed for use with the Verdana font. Due to licensing restrictions, the AppImage does not directly bundle it; instead, it uses a free font that works just as well but does not look as good. To install Verdana to `$HOME/.browservice/appimage/fonts` where Browservice will find it, run the following command and type `yes` to accept the license agreement:
-
-```
-./browservice-RELEASE-ARCH.AppImage --install-verdana
-```
+**WARNING**: The AppImage or the prebuilt binary directory on Windows (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
 
 The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
 
 There are many other useful command line options in Browservice. To get a list of them, run:
 
 ```
+# Linux
 ./browservice-RELEASE-ARCH.AppImage --help
+
+# Windows
+browservice.exe --help
 ```
 
 ## Usage
