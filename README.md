@@ -116,7 +116,7 @@ Here is one example of a mobile hardware Browservice setup that has shown to be 
 
 ### Running the Browservice proxy
 
-This section provides instructions for running the Browservice proxy server on [Linux](#linux) or [Windows](#windows) using prebuilt binary bundles that are available on the [Releases page](https://github.com/ttalvitie/browservice/releases). If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
+This section provides instructions for running the Browservice proxy server on using prebuilt binary bundles [Linux](#linux) and [Windows](#windows). If you want to build Browservice from source instead of using prebuilt binaries, you can follow the instructions in [BUILD.md](BUILD.md).
 
 #### Linux
 
@@ -142,7 +142,7 @@ The graphical user interface of Browservice is designed for use with the Verdana
 ./browservice-RELEASE-ARCH.AppImage --install-verdana
 ```
 
-For more information on running and configuring the proxy server, continue to the [proxy configuration](#proxy-configuration) section.
+For more information on running and configuring the proxy server, continue to the [proxy server configuration](#proxy-server-configuration) section.
 
 #### Windows
 
@@ -156,7 +156,7 @@ If you do not want to use the Command Prompt, you may also click `browservice.ex
 
 For more information on running and configuring the proxy server, continue to the next section.
 
-#### Proxy configuration
+#### Proxy server configuration
 
 With the default arguments, the Browservice proxy starts listening for HTTP connections on port 8080. If the server fails to start, see the [troubleshooting](#troubleshooting) section for possible fixes. To stop the server, you can use the `SIGTERM` or `SIGINT` signals (you can send the latter using Ctrl+C).
 
@@ -180,7 +180,7 @@ browservice.exe --vice-opt-http-listen-addr=0.0.0.0:8080
 
 **WARNING**: The AppImage or the prebuilt binary directory on Windows (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
 
-The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice`)
+The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice` on Linux)
 
 There are many other useful command line options in Browservice. To get a list of them, run:
 
@@ -192,7 +192,7 @@ There are many other useful command line options in Browservice. To get a list o
 browservice.exe --help
 ```
 
-## Usage
+## Browser usage
 
 To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
 
