@@ -1,5 +1,7 @@
 # Building Browservice
 
+This file contains building instructions on Linux. For build instructions on Windows, see the `README.md` file in the `winbuild` directory.
+
 ## Installing dependencies
 
 ### Ubuntu 18.04/20.04, Debian 10 and Raspberry Pi OS
