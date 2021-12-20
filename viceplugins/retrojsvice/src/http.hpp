@@ -25,6 +25,7 @@ public:
 
     string method();
     string path();
+    string getQualityParam();
     string userAgent();
 
     // Form accessors return empty string/pointer if there is no entry with

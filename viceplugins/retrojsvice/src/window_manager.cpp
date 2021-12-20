@@ -331,13 +331,27 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
             REQUIRE(!windows_.count(handle));
 
             bool allowPNG = hasPNGSupport(request->userAgent());
+
+	    int quality = defaultQuality_;
+
+	    try {
+                int qualityParam = std::stoi(request->getQualityParam());
+	        if (qualityParam >= 10 && qualityParam <= 100) {
+	            allowPNG = false;
+	            quality = qualityParam;
+		}
+	    }
+	    catch (...) {
+                WARNING_LOG("Invalid quality parameter");
+	    }
+
             shared_ptr<Window> window = Window::create(
                 shared_from_this(),
                 handle,
                 secretGen_,
                 programName_,
                 allowPNG,
-                defaultQuality_
+                quality
             );
             REQUIRE(windows_.emplace(handle, window).second);
 

@@ -13,10 +13,13 @@
 #include <Poco/Net/HTTPRequestHandler.h>
 #include <Poco/Net/PartHandler.h>
 #include <Poco/Net/SocketAddress.h>
+#include <Poco/URI.h>
 
 namespace retrojsvice {
 
 namespace {
+
+using QueryParameters = std::vector < std::pair < std::string, std::string >>;
 
 // We use a AliveToken to track that all the relevant Poco HTTP server
 // background threads actually shut down before reporting successful shutdown.
@@ -91,7 +94,26 @@ public:
     }
     string path() {
         REQUIRE(request_ != nullptr);
-        return path_;
+	Poco::URI uri = Poco::URI(path_);
+	QueryParameters params = uri.getQueryParameters();
+	uri.setRawQuery("");
+	for (const std::pair < std::string, std::string > &param : params) {
+	    if (param.first != "browservice_quality") {
+                uri.addQueryParameter(param.first, param.second);
+	    }
+	}
+        return uri.toString();
+    }
+    string getQualityParam() {
+        REQUIRE(request_ != nullptr);
+	Poco::URI uri = Poco::URI(path_);
+        QueryParameters	params = uri.getQueryParameters();
+	for (const std::pair < std::string, std::string > &param : params) {
+           if (param.first == "browservice_quality") {
+	       return param.second;
+	   } 
+	}
+	return "";
     }
     string userAgent() {
         REQUIRE(request_ != nullptr);
@@ -249,7 +271,9 @@ private:
 
     string method_;
     string path_;
+    Poco::URI params_;
     string userAgent_;
+    
 
     unique_ptr<Poco::Net::HTMLForm> form_;
     map<string, shared_ptr<FileUpload>> files_;
@@ -281,6 +305,11 @@ string HTTPRequest::userAgent() {
 string HTTPRequest::getFormParam(string name) {
     REQUIRE_API_THREAD();
     return impl_->getFormParam(move(name));
+}
+
+string HTTPRequest::getQualityParam() {
+	REQUIRE_API_THREAD();
+	return impl_->getQualityParam();
 }
 
 shared_ptr<FileUpload> HTTPRequest::getFormFile(string name) {
