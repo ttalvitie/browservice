@@ -273,7 +273,6 @@ private:
     string path_;
     Poco::URI params_;
     string userAgent_;
-    
 
     unique_ptr<Poco::Net::HTMLForm> form_;
     map<string, shared_ptr<FileUpload>> files_;
