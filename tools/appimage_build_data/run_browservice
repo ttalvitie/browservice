@@ -118,7 +118,7 @@ else
         echo "----------------------------------------------------------------------------------------------------" 1>&2
         echo "WARNING: The Verdana font is not installed in '${VERDANA_PATH}'" 1>&2
         echo "         Browservice GUI appearance will be suboptimal." 1>&2
-        echo "         Run '${0} --install-verdana' to install it." 1>&2
+        echo "         Run '${ARGV0} --install-verdana' to install it." 1>&2
         echo "----------------------------------------------------------------------------------------------------" 1>&2
     fi
 
