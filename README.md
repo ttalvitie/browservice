@@ -26,7 +26,7 @@ Initially, this approach of sending the whole browser view as a new image every 
 
 The current features of Browservice include the following:
 
-- Viewing of and keyboard/mouse interaction with all the web pages supported by the Chromium browser; this includes web apps such as YouTube, Gmail, GitHub, Office on the web, Twitter, Facebook and Instagram
+- Viewing of and keyboard/mouse interaction with all the web pages supported by the Chromium browser; this includes web apps such as YouTube, ~Gmail~, GitHub, Office on the web, Twitter, Facebook and Instagram (logging in Gmail and other Google services may be difficult due to new embedded browser login restrictions)
 - Support for multiple concurrent browser windows
 - Text clipboard common to all browser windows (accessed through Ctrl+C and Ctrl+V)
 - Form for accessing the browser clipboard from the client side
@@ -180,7 +180,7 @@ browservice.exe --vice-opt-http-listen-addr=0.0.0.0:8080
 
 **WARNING**: The AppImage or the prebuilt binary directory on Windows (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
 
-The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice` on Linux)
+The clipboard and browser storage (cookies, local storage, cache, etc.) are shared among all the clients of the same Browservice instance, and thus you should start a separate instance for each user. By default, the browser runs in incognito mode, which means that all the browser storage is lost when the Browservice server is stopped. To avoid losing your session cookies and cache, you can persist the storage by specifying an absolute path to the storage directory in the `--data-dir` option (for example `--data-dir=$HOME/.browservice/cefdata` on Linux)
 
 There are many other useful command line options in Browservice. To get a list of them, run:
 
