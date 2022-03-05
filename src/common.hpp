@@ -83,6 +83,7 @@ using std::stringstream;
 using std::swap;
 using std::thread;
 using std::tie;
+using std::tolower;
 using std::tuple;
 using std::uniform_int_distribution;
 using std::unique_ptr;

@@ -79,7 +79,7 @@ void QualitySelector::setQuality_(string qualityStr) {
         string ret;
         for(char c : str) {
             if(c == ' ') continue;
-            ret.push_back(tolower(c));
+            ret.push_back(tolower((unsigned char)c));
         }
         return ret;
     };

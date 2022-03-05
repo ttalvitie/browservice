@@ -8,6 +8,7 @@
     CONF_FOREACH_OPT_ITEM(vicePlugin) \
     CONF_FOREACH_OPT_ITEM(userAgent) \
     CONF_FOREACH_OPT_ITEM_USE_DEDICATED_XVFB \
+    CONF_FOREACH_OPT_ITEM(blockFileScheme) \
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
     CONF_FOREACH_OPT_ITEM(windowLimit) \
@@ -62,6 +63,19 @@ CONF_DEF_OPT_INFO(useDedicatedXvfb) {
     }
 };
 #endif
+
+CONF_DEF_OPT_INFO(blockFileScheme) {
+    const char* name = "block-file-scheme";
+    const char* valSpec = "YES/NO";
+    string desc() {
+        return
+            "if enabled, attempts to access local files through the file:// URI scheme are blocked "
+            "(WARNING: there may be ways around the block; do NOT allow untrusted users to access Browservice)";
+    }
+    bool defaultVal() {
+        return true;
+    }
+};
 
 CONF_DEF_OPT_INFO(startPage) {
     const char* name = "start-page";

@@ -11,6 +11,22 @@
 
 namespace browservice {
 
+namespace {
+// Only works for fully qualified and normalized URLs, such as the ones from CefRequest::GetURL.
+bool isLocalFileRequestURL(string url) {
+    if(url.size() >= 5) {
+        string prefix = url.substr(0, 5);
+        for(char& c : prefix) {
+            c = tolower((unsigned char)c);
+        }
+        if(prefix == "file:") {
+            return true;
+        }
+    }
+    return false;
+}
+}
+
 class Window::Client :
     public CefClient,
     public CefLifeSpanHandler,
@@ -36,6 +52,7 @@ public:
 
         lastFindID_ = -1;
         certificateErrorPageSignKey_ = generateDataURLSignKey();
+        fileSchemeBlockedPageSignKey_ = generateDataURLSignKey();
     }
 
     // CefClient:
@@ -215,6 +232,11 @@ public:
                 window_->rootWidget_->browserArea()->showError(
                     "Loading URL failed due to a certificate error"
                 );
+            } else if(readSignedDataURL(frame->GetURL(), fileSchemeBlockedPageSignKey_)) {
+                window_->rootWidget_->browserArea()->showError(
+                    "Access to files through the file:// URI scheme is blocked "
+                    "(do NOT rely on this block for security, as there may be ways around it)"
+                );
             } else {
                 window_->rootWidget_->browserArea()->clearError();
             }
@@ -260,6 +282,14 @@ public:
             frame->LoadURL(
                 createSignedDataURL(failedURL, certificateErrorPageSignKey_)
             );
+        } else if(
+            errorCode == ERR_ABORTED &&
+            globals->config->blockFileScheme &&
+            isLocalFileRequestURL(failedURL)
+        ) {
+            frame->LoadURL(
+                createSignedDataURL(failedURL, fileSchemeBlockedPageSignKey_)
+            );
         } else if(errorCode != ERR_ABORTED) {
             string msg = "Loading URL failed due to error: " + string(errorText);
             window_->rootWidget_->browserArea()->showError(msg);
@@ -279,21 +309,32 @@ public:
             return;
         }
 
-        optional<string> errorURL =
-            readSignedDataURL(url, certificateErrorPageSignKey_);
-        if(errorURL) {
-            window_->rootWidget_->controlBar()->setAddress(*errorURL);
+        optional<string> errorURL1 = readSignedDataURL(url, certificateErrorPageSignKey_);
+        optional<string> errorURL2 = readSignedDataURL(url, fileSchemeBlockedPageSignKey_);
+        if(errorURL1) {
+            window_->rootWidget_->controlBar()->setAddress(*errorURL1);
+        } else if(errorURL2) {
+            window_->rootWidget_->controlBar()->setAddress(*errorURL2);
         } else {
             window_->rootWidget_->controlBar()->setAddress(url);
         }
         window_->updateSecurityStatus_();
     }
 
-    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& title) override {
+    virtual void OnTitleChange(CefRefPtr<CefBrowser> browser, const CefString& origTitle) override {
         BROWSER_EVENT_HANDLER_CHECKS();
 
         if(window_->state_ != Open) {
             return;
+        }
+
+        string title = origTitle;
+        if(
+            readSignedDataURL(title, certificateErrorPageSignKey_) ||
+            readSignedDataURL(title, fileSchemeBlockedPageSignKey_)
+        ) {
+            // Do not show error message data URLs as titles
+            title = "";
         }
 
         window_->rootWidget_->controlBar()->setPageTitle(title);
@@ -333,6 +374,20 @@ public:
 
         postTask(window_, &Window::updateSecurityStatus_);
         return nullptr;
+    }
+
+    virtual bool OnBeforeBrowse(
+        CefRefPtr<CefBrowser> browser,
+        CefRefPtr<CefFrame> frame,
+        CefRefPtr<CefRequest> request,
+        bool userGesture,
+        bool isRedirect
+    ) override {
+        BROWSER_EVENT_HANDLER_CHECKS();
+
+        // Block local file requests (OnLoadError redirects to error message) if blocking enabled
+        REQUIRE(request);
+        return globals->config->blockFileScheme && isLocalFileRequestURL(request->GetURL());
     }
 
     virtual bool OnCertificateError(
@@ -461,6 +516,7 @@ private:
     int lastFindID_;
     optional<string> lastCertificateErrorURL_;
     string certificateErrorPageSignKey_;
+    string fileSchemeBlockedPageSignKey_;
 
     IMPLEMENT_REFCOUNTING(Client);
 };
