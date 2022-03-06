@@ -6,7 +6,7 @@ LDFLAGS_COMMON := -rdynamic -fPIC -pthread -Wl,--disable-new-dtags -Wl,--fatal-w
 LDFLAGS_debug := $(LDFLAGS_COMMON) cef/debugbuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 LDFLAGS_release := $(LDFLAGS_COMMON) -Wl,-O1 -Wl,--as-needed -Wl,--gc-sections cef/releasebuild/libcef_dll_wrapper/libcef_dll_wrapper.a
 SRCS := $(shell find src -name '*.cpp')
-CEFFILES_IN := cef/Release/chrome-sandbox cef/Release/libcef.so cef/Release/libEGL.so cef/Release/libGLESv2.so cef/Release/snapshot_blob.bin cef/Release/v8_context_snapshot.bin cef/Release/swiftshader cef/Resources/resources.pak cef/Resources/chrome_100_percent.pak cef/Resources/chrome_200_percent.pak cef/Resources/icudtl.dat cef/Resources/locales
+CEFFILES_IN := cef/Release/chrome-sandbox cef/Release/libcef.so cef/Release/libEGL.so cef/Release/libGLESv2.so cef/Release/snapshot_blob.bin cef/Release/v8_context_snapshot.bin cef/Release/swiftshader cef/Resources/resources.pak cef/Resources/chrome_100_percent.pak cef/Resources/chrome_200_percent.pak cef/Resources/icudtl.dat cef/Resources/locales cef/Release/libvk_swiftshader.so cef/Release/libvulkan.so.1 cef/Release/vk_swiftshader_icd.json
 
 define OUTDEFS
 OBJS_$(1) := $(SRCS:%.cpp=$(1)/obj/%.o)
