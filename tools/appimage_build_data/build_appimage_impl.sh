@@ -93,6 +93,10 @@ for f in \
     browservice/release/bin/libEGL.so \
     browservice/release/bin/libGLESv2.so \
     browservice/release/bin/chrome-sandbox \
+    browservice/release/bin/libvk_swiftshader.so \
+    browservice/release/bin/libvulkan.so.1 \
+    browservice/release/bin/swiftshader/libEGL.so \
+    browservice/release/bin/swiftshader/libGLESv2.so \
     /usr/bin/Xvfb \
     /usr/bin/xauth \
     /usr/bin/wget \
