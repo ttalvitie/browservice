@@ -471,7 +471,64 @@ MenuButtonIcon clipboardIcon = {
     )
 };
 
+map<char, array<uint8_t, 3>> backForwardColorPalette = {
+    {'G', {192, 192, 192}},
+    {'B', {0, 0, 0}},
+    {'b', {32, 32, 32}},
+    {'c', {64, 64, 64}},
+    {'W', {255, 255, 255}},
+    {'U', {120, 255, 255}},
+    {'u', {109, 236, 236}},
+    {'v', {102, 226, 226}},
+    {'M', {96, 216, 216}},
+    {'d', {82, 188, 188}},
+    {'D', {68, 160, 160}},
+    {'h', {89, 202, 202}}
+};
+map<char, array<uint8_t, 3>> backForwardGreyscalePalette = {
+    {'G', {192, 192, 192}},
+    {'B', {0, 0, 0}},
+    {'b', {32, 32, 32}},
+    {'c', {64, 64, 64}},
+    {'W', {255, 255, 255}},
+    {'U', {255, 255, 255}},
+    {'u', {232, 232, 232}},
+    {'v', {214, 214, 214}},
+    {'M', {200, 200, 200}},
+    {'d', {172, 172, 172}},
+    {'D', {144, 144, 144}},
+    {'h', {186, 186, 186}}
+};
+
+vector<string> backIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGBGGGGGGGGGGG",
+    "GGGGGGBBGGGGGGGGGGG",
+    "GGGGGBUBGGGGGGGGGGG",
+    "GGGGBUucccccccccccG",
+    "GGGBUuvUUUUUUUUUubG",
+    "GGBUvMMMMMMMMMMMdbG",
+    "GGGBdhDDDDDDDDDDDbG",
+    "GGGGBdDbbbbbbbbbbbG",
+    "GGGGGBDBGGGGGGGGGGG",
+    "GGGGGGBBGGGGGGGGGGG",
+    "GGGGGGGBGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG"
+};
+
+MenuButtonIcon backIcon = {
+    ImageSlice::createImageFromStrings(backIconPattern, backForwardColorPalette),
+    ImageSlice::createImageFromStrings(backIconPattern, backForwardGreyscalePalette)
+};
+
 vector<string> forwardIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
     "GGGGGGGGGGGGGGGGGGG",
     "GGGGGGGGGGGGGGGGGGG",
     "GGGGGGGGGGGGGGGGGGG",
@@ -479,12 +536,11 @@ vector<string> forwardIconPattern = {
     "GGGGGGGGGGGGBGGGGGG",
     "GGGGGGGGGGGGBBGGGGG",
     "GGGGGGGGGGGGBUBGGGG",
-    "GGGccccccccccUuBGGG",
-    "GGGcUUUUUUUUUUvvBGG",
-    "GGGcUvMMMMMMMMMMdBG",
-    "GGGcUMMMMMMMMMMddBG",
-    "GGGcMDDDDDDDDMdDBGG",
-    "GGGcbbbbbbbbbdDBGGG",
+    "GGcccccccccccUuBGGG",
+    "GGcUUUUUUUUUUUvvBGG",
+    "GGcUvMMMMMMMMMMMdBG",
+    "GGcMDDDDDDDDDMdDBGG",
+    "GGcbbbbbbbbbbdDBGGG",
     "GGGGGGGGGGGGBDBGGGG",
     "GGGGGGGGGGGGBBGGGGG",
     "GGGGGGGGGGGGBGGGGGG",
@@ -494,38 +550,8 @@ vector<string> forwardIconPattern = {
 };
 
 MenuButtonIcon forwardIcon = {
-    ImageSlice::createImageFromStrings(
-        forwardIconPattern,
-        {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}},
-            {'b', {32, 32, 32}},
-            {'c', {64, 64, 64}},
-            {'W', {255, 255, 255}},
-            {'U', {120, 255, 120}},
-            {'u', {109, 236, 109}},
-            {'v', {102, 226, 102}},
-            {'M', {96, 216, 96}},
-            {'d', {82, 188, 82}},
-            {'D', {68, 160, 68}},
-        }
-    ),
-    ImageSlice::createImageFromStrings(
-        forwardIconPattern,
-        {
-            {'G', {192, 192, 192}},
-            {'B', {0, 0, 0}},
-            {'b', {32, 32, 32}},
-            {'c', {64, 64, 64}},
-            {'W', {255, 255, 255}},
-            {'U', {255, 255, 255}},
-            {'u', {232, 232, 232}},
-            {'v', {214, 214, 214}},
-            {'M', {200, 200, 200}},
-            {'d', {172, 172, 172}},
-            {'D', {144, 144, 144}},
-        }
-    )
+    ImageSlice::createImageFromStrings(forwardIconPattern, backForwardColorPalette),
+    ImageSlice::createImageFromStrings(forwardIconPattern, backForwardGreyscalePalette)
 };
 
 const int BtnWidth = 22;
@@ -1010,9 +1036,9 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     addrField_->setAllowEmptySubmit(false);
 
-    backButton_ = MenuButton::create(forwardIcon, self, self);
+    backButton_ = MenuButton::create(backIcon, self, self);
     forwardButton_ = MenuButton::create(forwardIcon, self, self);
-    refreshButton_ = MenuButton::create(forwardIcon, self, self);
+    refreshButton_ = MenuButton::create(backIcon, self, self);
     homeButton_ = MenuButton::create(forwardIcon, self, self);
     goButton_ = MenuButton::create(goIcon, self, self);
     bookmarkToggleButton_ = MenuButton::create(bookmarkOffIcon, self, self);
