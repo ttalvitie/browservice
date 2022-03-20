@@ -12,7 +12,8 @@
     CONF_FOREACH_OPT_ITEM(startPage) \
     CONF_FOREACH_OPT_ITEM(dataDir) \
     CONF_FOREACH_OPT_ITEM(windowLimit) \
-    CONF_FOREACH_OPT_ITEM(chromiumArgs)
+    CONF_FOREACH_OPT_ITEM(chromiumArgs) \
+    CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -177,5 +178,17 @@ CONF_DEF_OPT_INFO(chromiumArgs) {
             start = end + 1;
         }
         return ret;
+    }
+};
+
+CONF_DEF_OPT_INFO(showSoftNavigationButtons) {
+    const char* name = "show-soft-navigation-buttons";
+    const char* valSpec = "YES/NO";
+    string desc() {
+        return
+            "if enabled, navigation buttons (Back/Forward/Refresh/Home) are added to the control bar in the browser view";
+    }
+    bool defaultVal() {
+        return false;
     }
 };

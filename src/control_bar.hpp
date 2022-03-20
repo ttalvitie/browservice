@@ -24,6 +24,10 @@ public:
     virtual void onStopFind(bool clearSelection) = 0;
     virtual void onClipboardButtonPressed() = 0;
     virtual void onOpenBookmarksButtonPressed() = 0;
+
+    // -1 = back, 0 = refresh, 1 = forward.
+    virtual void onNavigationButtonPressed(int direction) = 0;
+    virtual void onHomeButtonPressed() = 0;
 };
 
 class TextLayout;
@@ -110,6 +114,10 @@ private:
 
     SecurityStatus securityStatus_;
 
+    shared_ptr<MenuButton> backButton_;
+    shared_ptr<MenuButton> forwardButton_;
+    shared_ptr<MenuButton> refreshButton_;
+    shared_ptr<MenuButton> homeButton_;
     shared_ptr<MenuButton> goButton_;
     shared_ptr<MenuButton> bookmarkToggleButton_;
     shared_ptr<MenuButton> openBookmarksButton_;

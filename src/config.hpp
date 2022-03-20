@@ -32,6 +32,7 @@ public:
     const string dataDir;
     const int windowLimit;
     const vector<pair<string, optional<string>>> chromiumArgs;
+    bool showSoftNavigationButtons;
 };
 
 }

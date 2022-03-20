@@ -121,6 +121,8 @@ public:
     virtual void onStopFind(bool clearSelection) override;
     virtual void onClipboardButtonPressed() override;
     virtual void onOpenBookmarksButtonPressed() override;
+    virtual void onNavigationButtonPressed(int direction) override;
+    virtual void onHomeButtonPressed() override;
 
     // BrowserAreaEventHandler:
     virtual void onBrowserAreaViewDirty() override;
