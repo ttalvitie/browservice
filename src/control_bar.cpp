@@ -1,6 +1,7 @@
 #include "control_bar.hpp"
 
 #include "bookmarks.hpp"
+#include "globals.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
 
@@ -470,6 +471,63 @@ MenuButtonIcon clipboardIcon = {
     )
 };
 
+vector<string> forwardIconPattern = {
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGBGGGGGG",
+    "GGGGGGGGGGGGBBGGGGG",
+    "GGGGGGGGGGGGBUBGGGG",
+    "GGGccccccccccUuBGGG",
+    "GGGcUUUUUUUUUUvvBGG",
+    "GGGcUvMMMMMMMMMMdBG",
+    "GGGcUMMMMMMMMMMddBG",
+    "GGGcMDDDDDDDDMdDBGG",
+    "GGGcbbbbbbbbbdDBGGG",
+    "GGGGGGGGGGGGBDBGGGG",
+    "GGGGGGGGGGGGBBGGGGG",
+    "GGGGGGGGGGGGBGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG",
+    "GGGGGGGGGGGGGGGGGGG"
+};
+
+MenuButtonIcon forwardIcon = {
+    ImageSlice::createImageFromStrings(
+        forwardIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}},
+            {'b', {32, 32, 32}},
+            {'c', {64, 64, 64}},
+            {'W', {255, 255, 255}},
+            {'U', {120, 255, 120}},
+            {'u', {109, 236, 109}},
+            {'v', {102, 226, 102}},
+            {'M', {96, 216, 96}},
+            {'d', {82, 188, 82}},
+            {'D', {68, 160, 68}},
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        forwardIconPattern,
+        {
+            {'G', {192, 192, 192}},
+            {'B', {0, 0, 0}},
+            {'b', {32, 32, 32}},
+            {'c', {64, 64, 64}},
+            {'W', {255, 255, 255}},
+            {'U', {255, 255, 255}},
+            {'u', {232, 232, 232}},
+            {'v', {214, 214, 214}},
+            {'M', {200, 200, 200}},
+            {'d', {172, 172, 172}},
+            {'D', {144, 144, 144}},
+        }
+    )
+};
+
 const int BtnWidth = 22;
 
 }
@@ -489,6 +547,34 @@ struct ControlBar::Layout {
         const int AddressTextWidth = 52;
         const int QualityTextWidth = 46;
         const int FindTextWidth = 29;
+
+        int separator0Start;
+        int separator0End;
+        if(globals->config->showSoftNavigationButtons) {
+            backButtonStart = contentStart;
+            backButtonEnd = backButtonStart + BtnWidth;
+            forwardButtonStart = backButtonEnd;
+            forwardButtonEnd = forwardButtonStart + BtnWidth;
+            refreshButtonStart = forwardButtonEnd;
+            refreshButtonEnd = refreshButtonStart + BtnWidth;
+            homeButtonStart = refreshButtonEnd;
+            homeButtonEnd = homeButtonStart + BtnWidth;
+            separator0Start = homeButtonEnd;
+            separator0End = separator0Start + SeparatorWidth;
+            separator0Visible = true;
+        } else {
+            backButtonStart = contentStart;
+            backButtonEnd = contentStart;
+            forwardButtonStart = contentStart;
+            forwardButtonEnd = contentStart;
+            homeButtonStart = contentStart;
+            homeButtonEnd = contentStart;
+            separator0Start = contentStart;
+            separator0End = contentStart;
+            separator0Visible = false;
+        }
+
+        separator0Pos = separator0Start + SeparatorWidth / 2;
 
         int downloadWidth = isDownloadVisible ? 88 : 0;
         int downloadSpacerWidth;
@@ -568,7 +654,7 @@ struct ControlBar::Layout {
         int separator1Start = separator1End - SeparatorWidth;
         separator1Pos = separator1Start + SeparatorWidth / 2;
 
-        int addrStart = contentStart;
+        int addrStart = separator0End;
         int addrEnd = separator1Start;
 
         addrTextStart = addrStart;
@@ -595,6 +681,18 @@ struct ControlBar::Layout {
 
     int width;
 
+    int backButtonStart;
+    int backButtonEnd;
+
+    int forwardButtonStart;
+    int forwardButtonEnd;
+
+    int refreshButtonStart;
+    int refreshButtonEnd;
+
+    int homeButtonStart;
+    int homeButtonEnd;
+
     int addrTextStart;
     int addrTextEnd;
 
@@ -612,9 +710,11 @@ struct ControlBar::Layout {
     int addrFieldStart;
     int addrFieldEnd;
 
+    int separator0Pos;
     int separator1Pos;
     int separator2Pos;
     int separator3Pos;
+    bool separator0Visible;
     bool separator2Visible;
     bool separator3Visible;
 
@@ -852,6 +952,19 @@ void ControlBar::onMenuButtonPressed(weak_ptr<MenuButton> button) {
             &ControlBarEventHandler::onClipboardButtonPressed
         );
     }
+
+    if(button.lock() == backButton_) {
+        postTask(eventHandler_, &ControlBarEventHandler::onNavigationButtonPressed, -1);
+    }
+    if(button.lock() == forwardButton_) {
+        postTask(eventHandler_, &ControlBarEventHandler::onNavigationButtonPressed, 1);
+    }
+    if(button.lock() == refreshButton_) {
+        postTask(eventHandler_, &ControlBarEventHandler::onNavigationButtonPressed, 0);
+    }
+    if(button.lock() == homeButton_) {
+        postTask(eventHandler_, &ControlBarEventHandler::onHomeButtonPressed);
+    }
 }
 
 void ControlBar::onQualityChanged(size_t idx) {
@@ -897,6 +1010,10 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     addrField_ = TextField::create(self, self);
     addrField_->setAllowEmptySubmit(false);
 
+    backButton_ = MenuButton::create(forwardIcon, self, self);
+    forwardButton_ = MenuButton::create(forwardIcon, self, self);
+    refreshButton_ = MenuButton::create(forwardIcon, self, self);
+    homeButton_ = MenuButton::create(forwardIcon, self, self);
     goButton_ = MenuButton::create(goIcon, self, self);
     bookmarkToggleButton_ = MenuButton::create(bookmarkOffIcon, self, self);
     openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
@@ -931,6 +1048,20 @@ void ControlBar::widgetViewportUpdated_() {
     ImageSlice viewport = getViewport();
     Layout layout = layout_();
 
+    if(globals->config->showSoftNavigationButtons) {
+        backButton_->setViewport(viewport.subRect(
+            layout.backButtonStart, layout.backButtonEnd, 1, Height - 4
+        ));
+        forwardButton_->setViewport(viewport.subRect(
+            layout.forwardButtonStart, layout.forwardButtonEnd, 1, Height - 4
+        ));
+        refreshButton_->setViewport(viewport.subRect(
+            layout.refreshButtonStart, layout.refreshButtonEnd, 1, Height - 4
+        ));
+        homeButton_->setViewport(viewport.subRect(
+            layout.homeButtonStart, layout.homeButtonEnd, 1, Height - 4
+        ));
+    }
     addrField_->setViewport(viewport.subRect(
         layout.addrFieldStart, layout.addrFieldEnd, 3, Height - 8
     ));
@@ -1018,6 +1149,10 @@ void ControlBar::widgetRender_() {
     viewport.putImage(securityStatusIcon(securityStatus_), layout.securityIconStart, 6);
 
     // Separators
+    if(layout.separator0Visible) {
+        viewport.fill(layout.separator0Pos - 1, layout.separator0Pos, 1, Height - 4, 128);
+        viewport.fill(layout.separator0Pos, layout.separator0Pos + 1, 1, Height - 4, 255);
+    }
     viewport.fill(layout.separator1Pos - 1, layout.separator1Pos, 1, Height - 4, 128);
     viewport.fill(layout.separator1Pos, layout.separator1Pos + 1, 1, Height - 4, 255);
     if(layout.separator2Visible) {
@@ -1120,6 +1255,12 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
         openBookmarksButton_,
         findButton_
     };
+    if(globals->config->showSoftNavigationButtons) {
+        children.push_back(backButton_);
+        children.push_back(forwardButton_);
+        children.push_back(refreshButton_);
+        children.push_back(homeButton_);
+    }
     if(qualitySelector_) {
         children.push_back(qualitySelector_);
     }

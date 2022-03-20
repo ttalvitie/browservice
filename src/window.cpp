@@ -920,6 +920,22 @@ void Window::onOpenBookmarksButtonPressed() {
     }
 }
 
+void Window::onNavigationButtonPressed(int direction) {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        navigate(direction);
+    }
+}
+
+void Window::onHomeButtonPressed() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open) {
+        navigateToURI(globals->config->startPage);
+    }
+}
+
 void Window::onBrowserAreaViewDirty() {
     REQUIRE_UI_THREAD();
 
