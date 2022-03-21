@@ -607,6 +607,47 @@ MenuButtonIcon refreshIcon = {
     )
 };
 
+vector<string> homeIconPattern = {
+    "...................",
+    "...................",
+    "...................",
+    ".........#.........",
+    "........#.#.###....",
+    ".......#.#.##.#....",
+    "......#.#...#.#....",
+    ".....#.#.....##....",
+    "....#.#.......#....",
+    "...#.#.........#...",
+    "..#.#X.........##..",
+    "...##X...####..#.#.",
+    "....#X...#..#..#...",
+    "....#X...#..#..#...",
+    "....#X...#..#..#...",
+    "....#X...#..#..#...",
+    ".....#...#..#..#...",
+    ".....###########...",
+    "..................."
+};
+
+MenuButtonIcon homeIcon = {
+    ImageSlice::createImageFromStrings(
+        homeIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'#', {0, 0, 0}},
+            {'X', {96, 96, 96}},
+        }
+    ),
+    ImageSlice::createImageFromStrings(
+        homeIconPattern,
+        {
+            {'.', {192, 192, 192}},
+            {'#', {0, 0, 0}},
+            {'X', {96, 96, 96}},
+        }
+    )
+};
+
 const int BtnWidth = 22;
 
 }
@@ -1092,7 +1133,7 @@ void ControlBar::afterConstruct_(shared_ptr<ControlBar> self) {
     backButton_ = MenuButton::create(backIcon, self, self);
     forwardButton_ = MenuButton::create(forwardIcon, self, self);
     refreshButton_ = MenuButton::create(refreshIcon, self, self);
-    homeButton_ = MenuButton::create(refreshIcon, self, self);
+    homeButton_ = MenuButton::create(homeIcon, self, self);
     goButton_ = MenuButton::create(goIcon, self, self);
     bookmarkToggleButton_ = MenuButton::create(bookmarkOffIcon, self, self);
     openBookmarksButton_ = MenuButton::create(openBookmarksIcon, self, self);
