@@ -843,7 +843,7 @@ void Window::onFind(string text, bool forward, bool findNext) {
     REQUIRE_UI_THREAD();
 
     if(state_ == Open && browser_) {
-        browser_->GetHost()->Find(0, text, forward, false, findNext);
+        browser_->GetHost()->Find(text, forward, false, findNext);
     }
 }
 
