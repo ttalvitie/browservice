@@ -48,7 +48,7 @@ msg "Fetching automate-git.py"
 wget "https://bitbucket.org/chromiumembedded/cef/raw/master/tools/automate/automate-git.py" -O "${BUILDDIR}/automate-git.py"
 
 msg "Running automate-git.py in Docker"
-docker run -e CEF_INSTALL_SYSROOT="${SYSROOT}" -e GN_DEFINES="${GN_DEFINES}" -e CEF_ARCHIVE_FORMAT=tar.bz2 -v "${BUILDDIR}":/build "${DOCKER_IMAGE}" python /build/automate-git.py --download-dir=/build/chromium_git --depot-tools-dir=/build/depot_tools --branch="${BRANCH}" --minimal-distrib --client-distrib --force-clean --build-target=cefsimple ${AUTOMATE_FLAGS}
+docker run -e CEF_INSTALL_SYSROOT="${SYSROOT}" -e GN_DEFINES="${GN_DEFINES}" -e CEF_ARCHIVE_FORMAT=tar.bz2 -v "${BUILDDIR}":/build "${DOCKER_IMAGE}" python /build/automate-git.py --download-dir=/build/chromium_git --depot-tools-dir=/build/depot_tools --branch="${BRANCH}" --no-debug-build --minimal-distrib --client-distrib --force-clean --build-target=cefsimple ${AUTOMATE_FLAGS}
 
 msg "CEF successfully built to '${BUILDDIR}'; extract the output tarball and remove the rest of the directory manually (TODO: automatize)"
 
