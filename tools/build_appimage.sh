@@ -5,16 +5,23 @@ set -o pipefail
 
 msg() { cat <<< "--- $@" 1>&2; }
 
-if [ -z "${1}" ] || [ -z "${2}" ] || ! [ -z "${3}" ]
+if [ -z "${1}" ] || [ -z "${2}" ] || [ -z "${3}" ] || ! [ -z "${4}" ]
 then
     msg "Invalid arguments"
-    msg "Usage: build_appimage.sh x86_64|armhf|aarch64 BRANCH|COMMIT|TAG"
+    msg "Usage: build_appimage.sh x86_64|armhf|aarch64 BRANCH|COMMIT|TAG CEF_TARBALL"
     exit 1
 fi
 
 ARCH="${1}"
 SRC="${2}"
+CEFDIST="${3}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if ! [ -f "${CEFDIST}" ]
+then
+    msg "Cef binary distribution tarball '${CEFDIST}' does not exist"
+    exit 1
+fi
 
 if [ "${ARCH}" == "x86_64" ]
 then
@@ -106,6 +113,9 @@ cp "${SCRIPT_DIR}/appimage_build_data/browservice.png" "${TMPDIR}/shared/browser
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.desktop" "${TMPDIR}/shared/browservice.desktop"
 cp "${SCRIPT_DIR}/appimage_build_data/run_browservice" "${TMPDIR}/shared/run_browservice"
 cp "${SCRIPT_DIR}/appimage_build_data/relocate_fontconfig_cache.c" "${TMPDIR}/shared/relocate_fontconfig_cache.c"
+
+msg "Copying '${CEFDIST}' to the shared directory"
+cp -- "${CEFDIST}" "${TMPDIR}/shared/cef.tar.bz2"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "${SCRIPT_DIR}" &> /dev/null
