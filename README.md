@@ -4,6 +4,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
+2022-03-26: [Browservice 0.9.5.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.5.0) has been released. This release adds support for soft navigation buttons in the browser area and partial blocking of local file access.
+
 2021-12-19: [Browservice 0.9.4.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.4.0) has been released. This release adds support for running the proxy server on Windows (both 32-bit and 64-bit) and drops support for the i386 architecture on Linux (as Chromium no longer supports it).
 
 2021-09-24: [Browservice 0.9.3.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.3.0) has been released. This release adds support for bookmarks and changing URL from the client browser by appending `goto/URL` to the address.
@@ -176,7 +178,7 @@ browservice.exe --vice-opt-http-listen-addr=0.0.0.0:8080
 
 **WARNING**: Browservice does not support encrypted connections between the Browservice proxy and the client browser. Therefore, these connections should always be made over a completely trusted/isolated network (or over a secure tunnel).
 
-**WARNING**: The trust between the client and the proxy server has to be mutual, as the client controls a web browser process running on the proxy server. For example, the client can use the `file://` protocol to read files on the proxy server that are accessible to the user running `browservice`.
+**WARNING**: The trust between the client and the proxy server has to be mutual, as the client controls a web browser process running on the proxy server. Even though the `file://` protocol for reading files on the proxy server has been blocked by default, there are probably other ways to for the client to access files and other resources that are available to the user running `browservice`.
 
 **WARNING**: The AppImage or the prebuilt binary directory on Windows (including the embedded Chromium browser) does not update itself. The security updates of your Linux distribution do not update the libraries bundled in the AppImage. To keep the browser up to date, you should periodically install the newest release of Browservice.
 
