@@ -19,6 +19,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [ "${ARCH}" == "x86_64" ]
 then
     UBUNTU_ARCH="amd64"
+    UBUNTU_RELEASE="bionic"
     UBUNTU_KERNEL="vmlinuz-generic"
     UBUNTU_INITRD="initrd-generic"
     QEMU="qemu-system-x86_64"
@@ -29,6 +30,7 @@ then
 elif [ "${ARCH}" == "armhf" ]
 then
     UBUNTU_ARCH="armhf"
+    UBUNTU_RELEASE="bionic"
     UBUNTU_KERNEL="vmlinuz-lpae"
     UBUNTU_INITRD="initrd-generic-lpae"
     QEMU="qemu-system-arm"
@@ -39,6 +41,7 @@ then
 elif [ "${ARCH}" == "aarch64" ]
 then
     UBUNTU_ARCH="arm64"
+    UBUNTU_RELEASE="focal"
     UBUNTU_KERNEL="vmlinuz-generic"
     UBUNTU_INITRD="initrd-generic"
     QEMU="qemu-system-aarch64"
@@ -114,11 +117,11 @@ git archive --output="${TMPDIR}/shared/src.tar" "${SRC}"
 popd &> /dev/null
 popd &> /dev/null
 
-msg "Downloading Ubuntu Bionic Cloud VM image"
+msg "Downloading Ubuntu ${UBUNTU_RELEASE} Cloud VM image"
 mkdir "${TMPDIR}/vm"
-wget "https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-${UBUNTU_ARCH}.img" -O "${TMPDIR}/vm/disk.img"
-wget "https://cloud-images.ubuntu.com/bionic/current/unpacked/bionic-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_KERNEL}" -O "${TMPDIR}/vm/kernel"
-wget "https://cloud-images.ubuntu.com/bionic/current/unpacked/bionic-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_INITRD}" -O "${TMPDIR}/vm/initrd"
+wget "https://cloud-images.ubuntu.com/${UBUNTU_RELEASE}/current/${UBUNTU_RELEASE}-server-cloudimg-${UBUNTU_ARCH}.img" -O "${TMPDIR}/vm/disk.img"
+wget "https://cloud-images.ubuntu.com/${UBUNTU_RELEASE}/current/unpacked/${UBUNTU_RELEASE}-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_KERNEL}" -O "${TMPDIR}/vm/kernel"
+wget "https://cloud-images.ubuntu.com/${UBUNTU_RELEASE}/current/unpacked/${UBUNTU_RELEASE}-server-cloudimg-${UBUNTU_ARCH}-${UBUNTU_INITRD}" -O "${TMPDIR}/vm/initrd"
 
 msg "Creating cloud-init user data image"
 cat << EOF > "${TMPDIR}/vm/user-data"
