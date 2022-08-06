@@ -452,7 +452,6 @@ public:
         const CefString& title,
         const CefString& defaultFilePath,
         const vector<CefString>& acceptFilters,
-        int selectedAcceptFilter,
         CefRefPtr<CefFileDialogCallback> callback
     ) override {
         BROWSER_EVENT_HANDLER_CHECKS();
@@ -461,8 +460,8 @@ public:
         if(
             window_->state_ != Open ||
             (
-                (mode & FILE_DIALOG_TYPE_MASK) != FILE_DIALOG_OPEN &&
-                (mode & FILE_DIALOG_TYPE_MASK) != FILE_DIALOG_OPEN_MULTIPLE
+                mode != FILE_DIALOG_OPEN &&
+                mode != FILE_DIALOG_OPEN_MULTIPLE
             )
         ) {
             callback->Cancel();
@@ -483,7 +482,6 @@ public:
             window_->handle_
         )) {
             window_->fileUploadCallback_ = callback;
-            window_->fileUploadAcceptFilter_ = selectedAcceptFilter;
         } else {
             WARNING_LOG(
                 "Cannot upload in window ", window_->handle_,
@@ -650,7 +648,7 @@ void Window::uploadFile(shared_ptr<ViceFileUpload> file) {
     vector<CefString> paths;
     paths.push_back(file->path());
 
-    fileUploadCallback_->Continue(fileUploadAcceptFilter_, paths);
+    fileUploadCallback_->Continue(paths);
     fileUploadCallback_ = nullptr;
 
     // We retain all file uploads until the window cleanup is complete, as we
@@ -983,8 +981,6 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle)
     downloadManager_ = DownloadManager::create(self);
 
     watchdogTimeout_ = Timeout::create(1000);
-
-    fileUploadAcceptFilter_ = 0;
 }
 
 void Window::createSuccessful_() {

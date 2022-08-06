@@ -182,7 +182,6 @@ private:
 
     // The window is in file upload mode when fileUploadCallback_ is nonempty.
     CefRefPtr<CefFileDialogCallback> fileUploadCallback_;
-    int fileUploadAcceptFilter_;
     vector<shared_ptr<ViceFileUpload>> retainedUploads_;
 };
 
