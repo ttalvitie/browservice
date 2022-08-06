@@ -59,7 +59,7 @@ apt-get upgrade -y
 
 msg "Installing dependencies"
 snap install cmake --classic
-apt-get install -y wget make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils patchelf cabextract
+apt-get install -y wget make g++ pkg-config libxcb1-dev libx11-dev libpoco-dev libjpeg-dev zlib1g-dev libpango1.0-dev libpangoft2-1.0-0 xvfb xauth libatk-bridge2.0-0 libasound2 libgbm1 libxi6 libcups2 libnss3 libxcursor1 libxrandr2 libxcomposite1 libxss1 libxkbcommon0 libgtk-3-0 binutils patchelf cabextract libx11-xcb1
 apt-get install -y fonts-beng-extra fonts-dejavu-core fonts-deva-extra fonts-droid-fallback fonts-freefont-ttf fonts-gargi fonts-gubbi fonts-gujr-extra fonts-guru-extra fonts-kacst fonts-kacst-one fonts-kalapi fonts-khmeros-core fonts-lao fonts-liberation fonts-liberation2 fonts-lklug-sinhala fonts-lohit-beng-assamese fonts-lohit-beng-bengali fonts-lohit-deva fonts-lohit-gujr fonts-lohit-guru fonts-lohit-knda fonts-lohit-mlym fonts-lohit-orya fonts-lohit-taml fonts-lohit-taml-classical fonts-lohit-telu fonts-nakula fonts-navilu fonts-noto-cjk fonts-noto-color-emoji fonts-noto-mono fonts-opensymbol fonts-orya-extra fonts-pagul fonts-sahadeva fonts-samyak-deva fonts-samyak-gujr fonts-samyak-mlym fonts-samyak-taml fonts-sarai fonts-sil-abyssinica fonts-sil-padauk fonts-smc-anjalioldlipi fonts-smc-chilanka fonts-smc-dyuthi fonts-smc-karumbi fonts-smc-keraleeyam fonts-smc-manjari fonts-smc-meera fonts-smc-rachana fonts-smc-raghumalayalamsans fonts-smc-suruma fonts-smc-uroob fonts-telu-extra fonts-tibetan-machine fonts-tlwg-garuda-ttf fonts-tlwg-kinnari-ttf fonts-tlwg-laksaman-ttf fonts-tlwg-loma-ttf fonts-tlwg-mono-ttf fonts-tlwg-norasi-ttf fonts-tlwg-purisa-ttf fonts-tlwg-sawasdee-ttf fonts-tlwg-typewriter-ttf fonts-tlwg-typist-ttf fonts-tlwg-typo-ttf fonts-tlwg-umpush-ttf fonts-tlwg-waree-ttf fonts-ubuntu gsfonts xfonts-base xfonts-encodings xfonts-scalable xfonts-utils
 
 msg "Downloading CEF"
@@ -86,6 +86,7 @@ U patchelf --set-rpath '$ORIGIN/../../usr/lib' release/bin/chrome-sandbox
 msg "Collecting library dependencies"
 cd /home/user
 NSSDIR="$(dirname $(whereis libnss3.so | awk '{ print $2 }'))/nss"
+X11XCBDIR="$(dirname $(whereis libX11-xcb.so.1 | awk '{ print $2 }'))"
 for f in \
     browservice/release/bin/browservice \
     browservice/release/bin/retrojsvice.so \
@@ -104,9 +105,10 @@ for f in \
     "${NSSDIR}/libfreeblpriv3.so" \
     "${NSSDIR}/libnssckbi.so" \
     "${NSSDIR}/libnssdbm3.so" \
-    "${NSSDIR}/libsoftokn3.so"
+    "${NSSDIR}/libsoftokn3.so" \
+    "${X11XCBDIR}/libX11-xcb.so"*
 do
-    U ldd "${f}" | U grep "=>" | U bash -c "awk '{ print \$3 }' >> deplisttmp"
+    U ldd "${f}" | (U grep "=>" || true) | U bash -c "awk '{ print \$3 }' >> deplisttmp"
 done
 
 U sort deplisttmp \
@@ -141,6 +143,7 @@ fi
 
 msg "Adding run-time library dependencies"
 U cp -r "${NSSDIR}" deps/nss
+U cp "${X11XCBDIR}/libX11-xcb.so"* deps
 
 msg "Stripping library dependencies"
 U strip deps/*.so*
