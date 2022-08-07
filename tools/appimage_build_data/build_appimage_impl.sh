@@ -72,6 +72,9 @@ U PATH="/opt/cmake-3.22.1-linux-x86_64/bin:$PATH" ./setup_cef.sh
 msg "Compiling Browservice"
 U make -j2 release
 
+msg "Compiling CEF tests"
+U PATH="/opt/cmake-3.22.1-linux-x86_64/bin:$PATH" bash -c "cd cef/releasebuild ; make -j2 ceftests"
+
 msg "Stripping Browservice binaries"
 U strip release/bin/browservice release/bin/retrojsvice.so release/bin/libcef.so release/bin/libEGL.so release/bin/libGLESv2.so release/bin/chrome-sandbox
 
@@ -231,6 +234,7 @@ fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>/home/us
 fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
 fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
 U mkdir fontconfig_cache
+U FONTCONFIG_PATH="/home/user/fontconfig_config" xvfb-run browservice/cef/releasebuild/tests/ceftests/Release/ceftests --gtest_filter=VersionTest.VersionInfo
 U FONTCONFIG_PATH="/home/user/fontconfig_config" fc-cache
 
 msg "Preparing AppDir"

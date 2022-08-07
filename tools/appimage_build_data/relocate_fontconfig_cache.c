@@ -91,15 +91,34 @@ int main(int argc, char* argv[]) {
             isCacheFile = 0;
         }
 
-        for(int i = 0; isCacheFile && i < 32; ++i) {
-            char c = name[i];
-            if(!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f')) {
+        int isUUIDCacheFile = isCacheFile && name[8] == '-';
+
+        if(isUUIDCacheFile) {
+            if(nameLen <= 36) {
                 isCacheFile = 0;
             }
-        }
 
-        if(isCacheFile && name[32] != '-') {
-            isCacheFile = 0;
+            for(int i = 0; isCacheFile && i < 36; ++i) {
+                char c = name[i];
+                if(!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f') && c != '-') {
+                    isCacheFile = 0;
+                }
+            }
+
+            if(isCacheFile && name[36] != '-') {
+                isCacheFile = 0;
+            }
+        } else {
+            for(int i = 0; isCacheFile && i < 32; ++i) {
+                char c = name[i];
+                if(!(c >= '0' && c <= '9') && !(c >= 'a' && c <= 'f')) {
+                    isCacheFile = 0;
+                }
+            }
+
+            if(isCacheFile && name[32] != '-') {
+                isCacheFile = 0;
+            }
         }
 
         if(isCacheFile && strstr(&name[32], ".cache") == NULL) {
@@ -156,9 +175,12 @@ int main(int argc, char* argv[]) {
 
             char fontDirPathHash[32];
             md5(fontDirPath, fontDirPathHash);
-            for(int i = 0; i < 32; ++i) {
-                if(fontDirPathHash[i] != name[i]) {
-                    fail("Unexpected name for cache file");
+
+            if(!isUUIDCacheFile) {
+                for(int i = 0; i < 32; ++i) {
+                    if(fontDirPathHash[i] != name[i]) {
+                        fail("Unexpected name for cache file");
+                    }
                 }
             }
 
@@ -187,7 +209,9 @@ int main(int argc, char* argv[]) {
                 ++pos;
             }
 
-            md5(fontDirPath, name);
+            if(!isUUIDCacheFile) {
+                md5(fontDirPath, name);
+            }
 
             struct stat fontDirStat;
             if(stat(fontDirPath, &fontDirStat)) {
