@@ -124,5 +124,5 @@ else
 
     export PATH="${ROOT}/usr/bin:${PATH}"
     export FONTCONFIG_PATH="${TMPDIR}/etc/fonts"
-    "${ROOT}/opt/browservice/browservice" "$@"
+    (exec -a "${ARGV0}" "${ROOT}/opt/browservice/browservice" "$@")
 fi
