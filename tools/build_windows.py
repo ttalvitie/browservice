@@ -173,6 +173,8 @@ def run():
     log(f"Copying created ZIP archive '{distribution_zip_path}' to '{output_path}'")
     shutil.copyfile(distribution_zip_path, output_path)
 
+    log(f"Browservice built successfully, output saved in '{output_path}'")
+    log(f"NOTE: The build directory '{build_dir}' was not removed!")
     log(f"Success")
 
     return 0

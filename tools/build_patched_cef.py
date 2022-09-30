@@ -129,7 +129,7 @@ def run():
     log(f"Copying output file from '{output_src_path}' to '{output_path}'")
     shutil.copyfile(output_src_path, output_path)
 
-    log(f"CEF built built successfully, output saved in '{output_path}'")
+    log(f"CEF built successfully, output saved in '{output_path}'")
     log(f"NOTE: The build directory '{build_dir}' was not removed!")
     log("Success")
     return 0
