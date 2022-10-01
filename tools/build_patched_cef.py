@@ -108,6 +108,22 @@ def run():
             cmd.append("--x64-build")
         env["GN_DEFINES"] = "is_official_build=true use_thin_lto=false"
         env["GYP_MSVS_VERSION"] = "2019"
+    elif os_type == "Linux":
+        if arch == "x86_64":
+            cmd.append("--x64-build")
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false"
+        elif arch == "armhf":
+            cmd.append("--arm-build")
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false use_vaapi=false"
+            env["CEF_INSTALL_SYSROOT"] = "arm"
+        elif arch == "aarch64":
+            cmd.append("--arm64-build")
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false"
+            env["CEF_INSTALL_SYSROOT"] = "arm64"
+        else:
+            assert False
+    else:
+        assert False
 
     log(f"Building CEF using command {cmd} and environment variables {env}")
     subprocess.check_call(cmd, env={**os.environ, **env})
