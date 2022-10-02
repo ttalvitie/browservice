@@ -155,13 +155,13 @@ extern "C" char* chromiumBrowserviceClipboardPasteImpl();
 extern "C" void chromiumBrowserviceClipboardFreePasteResultImpl(char* str);
 extern "C" void chromiumBrowserviceClipboardCopyImpl(const char* str);
 
-__declspec(dllexport) extern "C" char* chromiumBrowserviceClipboardPaste() {
+CEF_EXPORT extern "C" char* chromiumBrowserviceClipboardPaste() {
     return chromiumBrowserviceClipboardPasteImpl();
 }
-__declspec(dllexport) extern "C" void chromiumBrowserviceClipboardFreePasteResult(char* str) {
+CEF_EXPORT extern "C" void chromiumBrowserviceClipboardFreePasteResult(char* str) {
     chromiumBrowserviceClipboardFreePasteResultImpl(str);
 }
-__declspec(dllexport) extern "C" void chromiumBrowserviceClipboardCopy(const char* str) {
+CEF_EXPORT extern "C" void chromiumBrowserviceClipboardCopy(const char* str) {
     chromiumBrowserviceClipboardCopyImpl(str);
 }"""
 
@@ -189,7 +189,13 @@ namespace {
     uint64_t browserviceClipboardSeqNum;
 }
 
-__declspec(dllexport) extern "C" char* chromiumBrowserviceClipboardPasteImpl() {
+#ifdef USE_OZONE
+#define BROWSERVICE_EXPORT __attribute__((visibility("default")))
+#else
+#define BROWSERVICE_EXPORT __declspec(dllexport)
+#endif
+
+BROWSERVICE_EXPORT extern "C" char* chromiumBrowserviceClipboardPasteImpl() {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
     const char* src = browserviceClipboardText.c_str();
     size_t count = browserviceClipboardText.size() + 1;
@@ -197,10 +203,10 @@ __declspec(dllexport) extern "C" char* chromiumBrowserviceClipboardPasteImpl() {
     std::copy(src, src + count, str);
     return str;
 }
-__declspec(dllexport) extern "C" void chromiumBrowserviceClipboardFreePasteResultImpl(char* str) {
+BROWSERVICE_EXPORT extern "C" void chromiumBrowserviceClipboardFreePasteResultImpl(char* str) {
     delete [] str;
 }
-__declspec(dllexport) extern "C" void chromiumBrowserviceClipboardCopyImpl(const char* str) {
+BROWSERVICE_EXPORT extern "C" void chromiumBrowserviceClipboardCopyImpl(const char* str) {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
     browserviceClipboardText = str;
     ++browserviceClipboardSeqNum;
@@ -324,6 +330,12 @@ private:
     void WriteBitmap(const SkBitmap& bitmap) override {}
     void WriteData(const ClipboardFormatType& format, const char* data_data, size_t data_len) override {}
 
+#ifdef USE_OZONE
+    bool IsSelectionBufferAvailable() const override {
+        return false;
+    }
+#endif
+
     friend class Clipboard;
 };
 
@@ -332,6 +344,10 @@ Clipboard* Clipboard::Create() {
 }
 
 }
+"""
+
+CLIPBOARD_FACTORY_OZONE_CC_CODE = b"""\
+// Native clipboard implementation replaced by Browservice non-backed clipboard; see .cc file.
 """
 
 def embed(data):
@@ -367,6 +383,11 @@ def run(cef_src_dir):
         log(f"Replacing '{clipboard_cc_path}' with the Browservice clipboard implementation")
         with open(clipboard_cc_path, "wb") as fp:
             fp.write(""" + embed(CLIPBOARD_IMPLEMENTATION_CC_CODE) + """)
+
+    clipboard_factory_ozone_cc_path = os.path.join(cef_src_dir, "..", "ui", "base", "clipboard", "clipboard_factory_ozone.cc")
+    log(f"Replacing '{clipboard_factory_ozone_cc_path}' with the Browservice clipboard implementation")
+    with open(clipboard_factory_ozone_cc_path, "wb") as fp:
+        fp.write(""" + embed(CLIPBOARD_FACTORY_OZONE_CC_CODE) + """)
 
     log("Browservice-specific CEF/Chromium patches applied successfully")
 
