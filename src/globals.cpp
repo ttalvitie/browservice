@@ -1,7 +1,6 @@
 #include "globals.hpp"
 
 #include "text.hpp"
-#include "xwindow.hpp"
 
 #ifdef _WIN32
 #include <shlobj.h>
@@ -66,9 +65,6 @@ string getDotDirPath() {
 
 Globals::Globals(CKey, shared_ptr<Config> config)
     : config(config),
-#ifndef _WIN32
-      xWindow(XWindow::create()),
-#endif
       dotDirPath(getDotDirPath()),
       textRenderContext(TextRenderContext::create())
 {

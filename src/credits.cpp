@@ -26,8 +26,6 @@ Browservice uses GNU FriBidi, which is licensed under the GNU Lesser General Pub
 Browservice uses the tiny SHA3 implementation by Markku-Juhani O. Saarinen, which is licensed under the MIT license.
 
 Browservice uses libX11, which is licensed under the MIT license.
-
-Browservice uses XCB, which is licensed under the MIT license with an advertising clause.
 )DELIM";
 
 }

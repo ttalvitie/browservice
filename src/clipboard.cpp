@@ -1,5 +1,3 @@
-#ifdef _WIN32
-
 #include "clipboard.hpp"
 
 namespace browservice {
@@ -22,5 +20,3 @@ string pasteFromClipboard() {
 }
 
 }
-
-#endif

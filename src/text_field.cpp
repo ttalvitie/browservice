@@ -5,7 +5,6 @@
 #include "key.hpp"
 #include "text.hpp"
 #include "timeout.hpp"
-#include "xwindow.hpp"
 
 namespace browservice {
 
@@ -174,7 +173,6 @@ void TextField::eraseRange_() {
 void TextField::pasteFromClipboard_() {
     if(caretActive_) {
         weak_ptr<TextField> selfWeak = shared_from_this();
-#ifdef _WIN32
         string text = pasteFromClipboard();
         postTask([selfWeak, text]() {
             REQUIRE_UI_THREAD();
@@ -182,14 +180,6 @@ void TextField::pasteFromClipboard_() {
                 self->typeText_(text.data(), (int)text.size());
             }
         });
-#else
-        globals->xWindow->pasteFromClipboard([selfWeak](string text) {
-            REQUIRE_UI_THREAD();
-            if(shared_ptr<TextField> self = selfWeak.lock()) {
-                self->typeText_(text.data(), (int)text.size());
-            }
-        });
-#endif
     }
 }
 
@@ -201,11 +191,7 @@ void TextField::copyToClipboard_() {
             string text = textLayout_->text();
             REQUIRE(idx1 >= 0 && idx2 <= (int)text.size());
             string slice = text.substr(idx1, idx2 - idx1);
-#ifdef _WIN32
             copyToClipboard(slice);
-#else
-            globals->xWindow->copyToClipboard(slice);
-#endif
         }
     }
 }

@@ -2,7 +2,6 @@
 
 #include "clipboard.hpp"
 #include "globals.hpp"
-#include "xwindow.hpp"
 
 namespace browservice {
 
@@ -197,11 +196,7 @@ void Server::onViceContextCopyToClipboard(string text) {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ != ShutdownComplete);
 
-#ifdef _WIN32
     copyToClipboard(move(text));
-#else
-    globals->xWindow->copyToClipboard(move(text));
-#endif
 }
 
 void Server::onViceContextRequestClipboardContent() {
@@ -239,13 +234,7 @@ void Server::onViceContextRequestClipboardContent() {
     shared_ptr<Responder> responder = make_shared<Responder>();
     responder->server = shared_from_this();
 
-#ifdef _WIN32
     responder->respond(pasteFromClipboard());
-#else
-    globals->xWindow->pasteFromClipboard([responder](string text) {
-        responder->respond(text);
-    });
-#endif
 }
 
 void Server::onViceContextUploadFile(

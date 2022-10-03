@@ -57,7 +57,7 @@ CONF_DEF_OPT_INFO(useDedicatedXvfb) {
     string desc() {
         return
             "if enabled, the browser is run in its own Xvfb X server; "
-            "otherwise, the browser shares the X session of the environment (including, e.g., the clipboard)";
+            "otherwise, the browser shares the X session of the environment";
     }
     bool defaultVal() {
         return true;
