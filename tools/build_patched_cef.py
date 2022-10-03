@@ -150,21 +150,6 @@ def run():
     log("Success")
     return 0
 
-LIBCEF_DLL_CLIPBOARD_INTEFACE_CODE = b"""
-extern "C" char* chromiumBrowserviceClipboardPasteImpl();
-extern "C" void chromiumBrowserviceClipboardFreePasteResultImpl(char* str);
-extern "C" void chromiumBrowserviceClipboardCopyImpl(const char* str);
-
-CEF_EXPORT extern "C" char* chromiumBrowserviceClipboardPaste() {
-    return chromiumBrowserviceClipboardPasteImpl();
-}
-CEF_EXPORT extern "C" void chromiumBrowserviceClipboardFreePasteResult(char* str) {
-    chromiumBrowserviceClipboardFreePasteResultImpl(str);
-}
-CEF_EXPORT extern "C" void chromiumBrowserviceClipboardCopy(const char* str) {
-    chromiumBrowserviceClipboardCopyImpl(str);
-}"""
-
 CLIPBOARD_IMPLEMENTATION_H_CODE = b"""\
 // Native clipboard implementation replaced by Browservice non-backed clipboard; see .cc file.
 """
@@ -195,7 +180,7 @@ namespace {
 #define BROWSERVICE_EXPORT __declspec(dllexport)
 #endif
 
-BROWSERVICE_EXPORT extern "C" char* chromiumBrowserviceClipboardPasteImpl() {
+BROWSERVICE_EXPORT extern "C" char* cef_chromiumBrowserviceClipboardPaste() {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
     const char* src = browserviceClipboardText.c_str();
     size_t count = browserviceClipboardText.size() + 1;
@@ -203,10 +188,10 @@ BROWSERVICE_EXPORT extern "C" char* chromiumBrowserviceClipboardPasteImpl() {
     std::copy(src, src + count, str);
     return str;
 }
-BROWSERVICE_EXPORT extern "C" void chromiumBrowserviceClipboardFreePasteResultImpl(char* str) {
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceClipboardFreePasteResult(char* str) {
     delete [] str;
 }
-BROWSERVICE_EXPORT extern "C" void chromiumBrowserviceClipboardCopyImpl(const char* str) {
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceClipboardCopy(const char* str) {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
     browserviceClipboardText = str;
     ++browserviceClipboardSeqNum;
@@ -367,11 +352,6 @@ def log(msg):
 
 def run(cef_src_dir):
     log(f"Applying Browservice-specific CEF/Chromium patches to '{cef_src_dir}' and its parent directory")
-
-    libcef_dll_cc_path = os.path.join(cef_src_dir, "libcef_dll", "libcef_dll.cc")
-    log(f"Adding Browservice clipboard interface to '{libcef_dll_cc_path}'")
-    with open(libcef_dll_cc_path, "ab") as fp:
-        fp.write(""" + embed(LIBCEF_DLL_CLIPBOARD_INTEFACE_CODE) + """)
 
     for platform in ["win", "ozone"]:
         clipboard_h_path = os.path.join(cef_src_dir, "..", "ui", "base", "clipboard", "clipboard_" + platform + ".h")
