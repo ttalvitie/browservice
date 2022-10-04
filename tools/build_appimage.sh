@@ -5,16 +5,24 @@ set -o pipefail
 
 msg() { cat <<< "--- $@" 1>&2; }
 
-if [ -z "${1}" ] || [ -z "${2}" ] || ! [ -z "${3}" ]
+if [ -z "${1}" ] || [ -z "${2}" ] || [ -z "${3}" ] || [ -z "${4}" ] || ! [ -z "${5}" ]
 then
     msg "Invalid arguments"
-    msg "Usage: build_appimage.sh x86_64|armhf|aarch64 BRANCH|COMMIT|TAG"
+    msg "Usage: build_appimage.sh x86_64|armhf|aarch64 BRANCH|COMMIT|TAG PATCHED_CEF_TARBALL OUTPUT"
     exit 1
 fi
 
 ARCH="${1}"
 SRC="${2}"
+CEFTARBALL="${3}"
+OUTPUT="${4}"
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+if ! [ -f "${CEFTARBALL}" ]
+then
+    msg "ERROR: Given CEF tarball path '${CEFTARBALL}' is not a file"
+    exit 1
+fi
 
 if [ "${ARCH}" == "x86_64" ]
 then
@@ -109,6 +117,7 @@ cp "${SCRIPT_DIR}/appimage_build_data/browservice.png" "${TMPDIR}/shared/browser
 cp "${SCRIPT_DIR}/appimage_build_data/browservice.desktop" "${TMPDIR}/shared/browservice.desktop"
 cp "${SCRIPT_DIR}/appimage_build_data/run_browservice" "${TMPDIR}/shared/run_browservice"
 cp "${SCRIPT_DIR}/appimage_build_data/relocate_fontconfig_cache.c" "${TMPDIR}/shared/relocate_fontconfig_cache.c"
+cp "${CEFTARBALL}" "${TMPDIR}/shared/cef.tar.bz2"
 
 msg "Generating tarball from branch/commit/tag '${SRC}'"
 pushd "${SCRIPT_DIR}" &> /dev/null
@@ -185,8 +194,8 @@ msg "------------------------------------"
 msg "QEMU machine shut down successfully, checking build result"
 [ -e "${TMPDIR}/shared/success" ]
 
-msg "Writing output to ${NAME}"
-cp "${TMPDIR}/shared/${NAME}" "${NAME}"
+msg "Writing output ${NAME} file to '${OUTPUT}'"
+cp "${TMPDIR}/shared/${NAME}" "${OUTPUT}"
 
 trap - EXIT
 rm -rf -- "${TMPDIR}" &> /dev/null 2>&1

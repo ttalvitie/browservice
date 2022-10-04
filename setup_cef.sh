@@ -2,15 +2,24 @@
 
 set -e
 
+if [ -z "${1}" ] || ! [ -z "${2}" ]
+then
+    echo "ERROR: Invalid arguments"
+    echo "Usage: setup_cef.sh PATCHED_CEF_TARBALL"
+    exit 1
+fi
+
+CEFTARBALL="${1}"
+
 if [ -e ./cef ]
 then
     echo "./cef already exists!"
     exit 1
 fi
 
-if ! [ -f ./cef.tar.bz2 ]
+if ! [ -f "${CEFTARBALL}" ]
 then
-    echo "./cef.tar.bz2 does not exist -- download it with ./download_cef.sh"
+    echo "ERROR: Given CEF tarball path '${CEFTARBALL}' is not a file"
     exit 1
 fi
 
@@ -26,13 +35,13 @@ elif [ "$ARCH" == "aarch64" ]
 then
     CMAKEFLAGS="-DPROJECT_ARCH=arm64"
 else
-    echo "Unsupported architecture"
+    echo "ERROR: Unsupported architecture"
     exit 1
 fi
 
 echo "Extracting CEF"
 mkdir cef
-tar xf cef.tar.bz2 -C cef --strip-components 1
+tar xf "${CEFTARBALL}" -C cef --strip-components 1
 
 echo "Building CEF DLL wrapper"
 
