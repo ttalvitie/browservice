@@ -1,8 +1,43 @@
 # Building Browservice
 
-This file contains building instructions on Linux. For build instructions on Windows, see the `README.md` file in the `winbuild` directory.
+This file contains building instructions for Linux. For building on Windows, see the `README.md` file in the `winbuild` directory.
 
-## Installing dependencies
+## Building CEF
+
+Browservice requires a custom build of CEF with some patches that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access. It is recommended to build it using the Docker image [tools/linux_cef_build_docker_image/Dockerfile](tools/linux_cef_build_docker_image/Dockerfile) and the script [tools/build_patched_cef.py](tools/build_patched_cef.py).
+
+Building CEF takes a lot of memory, disk space and time, because it includes the Chromium browser. You should build it on a powerful x86_64 Linux machine with Docker installed and at least 16 GB of memory and 100 GB of disk space. Note that even for ARM builds, you should use a x86_64 machine (CEF will be cross-compiled).
+
+Instructions:
+```
+# Clone Browservice repo
+git clone https://github.com/ttalvitie/browservice.git
+
+# Create the cefbuild Docker image
+cd browservice/tools/linux_cef_build_docker_image/
+sudo docker build -t cefbuild .
+
+# Prepare a build directory
+cd ..
+mkdir build
+chmod 777 build
+cp build_patched_cef.py build/
+
+# Build CEF (this takes a lot of time; run in screen if you are behind an unreliable SSH connection)
+# This command creates a x86_64 build; replace x86_64 by aarch64 for ARM64 and armhf for 32-bit ARM
+# This will build a CEF version that is compatible with the Browservice code in the currently checked out commit
+# (overridable using the command line arguments of build_patched_cef.py)
+sudo docker run -v "${PWD}/build":/home/appuser cefbuild python3 /home/appuser/build_patched_cef.py /home/appuser/build /home/appuser/patched_cef_x86_64.tar.bz2 x86_64
+
+# Keep the created CEF distribution from the build directory; we will need it when building Browservice
+# (Again replace x86_64 by aarch64 or armhf when appropriate)
+cp build/patched_cef_x86_64.tar.bz2 .
+
+# Remove the build directory
+sudo rm -rf build
+```
+
+## Installing Browservice dependencies
 
 ### Ubuntu 18.04/20.04, Debian 10 and Raspberry Pi OS
 
@@ -43,13 +78,7 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ## Compiling and running Browservice
 
-On the proxy server, download and extract the [latest release](https://github.com/ttalvitie/browservice/releases) of the Browservice source code. Before compiling Browservice, we still need to download and set up CEF. To help with this, convenience scripts are provided. To download a release build of CEF into `cef.tar.bz2`, run the following in the extracted Browservice release root directory to download and verify CEF:
-
-```
-./download_cef.sh
-```
-
-Then, extract CEF and build its DLL wrapper library:
+Enter the Browservice repo cloned as shown in the [Building CEF](#building-cef) section. Copy the patched CEF tarball you built to `cef.tar.bz2` at the root of the working copy, and run the following to extract it and build its DLL wrapper library:
 
 ```
 ./setup_cef.sh
@@ -81,4 +110,4 @@ For more information on how to use the Browservice proxy, refer to the instructi
 
 ## Building AppImage
 
-If you want to build the AppImage yourself, clone the repository and use the build script `tools/build_appimage.sh` with two arguments: the architecture (`x86_64`, `i386`, `armhf`, `aarch64`) and the Git branch, commit or tag name you want to build. The build script builds the AppImage in a QEMU emulated machine and if successfuly, saves the built AppImage to the current directory.
+If you want to build the AppImage yourself, clone the repository and use the build script `tools/build_appimage.sh` with four arguments: the architecture (`x86_64`, `armhf`, `aarch64`), the Git branch, commit or tag name you want to build, a path to the patched CEF tarball and the output filename. The build script builds the AppImage in a QEMU emulated machine and if successfuly, saves the built AppImage to the current directory.
