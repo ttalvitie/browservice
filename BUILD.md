@@ -10,7 +10,7 @@ Building CEF takes a lot of memory, disk space and time, because it includes the
 
 Instructions:
 ```
-# Clone Browservice repo
+# Clone the Browservice code repository
 git clone https://github.com/ttalvitie/browservice.git
 
 # Create the cefbuild Docker image
@@ -26,15 +26,15 @@ cp build_patched_cef.py build/
 # Build CEF (this takes a lot of time; run in screen if you are behind an unreliable SSH connection)
 # This command creates a x86_64 build; replace x86_64 by aarch64 for ARM64 and armhf for 32-bit ARM
 # This will build a CEF version that is compatible with the Browservice code in the currently checked out commit
-# (overridable using the command line arguments of build_patched_cef.py)
+# (The version is overridable using the command line arguments of build_patched_cef.py)
 sudo docker run -v "${PWD}/build":/home/appuser cefbuild python3 /home/appuser/build_patched_cef.py /home/appuser/build /home/appuser/patched_cef_x86_64.tar.bz2 x86_64
 
-# Keep the created CEF distribution from the build directory; we will need it when building Browservice
-# (Again replace x86_64 by aarch64 or armhf when appropriate)
+# Copy the built patched CEF distribution away from the build directory; we will need it when building Browservice
+# (Again replace x86_64 by aarch64 or armhf if appropriate)
 cp build/patched_cef_x86_64.tar.bz2 .
 
 # Remove the build directory
-sudo rm -rf build
+sudo rm -r build
 ```
 
 ## Installing Browservice dependencies
@@ -78,7 +78,7 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ## Compiling and running Browservice
 
-Enter the Browservice repo cloned as shown in the [Building CEF](#building-cef) section. Copy the patched CEF tarball you built to `cef.tar.bz2` at the root of the working copy, and run the following to extract it and build its DLL wrapper library:
+Enter the Browservice working copy cloned as shown in the [Building CEF](#building-cef) section. Copy the patched CEF distribution tarball you built to `cef.tar.bz2` at the root of the working copy, and run the following to extract it and build its DLL wrapper library:
 
 ```
 ./setup_cef.sh
