@@ -78,10 +78,10 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ## Compiling and running Browservice
 
-Enter the Browservice working copy cloned as shown in the [Building CEF](#building-cef) section. Copy the patched CEF distribution tarball you built to `cef.tar.bz2` at the root of the working copy, and run the following to extract it and build its DLL wrapper library:
+First build the patched CEF distribution as shown in the [Building CEF](#building-cef) section. Enter the Browservice working copy and run the following to extract the CEF distribution tarball and build its DLL wrapper library (replace `patched_cef_x86_64.tar.bz2` by the path of the CEF tarball you built):
 
 ```
-./setup_cef.sh
+./setup_cef.sh patched_cef_x86_64.tar.bz2
 ```
 
 Now, compile a release build of Browservice (you may adjust the number in the `-j` argument to set the number of parallel compile jobs):
