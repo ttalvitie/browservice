@@ -1,4 +1,5 @@
 import base64
+import ctypes
 import datetime
 import imageio.v3
 import io
@@ -32,7 +33,7 @@ def launch_browservice(args, popen_kwargs={}):
     if sys.platform == "linux":
         platform_popen_args = {"preexec_fn": os.setsid}
     else:
-        platform_popen_args = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP}
+        platform_popen_args = {"creationflags": subprocess.CREATE_NEW_CONSOLE}
     process = subprocess.Popen(args, stderr=subprocess.STDOUT, **platform_popen_args, **popen_kwargs)
 
     if sys.platform == "linux":
@@ -46,7 +47,8 @@ def launch_browservice(args, popen_kwargs={}):
             process.kill()
             process.communicate()
         def ctrlc():
-            os.kill(process.pid, signal.CTRL_C_EVENT)
+            # Sending Ctrl+C on Windows is hacky, adapted from https://stackoverflow.com/a/60795888
+            subprocess.check_call([sys.executable, "-c", "import ctypes, sys; kernel=ctypes.windll.kernel32; kernel.FreeConsole(); kernel.AttachConsole(int(sys.argv[1])); kernel.SetConsoleCtrlHandler(None, 1); kernel.GenerateConsoleCtrlEvent(0, 0)", str(process.pid)])
 
     return (process, {"cleanup": cleanup, "ctrlc": ctrlc})
 
@@ -228,7 +230,7 @@ def browser_test(browservice_path, allow_online):
         else:
             log(f"Navigating browser to the test image data URL")
             test_img_data = io.BytesIO()
-            imageio.v3.imwrite(test_img_data, test_img, format="png")
+            imageio.v3.imwrite(test_img_data, test_img, format="png", extension=".png")
             goto_url("data:image/png;base64," + base64.b64encode(test_img_data.getvalue()).decode("ascii"))
 
         log(f"Waiting for the image to contain the test image colors")
