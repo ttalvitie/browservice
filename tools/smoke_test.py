@@ -77,7 +77,7 @@ def browser_test(browservice_path, allow_online):
     log(f"Using port {port}")
 
     log(f"Running browservice with --vice-opt-http-listen-addr=127.0.0.1:{port}")
-    (process, process_funcs) = launch_browservice([browservice_path, f"--vice-opt-http-listen-addr=127.0.0.1:{port}", "--use-dedicated-xvfb=NO"])
+    (process, process_funcs) = launch_browservice([browservice_path, f"--vice-opt-http-listen-addr=127.0.0.1:{port}"])
 
     try:
         prefix = f"http://127.0.0.1:{port}"
