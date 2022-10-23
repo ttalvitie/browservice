@@ -221,10 +221,15 @@ def browser_test(browservice_path, allow_online):
         test_colors = [[[0, 212, 133], [6, 85, 41], [43, 142, 46], [229, 245, 6]], [[46, 182, 102], [174, 99, 239], [235, 116, 241], [95, 91, 113]]]
         test_img = np.repeat(np.repeat(np.array(test_colors), 150, 0), 150, 1).astype(np.uint8)
 
-        log(f"Navigating browser to a test image data URL")
-        test_img_data = io.BytesIO()
-        imageio.v3.imwrite(test_img_data, test_img, format="png")
-        goto_url("data:image/png;base64," + base64.b64encode(test_img_data.getvalue()).decode("ascii"))
+        if allow_online:
+            url = "https://raw.githubusercontent.com/ttalvitie/browservice/master/tools/smoke_test_data/test_img.png"
+            log(f"Navigating browser to the test image URL {url}")
+            goto_url(url)
+        else:
+            log(f"Navigating browser to the test image data URL")
+            test_img_data = io.BytesIO()
+            imageio.v3.imwrite(test_img_data, test_img, format="png")
+            goto_url("data:image/png;base64," + base64.b64encode(test_img_data.getvalue()).decode("ascii"))
 
         log(f"Waiting for the image to contain the test image colors")
         def test_image_color_criterion(img):
