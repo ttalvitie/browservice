@@ -6,8 +6,8 @@ import sys
 import urllib.request
 from base64 import b64encode
 
-DEFAULT_BRANCH = "5112"
-DEFAULT_COMMIT = "2587cf2"
+DEFAULT_BRANCH = "5249"
+DEFAULT_COMMIT = "5891c70"
 
 # Created at the end of the file.
 PATCHER_SCRIPT = None

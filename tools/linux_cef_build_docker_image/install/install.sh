@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-chromium_version=104.0.5112.81
+chromium_version=106.0.5249.119
 
 # Script from
 # https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p47371
