@@ -1,6 +1,6 @@
 #include "upload.hpp"
 
-#include <Poco/Crypto/DigestEngine.h>
+#include <openssl/sha.h>
 
 #ifdef _WIN32
 #include <fileapi.h>
@@ -139,7 +139,8 @@ shared_ptr<FileUpload> UploadStorage::upload(
     fp.open(path, ofstream::binary);
     REQUIRE(fp.good());
 
-    Poco::Crypto::DigestEngine hasher("SHA256");
+    SHA256_CTX hasher;
+    SHA256_Init(&hasher);
 
     bool ok = true;
     try {
@@ -159,7 +160,7 @@ shared_ptr<FileUpload> UploadStorage::upload(
             size_t readCount = dataStream.gcount();
             REQUIRE(readCount >= 0 && readCount <= BufSize);
 
-            hasher.update(buf, readCount);
+            SHA256_Update(&hasher, buf, readCount);
 
             fp.write(buf, readCount);
             REQUIRE(fp.good());
@@ -168,6 +169,9 @@ shared_ptr<FileUpload> UploadStorage::upload(
         WARNING_LOG("Reading file upload stream failed with exception");
         ok = false;
     }
+
+    unsigned char hashBin[SHA256_DIGEST_LENGTH];
+    SHA256_Final(hashBin, &hasher);
 
     fp.close();
     REQUIRE(fp.good());
@@ -178,7 +182,13 @@ shared_ptr<FileUpload> UploadStorage::upload(
         return empty;
     }
 
-    string hash = hasher.digestToHex(hasher.digest());
+    string hash;
+    for(size_t i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        int byte = (int)hashBin[i];
+        for(int nibble : {byte >> 4, byte & 15}) {
+            hash.push_back(nibble < 10 ? (char)('0' + nibble) : (char)('a' + (nibble - 10)));
+        }
+    }
 
     shared_ptr<FileUpload> ret;
     {
