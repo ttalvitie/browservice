@@ -1,0 +1,5 @@
+ARCH="armhf"
+RUNNER="debian"
+IMAGE_URL="https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-armhf.img"
+KERNEL_URL="https://cloud-images.ubuntu.com/focal/current/unpacked/focal-server-cloudimg-armhf-vmlinuz-lpae"
+INITRD_URL="https://cloud-images.ubuntu.com/focal/current/unpacked/focal-server-cloudimg-armhf-initrd-generic-lpae"

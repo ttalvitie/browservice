@@ -1,0 +1,5 @@
+ARCH="x86_64"
+RUNNER="debian"
+IMAGE_URL="https://cloud-images.ubuntu.com/focal/current/focal-server-cloudimg-amd64.img"
+KERNEL_URL="https://cloud-images.ubuntu.com/focal/current/unpacked/focal-server-cloudimg-amd64-vmlinuz-generic"
+INITRD_URL="https://cloud-images.ubuntu.com/focal/current/unpacked/focal-server-cloudimg-amd64-initrd-generic"
