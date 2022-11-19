@@ -6,7 +6,7 @@ shopt -s expand_aliases
 
 msg() { cat <<< "--- $@" 1>&2; }
 
-msg "Creating normal for running the tests"
+msg "Creating normal user for running the tests"
 useradd -m user
 alias U="sudo -u user"
 
@@ -26,7 +26,7 @@ echo "update_initramfs=no" >> /etc/initramfs-tools/update-initramfs.conf
 msg "Installing dependencies"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y python3-pip python3-numpy libjpeg-dev zlib1g-dev fuse
+apt-get install -y python3-pip python3-numpy libjpeg-dev zlib1g-dev fuse libopenjp2-7
 U pip install imageio
 
 msg "Running smoke test"

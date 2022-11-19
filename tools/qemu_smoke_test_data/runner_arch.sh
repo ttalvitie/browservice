@@ -6,7 +6,7 @@ shopt -s expand_aliases
 
 msg() { cat <<< "--- $@" 1>&2; }
 
-msg "Creating normal for running the tests"
+msg "Creating normal user for running the tests"
 useradd -m user
 alias U="sudo -u user"
 
