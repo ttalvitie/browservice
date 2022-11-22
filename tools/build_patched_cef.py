@@ -106,19 +106,21 @@ def run():
     if os_type == "Windows":
         if arch == "windows64":
             cmd.append("--x64-build")
-        env["GN_DEFINES"] = "is_official_build=true use_thin_lto=false"
+        cmd.append("--with-pgo-profiles")
+        env["GN_DEFINES"] = "is_official_build=true"
         env["GYP_MSVS_VERSION"] = "2019"
     elif os_type == "Linux":
         if arch == "x86_64":
             cmd.append("--x64-build")
-            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false"
+            cmd.append("--with-pgo-profiles")
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true symbol_level=1 is_cfi=false"
         elif arch == "armhf":
             cmd.append("--arm-build")
-            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false use_vaapi=false"
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true symbol_level=1 is_cfi=false use_thin_lto=false chrome_pgo_phase=0 use_vaapi=false"
             env["CEF_INSTALL_SYSROOT"] = "arm"
         elif arch == "aarch64":
             cmd.append("--arm64-build")
-            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true use_allocator=none symbol_level=1 is_cfi=false use_thin_lto=false"
+            env["GN_DEFINES"] = "is_official_build=true use_sysroot=true symbol_level=1 is_cfi=false use_thin_lto=false chrome_pgo_phase=0"
             env["CEF_INSTALL_SYSROOT"] = "arm64"
         else:
             assert False
