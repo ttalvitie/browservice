@@ -4,6 +4,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
+2022-11-23: [Browservice 0.9.6.1](https://github.com/ttalvitie/browservice/releases/tag/v0.9.6.1) has been released.
+
 2022-11-05: [Browservice 0.9.6.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.6.0) has been released.
 
 2022-03-26: [Browservice 0.9.5.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.5.0) has been released. This release adds support for soft navigation buttons in the browser area and partial blocking of local file access.
