@@ -7,7 +7,7 @@
 
 namespace browservice {
 
-const char* BrowserviceVersion = "0.9.6.1";
+const char* BrowserviceVersion = "0.9.6.2";
 
 namespace {
 
