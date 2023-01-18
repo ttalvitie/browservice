@@ -165,7 +165,7 @@ echo "--- Starting up the machine" >> "${TMPDIR}/shared/log"
     -device "${QEMU_NET_DEV},netdev=net0" \
     -kernel "${TMPDIR}/vm/kernel" \
     -initrd "${TMPDIR}/vm/initrd" \
-    -append "rw root=/dev/disk/by-id/virtio-hd0-part1" \
+    -append "rw root=/dev/disk/by-id/virtio-hd0-part1 init=/bin/bash -- -c \"echo w | fdisk /dev/disk/by-id/virtio-hd0 ; /usr/bin/growpart /dev/disk/by-id/virtio-hd0 1 ; /usr/sbin/resize2fs /dev/disk/by-id/virtio-hd0-part1 ; exec /sbin/init\"" \
     -fsdev "local,path=${TMPDIR}/shared,security_model=mapped-xattr,id=shared,writeout=immediate,fmode=0644,dmode=0755" \
     -device "${QEMU_9P_DEV},fsdev=shared,mount_tag=shared" \
     -display none \

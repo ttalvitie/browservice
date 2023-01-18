@@ -87,6 +87,7 @@ IMAGE_URL=""
 KERNEL_URL=""
 INITRD_URL=""
 USE_AARCH64_EFI=""
+USE_CMDLINE_GROWPART=""
 RASPI=""
 
 . "${CONFIGFILE}"
@@ -159,7 +160,12 @@ if ! [ -z "${KERNEL_URL}" ]
 then
     wget "${KERNEL_URL}" -O "${TMPDIR}/vm/kernel"
     QEMU_KERNEL_OPTS+=(-kernel "${TMPDIR}/vm/kernel")
-    QEMU_KERNEL_OPTS+=(-append "rw root=/dev/disk/by-id/virtio-hd0-part1")
+    if [ -z "${USE_CMDLINE_GROWPART}" ]
+    then
+        QEMU_KERNEL_OPTS+=(-append "rw root=/dev/disk/by-id/virtio-hd0-part1")
+    else
+        QEMU_KERNEL_OPTS+=(-append "rw root=/dev/disk/by-id/virtio-hd0-part1 init=/bin/bash -- -c \"echo w | fdisk /dev/disk/by-id/virtio-hd0 ; /usr/bin/growpart /dev/disk/by-id/virtio-hd0 1 ; /usr/sbin/resize2fs /dev/disk/by-id/virtio-hd0-part1 ; exec /sbin/init\"")
+    fi
 fi
 if ! [ -z "${INITRD_URL}" ]
 then
