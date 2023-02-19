@@ -20,7 +20,7 @@ U chmod 700 browservice.AppImage
 msg "Disabling man-db update to save time"
 rm /var/lib/man-db/auto-update
 
-msg "Disabling initramfs update to save time"
+msg "Disabling initramfs update to save time and avoid issues"
 echo "update_initramfs=no" >> /etc/initramfs-tools/update-initramfs.conf
 
 msg "Installing dependencies"

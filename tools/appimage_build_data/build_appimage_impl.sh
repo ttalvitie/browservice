@@ -52,6 +52,9 @@ U mkdir browservice
 cd browservice
 U tar xf /shared/src.tar
 
+msg "Disabling initramfs update to save time and avoid issues"
+echo "update_initramfs=no" >> /etc/initramfs-tools/update-initramfs.conf
+
 msg "Upgrading system"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
