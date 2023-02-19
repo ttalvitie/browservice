@@ -3,8 +3,18 @@
 #include "globals.hpp"
 #include "rect.hpp"
 
+#ifdef _WIN32
+// Silence warning about glib using forceinline not available in pre-C++20.
+#pragma warning( push )
+#pragma warning( disable : 5051 )
+#endif
+
 #include <freetype/fttypes.h>
 #include <pango/pangoft2.h>
+
+#ifdef _WIN32
+#pragma warning( pop )
+#endif
 
 namespace browservice {
 
