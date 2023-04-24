@@ -6,8 +6,8 @@ import sys
 import urllib.request
 from base64 import b64encode
 
-DEFAULT_BRANCH = "5563"
-DEFAULT_COMMIT = "491d238"
+DEFAULT_BRANCH = "5735"
+DEFAULT_COMMIT = "398e3c3"
 
 # Created at the end of the file.
 PATCHER_SCRIPT = None
@@ -309,6 +309,7 @@ private:
         ++browserviceClipboardSeqNum;
     }
     void WriteHTML(const char* markup_data, size_t markup_len, const char* url_data, size_t url_len) override {}
+    void WriteUnsanitizedHTML(const char* markup_data, size_t markup_len, const char* url_data, size_t url_len) override {}
     void WriteSvg(const char* markup_data, size_t markup_len) override {}
     void WriteRTF(const char* rtf_data, size_t data_len) override {}
     void WriteFilenames(std::vector<ui::FileInfo> filenames) override {}
