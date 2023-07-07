@@ -113,7 +113,7 @@ def run():
     cmake_arch = {"windows32": "Win32", "windows64": "x64"}[arch]
     log(f"Creating CEF build directory '{cef_build_dir}' and generating build files with CMake")
     os.mkdir(cef_build_dir)
-    cmake_output = subprocess.check_output(["cmake", "-G", "Visual Studio 16", "-A", cmake_arch, ".."], cwd=cef_build_dir).decode("UTF-8")
+    cmake_output = subprocess.check_output(["cmake", "-G", "Visual Studio 17", "-A", cmake_arch, ".."], cwd=cef_build_dir).decode("UTF-8")
     print(cmake_output, end="")
 
     log(f"Detecting C++ compiler path from CMake output")

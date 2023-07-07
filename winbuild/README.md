@@ -24,10 +24,10 @@
     - Create a subdirectory named ´build´ for the CEF binary distribution directory, navigate to it in a commmand prompt and run one of the commands below:
         ```
         # For 32-bit builds
-        cmake -G "Visual Studio 16" -A Win32 ..
+        cmake -G "Visual Studio 17" -A Win32 ..
 
         # For 64-bit builds
-        cmake -G "Visual Studio 16" -A x64 ..
+        cmake -G "Visual Studio 17" -A x64 ..
         ```
         This creates a Visual Studio solution file `cef.sln` that we will use to build Browservice.
 - Build Browservice:
