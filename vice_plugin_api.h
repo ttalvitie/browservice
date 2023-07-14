@@ -827,6 +827,53 @@ VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_PluginNavigationControlSupportQu
 );
 
 /***************************************************************************************************
+ *** API extension "WindowTitle" ***
+ ***********************************/
+
+/* Extension that allows the program to query the title string of each window, and also track
+ * changes to the title strings. The extension is enabled by the program using
+ * vicePluginAPI_WindowTitle_enable.
+ */
+
+struct VicePluginAPI_WindowTitle_Callbacks {
+    /* Returns the title of given window or NULL if the title is not available. If the return
+     * value is not NULL, the calling plugin must free the string using vicePluginAPI_free. After
+     * the call, the program must notify the plugin about possible changes to the title of the
+     * window using vicePluginAPI_WindowTitle_notifyWindowTitleChanged. Note that the title may be
+     * arbitrary null-terminated binary data possibly from an untrusted source (though it should
+     * typically be interpreted as an UTF-8 string); it is the responsibility of the caller to
+     * perform any sanitization and clamping of the string if necessary for the application.
+     */
+    char* (*getWindowTitle)(void*, uint64_t window);
+};
+typedef struct VicePluginAPI_WindowTitle_Callbacks VicePluginAPI_WindowTitle_Callbacks;
+
+/* Enables the WindowTitle extensions in given context, making it possible for the plugin to
+ * query window titles and get window title update notifications. May only be called once for
+ * each context, after vicePluginAPI_initContext and before vicePluginAPI_start. The vice plugin
+ * uses the callbacks similarly to the callbacks given in vicePluginAPI_start.
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_WindowTitle_enable(
+    VicePluginAPI_Context* ctx,
+    VicePluginAPI_WindowTitle_Callbacks callbacks
+);
+
+/* Called to notify the plugin that the title for given window has changed since it was last
+ * queried using the getWindowTitle callback (the new title should be available from the callback
+ * immediately after this function has returned). May only be called for running contexts (started
+ * with vicePluginAPI_start and not yet shut down) for which window title queries have been
+ * enabled using vicePluginAPI_WindowTitle_enable. The program may call this function even when
+ * the title does not change or is not available, but the given window must always exist. If
+ * multiple title changes happen to a window between calls to getWindowTitle, it suffices for the
+ * program to call this function only once. If getWindowTitle has not yet been called for a
+ * window, this function does not need to be called (but calling it is allowed).
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_WindowTitle_notifyWindowTitleChanged(
+    VicePluginAPI_Context* ctx,
+    uint64_t window
+);
+
+/***************************************************************************************************
  *** Deprecated API versions 1000000 and 1000001 ***
  ***************************************************/
 

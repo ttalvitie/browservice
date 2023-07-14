@@ -50,7 +50,9 @@ struct VicePlugin::APIFuncs {
 #define FOREACH_VICE_API_FUNC \
     FOREACH_REQUIRED_VICE_API_FUNC \
     FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable) \
-    FOREACH_VICE_API_FUNC_ITEM(PluginNavigationControlSupportQuery_query)
+    FOREACH_VICE_API_FUNC_ITEM(PluginNavigationControlSupportQuery_query) \
+    FOREACH_VICE_API_FUNC_ITEM(WindowTitle_enable) \
+    FOREACH_VICE_API_FUNC_ITEM(WindowTitle_notifyWindowTitleChanged)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name = nullptr;
@@ -270,6 +272,10 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     }
     if(apiFuncs->isExtensionSupported(APIVersion, "PluginNavigationControlSupportQuery")) {
         LOAD_API_FUNC(PluginNavigationControlSupportQuery_query);
+    }
+    if(apiFuncs->isExtensionSupported(APIVersion, "WindowTitle")) {
+        LOAD_API_FUNC(WindowTitle_enable);
+        LOAD_API_FUNC(WindowTitle_notifyWindowTitleChanged);
     }
 
     return VicePlugin::create(
@@ -596,6 +602,20 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
         plugin_->apiFuncs_->URINavigation_enable(ctx_, uriNavigationCallbacks);
     }
 
+    if(plugin_->apiFuncs_->WindowTitle_enable != nullptr) {
+        VicePluginAPI_WindowTitle_Callbacks windowTitleCallbacks;
+        memset(&windowTitleCallbacks, 0, sizeof(VicePluginAPI_WindowTitle_Callbacks));
+
+        windowTitleCallbacks.getWindowTitle =
+            CTX_CALLBACK(char*, (uint64_t window), {
+                REQUIRE(self->openWindows_.count(window));
+                string title = self->eventHandler_->onViceContextWindowTitleQuery(window);
+                return createMallocString(title, self->plugin_->apiFuncs_->malloc);
+            });
+
+        plugin_->apiFuncs_->WindowTitle_enable(ctx_, windowTitleCallbacks);
+    }
+
     VicePluginAPI_Callbacks callbacks;
     memset(&callbacks, 0, sizeof(VicePluginAPI_Callbacks));
 
@@ -850,6 +870,16 @@ void ViceContext::notifyWindowViewChanged(uint64_t window) {
     REQUIRE(openWindows_.count(window));
 
     plugin_->apiFuncs_->notifyWindowViewChanged(ctx_, window);
+}
+
+void ViceContext::notifyWindowTitleChanged(uint64_t window) {
+    RUNNING_CONTEXT_FUNC_CHECKS();
+    REQUIRE(openWindows_.count(window));
+
+    if(plugin_->apiFuncs_->WindowTitle_enable != nullptr) {
+        REQUIRE(plugin_->apiFuncs_->WindowTitle_notifyWindowTitleChanged != nullptr);
+        plugin_->apiFuncs_->WindowTitle_notifyWindowTitleChanged(ctx_, window);
+    }
 }
 
 void ViceContext::setWindowCursor(uint64_t window, int cursor) {

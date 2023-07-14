@@ -265,6 +265,16 @@ void Server::onViceContextCancelFileUpload(uint64_t window) {
     it->second->cancelFileUpload();
 }
 
+string Server::onViceContextWindowTitleQuery(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    return it->second->fetchTitle();
+}
+
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == WaitViceContext);
@@ -303,6 +313,14 @@ void Server::onWindowViewImageChanged(uint64_t handle) {
     REQUIRE(openWindows_.count(handle));
 
     viceCtx_->notifyWindowViewChanged(handle);
+}
+
+void Server::onWindowTitleChanged(uint64_t handle) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    viceCtx_->notifyWindowTitleChanged(handle);
 }
 
 void Server::onWindowCursorChanged(uint64_t handle, int cursor) {

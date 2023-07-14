@@ -118,6 +118,8 @@ public:
     ) = 0;
     virtual void onViceContextCancelFileUpload(uint64_t window) = 0;
 
+    virtual string onViceContextWindowTitleQuery(uint64_t window) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 
@@ -163,6 +165,8 @@ public:
     void closeWindow(uint64_t window);
 
     void notifyWindowViewChanged(uint64_t window);
+
+    void notifyWindowTitleChanged(uint64_t window);
 
     void setWindowCursor(uint64_t window, int cursor);
 

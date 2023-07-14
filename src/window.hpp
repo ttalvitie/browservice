@@ -18,6 +18,7 @@ public:
     virtual void onWindowClose(uint64_t handle) = 0;
     virtual void onWindowCleanupComplete(uint64_t handle) = 0;
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
+    virtual void onWindowTitleChanged(uint64_t handle) = 0;
     virtual void onWindowCursorChanged(uint64_t handle, int cursor) = 0;
     virtual optional<pair<vector<string>, size_t>> onWindowQualitySelectorQuery(
         uint64_t handle
@@ -88,6 +89,8 @@ public:
     void close();
     void resize(int width, int height);
     ImageSlice fetchViewImage();
+
+    string fetchTitle();
 
     // -1 = back, 0 = refresh, 1 = forward.
     void navigate(int direction);
@@ -162,6 +165,9 @@ private:
     // May call onWindowViewImageChanged immediately.
     void signalImageChanged_();
 
+    // May call onWindowTitleChanged immediately.
+    void signalTitleChanged_();
+
     uint64_t handle_;
     enum {Open, Closed, CleanupComplete} state_;
 
@@ -171,6 +177,9 @@ private:
     bool showSoftNavigationButtons_;
 
     bool imageChanged_;
+
+    bool titleChanged_;
+    string title_;
 
     // Always empty in CleanupComplete state. May be empty in Open and Closed
     // states if the browser has not yet started.

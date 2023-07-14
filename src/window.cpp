@@ -329,15 +329,27 @@ public:
         }
 
         string title = origTitle;
+        string bookmarkTitle = origTitle;
         if(
             readSignedDataURL(title, certificateErrorPageSignKey_) ||
             readSignedDataURL(title, fileSchemeBlockedPageSignKey_)
         ) {
             // Do not show error message data URLs as titles
-            title = "";
+            title = "Error";
+            bookmarkTitle = "";
         }
 
-        window_->rootWidget_->controlBar()->setPageTitle(title);
+        if(window_->title_ != title) {
+            window_->title_ = title;
+            shared_ptr<Window> window = window_;
+            postTask([window]() {
+                if(window->state_ == Open) {
+                    window->signalTitleChanged_();
+                }
+            });
+        }
+
+        window_->rootWidget_->controlBar()->setPageTitle(bookmarkTitle);
     }
 
     virtual bool OnCursorChange(
@@ -606,6 +618,14 @@ ImageSlice Window::fetchViewImage() {
 
     imageChanged_ = false;
     return rootViewport_;
+}
+
+string Window::fetchTitle() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    titleChanged_ = false;
+    return title_;
 }
 
 void Window::navigate(int direction) {
@@ -975,6 +995,9 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle,
 
     imageChanged_ = false;
 
+    titleChanged_ = false;
+    title_ = "Browservice";
+
     shared_ptr<Window> self = shared_from_this();
 
     rootViewport_ = ImageSlice::createImage(800, 600);
@@ -1107,6 +1130,17 @@ void Window::signalImageChanged_() {
 
         REQUIRE(eventHandler_);
         eventHandler_->onWindowViewImageChanged(handle_);
+    }
+}
+
+void Window::signalTitleChanged_() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ == Open && !titleChanged_) {
+        titleChanged_ = true;
+
+        REQUIRE(eventHandler_);
+        eventHandler_->onWindowTitleChanged(handle_);
     }
 }
 
