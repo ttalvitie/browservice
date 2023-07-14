@@ -61,7 +61,15 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason, optional<strin
     uint64_t handle = nextWindowHandle_++;
     REQUIRE(handle);
 
-    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle, uri);
+    bool showNavigationButtons;
+    if(globals->config->showSoftNavigationButtons.has_value()) {
+        showNavigationButtons = globals->config->showSoftNavigationButtons.value();
+    } else {
+        optional<bool> viceHasNavigationControls = viceCtx_->hasNavigationControls();
+        showNavigationButtons = !viceHasNavigationControls.has_value() || viceHasNavigationControls.value() == false;
+    }
+
+    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle, uri, showNavigationButtons);
     if(window) {
         REQUIRE(openWindows_.emplace(handle, window).second);
         return handle;

@@ -49,7 +49,8 @@ struct VicePlugin::APIFuncs {
 
 #define FOREACH_VICE_API_FUNC \
     FOREACH_REQUIRED_VICE_API_FUNC \
-    FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable)
+    FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable) \
+    FOREACH_VICE_API_FUNC_ITEM(PluginNavigationControlSupportQuery_query)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name = nullptr;
@@ -266,6 +267,9 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 
     if (apiFuncs->isExtensionSupported(APIVersion, "URINavigation")) {
         LOAD_API_FUNC(URINavigation_enable);
+    }
+    if(apiFuncs->isExtensionSupported(APIVersion, "PluginNavigationControlSupportQuery")) {
+        LOAD_API_FUNC(PluginNavigationControlSupportQuery_query);
     }
 
     return VicePlugin::create(
@@ -525,11 +529,21 @@ ViceContext::ViceContext(CKey, CKey,
 
     uploadTempDir_ = TempDir::create();
     nextUploadIdx_ = (uint64_t)1;
+
+    if(plugin->apiFuncs_->PluginNavigationControlSupportQuery_query != nullptr) {
+        int value = plugin->apiFuncs_->PluginNavigationControlSupportQuery_query(ctx);
+        REQUIRE(value == 0 || value == 1);
+        hasNavigationControls_ = (bool)value;
+    }
 }
 
 ViceContext::~ViceContext() {
     REQUIRE(state_ == Pending || state_ == ShutdownComplete);
     plugin_->apiFuncs_->destroyContext(ctx_);
+}
+
+optional<bool> ViceContext::hasNavigationControls() {
+    return hasNavigationControls_;
 }
 
 void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {

@@ -75,7 +75,8 @@ public:
     static shared_ptr<Window> tryCreate(
         shared_ptr<WindowEventHandler> eventHandler,
         uint64_t handle,
-        optional<string> uri
+        optional<string> uri,
+        bool showSoftNavigationButtons
     );
 
     // Private constructor.
@@ -147,7 +148,7 @@ private:
     //         after this, the window is open.
     //       - If creating the browser failed, call createFailed_() and let the
     //         object destruct.
-    void init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle);
+    void init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle, bool showSoftNavigationButtons);
     void createSuccessful_();
     void createFailed_();
 
@@ -166,6 +167,8 @@ private:
 
     // Empty only in CleanupComplete state.
     shared_ptr<WindowEventHandler> eventHandler_;
+
+    bool showSoftNavigationButtons_;
 
     bool imageChanged_;
 

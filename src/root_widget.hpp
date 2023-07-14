@@ -16,7 +16,8 @@ public:
         weak_ptr<WidgetParent> widgetParent,
         weak_ptr<ControlBarEventHandler> controlBarEventHandler,
         weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler,
-        bool allowPNG
+        bool allowPNG,
+        bool showSoftNavigationButtons
     );
 
     shared_ptr<ControlBar> controlBar();
@@ -30,6 +31,7 @@ private:
     virtual vector<shared_ptr<Widget>> widgetListChildren_() override;
 
     bool allowPNG_;
+    bool showSoftNavigationButtons_;
 
     weak_ptr<ControlBarEventHandler> controlBarEventHandler_;
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler_;

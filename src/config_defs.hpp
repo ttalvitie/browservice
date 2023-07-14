@@ -183,12 +183,14 @@ CONF_DEF_OPT_INFO(chromiumArgs) {
 
 CONF_DEF_OPT_INFO(showSoftNavigationButtons) {
     const char* name = "show-soft-navigation-buttons";
-    const char* valSpec = "YES/NO";
+    const char* valSpec = "YES/NO/AUTO";
     string desc() {
         return
-            "if enabled, navigation buttons (Back/Forward/Refresh/Home) are added to the control bar in the browser view";
+            "if enabled, navigation buttons (Back/Forward/Refresh/Home) are added to the control bar in the browser view; "
+            "in auto mode, enabled unless the vice plugin reports to implement navigation buttons";
     }
-    bool defaultVal() {
-        return false;
+    optional<bool> defaultVal() {
+        optional<bool> empty;
+        return empty;
     }
 };

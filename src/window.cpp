@@ -134,7 +134,7 @@ public:
                 );
 
                 shared_ptr<Window> newWindow = Window::create(Window::CKey());
-                newWindow->init_(window_->eventHandler_, newHandle);
+                newWindow->init_(window_->eventHandler_, newHandle, window_->showSoftNavigationButtons_);
 
                 windowInfo.SetAsWindowless(kNullWindowHandle);
                 browserSettings.background_color = (cef_color_t)-1;
@@ -522,7 +522,8 @@ private:
 shared_ptr<Window> Window::tryCreate(
     shared_ptr<WindowEventHandler> eventHandler,
     uint64_t handle,
-    optional<string> uri
+    optional<string> uri,
+    bool showSoftNavigationButtons
 ) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
@@ -531,7 +532,7 @@ shared_ptr<Window> Window::tryCreate(
     INFO_LOG("Creating window ", handle);
 
     shared_ptr<Window> window = Window::create(CKey());
-    window->init_(eventHandler, handle);
+    window->init_(eventHandler, handle, showSoftNavigationButtons);
 
     CefRefPtr<CefClient> client = new Client(window);
 
@@ -897,7 +898,7 @@ void Window::onOpenBookmarksButtonPressed() {
                 INFO_LOG("Creating bookmark popup window ", newHandle);
 
                 shared_ptr<Window> newWindow =
-                    Window::tryCreate(eventHandler_, newHandle, "browservice://bookmarks/");
+                    Window::tryCreate(eventHandler_, newHandle, "browservice://bookmarks/", showSoftNavigationButtons_);
 
                 popupDenied = false;
                 return newWindow;
@@ -961,7 +962,7 @@ void Window::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     }
 }
 
-void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle) {
+void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle, bool showSoftNavigationButtons) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
     REQUIRE(handle);
@@ -970,12 +971,14 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle)
     state_ = Open;
     eventHandler_ = eventHandler;
 
+    showSoftNavigationButtons_ = showSoftNavigationButtons;
+
     imageChanged_ = false;
 
     shared_ptr<Window> self = shared_from_this();
 
     rootViewport_ = ImageSlice::createImage(800, 600);
-    rootWidget_ = RootWidget::create(self, self, self, true);
+    rootWidget_ = RootWidget::create(self, self, self, true, showSoftNavigationButtons);
     rootWidget_->setViewport(rootViewport_);
 
     downloadManager_ = DownloadManager::create(self);

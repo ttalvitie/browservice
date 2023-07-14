@@ -314,6 +314,13 @@ void Context::URINavigation_enable(VicePluginAPI_URINavigation_Callbacks callbac
     uriNavigationCallbacks_ = callbacks;
 }
 
+int Context::PluginNavigationControlSupportQuery_query() {
+    APILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    return 1;
+}
+
 void Context::start(
     VicePluginAPI_Callbacks callbacks,
     void* callbackData

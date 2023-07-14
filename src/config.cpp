@@ -53,6 +53,26 @@ struct OptParser<bool> {
     }
 };
 
+template <>
+struct OptParser<optional<bool>> {
+    static optional<optional<bool>> parse(string str) {
+        for(char& c : str) {
+            c = tolower(c);
+        }
+        if(str == "auto" || str == "automatic" || str == "autodetect") {
+            optional<bool> autoVal;
+            optional<optional<bool>> ret = autoVal;
+            return ret;
+        }
+        optional<bool> boolParseResult = OptParser<bool>::parse(str);
+        if(boolParseResult.has_value()) {
+            return boolParseResult;
+        } else {
+            optional<optional<bool>> empty;
+            return empty;
+        }
+    }
+};
 
 template <>
 struct OptParser<int> {
@@ -72,6 +92,13 @@ template <>
 struct DefaultValFormatter<bool> {
     static string format(bool val) {
         return val ? "yes" : "no";
+    }
+};
+
+template <>
+struct DefaultValFormatter<optional<bool>> {
+    static string format(optional<bool> val) {
+        return val.has_value() ? DefaultValFormatter<bool>::format(val.value()) : "auto";
     }
 };
 

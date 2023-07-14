@@ -684,7 +684,8 @@ struct ControlBar::Layout {
         bool isQualitySelectorVisible,
         bool isClipboardButtonVisible,
         bool isDownloadVisible,
-        bool isFindBarVisible
+        bool isFindBarVisible,
+        bool showSoftNavigationButtons
     ) : width(width) {
         int contentStart = 1;
         int contentEnd = width - 1;
@@ -696,7 +697,7 @@ struct ControlBar::Layout {
 
         int separator0Start;
         int separator0End;
-        if(globals->config->showSoftNavigationButtons) {
+        if(showSoftNavigationButtons) {
             backButtonStart = contentStart;
             backButtonEnd = backButtonStart + BtnWidth;
             forwardButtonStart = backButtonEnd;
@@ -892,7 +893,8 @@ struct ControlBar::Layout {
 ControlBar::ControlBar(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ControlBarEventHandler> eventHandler,
-    bool allowPNG
+    bool allowPNG,
+    bool showSoftNavigationButtons
 )
     : Widget(widgetParent)
 {
@@ -902,6 +904,7 @@ ControlBar::ControlBar(CKey,
 
     clipboardButtonEnabled_ = false;
     allowPNG_ = allowPNG;
+    showSoftNavigationButtons_ = showSoftNavigationButtons;
 
     animationTimeout_ = Timeout::create(30);
 
@@ -1179,7 +1182,8 @@ ControlBar::Layout ControlBar::layout_() {
         (bool)qualitySelector_,
         clipboardButtonEnabled_,
         isDownloadVisible_(),
-        findBarVisible_
+        findBarVisible_,
+        showSoftNavigationButtons_
     );
 }
 
@@ -1194,7 +1198,7 @@ void ControlBar::widgetViewportUpdated_() {
     ImageSlice viewport = getViewport();
     Layout layout = layout_();
 
-    if(globals->config->showSoftNavigationButtons) {
+    if(showSoftNavigationButtons_) {
         backButton_->setViewport(viewport.subRect(
             layout.backButtonStart, layout.backButtonEnd, 1, Height - 4
         ));
@@ -1401,7 +1405,7 @@ vector<shared_ptr<Widget>> ControlBar::widgetListChildren_() {
         openBookmarksButton_,
         findButton_
     };
-    if(globals->config->showSoftNavigationButtons) {
+    if(showSoftNavigationButtons_) {
         children.push_back(backButton_);
         children.push_back(forwardButton_);
         children.push_back(refreshButton_);

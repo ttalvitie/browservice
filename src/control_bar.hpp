@@ -49,7 +49,8 @@ public:
     ControlBar(CKey,
         weak_ptr<WidgetParent> widgetParent,
         weak_ptr<ControlBarEventHandler> eventHandler,
-        bool allowPNG
+        bool allowPNG,
+        bool showSoftNavigationButtons
     );
 
     void enableQualitySelector(vector<string> labels, size_t choiceIdx);
@@ -106,6 +107,7 @@ private:
     bool clipboardButtonEnabled_;
 
     bool allowPNG_;
+    bool showSoftNavigationButtons_;
 
     shared_ptr<Timeout> animationTimeout_;
 

@@ -38,6 +38,7 @@ public:
 
     // Public API functions:
     void URINavigation_enable(VicePluginAPI_URINavigation_Callbacks callbacks);
+    int PluginNavigationControlSupportQuery_query();
 
     void start(
         VicePluginAPI_Callbacks callbacks,

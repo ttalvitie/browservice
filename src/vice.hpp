@@ -141,6 +141,10 @@ public:
     );
     ~ViceContext();
 
+    // Does the plugin implement navigation controls? (Data may be unavailable if the plugin does
+    // not support the PluginNavigationControlSupportQuery plugin.)
+    optional<bool> hasNavigationControls();
+
     // Start running the context. Before quitting CEF message loop, call
     // shutdown and wait for onViceContextShutdownComplete event. Pointer to
     // the event handler will be retained until shutdown is complete.
@@ -184,6 +188,8 @@ private:
 
     shared_ptr<VicePlugin> plugin_;
     VicePluginAPI_Context* ctx_;
+
+    optional<bool> hasNavigationControls_;
 
     enum {Pending, Running, ShutdownComplete} state_;
     bool shutdownPending_;

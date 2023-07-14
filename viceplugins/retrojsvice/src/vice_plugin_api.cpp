@@ -386,7 +386,7 @@ API_FUNC_START
     REQUIRE(apiVersion == (uint64_t)2000000);
 
     string nameStr = name;
-    if(nameStr == "URINavigation") {
+    if(nameStr == "URINavigation" || nameStr == "PluginNavigationControlSupportQuery") {
         return 1;
     } else {
         return 0;
@@ -400,5 +400,10 @@ API_EXPORT void vicePluginAPI_URINavigation_enable(
     VicePluginAPI_URINavigation_Callbacks callbacks
 )
 WRAP_CTX_API(URINavigation_enable, callbacks);
+
+API_EXPORT int vicePluginAPI_PluginNavigationControlSupportQuery_query(
+    VicePluginAPI_Context* ctx
+)
+WRAP_CTX_API(PluginNavigationControlSupportQuery_query);
 
 }

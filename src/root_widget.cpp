@@ -9,13 +9,15 @@ RootWidget::RootWidget(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ControlBarEventHandler> controlBarEventHandler,
     weak_ptr<BrowserAreaEventHandler> browserAreaEventHandler,
-    bool allowPNG
+    bool allowPNG,
+    bool showSoftNavigationButtons
 )
     : Widget(widgetParent)
 {
     REQUIRE_UI_THREAD();
 
     allowPNG_ = allowPNG;
+    showSoftNavigationButtons_ = showSoftNavigationButtons;
 
     controlBarEventHandler_ = controlBarEventHandler;
     browserAreaEventHandler_ = browserAreaEventHandler;
@@ -34,7 +36,7 @@ shared_ptr<BrowserArea> RootWidget::browserArea() {
 }
 
 void RootWidget::afterConstruct_(shared_ptr<RootWidget> self) {
-    controlBar_ = ControlBar::create(self, controlBarEventHandler_, allowPNG_);
+    controlBar_ = ControlBar::create(self, controlBarEventHandler_, allowPNG_, showSoftNavigationButtons_);
     browserArea_ = BrowserArea::create(self, browserAreaEventHandler_);
 
     controlBarEventHandler_.reset();

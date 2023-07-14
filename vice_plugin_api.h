@@ -809,6 +809,24 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_URINavigation_enable(
 );
 
 /***************************************************************************************************
+ *** API extension "PluginNavigationControlSupportQuery" ***
+ ***********************************************************/
+
+/* Extension that allows the program to query from the plugin whether it implements navigation
+ * (back/refresh/forward) controls. Based on this information, the program may e.g. choose whether
+ * or not to show the controls in its own UI.
+ */
+
+/* Returns 1 if the plugin implements navigation controls for the user and relays the inputs to
+ * the navigate callback, and 0 otherwise. May be called for any existing context (created with
+ * vicePluginAPI_initContext and not yet destroyed by vicePluginAPI_destroyContext). If called
+ * multiple times for the same context, the return value should not change.
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC int vicePluginAPI_PluginNavigationControlSupportQuery_query(
+    VicePluginAPI_Context* ctx
+);
+
+/***************************************************************************************************
  *** Deprecated API versions 1000000 and 1000001 ***
  ***************************************************/
 
