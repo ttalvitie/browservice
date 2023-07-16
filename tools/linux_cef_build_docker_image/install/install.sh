@@ -6,13 +6,14 @@ chromium_version=114.0.5735.199
 # https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p47371
 # linked from official automated build setup documentation in
 # https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md
+# (Fixed python -> python3 in the apt-get install command below.)
 
 # Packages required to download and run the Chromium bootstrap.
 apt-get update
 apt-get install -y \
     curl \
     lsb-release \
-    python
+    python3
 
 # Download the Chromium bootstrap at the requested version.
 curl "https://chromium.googlesource.com/chromium/src/+/refs/tags/${chromium_version}/build/install-build-deps.sh?format=TEXT" | base64 -d > install-build-deps.sh
