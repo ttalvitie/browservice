@@ -1001,7 +1001,7 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle,
     shared_ptr<Window> self = shared_from_this();
 
     rootViewport_ = ImageSlice::createImage(800, 600);
-    rootWidget_ = RootWidget::create(self, self, self, true, showSoftNavigationButtons);
+    rootWidget_ = RootWidget::create(self, self, self, showSoftNavigationButtons);
     rootWidget_->setViewport(rootViewport_);
 
     downloadManager_ = DownloadManager::create(self);

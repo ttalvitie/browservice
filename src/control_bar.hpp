@@ -49,7 +49,6 @@ public:
     ControlBar(CKey,
         weak_ptr<WidgetParent> widgetParent,
         weak_ptr<ControlBarEventHandler> eventHandler,
-        bool allowPNG,
         bool showSoftNavigationButtons
     );
 
@@ -106,7 +105,6 @@ private:
 
     bool clipboardButtonEnabled_;
 
-    bool allowPNG_;
     bool showSoftNavigationButtons_;
 
     shared_ptr<Timeout> animationTimeout_;

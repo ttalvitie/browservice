@@ -893,7 +893,6 @@ struct ControlBar::Layout {
 ControlBar::ControlBar(CKey,
     weak_ptr<WidgetParent> widgetParent,
     weak_ptr<ControlBarEventHandler> eventHandler,
-    bool allowPNG,
     bool showSoftNavigationButtons
 )
     : Widget(widgetParent)
@@ -903,7 +902,6 @@ ControlBar::ControlBar(CKey,
     eventHandler_ = eventHandler;
 
     clipboardButtonEnabled_ = false;
-    allowPNG_ = allowPNG;
     showSoftNavigationButtons_ = showSoftNavigationButtons;
 
     animationTimeout_ = Timeout::create(30);
