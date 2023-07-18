@@ -4,7 +4,7 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
-2023-06-11: [Browservice 0.9.6.5](https://github.com/ttalvitie/browservice/releases/tag/v0.9.6.5) has been released.
+2023-07-18: [Browservice 0.9.7.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.7.0) has been released. This release adds vice plugin API extensions that are useful with alternative vice plugins (e.g. for native clients).
 
 2022-11-05: [Browservice 0.9.6.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.6.0) has been released.
 
@@ -21,6 +21,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 ![Screenshot of IE6 showing an Instagram page through Browservice](fig/nt4_ie6_instagram.png)
 
 [<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
+
+(Note that using Gmail or other Google services this way is no longer possible; see [this comment](https://github.com/ttalvitie/browservice/issues/84#issuecomment-1296246842) for details.)
 
 [See more screenshots](#screenshots)
 
