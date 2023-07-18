@@ -19,7 +19,7 @@ U chmod 700 browservice.AppImage
 
 msg "Installing dependencies"
 pacman -Sy --noconfirm python-pip python-numpy fuse2
-U pip install imageio
+U pip install imageio --break-system-packages
 
 msg "Running smoke test"
 U python3 smoke_test.py ./browservice.AppImage all
