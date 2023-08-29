@@ -103,11 +103,14 @@ def run():
     with open(cef_cmake_lists_path, "a") as fp:
         fp.write("\nadd_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/browservice)\n")
 
-    log(f"Adding compiler path in a machine readable format to the output of '{cef_cmake_lists_path}'")
-    compiler_path_log_prefix = "[GnGzAgJ5wEUZUzq7]CMAKE_CXX_COMPILER="
-    compiler_path_log_suffix = "[kCVr24VJWqmdld5c]"
+    log(f"Adding redistributable library path in a machine readable format to the output of '{cef_cmake_lists_path}'")
+    redist_path_log_prefix = "[GnGzAgJ5wEUZUzq7]MSVC_REDIST_DIR="
+    redist_path_log_suffix = "[kCVr24VJWqmdld5c]"
     with open(cef_cmake_lists_path, "a") as fp:
-        fp.write(f"\nmessage(STATUS \"{compiler_path_log_prefix}${{CMAKE_CXX_COMPILER}}{compiler_path_log_suffix}\")\n")
+        fp.write("\n")
+        fp.write("set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)\n")
+        fp.write("include(InstallRequiredSystemLibraries)\n")
+        fp.write(f"message(STATUS \"{redist_path_log_prefix}${{MSVC_REDIST_DIR}}{redist_path_log_suffix}\")\n")
 
     cef_build_dir = os.path.join(cef_binary_distrib_dir, "build")
     cmake_arch = {"windows32": "Win32", "windows64": "x64"}[arch]
@@ -116,16 +119,14 @@ def run():
     cmake_output = subprocess.check_output(["cmake", "-G", "Visual Studio 17", "-A", cmake_arch, ".."], cwd=cef_build_dir).decode("UTF-8")
     print(cmake_output, end="")
 
-    log(f"Detecting C++ compiler path from CMake output")
-    cxx_compiler_path = cmake_output[cmake_output.index(compiler_path_log_prefix) + len(compiler_path_log_prefix):cmake_output.index(compiler_path_log_suffix)]
-    cxx_compiler_path = os.path.normpath(cxx_compiler_path)
-    assert os.path.isfile(cxx_compiler_path)
+    log(f"Detecting MSVC redistributable DLL root from CMake output")
+    redist_root = cmake_output[cmake_output.index(redist_path_log_prefix) + len(redist_path_log_prefix):cmake_output.index(redist_path_log_suffix)]
+    redist_root = os.path.normpath(redist_root)
+    assert os.path.isdir(redist_root)
 
-    log(f"Deducing MSVC redistributable DLL locations from the detected C++ compiler path '{cxx_compiler_path}'")
-    i = cxx_compiler_path.lower().rindex("\\vc\\tools\\msvc\\")
-    j = cxx_compiler_path.lower().index("\\bin\\", i)
+    log(f"Deducing MSVC redistributable DLL locations from the detected redistributable root '{redist_root}'")
     redist_arch = {"windows32": "x86", "windows64": "x64"}[arch]
-    redist_root = cxx_compiler_path[:i] + "\\VC\\Redist\\MSVC\\" + cxx_compiler_path[i + 15:j] + "\\" + redist_arch
+    redist_root = redist_root + "\\" + redist_arch
     redist_dir = []
     for dirname in os.listdir(redist_root):
         if dirname.startswith("Microsoft.VC") and dirname.endswith(".CRT"):
