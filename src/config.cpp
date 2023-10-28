@@ -81,6 +81,13 @@ struct OptParser<int> {
     }
 };
 
+template <>
+struct OptParser<double> {
+    static optional<double> parse(const string& str) {
+        return parseString<double>(str);
+    }
+};
+
 template <typename T>
 struct DefaultValFormatter {
     static string format(const T& val) {

@@ -13,7 +13,8 @@
     CONF_FOREACH_OPT_ITEM(dataDir) \
     CONF_FOREACH_OPT_ITEM(windowLimit) \
     CONF_FOREACH_OPT_ITEM(chromiumArgs) \
-    CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons)
+    CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons) \
+    CONF_FOREACH_OPT_ITEM(initialZoom)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -192,5 +193,19 @@ CONF_DEF_OPT_INFO(showSoftNavigationButtons) {
     optional<bool> defaultVal() {
         optional<bool> empty;
         return empty;
+    }
+};
+
+CONF_DEF_OPT_INFO(initialZoom) {
+    const char* name = "initial-zoom";
+    const char* valSpec = "FACTOR";
+    string desc() {
+        return "initial zoom factor for new browser windows";
+    }
+    double defaultVal() {
+        return 1.0;
+    }
+    bool validate(double val) {
+        return std::isfinite(val) && val > 0.0;
     }
 };

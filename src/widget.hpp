@@ -13,7 +13,10 @@ enum class GlobalHotkey {
     Address,
     Find,
     FindNext,
-    Refresh
+    Refresh,
+    ZoomReset,
+    ZoomIn,
+    ZoomOut
 };
 
 class Widget;

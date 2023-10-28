@@ -179,6 +179,21 @@ void Widget::sendKeyDownEvent(int key) {
         (key == (int)'r' || key == (int)'R')
     ) {
         onGlobalHotkeyPressed(GlobalHotkey::Refresh);
+    } else if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'m' || key == (int)'M')
+    ) {
+        onGlobalHotkeyPressed(GlobalHotkey::ZoomReset);
+    } else if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'k' || key == (int)'K')
+    ) {
+        onGlobalHotkeyPressed(GlobalHotkey::ZoomIn);
+    } else if(
+        keysDown_.count(keys::Control) &&
+        (key == (int)'j' || key == (int)'J')
+    ) {
+        onGlobalHotkeyPressed(GlobalHotkey::ZoomOut);
     } else {
         keysDown_.insert(key);
         forwardKeyDownEvent_(key);

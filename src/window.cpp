@@ -25,6 +25,28 @@ bool isLocalFileRequestURL(string url) {
     }
     return false;
 }
+
+// Adjust zoom in steps of sixth root of 2.
+constexpr double ZoomFactorStep = 1.122462048309373;
+
+// Allow zoom to at most factor 4.
+constexpr double MinZoomFactor = 0.25;
+constexpr double MaxZoomFactor = 4.0;
+
+// Convert zoom factor to Chromium internal logarithmic zoom level format.
+double zoomFactorToZoomLevel(double zoom) {
+    if(!std::isfinite(zoom)) {
+        zoom = 1.0;
+    }
+    zoom = std::clamp(zoom, MinZoomFactor, MaxZoomFactor);
+    return std::log(zoom) / std::log(1.2);
+}
+
+// Zoom level step, limits and equality comparison epsilon in Chromium internal zoom level format.
+const double ZoomLevelStep = zoomFactorToZoomLevel(ZoomFactorStep) - zoomFactorToZoomLevel(1.0);
+const double MinZoomLevel = zoomFactorToZoomLevel(MinZoomFactor);
+const double MaxZoomLevel = zoomFactorToZoomLevel(MaxZoomFactor);
+constexpr double ZoomLevelEpsilon = 1e-6;
 }
 
 class Window::Client :
@@ -823,6 +845,18 @@ void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
             if(key == GlobalHotkey::Refresh) {
                 self->navigate(0);
             }
+            if(key == GlobalHotkey::ZoomIn) {
+                self->zoomLevel_ = std::clamp(self->zoomLevel_ + ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
+                self->updateZoom_();
+            }
+            if(key == GlobalHotkey::ZoomOut) {
+                self->zoomLevel_ = std::clamp(self->zoomLevel_ - ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
+                self->updateZoom_();
+            }
+            if(key == GlobalHotkey::ZoomReset) {
+                self->zoomLevel_ = zoomFactorToZoomLevel(globals->config->initialZoom);
+                self->updateZoom_();
+            }
         }
     });
 }
@@ -1006,7 +1040,9 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle,
 
     downloadManager_ = DownloadManager::create(self);
 
-    watchdogTimeout_ = Timeout::create(1000);
+    watchdogTimeout_ = Timeout::create(250);
+
+    zoomLevel_ = zoomFactorToZoomLevel(globals->config->initialZoom);
 }
 
 void Window::createSuccessful_() {
@@ -1058,7 +1094,7 @@ void Window::afterClose_() {
     }
 }
 
-// Called every 1s for an Open window for various checks.
+// Called every 0.25s for an Open window for various checks.
 void Window::watchdog_() {
     REQUIRE_UI_THREAD();
 
@@ -1069,6 +1105,11 @@ void Window::watchdog_() {
     // Make sure that security status is not incorrect for extended periods of
     // time just in case our event handlers do not catch all the changes.
     updateSecurityStatus_();
+
+    // Make sure that the zoom level is set correctly. The browser typically
+    // resets the zoom during initialization, so we need to initialize it in
+    // the watchdog and keep making sure it is set correctly just in case.
+    updateZoom_();
 
     if(!watchdogTimeout_->isActive()) {
         weak_ptr<Window> selfWeak = shared_from_this();
@@ -1113,6 +1154,20 @@ void Window::updateSecurityStatus_() {
     }
 
     rootWidget_->controlBar()->setSecurityStatus(securityStatus);
+}
+
+void Window::updateZoom_() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ != Open) {
+        return;
+    }
+
+    if(browser_) {
+        if(std::abs(browser_->GetHost()->GetZoomLevel() - zoomLevel_) > ZoomLevelEpsilon) {
+            browser_->GetHost()->SetZoomLevel(zoomLevel_);
+        }
+    }
 }
 
 void Window::clampMouseCoords_(int& x, int& y) {

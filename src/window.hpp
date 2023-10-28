@@ -159,6 +159,7 @@ private:
 
     void watchdog_();
     void updateSecurityStatus_();
+    void updateZoom_();
 
     void clampMouseCoords_(int& x, int& y);
 
@@ -195,6 +196,8 @@ private:
     // The window is in file upload mode when fileUploadCallback_ is nonempty.
     CefRefPtr<CefFileDialogCallback> fileUploadCallback_;
     vector<shared_ptr<ViceFileUpload>> retainedUploads_;
+
+    double zoomLevel_;
 };
 
 }
