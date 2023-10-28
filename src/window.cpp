@@ -788,6 +788,30 @@ void Window::sendLoseFocusEvent() {
     rootWidget_->sendLoseFocusEvent();
 }
 
+void Window::zoomIn() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    zoomLevel_ = std::clamp(zoomLevel_ + ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
+    updateZoom_();
+}
+
+void Window::zoomOut() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    zoomLevel_ = std::clamp(zoomLevel_ - ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
+    updateZoom_();
+}
+
+void Window::zoomReset() {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ == Open);
+
+    zoomLevel_ = zoomFactorToZoomLevel(globals->config->initialZoom);
+    updateZoom_();
+}
+
 void Window::onWidgetViewDirty() {
     REQUIRE_UI_THREAD();
 
@@ -846,16 +870,13 @@ void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
                 self->navigate(0);
             }
             if(key == GlobalHotkey::ZoomIn) {
-                self->zoomLevel_ = std::clamp(self->zoomLevel_ + ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
-                self->updateZoom_();
+                self->zoomIn();
             }
             if(key == GlobalHotkey::ZoomOut) {
-                self->zoomLevel_ = std::clamp(self->zoomLevel_ - ZoomLevelStep, MinZoomLevel, MaxZoomLevel);
-                self->updateZoom_();
+                self->zoomOut();
             }
             if(key == GlobalHotkey::ZoomReset) {
-                self->zoomLevel_ = zoomFactorToZoomLevel(globals->config->initialZoom);
-                self->updateZoom_();
+                self->zoomReset();
             }
         }
     });

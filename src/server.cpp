@@ -275,6 +275,36 @@ string Server::onViceContextWindowTitleQuery(uint64_t window) {
     return it->second->fetchTitle();
 }
 
+void Server::onViceContextZoomIn(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    return it->second->zoomIn();
+}
+
+void Server::onViceContextZoomOut(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    return it->second->zoomOut();
+}
+
+void Server::onViceContextZoomReset(uint64_t window) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+
+    auto it = openWindows_.find(window);
+    REQUIRE(it != openWindows_.end());
+
+    return it->second->zoomReset();
+}
+
 void Server::onViceContextShutdownComplete() {
     REQUIRE_UI_THREAD();
     REQUIRE(state_ == WaitViceContext);

@@ -120,6 +120,10 @@ public:
 
     virtual string onViceContextWindowTitleQuery(uint64_t window) = 0;
 
+    virtual void onViceContextZoomIn(uint64_t window) = 0;
+    virtual void onViceContextZoomOut(uint64_t window) = 0;
+    virtual void onViceContextZoomReset(uint64_t window) = 0;
+
     virtual void onViceContextShutdownComplete() = 0;
 };
 

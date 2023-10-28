@@ -112,6 +112,10 @@ public:
     void sendKeyUpEvent(int key);
     void sendLoseFocusEvent();
 
+    void zoomIn();
+    void zoomOut();
+    void zoomReset();
+
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;

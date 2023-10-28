@@ -52,7 +52,8 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(URINavigation_enable) \
     FOREACH_VICE_API_FUNC_ITEM(PluginNavigationControlSupportQuery_query) \
     FOREACH_VICE_API_FUNC_ITEM(WindowTitle_enable) \
-    FOREACH_VICE_API_FUNC_ITEM(WindowTitle_notifyWindowTitleChanged)
+    FOREACH_VICE_API_FUNC_ITEM(WindowTitle_notifyWindowTitleChanged) \
+    FOREACH_VICE_API_FUNC_ITEM(ZoomInput_enable)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name = nullptr;
@@ -276,6 +277,9 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     if(apiFuncs->isExtensionSupported(APIVersion, "WindowTitle")) {
         LOAD_API_FUNC(WindowTitle_enable);
         LOAD_API_FUNC(WindowTitle_notifyWindowTitleChanged);
+    }
+    if(apiFuncs->isExtensionSupported(APIVersion, "ZoomInput")) {
+        LOAD_API_FUNC(ZoomInput_enable);
     }
 
     return VicePlugin::create(
@@ -614,6 +618,27 @@ void ViceContext::start(shared_ptr<ViceContextEventHandler> eventHandler) {
             });
 
         plugin_->apiFuncs_->WindowTitle_enable(ctx_, windowTitleCallbacks);
+    }
+
+    if(plugin_->apiFuncs_->ZoomInput_enable != nullptr) {
+        INFO_LOG("Initializing ZoomInput plugin");
+        VicePluginAPI_ZoomInput_Callbacks zoomInputCallbacks;
+        memset(&zoomInputCallbacks, 0, sizeof(VicePluginAPI_ZoomInput_Callbacks));
+
+        zoomInputCallbacks.zoomCommand =
+            CTX_CALLBACK(void, (uint64_t window, VicePluginAPI_ZoomInput_Command command), {
+                REQUIRE(self->openWindows_.count(window));
+                if(command == VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_IN) {
+                    self->eventHandler_->onViceContextZoomIn(window);
+                } else if(command == VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_OUT) {
+                    self->eventHandler_->onViceContextZoomOut(window);
+                } else {
+                    REQUIRE(command == VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_RESET);
+                    self->eventHandler_->onViceContextZoomReset(window);
+                }
+            });
+
+        plugin_->apiFuncs_->ZoomInput_enable(ctx_, zoomInputCallbacks);
     }
 
     VicePluginAPI_Callbacks callbacks;

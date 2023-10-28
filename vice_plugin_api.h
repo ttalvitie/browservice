@@ -874,6 +874,44 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_WindowTitle_notifyWindowTitleCh
 );
 
 /***************************************************************************************************
+ *** API extension "ZoomInput" ***
+ *********************************/
+
+ /* Extension that allows the plugin to send commands to send zoom in/out/reset commands to a
+  * window. These commands should control the zoom level of the content of the window, and are
+  * typically relayed from key/button presses by the user.
+  */
+
+enum VicePluginAPI_ZoomInput_Command {
+    VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_IN = 0,
+    VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_OUT = 1,
+    VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_RESET = 2,
+
+    /* Invalid value that is larger than any valid enum value, used to ensure
+     * binary compatibility when new values are added.
+     */
+    VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_HUGE_UNUSED = 1000000000
+};
+typedef enum VicePluginAPI_ZoomInput_Command VicePluginAPI_ZoomInput_Command;
+
+struct VicePluginAPI_ZoomInput_Callbacks {
+    /* Sends given zoom command to given window. The window must exist and the command must be
+     * one of the valid commands defined in VicePluginAPI_ZoomInput_Command. */
+    void (*zoomCommand)(void*, uint64_t window, VicePluginAPI_ZoomInput_Command command);
+};
+typedef struct VicePluginAPI_ZoomInput_Callbacks VicePluginAPI_ZoomInput_Callbacks;
+
+/* Enables the ZoomInput extensions in given context, making it possible for the plugin to send
+ * zoom input commands to the program. May only be called once for each context, after
+ * vicePluginAPI_initContext and before vicePluginAPI_start. The vice plugin uses the callbacks
+ * similarly to the callbacks given in vicePluginAPI_start.
+ */
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_ZoomInput_enable(
+    VicePluginAPI_Context* ctx,
+    VicePluginAPI_ZoomInput_Callbacks callbacks
+);
+
+/***************************************************************************************************
  *** Deprecated API versions 1000000 and 1000001 ***
  ***************************************************/
 

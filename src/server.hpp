@@ -64,6 +64,9 @@ public:
     ) override;
     virtual void onViceContextCancelFileUpload(uint64_t window) override;
     virtual string onViceContextWindowTitleQuery(uint64_t window) override;
+    virtual void onViceContextZoomIn(uint64_t window) override;
+    virtual void onViceContextZoomOut(uint64_t window) override;
+    virtual void onViceContextZoomReset(uint64_t window) override;
     virtual void onViceContextShutdownComplete() override;
 
     // WindowEventHandler:
