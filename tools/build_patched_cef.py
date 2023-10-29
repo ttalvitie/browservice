@@ -338,6 +338,122 @@ CLIPBOARD_FACTORY_OZONE_CC_CODE = b"""\
 // Native clipboard implementation replaced by Browservice non-backed clipboard; see .cc file.
 """
 
+FONT_RENDER_PARAMS_OVERRIDE_HEADER_CC_CODE = b"""\
+#include "ui/gfx/font_render_params.h"
+
+// Change name of GetFontRenderParams to allow Browservice to override fields in the output
+// (see the bottom of the file).
+#define GetFontRenderParams GetFontRenderParamsNonBrowserviceImpl
+
+"""
+
+FONT_RENDER_PARAMS_OVERRIDE_FOOTER_CC_CODE = b"""\
+
+// In the remainder of this file, we implement functions that allow Browservice to override font
+// render parameters prior to starting Chromium.
+#undef GetFontRenderParams
+#include <mutex>
+#include <optional>
+
+namespace {
+namespace browserviceFontRenderParams {
+    std::mutex mutex;
+    std::optional<bool> antialiasing;
+    std::optional<bool> subpixel_positioning;
+    std::optional<bool> autohinter;
+    std::optional<bool> use_bitmaps;
+    std::optional<gfx::FontRenderParams::Hinting> hinting;
+    std::optional<gfx::FontRenderParams::SubpixelRendering> subpixel_rendering;
+}
+}
+
+#if BUILDFLAG(IS_LINUX)
+#define BROWSERVICE_EXPORT __attribute__((visibility("default")))
+#else
+#define BROWSERVICE_EXPORT __declspec(dllexport)
+#endif
+
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetAntialiasingEnabled(int enabled) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    antialiasing = (enabled != 0);
+}
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetSubpixelPositioningEnabled(int enabled) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    subpixel_positioning = (enabled != 0);
+}
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetAutohinterEnabled(int enabled) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    autohinter = (enabled != 0);
+}
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetUseBitmapsEnabled(int enabled) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    use_bitmaps = (enabled != 0);
+}
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetHinting(int val) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    switch(val) {
+        case 0: hinting = gfx::FontRenderParams::HINTING_NONE; break;
+        case 1: hinting = gfx::FontRenderParams::HINTING_SLIGHT; break;
+        case 2: hinting = gfx::FontRenderParams::HINTING_MEDIUM; break;
+        case 3: hinting = gfx::FontRenderParams::HINTING_FULL; break;
+        default: break;
+    }
+}
+BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceFontRenderParamsSetSubpixelRendering(int val) {
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    switch(val) {
+        case 0: subpixel_rendering = gfx::FontRenderParams::SUBPIXEL_RENDERING_NONE; break;
+        case 1: subpixel_rendering = gfx::FontRenderParams::SUBPIXEL_RENDERING_RGB; break;
+        case 2: subpixel_rendering = gfx::FontRenderParams::SUBPIXEL_RENDERING_BGR; break;
+        case 3: subpixel_rendering = gfx::FontRenderParams::SUBPIXEL_RENDERING_VRGB; break;
+        case 4: subpixel_rendering = gfx::FontRenderParams::SUBPIXEL_RENDERING_VBGR; break;
+        default: break;
+    }
+}
+
+namespace gfx {
+FontRenderParams GetFontRenderParams(const FontRenderParamsQuery& query, std::string* family_out) {
+    FontRenderParams ret = GetFontRenderParamsNonBrowserviceImpl(query, family_out);
+
+    using namespace browserviceFontRenderParams;
+    std::lock_guard<std::mutex> lock(mutex);
+
+    if(antialiasing.has_value()) {
+        ret.antialiasing = antialiasing.value();
+    }
+    if(subpixel_positioning.has_value()) {
+        ret.subpixel_positioning = subpixel_positioning.value();
+    }
+    if(autohinter.has_value()) {
+        ret.autohinter = autohinter.value();
+    }
+    if(use_bitmaps.has_value()) {
+        ret.use_bitmaps = use_bitmaps.value();
+    }
+    if(hinting.has_value()) {
+        ret.hinting = hinting.value();
+    }
+    if(subpixel_rendering.has_value()) {
+        ret.subpixel_rendering = subpixel_rendering.value();
+    }
+
+    return ret;
+}
+}
+"""
+
 def embed(data):
     return "b64decode(\"" + b64encode(data).decode("ASCII") + "\")"
 
@@ -371,6 +487,16 @@ def run(cef_src_dir):
     log(f"Replacing '{clipboard_factory_ozone_cc_path}' with the Browservice clipboard implementation")
     with open(clipboard_factory_ozone_cc_path, "wb") as fp:
         fp.write(""" + embed(CLIPBOARD_FACTORY_OZONE_CC_CODE) + """)
+
+    for platform in ["win", "linux"]:
+        font_render_params_cc_path = os.path.join(cef_src_dir, "..", "ui", "gfx", "font_render_params_" + platform + ".cc")
+        log(f"Augmenting '{font_render_params_cc_path}' with the Browservice font render params override")
+        with open(font_render_params_cc_path, "rb") as fp:
+            old_code = fp.read()
+        with open(font_render_params_cc_path, "wb") as fp:
+            fp.write(""" + embed(FONT_RENDER_PARAMS_OVERRIDE_HEADER_CC_CODE) + """)
+            fp.write(old_code)
+            fp.write(""" + embed(FONT_RENDER_PARAMS_OVERRIDE_FOOTER_CC_CODE) + """)
 
     log("Browservice-specific CEF/Chromium patches applied successfully")
 
