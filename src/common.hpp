@@ -74,6 +74,7 @@ using std::regex;
 using std::regex_match;
 using std::remove_const;
 using std::remove_reference;
+using std::seed_seq;
 using std::set;
 using std::shared_ptr;
 using std::smatch;
@@ -98,8 +99,6 @@ using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
 using std::this_thread::sleep_for;
-
-extern thread_local mt19937 rng;
 
 #ifdef _WIN32
 typedef wstring PathStr;
@@ -159,6 +158,8 @@ PathStr toPathStr(const T& obj) {
 
 string sanitizeUTF8String(string str);
 vector<int> sanitizeUTF8StringToCodePoints(string str);
+
+mt19937 createRNG();
 
 // Logging macros that log given message along with severity, source file and
 // line information to stderr. Message is formed by calling toString for each

@@ -30,6 +30,7 @@ public:
 
 private:
     map<uint64_t, Bookmark> data_;
+    mt19937 rng_;
 };
 
 // Returns the bookmark ID if given url is bookmarked in the last state saved

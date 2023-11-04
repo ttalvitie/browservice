@@ -112,7 +112,9 @@ bool readStr(ifstream& fp, string& val) {
 
 }
 
-Bookmarks::Bookmarks(CKey) {}
+Bookmarks::Bookmarks(CKey) {
+    rng_ = createRNG();
+}
 
 shared_ptr<Bookmarks> Bookmarks::load() {
     if(!tryCreateDotDir()) {
@@ -204,7 +206,7 @@ bool Bookmarks::save() {
     PathStr bookmarkTmpPath = globals->dotDirPath + PathSep + PATHSTR(".tmp.bookmarks.");
     PathStr charPalette = PATHSTR("abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789");
     for(int i = 0; i < 16; ++i) {
-        auto c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng)];
+        auto c = charPalette[uniform_int_distribution<size_t>(0, charPalette.size() - 1)(rng_)];
         bookmarkTmpPath.push_back(c);
     }
 
@@ -290,7 +292,7 @@ const map<uint64_t, Bookmark>& Bookmarks::getData() const {
 uint64_t Bookmarks::putBookmark(Bookmark bookmark) {
     uint64_t id;
     do {
-        id = uniform_int_distribution<uint64_t>()(rng);
+        id = uniform_int_distribution<uint64_t>()(rng_);
     } while(data_.count(id));
 
     data_.emplace(id, move(bookmark));

@@ -17,6 +17,8 @@ TempDir::TempDir(CKey) {
     REQUIRE(baseLen > 0);
     wstring path(baseBuf, (size_t)baseLen);
 
+    mt19937 rng = createRNG();
+
     path += L"browservicetmp_";
     wstring charPalette = L"abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789";
     for(int i = 0; i < 16; ++i) {

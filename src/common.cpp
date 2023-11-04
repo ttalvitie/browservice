@@ -5,8 +5,6 @@
 
 namespace browservice {
 
-thread_local mt19937 rng(random_device{}());
-
 namespace {
 
 template <typename A, typename B>
@@ -90,6 +88,19 @@ vector<int> sanitizeUTF8StringToCodePoints(string str) {
         }
     );
     return ret;
+}
+
+mt19937 createRNG() {
+    static_assert(sizeof(random_device::result_type) == 4);
+    static_assert(mt19937::word_size == 32);
+
+    random_device dev;
+    array<uint32_t, mt19937::state_size> seedData;
+    for(uint32_t& val : seedData) {
+        val = dev();
+    }
+    seed_seq seedSeq(seedData.begin(), seedData.end());
+    return mt19937(seedSeq);
 }
 
 static atomic<bool> panicUsingCEFFatalError_(false);
