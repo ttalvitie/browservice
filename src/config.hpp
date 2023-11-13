@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common.hpp"
+#include "browser_font_render_mode.hpp"
 
 namespace browservice {
 
@@ -34,6 +34,7 @@ public:
     const vector<pair<string, optional<string>>> chromiumArgs;
     const optional<bool> showSoftNavigationButtons;
     const double initialZoom;
+    const BrowserFontRenderMode browserFontRenderMode;
 };
 
 }

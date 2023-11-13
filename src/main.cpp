@@ -197,6 +197,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    initBrowserFontRenderMode(config->browserFontRenderMode);
+
     INFO_LOG("Loading vice plugin ", config->vicePlugin);
     shared_ptr<VicePlugin> vicePlugin = VicePlugin::load(config->vicePlugin);
     if(!vicePlugin) {
