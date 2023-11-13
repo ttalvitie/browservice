@@ -14,7 +14,8 @@
     CONF_FOREACH_OPT_ITEM(windowLimit) \
     CONF_FOREACH_OPT_ITEM(chromiumArgs) \
     CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons) \
-    CONF_FOREACH_OPT_ITEM(initialZoom)
+    CONF_FOREACH_OPT_ITEM(initialZoom) \
+    CONF_FOREACH_OPT_ITEM(browserFontRenderMode)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -207,5 +208,16 @@ CONF_DEF_OPT_INFO(initialZoom) {
     }
     bool validate(double val) {
         return std::isfinite(val) && val > 0.0;
+    }
+};
+
+CONF_DEF_OPT_INFO(browserFontRenderMode) {
+    const char* name = "browser-font-render-mode";
+    const char* valSpec = "MODE";
+    string desc() {
+        return "font render mode for the browser area; supported modes: " + getBrowserFontRenderModeDescription();
+    }
+    BrowserFontRenderMode defaultVal() {
+        return BrowserFontRenderMode::AntiAliasing;
     }
 };

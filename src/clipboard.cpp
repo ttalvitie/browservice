@@ -2,7 +2,7 @@
 
 namespace browservice {
 
-// Accessor functions defined in patched CEF (see https://bitbucket.org/toptalvitie/cef/src/master/ ).
+// Accessor functions defined in patched CEF.
 extern "C" char* cef_chromiumBrowserviceClipboardPaste();
 extern "C" void cef_chromiumBrowserviceClipboardFreePasteResult(char* str);
 extern "C" void cef_chromiumBrowserviceClipboardCopy(const char* str);

@@ -28,7 +28,7 @@ template <>
 struct OptParser<bool> {
     static optional<bool> parse(string str) {
         for(char& c : str) {
-            c = tolower(c);
+            c = (char)tolower((unsigned char)c);
         }
         if(
             str == "1" ||
@@ -57,7 +57,7 @@ template <>
 struct OptParser<optional<bool>> {
     static optional<optional<bool>> parse(string str) {
         for(char& c : str) {
-            c = tolower(c);
+            c = (char)tolower((unsigned char)c);
         }
         if(str == "auto" || str == "automatic" || str == "autodetect") {
             optional<bool> autoVal;
@@ -88,6 +88,23 @@ struct OptParser<double> {
     }
 };
 
+template <>
+struct OptParser<BrowserFontRenderMode> {
+    static optional<BrowserFontRenderMode> parse(string str) {
+        for(char& c : str) {
+            c = (char)tolower((unsigned char)c);
+        }
+        vector<pair<BrowserFontRenderMode, string>> modes = listBrowserFontRenderModes();
+        for(const auto& p : modes) {
+            if(str == p.second) {
+                return p.first;
+            }
+        }
+        optional<BrowserFontRenderMode> empty;
+        return empty;
+    }
+};
+
 template <typename T>
 struct DefaultValFormatter {
     static string format(const T& val) {
@@ -106,6 +123,20 @@ template <>
 struct DefaultValFormatter<optional<bool>> {
     static string format(optional<bool> val) {
         return val.has_value() ? DefaultValFormatter<bool>::format(val.value()) : "auto";
+    }
+};
+
+template <>
+struct DefaultValFormatter<BrowserFontRenderMode> {
+    static string format(BrowserFontRenderMode val) {
+        vector<pair<BrowserFontRenderMode, string>> modes = listBrowserFontRenderModes();
+        for(const auto& p : modes) {
+            if(val == p.first) {
+                return p.second;
+            }
+        }
+        PANIC("Invalid browser font render mode");
+        return "UNKNOWN";
     }
 };
 
