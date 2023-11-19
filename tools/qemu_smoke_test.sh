@@ -262,14 +262,14 @@ cd /
 dd if=/dev/mmcblk0 iflag=skip_bytes,count_bytes,fullblock bs=1M skip=17179869184 count=${SHARED_TARBALL_SIZE} | tar x
 if sha1sum -c shared/runner.sh.sha1
 then
-    echo "--- Machine started up successfully" > /dev/ttyAMA0
+    echo "--- Machine started up successfully" > /dev/ttyUSB0
     chmod 700 /shared/runner.sh
-    if /shared/runner.sh &> /dev/ttyAMA0
+    if /shared/runner.sh &> /dev/ttyUSB0
     then
-        echo "${SUCCESS_TOKEN}" > /dev/ttyAMA0
+        echo "${SUCCESS_TOKEN}" > /dev/ttyUSB0
     fi
 fi
-echo "--- Shutting down the machine" > /dev/ttyAMA0
+echo "--- Shutting down the machine" > /dev/ttyUSB0
 poweroff
 EOF
 
@@ -283,9 +283,10 @@ EOF
         -append "${KERNELCMDLINE}" \
         -dtb "${TMPDIR}/vm/bcm2710-rpi-3-b.dtb" \
         -drive "id=hd-root,file=${TMPDIR}/vm/disk.img,format=raw" \
-        -serial "file:${TMPDIR}/shared/log" \
         -netdev user,id=net0 \
         -device usb-net,netdev=net0 \
+        -device usb-serial,chardev=logport \
+        -chardev "file,id=logport,path=${TMPDIR}/shared/log" \
         -display none \
         &> /dev/null &
     QEMUPID="${!}"
