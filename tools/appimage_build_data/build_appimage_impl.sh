@@ -74,6 +74,9 @@ U PATH="/opt/cmake-3.22.1-linux-x86_64/bin:$PATH" ./setup_cef.sh /shared/cef.tar
 msg "Compiling Browservice"
 U make -j2 release
 
+msg "Applying patches to CEF tests necessary to make them compile without C++20 support"
+sed -i "s/const bool has_value = browser_status_map_.contains(browser_id);/const bool has_value = browser_status_map_.count(browser_id) != 0;/g" cef/tests/ceftests/test_handler.cc
+
 msg "Compiling CEF tests"
 U PATH="/opt/cmake-3.22.1-linux-x86_64/bin:$PATH" bash -c "cd cef/releasebuild ; make -j2 ceftests"
 
