@@ -4,7 +4,7 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
-2023-09-02: [Browservice 0.9.7.1](https://github.com/ttalvitie/browservice/releases/tag/v0.9.7.1) has been released.
+2023-11-26: [Browservice 0.9.8.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.8.0) has been released. This release add support for page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset) and setting font render parameters for the browser view (using the `--browser-font-render-mode` command line option).
 
 2023-07-18: [Browservice 0.9.7.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.7.0) has been released. This release adds vice plugin API extensions that are useful with alternative vice plugins (e.g. for native clients).
 
@@ -49,13 +49,14 @@ The current features of Browservice include the following:
 - Image compression quality selectable on the fly (JPEG compression levels or PNG)
 - Native Back/Forward/Refresh buttons on the client forwarded to the browser
 - Custom multithreaded implementation of PNG compression (standalone library; you just need `png.hpp` and `png.cpp` from directory `viceplugins/retrojsvice/src`)
+- Page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset)
+- Customizing font render parameters (antialiasing, subpixel rendering) for the browser view using the `--browser-font-render-mode` command line option.
 
 The following features are currently missing but could be implemented in future versions:
 
 - Streaming audio to client (currently audio is played locally by the proxy server)
 - Less hackish keyboard handling (different browsers send very different JavaScript key events)
 - Integration with web search engines
-- Page zooming
 
 ## Background
 
