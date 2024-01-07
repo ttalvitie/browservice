@@ -47,6 +47,23 @@ const double ZoomLevelStep = zoomFactorToZoomLevel(ZoomFactorStep) - zoomFactorT
 const double MinZoomLevel = zoomFactorToZoomLevel(MinZoomFactor);
 const double MaxZoomLevel = zoomFactorToZoomLevel(MaxZoomFactor);
 constexpr double ZoomLevelEpsilon = 1e-6;
+
+optional<string> extractDomainFromHTTPSURL(string url) {
+    string prefix = "https://";
+    if(url.size() <= prefix.size() || url.substr(0, prefix.size()) != prefix) {
+        return optional<string>();
+    }
+    size_t endPos = url.find('/', prefix.size());
+    if(endPos == string::npos) {
+        endPos = url.size();
+    }
+    string domain = url.substr(prefix.size(), endPos - prefix.size());
+    if(domain.empty()) {
+        return optional<string>();
+    } else {
+        return domain;
+    }
+}
 }
 
 class Window::Client :
@@ -432,6 +449,20 @@ public:
         CefRefPtr<CefCallback> callback
     ) override {
         BROWSER_EVENT_HANDLER_CHECKS();
+
+        optional<string> domain = extractDomainFromHTTPSURL(requestURL);
+        if(domain.has_value()) {
+            if(globals->config->certificateCheckExceptions.count(domain.value())) {
+                REQUIRE(callback);
+                callback->Continue();
+                return true;
+            } else {
+                INFO_LOG(
+                    "Invalid certificate for domain '", domain.value(), "', canceling request. "
+                    "To add an exception, use the --certificate-check-exceptions command line option."
+                );
+            }
+        }
 
         lastCertificateErrorURL_ = string(requestURL);
         return false;

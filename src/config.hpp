@@ -35,6 +35,7 @@ public:
     const optional<bool> showSoftNavigationButtons;
     const double initialZoom;
     const BrowserFontRenderMode browserFontRenderMode;
+    const set<string> certificateCheckExceptions;
 };
 
 }

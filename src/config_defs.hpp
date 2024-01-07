@@ -15,7 +15,8 @@
     CONF_FOREACH_OPT_ITEM(chromiumArgs) \
     CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons) \
     CONF_FOREACH_OPT_ITEM(initialZoom) \
-    CONF_FOREACH_OPT_ITEM(browserFontRenderMode)
+    CONF_FOREACH_OPT_ITEM(browserFontRenderMode) \
+    CONF_FOREACH_OPT_ITEM(certificateCheckExceptions)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -219,5 +220,49 @@ CONF_DEF_OPT_INFO(browserFontRenderMode) {
     }
     BrowserFontRenderMode defaultVal() {
         return BrowserFontRenderMode::AntiAliasing;
+    }
+};
+
+CONF_DEF_OPT_INFO(certificateCheckExceptions) {
+    const char* name = "certificate-check-exceptions";
+    const char* valSpec = "DOMAIN,...";
+    string desc() {
+        return
+            "comma-separated list of domains for which SSL/TLS certificate checking is disabled; "
+            "only exact match is considered, e.g. exception for 'example.com' does not cover 'www.example.com'";
+    }
+    string defaultValStr() {
+        return "default empty";
+    }
+    set<string> defaultVal() {
+        return set<string>();
+    }
+    optional<set<string>> parse(string str) {
+        if(str.empty()) {
+            return set<string>();
+        }
+
+        optional<set<string>> empty;
+        set<string> ret;
+
+        size_t start = 0;
+        while(true) {
+            size_t end = start;
+            while(end != str.size() && str[end] != ',') {
+                ++end;
+            }
+
+            if(start == end) {
+                return empty;
+            }
+
+            ret.insert(str.substr(start, end - start));
+
+            if(end == str.size()) {
+                break;
+            }
+            start = end + 1;
+        }
+        return ret;
     }
 };
