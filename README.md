@@ -292,7 +292,7 @@ browservice-RELEASE-ARCH.AppDir/AppRun
 
 ### Cannot sign in to Google
 
-Google implements sign-in restrictions that make it difficult to sign in using CEF-based browsers like Browservice (see [this comment](https://github.com/ttalvitie/browservice/issues/84#issuecomment-1296246842) for more details). However, sometimes it is possible to circumvent there restrictions e.g. by changing the user agent. As of January 7, 2024, the following workaround (reported by [LagLifeYT](https://github.com/LagLifeYT) in [issue #113](https://github.com/ttalvitie/browservice/issues/113)) appears to work:
+Google implements sign-in restrictions that make it difficult to sign in using CEF-based browsers like Browservice (see [this comment](https://github.com/ttalvitie/browservice/issues/84#issuecomment-1296246842) for more details). However, sometimes it is possible to circumvent the restrictions e.g. by changing the user agent string. As of January 7, 2024, the following workaround (reported by [LagLifeYT](https://github.com/LagLifeYT) in [issue #113](https://github.com/ttalvitie/browservice/issues/113)) appears to work:
 
 - Set user agent to `https://accounts.google.com` using the command line option `--user-agent="https://accounts.google.com"`; with this command line option, signing in to Google should work normally.
 - You only need to set this user agent string for the sign in; if you use a data directory (`--data-dir`), you can sign in with user agent set to `https://accounts.google.com`, then restart Browservice with the default user agent string (or some other value of your choosing), and the session should continue working.
