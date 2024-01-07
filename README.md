@@ -24,7 +24,7 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 [<img src="fig/youtube_gmail_demo.png" alt="YouTube video of Gmail usage on IE6 with the help of Browservice" width="650">](https://www.youtube.com/watch?v=oI6wJbMKjoQ)
 
-(Note that using Gmail or other Google services this way is no longer possible; see [this comment](https://github.com/ttalvitie/browservice/issues/84#issuecomment-1296246842) for details.)
+(Note that you might run into difficulties when trying to log into Gmail or other Google services. See [Cannot sign in to Google](#cannot-sign-in-to-google) for a workaround.)
 
 [See more screenshots](#screenshots)
 
@@ -289,6 +289,15 @@ sudo chmod 4755 browservice-RELEASE-ARCH.AppDir/opt/browservice/chrome-sandbox
 # Start Browservice
 browservice-RELEASE-ARCH.AppDir/AppRun
 ```
+
+### Cannot sign in to Google
+
+Google implements sign-in restrictions that make it difficult to sign in using CEF-based browsers like Browservice (see [this comment](https://github.com/ttalvitie/browservice/issues/84#issuecomment-1296246842) for more details). However, sometimes it is possible to circumvent there restrictions e.g. by changing the user agent. As of January 7, 2024, the following workaround (reported by [LagLifeYT](https://github.com/LagLifeYT) in [issue #113](https://github.com/ttalvitie/browservice/issues/113)) appears to work:
+
+- Set user agent to `https://accounts.google.com` using the command line option `--user-agent="https://accounts.google.com"`; with this command line option, signing in to Google should work normally.
+- You only need to set this user agent string for the sign in; if you use a data directory (`--data-dir`), you can sign in with user agent set to `https://accounts.google.com`, then restart Browservice with the default user agent string (or some other value of your choosing), and the session should continue working.
+
+Note that this workaround may stop working at any time if Google changes something.
 
 ## Vice plugin API
 
