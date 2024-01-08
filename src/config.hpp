@@ -36,6 +36,7 @@ public:
     const double initialZoom;
     const BrowserFontRenderMode browserFontRenderMode;
     const set<string> certificateCheckExceptions;
+    const bool showControlBar;
 };
 
 }

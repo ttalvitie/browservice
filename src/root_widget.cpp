@@ -2,6 +2,7 @@
 
 #include "control_bar.hpp"
 #include "browser_area.hpp"
+#include "globals.hpp"
 
 namespace browservice {
 
@@ -48,13 +49,23 @@ void RootWidget::widgetViewportUpdated_() {
     tie(controlBarViewport, browserAreaViewport) =
         getViewport().splitY(ControlBar::Height);
 
+    if(!globals->config->showControlBar) {
+        browserAreaViewport = getViewport();
+    }
+
     controlBar_->setViewport(controlBarViewport);
     browserArea_->setViewport(browserAreaViewport);
 }
 
 vector<shared_ptr<Widget>> RootWidget::widgetListChildren_() {
     REQUIRE_UI_THREAD();
-    return {controlBar_, browserArea_};
+
+    vector<shared_ptr<Widget>> ret;
+    if(globals->config->showControlBar) {
+        ret.push_back(controlBar_);
+    }
+    ret.push_back(browserArea_);
+    return ret;
 }
 
 }

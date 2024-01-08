@@ -16,7 +16,8 @@
     CONF_FOREACH_OPT_ITEM(showSoftNavigationButtons) \
     CONF_FOREACH_OPT_ITEM(initialZoom) \
     CONF_FOREACH_OPT_ITEM(browserFontRenderMode) \
-    CONF_FOREACH_OPT_ITEM(certificateCheckExceptions)
+    CONF_FOREACH_OPT_ITEM(certificateCheckExceptions) \
+    CONF_FOREACH_OPT_ITEM(showControlBar)
 
 CONF_DEF_OPT_INFO(vicePlugin) {
     const char* name = "vice-plugin";
@@ -264,5 +265,17 @@ CONF_DEF_OPT_INFO(certificateCheckExceptions) {
             start = end + 1;
         }
         return ret;
+    }
+};
+
+CONF_DEF_OPT_INFO(showControlBar) {
+    const char* name = "show-control-bar";
+    const char* valSpec = "YES/NO";
+    string desc() {
+        return
+            "controls whether or not the control bar is shown (disabling is useful with e.g. kiosk software)";
+    }
+    bool defaultVal() {
+        return true;
     }
 };
