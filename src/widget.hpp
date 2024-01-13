@@ -19,6 +19,35 @@ enum class GlobalHotkey {
     ZoomOut
 };
 
+enum class VirtualKeyboardMode {
+    None,
+    Default,
+    Text,
+    Tel,
+    URL,
+    Email,
+    Numeric,
+    Decimal,
+    Search
+};
+
+// We wrap virtual keyboard mode updates into these update objects to make it possible to send
+// multiple updates of the same type in sequence; all None updates are equivalent but other
+// updates are unique and thus are repropagated up the widget tree (this logic is implemented is
+// the isEquivalentWith member function).
+class VirtualKeyboardModeUpdate {
+SHARED_ONLY_CLASS(VirtualKeyboardModeUpdate);
+public:
+    VirtualKeyboardModeUpdate(CKey, VirtualKeyboardMode mode);
+
+    VirtualKeyboardMode mode();
+
+    bool isEquivalentWith(shared_ptr<VirtualKeyboardModeUpdate> other);
+
+private:
+    VirtualKeyboardMode mode_;
+};
+
 class Widget;
 
 class WidgetParent {
@@ -28,6 +57,7 @@ public:
     // implementor should take care to avoid re-entrancy issues.
     virtual void onWidgetViewDirty() = 0;
     virtual void onWidgetCursorChanged() = 0;
+    virtual void onWidgetVirtualKeyboardModeChanged() = 0;
     virtual void onWidgetTakeFocus(Widget* child) {}
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) = 0;
 };
@@ -42,6 +72,8 @@ public:
     void render();
 
     int cursor();
+
+    shared_ptr<VirtualKeyboardModeUpdate> virtualKeyboardModeUpdate();
 
     // Make this widget the focused widget in the widget tree
     void takeFocus();
@@ -65,6 +97,7 @@ public:
     // WidgetParent: (forward events from possible children)
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+    virtual void onWidgetVirtualKeyboardModeChanged() override;
     virtual void onWidgetTakeFocus(Widget* child) override;
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) override;
 
@@ -76,6 +109,11 @@ protected:
     // The widget should call this to update its own cursor; the effects might
     // not be immediately visible if mouse is not over this widget
     void setCursor_(int newCursor);
+
+    // The widget should call this to update its own virtual keyboard mode; the
+    // effects might not be immediately visible if this widget does not have
+    // focus
+    void setVirtualKeyboardMode_(VirtualKeyboardMode mode);
 
     // Functions to query widget status so that it does not always need its own
     // bookkeeping
@@ -131,6 +169,8 @@ private:
 
     void updateCursor_();
 
+    void updateVirtualKeyboardMode_();
+
     void forwardMouseDownEvent_(int x, int y, int button);
     void forwardMouseUpEvent_(int x, int y, int button);
     void forwardMouseDoubleClickEvent_(int x, int y);
@@ -161,6 +201,9 @@ private:
 
     int cursor_;
     int myCursor_;
+
+    shared_ptr<VirtualKeyboardModeUpdate> virtualKeyboardModeUpdate_;
+    shared_ptr<VirtualKeyboardModeUpdate> myVirtualKeyboardModeUpdate_;
 };
 
 }

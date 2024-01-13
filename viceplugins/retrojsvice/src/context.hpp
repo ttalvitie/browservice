@@ -80,6 +80,8 @@ public:
     int startFileUpload(uint64_t window);
     void cancelFileUpload(uint64_t window);
 
+    void VirtualKeyboardModeUpdate_update(uint64_t window, VicePluginAPI_VirtualKeyboardModeUpdate_Mode mode);
+
     // Returns (name, valSpec, desc, defaultValStr)-tuples.
     static vector<tuple<string, string, string, string>> getOptionDocs();
 

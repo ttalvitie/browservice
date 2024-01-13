@@ -82,6 +82,7 @@ public:
     void notifyViewChanged();
 
     void setCursor(int cursorSignal);
+    bool setVirtualKeyboardEnabled(bool enabled);
 
     optional<pair<vector<string>, size_t>> qualitySelectorQuery();
     void qualityChanged(size_t qualityIdx);

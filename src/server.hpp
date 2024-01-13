@@ -75,6 +75,7 @@ public:
     virtual void onWindowViewImageChanged(uint64_t handle) override;
     virtual void onWindowTitleChanged(uint64_t handle) override;
     virtual void onWindowCursorChanged(uint64_t handle, int cursor) override;
+    virtual void onWindowVirtualKeyboardModeChanged(uint64_t handle, VirtualKeyboardMode mode) override;
     virtual optional<pair<vector<string>, size_t>> onWindowQualitySelectorQuery(
         uint64_t handle
     ) override;

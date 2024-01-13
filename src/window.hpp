@@ -20,6 +20,7 @@ public:
     virtual void onWindowViewImageChanged(uint64_t handle) = 0;
     virtual void onWindowTitleChanged(uint64_t handle) = 0;
     virtual void onWindowCursorChanged(uint64_t handle, int cursor) = 0;
+    virtual void onWindowVirtualKeyboardModeChanged(uint64_t handle, VirtualKeyboardMode mode) = 0;
     virtual optional<pair<vector<string>, size_t>> onWindowQualitySelectorQuery(
         uint64_t handle
     ) = 0;
@@ -119,6 +120,7 @@ public:
     // WidgetParent:
     virtual void onWidgetViewDirty() override;
     virtual void onWidgetCursorChanged() override;
+    virtual void onWidgetVirtualKeyboardModeChanged() override;
     virtual void onGlobalHotkeyPressed(GlobalHotkey key) override;
 
     // ControlBarEventHandler:
@@ -202,6 +204,8 @@ private:
     vector<shared_ptr<ViceFileUpload>> retainedUploads_;
 
     double zoomLevel_;
+
+    shared_ptr<Timeout> virtualKeyboardUpdateTimeout_;
 };
 
 }

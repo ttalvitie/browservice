@@ -53,7 +53,8 @@ struct VicePlugin::APIFuncs {
     FOREACH_VICE_API_FUNC_ITEM(PluginNavigationControlSupportQuery_query) \
     FOREACH_VICE_API_FUNC_ITEM(WindowTitle_enable) \
     FOREACH_VICE_API_FUNC_ITEM(WindowTitle_notifyWindowTitleChanged) \
-    FOREACH_VICE_API_FUNC_ITEM(ZoomInput_enable)
+    FOREACH_VICE_API_FUNC_ITEM(ZoomInput_enable) \
+    FOREACH_VICE_API_FUNC_ITEM(VirtualKeyboardModeUpdate_update)
 
 #define FOREACH_VICE_API_FUNC_ITEM(name) \
     decltype(&vicePluginAPI_ ## name) name = nullptr;
@@ -280,6 +281,9 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
     }
     if(apiFuncs->isExtensionSupported(APIVersion, "ZoomInput")) {
         LOAD_API_FUNC(ZoomInput_enable);
+    }
+    if(apiFuncs->isExtensionSupported(APIVersion, "VirtualKeyboardModeUpdate")) {
+        LOAD_API_FUNC(VirtualKeyboardModeUpdate_update);
     }
 
     return VicePlugin::create(
@@ -922,6 +926,31 @@ void ViceContext::setWindowCursor(uint64_t window, int cursor) {
     }
 
     plugin_->apiFuncs_->setWindowCursor(ctx_, window, apiCursor);
+}
+
+void ViceContext::setWindowVirtualKeyboardMode(uint64_t window, VirtualKeyboardMode mode) {
+    RUNNING_CONTEXT_FUNC_CHECKS();
+    REQUIRE(openWindows_.count(window));
+
+    if(plugin_->apiFuncs_->VirtualKeyboardModeUpdate_update != nullptr) {
+        VicePluginAPI_VirtualKeyboardModeUpdate_Mode apiMode;
+        switch(mode) {
+            case VirtualKeyboardMode::None: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NONE; break;
+            case VirtualKeyboardMode::Default: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DEFAULT; break;
+            case VirtualKeyboardMode::Text: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEXT; break;
+            case VirtualKeyboardMode::Tel: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEL; break;
+            case VirtualKeyboardMode::URL: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_URL; break;
+            case VirtualKeyboardMode::Email: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_EMAIL; break;
+            case VirtualKeyboardMode::Numeric: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NUMERIC; break;
+            case VirtualKeyboardMode::Decimal: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DECIMAL; break;
+            case VirtualKeyboardMode::Search: apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_SEARCH; break;
+            default: {
+                apiMode = VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DEFAULT;
+                WARNING_LOG("Unknown virtual keyboard mode, using default");
+            } break;
+        }
+        plugin_->apiFuncs_->VirtualKeyboardModeUpdate_update(ctx_, window, apiMode);
+    }
 }
 
 optional<pair<vector<string>, size_t>> ViceContext::windowQualitySelectorQuery(

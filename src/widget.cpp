@@ -4,6 +4,23 @@
 
 namespace browservice {
 
+VirtualKeyboardModeUpdate::VirtualKeyboardModeUpdate(CKey, VirtualKeyboardMode mode) {
+    mode_ = mode;
+}
+
+VirtualKeyboardMode VirtualKeyboardModeUpdate::mode() {
+    return mode_;
+}
+
+bool VirtualKeyboardModeUpdate::isEquivalentWith(shared_ptr<VirtualKeyboardModeUpdate> other) {
+    REQUIRE(other);
+    if(mode_ == VirtualKeyboardMode::None && other->mode() == VirtualKeyboardMode::None) {
+        return true;
+    } else {
+        return this == other.get();
+    }
+}
+
 Widget::Widget(weak_ptr<WidgetParent> parent) {
     REQUIRE_UI_THREAD();
 
@@ -18,6 +35,9 @@ Widget::Widget(weak_ptr<WidgetParent> parent) {
 
     cursor_ = NormalCursor;
     myCursor_ = NormalCursor;
+
+    virtualKeyboardModeUpdate_ = VirtualKeyboardModeUpdate::create(VirtualKeyboardMode::None);
+    myVirtualKeyboardModeUpdate_ = VirtualKeyboardModeUpdate::create(VirtualKeyboardMode::None);
 }
 
 void Widget::setViewport(ImageSlice viewport) {
@@ -50,6 +70,11 @@ int Widget::cursor() {
     return cursor_;
 }
 
+shared_ptr<VirtualKeyboardModeUpdate> Widget::virtualKeyboardModeUpdate() {
+    REQUIRE_UI_THREAD();
+    return virtualKeyboardModeUpdate_;
+}
+
 void Widget::takeFocus() {
     REQUIRE_UI_THREAD();
     if(focused_ && !focusChild_) return;
@@ -65,6 +90,7 @@ void Widget::takeFocus() {
 
     focusChild_ = nullptr;
     focused_ = true;
+    updateVirtualKeyboardMode_();
     widgetGainFocusEvent_(viewport_.width() / 2, viewport_.height() / 2);
 }
 
@@ -228,6 +254,7 @@ void Widget::sendLoseFocusEvent() {
         forwardLoseFocusEvent_();
         focusChild_.reset();
         focused_ = false;
+        updateVirtualKeyboardMode_();
     }
 }
 
@@ -239,6 +266,11 @@ void Widget::onWidgetViewDirty() {
 void Widget::onWidgetCursorChanged() {
     REQUIRE_UI_THREAD();
     updateCursor_();
+}
+
+void Widget::onWidgetVirtualKeyboardModeChanged() {
+    REQUIRE_UI_THREAD();
+    updateVirtualKeyboardMode_();
 }
 
 void Widget::onWidgetTakeFocus(Widget* child) {
@@ -263,6 +295,8 @@ void Widget::onWidgetTakeFocus(Widget* child) {
 
         focusChild_ = childShared;
         focused_ = true;
+
+        updateVirtualKeyboardMode_();
     }
 }
 
@@ -291,6 +325,13 @@ void Widget::setCursor_(int newCursor) {
 
     myCursor_ = newCursor;
     updateCursor_();
+}
+
+void Widget::setVirtualKeyboardMode_(VirtualKeyboardMode mode) {
+    REQUIRE_UI_THREAD();
+
+    myVirtualKeyboardModeUpdate_ = VirtualKeyboardModeUpdate::create(mode);
+    updateVirtualKeyboardMode_();
 }
 
 bool Widget::isMouseOver_() {
@@ -322,6 +363,8 @@ void Widget::updateFocus_(int x, int y) {
     } else {
         updateMouseOver_(x, y);
     }
+
+    updateVirtualKeyboardMode_();
 }
 
 void Widget::updateMouseOver_(int x, int y) {
@@ -376,6 +419,25 @@ void Widget::updateCursor_() {
         cursor_ = newCursor;
         if(shared_ptr<WidgetParent> parent = parent_.lock()) {
             parent->onWidgetCursorChanged();
+        }
+    }
+}
+
+void Widget::updateVirtualKeyboardMode_() {
+    if(!focused_) {
+        return;
+    }
+
+    shared_ptr<VirtualKeyboardModeUpdate> newModeUpdate;
+    if(focusChild_) {
+        newModeUpdate = focusChild_->virtualKeyboardModeUpdate();
+    } else {
+        newModeUpdate = myVirtualKeyboardModeUpdate_;
+    }
+    if(!newModeUpdate->isEquivalentWith(virtualKeyboardModeUpdate_)) {
+        virtualKeyboardModeUpdate_ = newModeUpdate;
+        if(shared_ptr<WidgetParent> parent = parent_.lock()) {
+            parent->onWidgetVirtualKeyboardModeChanged();
         }
     }
 }

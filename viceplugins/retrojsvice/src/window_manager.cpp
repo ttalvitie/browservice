@@ -155,6 +155,14 @@ void WindowManager::setCursor(uint64_t window, int cursorSignal) {
     it->second->setCursor(cursorSignal);
 }
 
+void WindowManager::setVirtualKeyboardEnabled(uint64_t window, bool enabled) {
+    REQUIRE_API_THREAD();
+
+    auto it = windows_.find(window);
+    REQUIRE(it != windows_.end());
+    it->second->setVirtualKeyboardEnabled(enabled);
+}
+
 optional<pair<vector<string>, size_t>> WindowManager::qualitySelectorQuery(
     uint64_t window
 ) {

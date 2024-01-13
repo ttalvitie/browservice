@@ -877,10 +877,10 @@ VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_WindowTitle_notifyWindowTitleCh
  *** API extension "ZoomInput" ***
  *********************************/
 
- /* Extension that allows the plugin to send commands to send zoom in/out/reset commands to a
-  * window. These commands should control the zoom level of the content of the window, and are
-  * typically relayed from key/button presses by the user.
-  */
+/* Extension that allows the plugin to send commands to send zoom in/out/reset commands to a
+ * window. These commands should control the zoom level of the content of the window, and are
+ * typically relayed from key/button presses by the user.
+ */
 
 enum VicePluginAPI_ZoomInput_Command {
     VICE_PLUGIN_API_ZOOM_INPUT_COMMAND_ZOOM_IN = 0,
@@ -909,6 +909,44 @@ typedef struct VicePluginAPI_ZoomInput_Callbacks VicePluginAPI_ZoomInput_Callbac
 VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_ZoomInput_enable(
     VicePluginAPI_Context* ctx,
     VicePluginAPI_ZoomInput_Callbacks callbacks
+);
+
+/***************************************************************************************************
+ *** API extension "VirtualKeyboardModeUpdate" ***
+ *************************************************/
+
+/* Extension that allows the program to send updates on the expected virtual keyboard mode (i.e.
+ * whether or not and what kind of keyboard input is expected). This allows the plugin to
+ * implement keyboard input using a virtual (on-screen) keyboard that is not always visible.
+ */
+
+/* We use the same input modes as the HTML standard
+ *   https://html.spec.whatwg.org/#input-modalities:-the-inputmode-attribute
+ * the default mode corresponds to the case of unspecified input mode. */
+enum VicePluginAPI_VirtualKeyboardModeUpdate_Mode {
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NONE = 0,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DEFAULT = 1,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEXT = 2,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEL = 3,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_URL = 4,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_EMAIL = 5,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NUMERIC = 6,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DECIMAL = 7,
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_SEARCH = 8,
+
+    /* Invalid value that is larger than any valid enum value, used to ensure
+     * binary compatibility when new values are added.
+     */
+    VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_HUGE_UNUSED = 1000000000
+};
+typedef enum VicePluginAPI_VirtualKeyboardModeUpdate_Mode VicePluginAPI_VirtualKeyboardModeUpdate_Mode;
+
+/* Updates the current virtual keyboard mode for given window; may only be called for a running
+ * context. */
+VICE_PLUGIN_API_FUNC_DECLSPEC void vicePluginAPI_VirtualKeyboardModeUpdate_update(
+    VicePluginAPI_Context* ctx,
+    uint64_t window,
+    VicePluginAPI_VirtualKeyboardModeUpdate_Mode mode
 );
 
 /***************************************************************************************************

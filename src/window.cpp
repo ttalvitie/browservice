@@ -878,6 +878,27 @@ void Window::onWidgetCursorChanged() {
     });
 }
 
+void Window::onWidgetVirtualKeyboardModeChanged() {
+    REQUIRE_UI_THREAD();
+
+    if(state_ != Open) {
+        return;
+    }
+
+    // Process update with slight delay to avoid bursts.
+    if(!virtualKeyboardUpdateTimeout_->isActive()) {
+        shared_ptr<Window> self = shared_from_this();
+        virtualKeyboardUpdateTimeout_->set([self]() {
+            if(self->state_ == Open) {
+                VirtualKeyboardMode mode = self->rootWidget_->virtualKeyboardModeUpdate()->mode();
+
+                REQUIRE(self->eventHandler_);
+                self->eventHandler_->onWindowVirtualKeyboardModeChanged(self->handle_, mode);
+            }
+        });
+    }
+}
+
 void Window::onGlobalHotkeyPressed(GlobalHotkey key) {
     REQUIRE_UI_THREAD();
 
@@ -1095,6 +1116,8 @@ void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle,
     watchdogTimeout_ = Timeout::create(250);
 
     zoomLevel_ = zoomFactorToZoomLevel(globals->config->initialZoom);
+
+    virtualKeyboardUpdateTimeout_ = Timeout::create(20);
 }
 
 void Window::createSuccessful_() {
@@ -1124,6 +1147,9 @@ void Window::createSuccessful_() {
         )) {
             self->rootWidget_->controlBar()->enableClipboardButton();
         }
+
+        // Send initial virtual keyboard mode.
+        self->onWidgetVirtualKeyboardModeChanged();
     });
 }
 
@@ -1139,6 +1165,7 @@ void Window::afterClose_() {
     REQUIRE(state_ == Closed);
 
     watchdogTimeout_->clear(false);
+    virtualKeyboardUpdateTimeout_->clear(false);
 
     if(fileUploadCallback_) {
         fileUploadCallback_->Cancel();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "timeout.hpp"
+#include "widget.hpp"
 
 typedef struct VicePluginAPI_Context VicePluginAPI_Context;
 
@@ -173,6 +174,7 @@ public:
     void notifyWindowTitleChanged(uint64_t window);
 
     void setWindowCursor(uint64_t window, int cursor);
+    void setWindowVirtualKeyboardMode(uint64_t window, VirtualKeyboardMode mode);
 
     optional<pair<vector<string>, size_t>> windowQualitySelectorQuery(
         uint64_t window

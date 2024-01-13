@@ -361,6 +361,14 @@ void Server::onWindowCursorChanged(uint64_t handle, int cursor) {
     viceCtx_->setWindowCursor(handle, cursor);
 }
 
+void Server::onWindowVirtualKeyboardModeChanged(uint64_t handle, VirtualKeyboardMode mode) {
+    REQUIRE_UI_THREAD();
+    REQUIRE(state_ != ShutdownComplete);
+    REQUIRE(openWindows_.count(handle));
+
+    viceCtx_->setWindowVirtualKeyboardMode(handle, mode);
+}
+
 optional<pair<vector<string>, size_t>> Server::onWindowQualitySelectorQuery(
     uint64_t handle
 ) {

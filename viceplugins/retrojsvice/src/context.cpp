@@ -569,6 +569,25 @@ void Context::cancelFileUpload(uint64_t window) {
     windowManager_->cancelFileUpload(window);
 }
 
+void Context::VirtualKeyboardModeUpdate_update(uint64_t window, VicePluginAPI_VirtualKeyboardModeUpdate_Mode mode) {
+    RunningAPILock apiLock(this);
+    REQUIRE(!threadRunningPumpEvents);
+
+    REQUIRE(
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NONE ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DEFAULT ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEXT ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_TEL ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_URL ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_EMAIL ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NUMERIC ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_DECIMAL ||
+        mode == VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_SEARCH
+    );
+
+    windowManager_->setVirtualKeyboardEnabled(window, mode != VICE_PLUGIN_API_VIRTUAL_KEYBOARD_MODE_UPDATE_MODE_NONE);
+}
+
 vector<tuple<string, string, string, string>> Context::getOptionDocs() {
     vector<tuple<string, string, string, string>> ret;
 

@@ -294,6 +294,13 @@ void Window::setCursor(int cursorSignal) {
     });
 }
 
+bool Window::setVirtualKeyboardEnabled(bool enabled) {
+    REQUIRE_API_THREAD();
+    REQUIRE(!closed_);
+
+    INFO_LOG("Virtual keyboard enabled: ", (int)enabled);
+}
+
 optional<pair<vector<string>, size_t>> Window::qualitySelectorQuery() {
     REQUIRE_API_THREAD();
     REQUIRE(!closed_);

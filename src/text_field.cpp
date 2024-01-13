@@ -32,6 +32,7 @@ TextField::TextField(CKey,
     caretBlinkTimeout_ = Timeout::create(500);
 
     setCursor_(TextCursor);
+    setVirtualKeyboardMode_(VirtualKeyboardMode::Text);
 }
 
 void TextField::setText(string text) {
@@ -263,6 +264,9 @@ void TextField::widgetMouseDownEvent_(int x, int y, int button) {
             setCaret_(0, (int)textLayout_->text().size());
         }
     }
+
+    // Force resend virtual keyboard mode update.
+    setVirtualKeyboardMode_(VirtualKeyboardMode::Text);
 }
 
 void TextField::widgetMouseUpEvent_(int x, int y, int button) {

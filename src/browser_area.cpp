@@ -238,6 +238,23 @@ public:
         }
     }
 
+    virtual void OnVirtualKeyboardRequested(CefRefPtr<CefBrowser>, TextInputMode inputMode) override {
+        VirtualKeyboardMode mode = VirtualKeyboardMode::None;
+        switch(inputMode) {
+            case CEF_TEXT_INPUT_MODE_DEFAULT: mode = VirtualKeyboardMode::Default; break;
+            case CEF_TEXT_INPUT_MODE_NONE: mode = VirtualKeyboardMode::None; break;
+            case CEF_TEXT_INPUT_MODE_TEXT: mode = VirtualKeyboardMode::Text; break;
+            case CEF_TEXT_INPUT_MODE_TEL: mode = VirtualKeyboardMode::Tel; break;
+            case CEF_TEXT_INPUT_MODE_URL: mode = VirtualKeyboardMode::URL; break;
+            case CEF_TEXT_INPUT_MODE_EMAIL: mode = VirtualKeyboardMode::Email; break;
+            case CEF_TEXT_INPUT_MODE_NUMERIC: mode = VirtualKeyboardMode::Numeric; break;
+            case CEF_TEXT_INPUT_MODE_DECIMAL: mode = VirtualKeyboardMode::Decimal; break;
+            case CEF_TEXT_INPUT_MODE_SEARCH: mode = VirtualKeyboardMode::Search; break;
+            default: mode = VirtualKeyboardMode::Default; break;
+        }
+        browserArea_->setVirtualKeyboardMode_(mode);
+    }
+
 private:
     shared_ptr<BrowserArea> browserArea_;
 
