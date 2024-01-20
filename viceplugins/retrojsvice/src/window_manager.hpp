@@ -66,7 +66,8 @@ public:
         shared_ptr<WindowManagerEventHandler> eventHandler,
         shared_ptr<SecretGenerator> secretGen,
         string programName,
-        int defaultQuality
+        int defaultQuality,
+        bool setupNavigationForwarding
     );
     ~WindowManager();
 
@@ -147,6 +148,7 @@ private:
     shared_ptr<SecretGenerator> secretGen_;
     string programName_;
     int defaultQuality_;
+    bool setupNavigationForwarding_;
 };
 
 }

@@ -33,7 +33,8 @@ Window::Window(CKey,
     shared_ptr<SecretGenerator> secretGen,
     string programName,
     bool allowPNG,
-    int initialQuality
+    int initialQuality,
+    bool setupNavigationForwarding
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(handle);
@@ -46,6 +47,7 @@ Window::Window(CKey,
     programName_ = move(programName);
     allowPNG_ = allowPNG;
     initialQuality_ = initialQuality;
+    setupNavigationForwarding_ = setupNavigationForwarding;
     secretGen_ = secretGen;
     snakeOilKeyCipherKey_ = secretGen_->generateSnakeOilCipherKey();
 
@@ -107,8 +109,10 @@ void Window::handleInitialForwardHTTPRequest(shared_ptr<HTTPRequest> request) {
         return;
     }
 
+    string pathSuffix = setupNavigationForwarding_ ? "prev/" : "";
+
     request->sendHTMLResponse(
-        200, writeNewWindowHTML, {programName_, pathPrefix_}
+        200, writeNewWindowHTML, {programName_, pathPrefix_, pathSuffix}
     );
 }
 
@@ -241,7 +245,8 @@ shared_ptr<Window> Window::createPopup(uint64_t popupHandle) {
         secretGen_,
         programName_,
         allowPNG_,
-        imageCompressor_->quality()
+        imageCompressor_->quality(),
+        setupNavigationForwarding_
     );
 
     shared_ptr<Window> self = shared_from_this();
@@ -251,10 +256,11 @@ shared_ptr<Window> Window::createPopup(uint64_t popupHandle) {
         }
         self->addIframe_(mce,
             [self, popupWindow](shared_ptr<HTTPRequest> request) {
+                string pathSuffix = self->setupNavigationForwarding_ ? "prev/" : "";
                 request->sendHTMLResponse(
                     200,
                     writePopupIframeHTML,
-                    {self->programName_, popupWindow->pathPrefix_}
+                    {self->programName_, popupWindow->pathPrefix_, pathSuffix}
                 );
             }
         );
@@ -748,7 +754,7 @@ void Window::navigate_(MCE, int direction) {
 void Window::handleMainPageRequest_(MCE, shared_ptr<HTTPRequest> request) {
     updateInactivityTimeout_();
 
-    if(preMainVisited_) {
+    if(preMainVisited_ || !setupNavigationForwarding_) {
         ++curMainIdx_;
 
         if(curMainIdx_ > 1 && !navigationInProgress_) {
@@ -991,7 +997,9 @@ void Window::handleGotoURIRequest_(MCE, shared_ptr<HTTPRequest> request, string 
     prePrevVisited_ = false;
     preMainVisited_ = false;
 
-    request->sendHTMLResponse(200, writeNewWindowHTML, {programName_, pathPrefix_});
+    string pathSuffix = setupNavigationForwarding_ ? "prev/" : "";
+
+    request->sendHTMLResponse(200, writeNewWindowHTML, {programName_, pathPrefix_, pathSuffix});
 }
 
 void Window::addIframe_(MCE, function<void(shared_ptr<HTTPRequest>)> iframe) {

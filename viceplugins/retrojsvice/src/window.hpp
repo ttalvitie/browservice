@@ -65,7 +65,8 @@ public:
         shared_ptr<SecretGenerator> secretGen,
         string programName,
         bool allowPNG,
-        int initialQuality
+        int initialQuality,
+        bool setupNavigationForwarding
     );
     ~Window();
 
@@ -158,6 +159,7 @@ private:
     string programName_;
     bool allowPNG_;
     int initialQuality_;
+    bool setupNavigationForwarding_;
     shared_ptr<SecretGenerator> secretGen_;
 
     // The key codes sent by the client are XOR "encrypted" using this key. Note

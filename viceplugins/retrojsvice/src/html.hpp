@@ -7,6 +7,7 @@ namespace retrojsvice {
 struct NewWindowHTMLData {
     const string& programName;
     const string& pathPrefix;
+    const string& pathSuffix;
 };
 void writeNewWindowHTML(ostream& out, const NewWindowHTMLData& data);
 
@@ -46,6 +47,7 @@ void writeNextHTML(ostream& out, const NextHTMLData& data);
 struct PopupIframeHTMLData {
     const string& programName;
     const string& popupPathPrefix;
+    const string& popupPathSuffix;
 };
 void writePopupIframeHTML(ostream& out, const PopupIframeHTMLData& data);
 

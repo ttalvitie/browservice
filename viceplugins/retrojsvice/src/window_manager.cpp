@@ -14,7 +14,8 @@ WindowManager::WindowManager(CKey,
     shared_ptr<WindowManagerEventHandler> eventHandler,
     shared_ptr<SecretGenerator> secretGen,
     string programName,
-    int defaultQuality
+    int defaultQuality,
+    bool setupNavigationForwarding
 ) {
     REQUIRE_API_THREAD();
     REQUIRE(defaultQuality >= 10 && defaultQuality <= 101);
@@ -25,6 +26,7 @@ WindowManager::WindowManager(CKey,
     secretGen_ = secretGen;
     programName_ = move(programName);
     defaultQuality_ = defaultQuality;
+    setupNavigationForwarding_ = setupNavigationForwarding;
 }
 
 WindowManager::~WindowManager() {
@@ -337,7 +339,8 @@ void WindowManager::handleNewWindowRequest_(MCE, shared_ptr<HTTPRequest> request
                 secretGen_,
                 programName_,
                 allowPNG,
-                defaultQuality_
+                defaultQuality_,
+                setupNavigationForwarding_
             );
             REQUIRE(windows_.emplace(handle, window).second);
 

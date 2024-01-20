@@ -32,6 +32,7 @@ public:
         int httpMaxThreads,
         string httpAuthCredentials,
         bool allowQualitySelector,
+        bool setupNavigationForwarding,
         string programName
     );
     ~Context();
@@ -145,6 +146,7 @@ private:
     int httpMaxThreads_;
     string httpAuthCredentials_;
     bool allowQualitySelector_;
+    bool setupNavigationForwarding_;
     string programName_;
 
     enum {Pending, Running, ShutdownComplete} state_;

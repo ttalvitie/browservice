@@ -202,6 +202,7 @@ variant<shared_ptr<Context>, string> Context::init(
     int httpMaxThreads = defaultHTTPMaxThreads;
     string httpAuthCredentials;
     bool allowQualitySelector = true;
+    bool setupNavigationForwarding = true;
 
     for(const pair<string, string>& option : options) {
         const string& name = option.first;
@@ -252,6 +253,18 @@ variant<shared_ptr<Context>, string> Context::init(
             } else {
                 return "Invalid value '" + value + "' for option quality-selector";
             }
+        } else if(name == "navigation-forwarding") {
+            string lowValue = value;
+            for(char& c : lowValue) {
+                c = tolower(c);
+            }
+            if(trueValues.count(lowValue)) {
+                setupNavigationForwarding = true;
+            } else if(falseValues.count(lowValue)) {
+                setupNavigationForwarding = false;
+            } else {
+                return "Invalid value '" + value + "' for option navigation-forwarding";
+            }
         } else {
             return "Unrecognized option '" + name + "'";
         }
@@ -264,6 +277,7 @@ variant<shared_ptr<Context>, string> Context::init(
         httpMaxThreads,
         httpAuthCredentials,
         allowQualitySelector,
+        setupNavigationForwarding,
         programName
     );
 }
@@ -274,6 +288,7 @@ Context::Context(CKey, CKey,
     int httpMaxThreads,
     string httpAuthCredentials,
     bool allowQualitySelector,
+    bool setupNavigationForwarding,
     string programName
 )
     : httpListenAddr_(httpListenAddr)
@@ -284,6 +299,7 @@ Context::Context(CKey, CKey,
     httpMaxThreads_ = httpMaxThreads;
     httpAuthCredentials_ = httpAuthCredentials;
     allowQualitySelector_ = allowQualitySelector;
+    setupNavigationForwarding_ = setupNavigationForwarding;
     programName_ = sanitizeProgramName(programName);
 
     state_ = Pending;
@@ -352,7 +368,11 @@ void Context::start(
     );
     secretGen_ = SecretGenerator::create();
     windowManager_ = WindowManager::create(
-        shared_from_this(), secretGen_, programName_, defaultQuality_
+        shared_from_this(),
+        secretGen_,
+        programName_,
+        defaultQuality_,
+        setupNavigationForwarding_
     );
 
     clipboardCSRFToken_ = secretGen_->generateCSRFToken();
@@ -604,6 +624,13 @@ vector<tuple<string, string, string, string>> Context::getOptionDocs() {
         "quality-selector",
         "YES/NO",
         "make image quality adjustable using a quality selector widget",
+        "default: yes"
+    );
+    ret.emplace_back(
+        "navigation-forwarding",
+        "YES/NO",
+        "forward client back/forward buttons to the program; "
+        "may have compatibility issues with some clients",
         "default: yes"
     );
 
