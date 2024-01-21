@@ -108,7 +108,7 @@ def run():
             cmd.append("--x64-build")
         cmd.append("--with-pgo-profiles")
         env["GN_DEFINES"] = "is_official_build=true"
-        env["GYP_MSVS_VERSION"] = "2019"
+        env["GYP_MSVS_VERSION"] = "2022"
     elif os_type == "Linux":
         if arch == "x86_64":
             cmd.append("--x64-build")

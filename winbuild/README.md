@@ -2,7 +2,7 @@
 
 - Install Microsoft Visual Studio 2022
 - Build a CEF distribution with patches that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access (note that this takes a lot of time, memory and disk space):
-    - Ensure that you have Python3 and the Visual Studio 2019 components mentioned in https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md#markdown-header-windows-configuration installed
+    - Ensure that you have Python3 and the Visual Studio 2022 components mentioned in https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md#markdown-header-windows-configuration installed
     - Run the script [tools/build_patched_cef.py](../tools/build_patched_cef.py) in a Command Prompt using a command like `python build_patched_cef.py C:\build patched_cef_windows64.tar.bz2 windows64` (replace `windows64` by `windows32` for 32-bit build; you may also replace `C:\build` with another short build directory path)
     - After the script has finished (typically after running for multiple hours), the patched CEF distribution is created in `patched_cef_windows64.tar.bz2`. You may remove the created build directory (`C:\build` in the command above); it will not be needed after the distribution has been built
 - Install Browservice dependencies:
