@@ -454,6 +454,12 @@ FontRenderParams GetFontRenderParams(const FontRenderParamsQuery& query, std::st
 }
 """
 
+# Hack to fix compilation issue
+CSTRING_BUILDER_CC_HEADER_CODE = b"""\
+#include <limits>
+
+"""
+
 def embed(data):
     return "b64decode(\"" + b64encode(data).decode("ASCII") + "\")"
 
@@ -497,6 +503,14 @@ def run(cef_src_dir):
             fp.write(""" + embed(FONT_RENDER_PARAMS_OVERRIDE_HEADER_CC_CODE) + """)
             fp.write(old_code)
             fp.write(""" + embed(FONT_RENDER_PARAMS_OVERRIDE_FOOTER_CC_CODE) + """)
+
+    cstring_builder_cc_path = os.path.join(cef_src_dir, "..", "base", "allocator", "partition_allocator", "src", "partition_alloc", "partition_alloc_base", "strings", "cstring_builder.cc")
+    log(f"Adding missing include to '{cstring_builder_cc_path}'")
+    with open(cstring_builder_cc_path, "rb") as fp:
+        old_code = fp.read()
+    with open(cstring_builder_cc_path, "wb") as fp:
+        fp.write(""" + embed(CSTRING_BUILDER_CC_HEADER_CODE) + """)
+        fp.write(old_code)
 
     log("Browservice-specific CEF/Chromium patches applied successfully")
 
