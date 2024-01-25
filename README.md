@@ -4,7 +4,9 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
-2023-11-26: [Browservice 0.9.8.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.8.0) has been released. This release add support for page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset) and setting font render parameters for the browser view (using the `--browser-font-render-mode` command line option).
+2024-01-25: [Browservice 0.9.9.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.0) has been released. This release adds support for three new command line arguments: `--certificate-check-exceptions` for making exceptions to SSL/TLS certificate checking, `--show-control-bar` for hiding the control bar (useful with kiosk software) and `--vice-opt-navigation-forwarding` that makes it possible to disable the client back/forward button forwarding feature that may cause compatibility issues with some clients.
+
+2023-11-26: [Browservice 0.9.8.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.8.0) has been released. This release adds support for page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset) and setting font render parameters for the browser view (using the `--browser-font-render-mode` command line option).
 
 2023-07-18: [Browservice 0.9.7.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.7.0) has been released. This release adds vice plugin API extensions that are useful with alternative vice plugins (e.g. for native clients).
 
@@ -50,7 +52,9 @@ The current features of Browservice include the following:
 - Native Back/Forward/Refresh buttons on the client forwarded to the browser
 - Custom multithreaded implementation of PNG compression (standalone library; you just need `png.hpp` and `png.cpp` from directory `viceplugins/retrojsvice/src`)
 - Page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset)
-- Customizing font render parameters (antialiasing, subpixel rendering) for the browser view using the `--browser-font-render-mode` command line option.
+- Customizing font render parameters (antialiasing, subpixel rendering) for the browser view using the `--browser-font-render-mode` command line option
+- SSL/TLS certificate checking exceptions using the `--certificate-check-exceptions` command line option
+- Hiding the control bar for kiosk mode software by setting `--show-control-bar=no`
 
 The following features are currently missing but could be implemented in future versions:
 
