@@ -2,6 +2,9 @@
 
 chromium_version=123.0.6312.107
 
+# Avoid getting stuck in e.g. keyboard layout setting dialog.
+export DEBIAN_FRONTEND=noninteractive
+
 # Script from
 # https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p54107
 # linked from official automated build setup documentation in
