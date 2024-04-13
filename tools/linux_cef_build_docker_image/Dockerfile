@@ -1,7 +1,7 @@
-FROM debian:latest
+FROM debian:bullseye
 
 # Dockerfile from
-# https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p47371
+# https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p54107
 # linked from official automated build setup documentation in
 # https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md
 
@@ -18,6 +18,8 @@ RUN chmod +x /app/install/*.sh && \
     /app/install/install.sh
 
 # Continue to the default entrypoint as a non-root user.
+# This isn't strictly required since the `build-in-docker` script will run with
+# the `--user` command-line argument, but it adds safety by default.
 RUN groupadd -g 999 appuser && \
     useradd -r -u 999 -g appuser appuser
 USER appuser
