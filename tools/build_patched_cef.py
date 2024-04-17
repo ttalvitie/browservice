@@ -163,6 +163,7 @@ CLIPBOARD_IMPLEMENTATION_CC_CODE = b"""\
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -216,8 +217,8 @@ private:
     ~ClipboardBrowservice() override {}
 
     void OnPreShutdown() override {}
-    DataTransferEndpoint* GetSource(ClipboardBuffer buffer) const override {
-        return nullptr;
+    std::optional<DataTransferEndpoint> GetSource(ClipboardBuffer buffer) const override {
+        return std::nullopt;
     }
     const ClipboardSequenceNumberToken& GetSequenceNumber(ClipboardBuffer buffer) const override {
         uint64_t sequence_number;
@@ -308,8 +309,7 @@ private:
         browserviceClipboardText.assign(text.begin(), text.end());
         ++browserviceClipboardSeqNum;
     }
-    void WriteHTML(base::StringPiece markup, absl::optional<base::StringPiece> source_url) override {}
-    void WriteUnsanitizedHTML(base::StringPiece markup, absl::optional<base::StringPiece> source_url) override {}
+    void WriteHTML(base::StringPiece markup, std::optional<base::StringPiece> source_url) override {}
     void WriteSvg(base::StringPiece markup) override {}
     void WriteRTF(base::StringPiece rtf) override {}
     void WriteFilenames(std::vector<ui::FileInfo> filenames) override {}
