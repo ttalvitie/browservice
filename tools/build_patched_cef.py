@@ -138,6 +138,7 @@ def run():
         if not filename.endswith(".tar.bz2"): continue
         if "release_symbols" in filename: continue
         if f"+g{commit}+" not in filename: continue
+        if filename.endswith("_docs.tar.bz2"): continue
         if not os.path.isfile(os.path.join(binary_distrib_dir, filename)): continue
         output_filename_matches.append(filename)
     if len(output_filename_matches) != 1:
