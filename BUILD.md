@@ -6,7 +6,7 @@ This file contains building instructions for Linux. For building on Windows, see
 
 Browservice requires a custom build of CEF with some patches that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access. It is recommended to build it using the Docker image [tools/linux_cef_build_docker_image/Dockerfile](tools/linux_cef_build_docker_image/Dockerfile) and the script [tools/build_patched_cef.py](tools/build_patched_cef.py).
 
-Building CEF takes a lot of memory, disk space and time, because it includes the Chromium browser. You should build it on a powerful x86_64 Linux machine with Docker installed and at least 16 GB of memory and 100 GB of disk space. Note that even for ARM builds, you should use a x86_64 machine (CEF will be cross-compiled).
+Building CEF takes a lot of memory, disk space and time, because it includes the Chromium browser. You should build it on a powerful x86_64 Linux machine with Docker installed and at least 16 GB of memory and 200 GB of disk space. Note that even for ARM builds, you should use a x86_64 machine (CEF will be cross-compiled).
 
 Instructions:
 ```
