@@ -4,12 +4,6 @@
 
 namespace retrojsvice {
 
-namespace {
-
-regex windowPathRegex("/([0-9]+)/.*");
-
-}
-
 WindowManager::WindowManager(CKey,
     shared_ptr<WindowManagerEventHandler> eventHandler,
     shared_ptr<SecretGenerator> secretGen,
@@ -71,16 +65,15 @@ void WindowManager::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     }
 
     const string gotoPrefix = "/goto/";
-    if(method == "GET" && path.size() >= gotoPrefix.size() && path.substr(0, 6) == gotoPrefix) {
+    if(method == "GET" && path.size() >= gotoPrefix.size() && path.substr(0, gotoPrefix.size()) == gotoPrefix) {
         string uri = path.substr(gotoPrefix.size());
         handleNewWindowRequest_(mce, request, uri);
         return;
     }
 
-    smatch match;
-    if(regex_match(path, match, windowPathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> handle = parseString<uint64_t>(match[1]);
+    vector<string> pathSplit = splitStr(path, '/', 2);
+    if(pathSplit.size() == 3 && pathSplit[0].empty() && isNonEmptyNumericStr(pathSplit[1])) {
+        optional<uint64_t> handle = parseString<uint64_t>(pathSplit[1]);
         if(handle) {
             auto it = windows_.find(*handle);
             if(it != windows_.end()) {
