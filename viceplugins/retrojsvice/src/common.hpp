@@ -17,13 +17,13 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <random>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -62,6 +62,7 @@ using std::move;
 using std::mt19937;
 using std::multimap;
 using std::mutex;
+using std::numeric_limits;
 using std::optional;
 using std::ofstream;
 using std::ostream;
@@ -70,12 +71,9 @@ using std::promise;
 using std::queue;
 using std::random_device;
 using std::range_error;
-using std::regex;
-using std::regex_match;
 using std::seed_seq;
 using std::set;
 using std::shared_ptr;
-using std::smatch;
 using std::string;
 using std::stringstream;
 using std::swap;
@@ -149,6 +147,14 @@ PathStr toPathStr(const T& obj) {
 }
 
 string sanitizeUTF8String(string str);
+
+vector<string> splitStr(
+    const string& str,
+    char delim,
+    size_t maxSplits = numeric_limits<size_t>::max()
+);
+
+bool isNonEmptyNumericStr(const string& str);
 
 // Helper class for defining visitors for variants
 template<class... T> struct Overloaded : T... { using T::operator()...; };

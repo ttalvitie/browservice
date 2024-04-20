@@ -10,23 +10,6 @@
 
 namespace retrojsvice {
 
-namespace {
-
-regex imagePathRegex(
-    "/image/([0-9]+)/([0-9]+)/([01])/([0-9]+)/([0-9]+)/([0-9]+)/(([A-Z0-9_-]+/)*)"
-);
-regex iframePathRegex(
-    "/iframe/([0-9]+)/[0-9]+/"
-);
-regex downloadPathRegex(
-    "/download/([0-9]+)/.*"
-);
-regex closePathRegex(
-    "/close/([0-9]+)/"
-);
-
-}
-
 Window::Window(CKey,
     shared_ptr<WindowEventHandler> eventHandler,
     uint64_t handle,
@@ -135,99 +118,127 @@ void Window::handleHTTPRequest(MCE, shared_ptr<HTTPRequest> request) {
     }
 
     string method = request->method();
-    smatch match;
 
     if(method == "GET" && path == "/") {
         handleMainPageRequest_(mce, request);
         return;
     }
 
-    if(method == "GET" && regex_match(path, match, imagePathRegex)) {
-        REQUIRE(match.size() >= 8);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-        optional<uint64_t> imgIdx = parseString<uint64_t>(match[2]);
-        optional<int> immediate = parseString<int>(match[3]);
-        optional<int> width = parseString<int>(match[4]);
-        optional<int> height = parseString<int>(match[5]);
-        optional<uint64_t> startEventIdx = parseString<uint64_t>(match[6]);
-        string eventStr = match[7];
+    vector<string> pathSplit = splitStr(path, '/', 2);
+    if(pathSplit.size() == 3 && pathSplit[0].empty()) {
+        string pathBase = move(pathSplit[1]);
+        string subPath = move(pathSplit[2]);
 
-        if(mainIdx && imgIdx && immediate && width && height && startEventIdx) {
-            handleImageRequest_(
-                mce,
-                request,
-                *mainIdx,
-                *imgIdx,
-                *immediate,
-                *width,
-                *height,
-                *startEventIdx,
-                move(eventStr)
+        if(method == "GET" && pathBase == "image") {
+            vector<string> subPathSplit = splitStr(subPath, '/', 6);
+            if(
+                subPathSplit.size() == 7 &&
+                isNonEmptyNumericStr(subPathSplit[0]) &&
+                isNonEmptyNumericStr(subPathSplit[1]) &&
+                (subPathSplit[2] == "0" || subPathSplit[2] == "1") &&
+                isNonEmptyNumericStr(subPathSplit[3]) &&
+                isNonEmptyNumericStr(subPathSplit[4]) &&
+                isNonEmptyNumericStr(subPathSplit[5])
+            ) {
+                optional<uint64_t> mainIdx = parseString<uint64_t>(subPathSplit[0]);
+                optional<uint64_t> imgIdx = parseString<uint64_t>(subPathSplit[1]);
+                optional<int> immediate = parseString<int>(subPathSplit[2]);
+                optional<int> width = parseString<int>(subPathSplit[3]);
+                optional<int> height = parseString<int>(subPathSplit[4]);
+                optional<uint64_t> startEventIdx = parseString<uint64_t>(subPathSplit[5]);
+                string eventStr = subPathSplit[6];
+
+                if(mainIdx && imgIdx && immediate && width && height && startEventIdx) {
+                    handleImageRequest_(
+                        mce,
+                        request,
+                        *mainIdx,
+                        *imgIdx,
+                        *immediate,
+                        *width,
+                        *height,
+                        *startEventIdx,
+                        move(eventStr)
+                    );
+                    return;
+                }
+            }
+        }
+
+        if(method == "GET" && pathBase == "iframe") {
+            vector<string> subPathSplit = splitStr(subPath, '/');
+            if(
+                subPathSplit.size() == 3 &&
+                isNonEmptyNumericStr(subPathSplit[0]) &&
+                isNonEmptyNumericStr(subPathSplit[1]) &&
+                subPathSplit[2].empty()
+            ) {
+                optional<uint64_t> mainIdx = parseString<uint64_t>(subPathSplit[0]);
+
+                if(mainIdx) {
+                    handleIframeRequest_(mce, request, *mainIdx);
+                    return;
+                }
+            }
+        }
+
+        if(method == "GET" && pathBase == "download") {
+            vector<string> subPathSplit = splitStr(subPath, '/', 1);
+            if(subPathSplit.size() == 2 && isNonEmptyNumericStr(subPathSplit[0])) {
+                optional<uint64_t> downloadIdx = parseString<uint64_t>(subPathSplit[0]);
+                if(downloadIdx) {
+                    auto it = downloads_.find(*downloadIdx);
+                    if(it == downloads_.end()) {
+                        request->sendTextResponse(400, "ERROR: Outdated download index");
+                    } else {
+                        it->second.first->serve(request);
+                    }
+                    return;
+                }
+            }
+        }
+
+        if(method == "GET" && pathBase == "upload" && subPath.empty()) {
+            request->sendHTMLResponse(
+                200, writeUploadHTML, {programName_, pathPrefix_, uploadCSRFToken_}
             );
             return;
         }
-    }
 
-    if(method == "GET" && regex_match(path, match, iframePathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-
-        if(mainIdx) {
-            handleIframeRequest_(mce, request, *mainIdx);
+        if(method == "POST" && pathBase == "upload" && subPath.empty()) {
+            handleUploadPostRequest_(mce, request);
             return;
         }
-    }
 
-    if(method == "GET" && regex_match(path, match, downloadPathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> downloadIdx = parseString<uint64_t>(match[1]);
-        if(downloadIdx) {
-            auto it = downloads_.find(*downloadIdx);
-            if(it == downloads_.end()) {
-                request->sendTextResponse(400, "ERROR: Outdated download index");
-            } else {
-                it->second.first->serve(request);
+        if(method == "GET" && pathBase == "close") {
+            vector<string> subPathSplit = splitStr(subPath, '/');
+            if(
+                subPathSplit.size() == 2 &&
+                isNonEmptyNumericStr(subPathSplit[0]) &&
+                subPathSplit[1].empty()
+            ) {
+                optional<uint64_t> mainIdx = parseString<uint64_t>(subPathSplit[0]);
+
+                if(mainIdx) {
+                    handleCloseRequest_(request, *mainIdx);
+                    return;
+                }
             }
+        }
+
+        if(method == "GET" && pathBase == "prev" && subPath.empty()) {
+            handlePrevPageRequest_(mce, request);
             return;
         }
-    }
-
-    if(method == "GET" && path == "/upload/") {
-        request->sendHTMLResponse(
-            200, writeUploadHTML, {programName_, pathPrefix_, uploadCSRFToken_}
-        );
-        return;
-    }
-
-    if(method == "POST" && path == "/upload/") {
-        handleUploadPostRequest_(mce, request);
-        return;
-    }
-
-    if(method == "GET" && regex_match(path, match, closePathRegex)) {
-        REQUIRE(match.size() == 2);
-        optional<uint64_t> mainIdx = parseString<uint64_t>(match[1]);
-
-        if(mainIdx) {
-            handleCloseRequest_(request, *mainIdx);
+        if(method == "GET" && pathBase == "next" && subPath.empty()) {
+            handleNextPageRequest_(mce, request);
             return;
         }
-    }
 
-    if(method == "GET" && path == "/prev/") {
-        handlePrevPageRequest_(mce, request);
-        return;
-    }
-    if(method == "GET" && path == "/next/") {
-        handleNextPageRequest_(mce, request);
-        return;
-    }
-
-    const string gotoPrefix = "/goto/";
-    if(method == "GET" && path.size() >= gotoPrefix.size() && path.substr(0, 6) == gotoPrefix) {
-        string uri = path.substr(gotoPrefix.size());
-        handleGotoURIRequest_(mce, request, uri);
-        return;
+        if(method == "GET" && pathBase == "goto") {
+            handleGotoURIRequest_(mce, request, subPath);
+            return;
+        }
     }
 
     request->sendTextResponse(400, "ERROR: Invalid request URI or method");

@@ -60,6 +60,38 @@ string sanitizeUTF8String(string str) {
     return ret;
 }
 
+vector<string> splitStr(
+    const string& str,
+    char delim,
+    size_t maxSplits
+) {
+    vector<string> ret;
+    string item;
+    for(char c : str) {
+        if(c == delim && maxSplits != 0) {
+            ret.push_back(move(item));
+            item = "";
+            --maxSplits;
+        } else {
+            item.push_back(c);
+        }
+    }
+    ret.push_back(move(item));
+    return ret;
+}
+
+bool isNonEmptyNumericStr(const string& str) {
+    if(str.empty()) {
+        return false;
+    }
+    for(char c : str) {
+        if(!(c >= '0' && c <= '9')) {
+            return false;
+        }
+    }
+    return true;
+}
+
 namespace {
 
 void defaultLogCallback(

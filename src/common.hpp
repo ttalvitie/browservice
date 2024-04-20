@@ -23,7 +23,6 @@
 #include <optional>
 #include <queue>
 #include <random>
-#include <regex>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -70,14 +69,11 @@ using std::promise;
 using std::queue;
 using std::random_device;
 using std::range_error;
-using std::regex;
-using std::regex_match;
 using std::remove_const;
 using std::remove_reference;
 using std::seed_seq;
 using std::set;
 using std::shared_ptr;
-using std::smatch;
 using std::sort;
 using std::string;
 using std::stringstream;
