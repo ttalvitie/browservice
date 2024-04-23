@@ -180,6 +180,7 @@ then
 #!/bin/bash
 mkdir /shared
 mount -t 9p -o trans=virtio,version=9p2000.L,msize=10485760 shared /shared
+sleep 10
 cd /
 if sha1sum -c shared/runner.sh.sha1
 then
