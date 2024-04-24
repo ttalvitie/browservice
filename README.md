@@ -4,6 +4,8 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 
 ## News
 
+2024-04-24: [Browservice 0.9.9.1](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.1) has been released.
+
 2024-01-25: [Browservice 0.9.9.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.0) has been released. This release adds support for three new command line arguments: `--certificate-check-exceptions` for making exceptions to SSL/TLS certificate checking, `--show-control-bar` for hiding the control bar (useful with kiosk software) and `--vice-opt-navigation-forwarding` that makes it possible to disable the client back/forward button forwarding feature that may cause compatibility issues with some clients.
 
 2023-11-26: [Browservice 0.9.8.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.8.0) has been released. This release adds support for page zooming (using the `--initial-zoom` command line option and hotkeys Ctrl+K/J/M for zoom in/out/reset) and setting font render parameters for the browser view (using the `--browser-font-render-mode` command line option).
