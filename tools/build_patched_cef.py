@@ -166,6 +166,7 @@ CLIPBOARD_IMPLEMENTATION_CC_CODE = b"""\
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ui/base/clipboard/clipboard.h"
@@ -293,7 +294,7 @@ private:
     void ReadData(const ClipboardFormatType& format, const DataTransferEndpoint* data_dst, std::string* result) const override {
         if(result) result->clear();
     }
-    void WritePortableAndPlatformRepresentations(ClipboardBuffer buffer, const ObjectMap& objects, std::vector<Clipboard::PlatformRepresentation> platform_representations, std::unique_ptr<DataTransferEndpoint> data_src) override {
+    void WritePortableAndPlatformRepresentations(ClipboardBuffer buffer, const ObjectMap& objects, std::vector<Clipboard::PlatformRepresentation> platform_representations, std::unique_ptr<DataTransferEndpoint> data_src, uint32_t privacy_types) override {
         {
             std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
             browserviceClipboardText.clear();
@@ -305,19 +306,23 @@ private:
             DispatchPortableRepresentation(object.second);
         }
     }
-    void WriteText(base::StringPiece text) override {
+    void WriteText(std::string_view text) override {
         std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
         browserviceClipboardText.assign(text.begin(), text.end());
         ++browserviceClipboardSeqNum;
     }
-    void WriteHTML(base::StringPiece markup, std::optional<base::StringPiece> source_url) override {}
-    void WriteSvg(base::StringPiece markup) override {}
-    void WriteRTF(base::StringPiece rtf) override {}
+    void WriteHTML(std::string_view markup, std::optional<std::string_view> source_url) override {}
+    void WriteSvg(std::string_view markup) override {}
+    void WriteRTF(std::string_view rtf) override {}
     void WriteFilenames(std::vector<ui::FileInfo> filenames) override {}
-    void WriteBookmark(base::StringPiece title, base::StringPiece url) override {}
+    void WriteBookmark(std::string_view title, std::string_view url) override {}
     void WriteWebSmartPaste() override {}
     void WriteBitmap(const SkBitmap& bitmap) override {}
     void WriteData(const ClipboardFormatType& format, base::span<const uint8_t> data) override {}
+
+    void WriteClipboardHistory() override {}
+    void WriteUploadCloudClipboard() override {}
+    void WriteConfidentialDataForPassword() override {}
 
 #ifdef USE_OZONE
     bool IsSelectionBufferAvailable() const override {
