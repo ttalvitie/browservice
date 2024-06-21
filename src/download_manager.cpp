@@ -45,7 +45,7 @@ public:
     }
 
     // CefDownloadHandler:
-    virtual void OnBeforeDownload(
+    virtual bool OnBeforeDownload(
         CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefDownloadItem> downloadItem,
         const CefString& suggestedName,
@@ -66,6 +66,8 @@ public:
 
         downloadManager_->pending_.push(id);
         downloadManager_->pendingDownloadCountChanged_();
+
+        return true;
     }
 
     virtual void OnDownloadUpdated(

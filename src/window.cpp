@@ -517,6 +517,8 @@ public:
         const CefString& title,
         const CefString& defaultFilePath,
         const vector<CefString>& acceptFilters,
+        const vector<CefString>& acceptExtensions,
+        const vector<CefString>& acceptDescriptions,
         CefRefPtr<CefFileDialogCallback> callback
     ) override {
         BROWSER_EVENT_HANDLER_CHECKS();
