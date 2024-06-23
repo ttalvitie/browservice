@@ -154,7 +154,7 @@ qemu-img resize "${TMPDIR}/vm/disk.img" +20G &> /dev/null
 msg "Starting Ubuntu in QEMU"
 echo "--- Starting up the machine" >> "${TMPDIR}/shared/log"
 "${QEMU}" \
-    -m 2048 \
+    -m 4096 \
     -smp 2 \
     ${QEMU_ARCH_OPTS} \
     -drive "file=${TMPDIR}/vm/disk.img,format=qcow2,if=none,id=hd0" \
