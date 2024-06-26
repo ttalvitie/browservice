@@ -257,7 +257,7 @@ EOF
 for i in {1..30}; do ping -q -c 1 -W 1 10.0.2.2 && break ; sleep 1 ; done
 parted -s -a opt /dev/mmcblk0 "resizepart 2 8G"
 resize2fs /dev/mmcblk0p2
-echo "CONF_SWAPSIZE=1024" >> /etc/dphys-swapfile
+echo "CONF_SWAPSIZE=2048" >> /etc/dphys-swapfile
 systemctl restart dphys-swapfile.service
 cd /
 dd if=/dev/mmcblk0 iflag=skip_bytes,count_bytes,fullblock bs=1M skip=17179869184 count=${SHARED_TARBALL_SIZE} | tar x
