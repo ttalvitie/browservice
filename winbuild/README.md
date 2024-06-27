@@ -1,7 +1,7 @@
 # Windows build
 
 - Install Microsoft Visual Studio 2022
-- Build a CEF distribution with patches that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access (note that this takes a lot of time, memory and disk space):
+- Obtain a CEF distribution with Browservice-specific patches (that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access and enable changing the font rendering options) either by downloading it from the [Releases page](https://github.com/ttalvitie/browservice/releases) (name like `patched_cef_v*_windows*.tar.bz2`; only available starting from v0.9.9.2) or building it yourself as described below (note that this takes a lot of time, memory and disk space):
     - Ensure that you have Python3 and the Visual Studio 2022 components mentioned in https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md#markdown-header-windows-configuration installed
     - Run the script [tools/build_patched_cef.py](../tools/build_patched_cef.py) in a Command Prompt using a command like `python build_patched_cef.py C:\build patched_cef_windows64.tar.bz2 windows64` (replace `windows64` by `windows32` for 32-bit build; you may also replace `C:\build` with another short build directory path)
     - After the script has finished (typically after running for multiple hours), the patched CEF distribution is created in `patched_cef_windows64.tar.bz2`. You may remove the created build directory (`C:\build` in the command above); it will not be needed after the distribution has been built
@@ -19,7 +19,7 @@
         mkdir gen
         python gen_html_cpp.py > gen\html.cpp
         ```
-    - Extract the previously built CEF binary distribution tarball to this directory (this tarball contains the CEF binary distribution in a single directory, named similarly to the tarball).
+    - Extract the previously obtained CEF binary distribution tarball to this directory (this tarball contains the CEF binary distribution in a single directory, named similarly to the tarball).
     - Edit the `CMakeLists.txt` file in the CEF binary distribution directory, appending the line `add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/.. ${CMAKE_CURRENT_BINARY_DIR}/browservice)` to the end of the file.
     - Create a subdirectory named ´build´ for the CEF binary distribution directory, navigate to it in a commmand prompt and run one of the commands below:
         ```
