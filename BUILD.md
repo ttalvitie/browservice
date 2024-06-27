@@ -2,9 +2,15 @@
 
 This file contains building instructions for Linux. For building on Windows, see the `README.md` file in the `winbuild` directory.
 
-## Building CEF
+## Obtaining patched CEF
 
-Browservice requires a custom build of CEF with some patches that make the embedded Chromium use an in-memory text-only clipboard that Browservice can access. It is recommended to build it using the Docker image [tools/linux_cef_build_docker_image/Dockerfile](tools/linux_cef_build_docker_image/Dockerfile) and the script [tools/build_patched_cef.py](tools/build_patched_cef.py).
+Browservice is built on a patched version of CEF (Chromium Embedded Framework); the patches are needed to make the embedded Chromium use an in-memory text-only clipboard that Browservice can access instead of the system clipboard, and also enable font rendering options different from the defaults for the system.
+
+Building CEF includes building Chromium, which means it takes a lot of memory, disk space and time. This can be avoided by using a prebuilt tarball (name starts with `patched_cef_`) distributed in the [Releases](https://github.com/ttalvitie/browservice/releases) page (starting from Browservice v0.9.9.2). The rest of this section describes the other alternative: building the patched CEF yourself.
+
+### Building patched CEF
+
+It is recommended to build the patched CEF using the Docker image [tools/linux_cef_build_docker_image/Dockerfile](tools/linux_cef_build_docker_image/Dockerfile) and the script [tools/build_patched_cef.py](tools/build_patched_cef.py).
 
 Building CEF takes a lot of memory, disk space and time, because it includes the Chromium browser. You should build it on a powerful x86_64 Linux machine with Docker installed and at least 16 GB of memory and 200 GB of disk space. Note that even for ARM builds, you should use a x86_64 machine (CEF will be cross-compiled).
 
@@ -78,7 +84,7 @@ rm -r ttf-ms-fonts ttf-ms-fonts.tar.gz
 
 ## Compiling and running Browservice
 
-First build the patched CEF distribution as shown in the [Building CEF](#building-cef) section. Enter the Browservice working copy and run the following to extract the CEF distribution tarball and build its DLL wrapper library (replace `patched_cef_x86_64.tar.bz2` by the path of the CEF tarball you built):
+First obtain the patched CEF distribution as described in the [Obtaining patched CEF](#obtaining-patched-cef) section (either by downloading a prebuilt one or building it yourself). Enter the Browservice working copy and run the following to extract the CEF distribution tarball and build its DLL wrapper library (replace `patched_cef_x86_64.tar.bz2` by the path of the CEF tarball you obtained):
 
 ```
 ./setup_cef.sh patched_cef_x86_64.tar.bz2
