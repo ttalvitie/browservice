@@ -2,9 +2,13 @@
 
 A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
+## NOTICE (2024-07-27)
+
+As some of the users may have noticed, I ([@ttalvitie](https://github.com/ttalvitie/)) have already greatly fallen behind in responding to the suggestions and problems in the [issues section](https://github.com/ttalvitie/browservice/issues). The situation now (and for the foreseaable future) is the following: the time I have available for developing Browservice further is very limited (due to work, other projects and other hobbies). Thus my main focus will be regularly providing up-to-date builds with latest Chromium versions (because it is critical for security) and fixing the most critical bugs. Developing new features and improvements will unfortunately have to be put on the back burner: I might add new features occasionally, but very irregularly and mostly based on my own needs as a user. I remind that Browservice is open source and anyone can build and distribute improved or modified versions of it. Thank you in advance for your understanding.
+
 ## News
 
-2024-04-24: [Browservice 0.9.9.1](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.1) has been released.
+2024-07-27: [Browservice 0.9.9.2](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.2) has been released. Starting from this release, the binaries for the patched CEF distribution used for building Browservice are also distributed with the release; this makes it possible to build modified versions of Browservice without having to build CEF/Chromium from scratch.
 
 2024-01-25: [Browservice 0.9.9.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.0) has been released. This release adds support for three new command line arguments: `--certificate-check-exceptions` for making exceptions to SSL/TLS certificate checking, `--show-control-bar` for hiding the control bar (useful with kiosk software) and `--vice-opt-navigation-forwarding` that makes it possible to disable the client back/forward button forwarding feature that may cause compatibility issues with some clients.
 
