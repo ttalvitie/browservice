@@ -81,8 +81,8 @@ def run():
     with open(automate_git_path) as fp:
         automate_git_script = fp.read()
     patched_automate_git_script = automate_git_script.replace(
-        "# Build using Ninja.",
-        "import browservice_cef_patcher; browservice_cef_patcher.run(cef_src_dir)\n\n# Build using Ninja."
+        "# Build using autoninja for automatic `-j (#cores)` configuration.",
+        "import browservice_cef_patcher; browservice_cef_patcher.run(cef_src_dir)\n\n# Build using autoninja for automatic `-j (#cores)` configuration."
     )
     if patched_automate_git_script == automate_git_script:
         fail("Patching automate-git.py script failed")
