@@ -281,7 +281,7 @@ private:
         std::vector<uint8_t> data;
         std::move(callback).Run(data);
     }
-    void ReadCustomData(ClipboardBuffer buffer, const std::u16string& type, const DataTransferEndpoint* data_dst, std::u16string* result) const override {
+    void ReadDataTransferCustomData(ClipboardBuffer buffer, const std::u16string& type, const DataTransferEndpoint* data_dst, std::u16string* result) const override {
         if(result) result->clear();
     }
     void ReadFilenames(ClipboardBuffer buffer, const DataTransferEndpoint* data_dst, std::vector<ui::FileInfo>* result) const override {
