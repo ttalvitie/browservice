@@ -18,6 +18,7 @@
 #include <future>
 #include <iostream>
 #include <limits>
+#include <locale>
 #include <map>
 #include <memory>
 #include <mutex>

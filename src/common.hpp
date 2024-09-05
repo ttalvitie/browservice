@@ -17,6 +17,7 @@
 #include <functional>
 #include <future>
 #include <iostream>
+#include <locale>
 #include <map>
 #include <memory>
 #include <mutex>
