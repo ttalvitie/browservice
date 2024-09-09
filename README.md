@@ -8,6 +8,8 @@ As some of the users may have noticed, I ([@ttalvitie](https://github.com/ttalvi
 
 ## News
 
+2024-09-09: [Browservice 0.9.10.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.10.0) has been released.
+
 2024-06-27: [Browservice 0.9.9.2](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.2) has been released. Starting from this release, the binaries for the patched CEF distribution used for building Browservice are also distributed with the release; this makes it possible to build modified versions of Browservice without having to build CEF/Chromium from scratch.
 
 2024-01-25: [Browservice 0.9.9.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.0) has been released. This release adds support for three new command line arguments: `--certificate-check-exceptions` for making exceptions to SSL/TLS certificate checking, `--show-control-bar` for hiding the control bar (useful with kiosk software) and `--vice-opt-navigation-forwarding` that makes it possible to disable the client back/forward button forwarding feature that may cause compatibility issues with some clients.
