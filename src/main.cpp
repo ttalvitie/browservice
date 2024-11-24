@@ -79,7 +79,8 @@ public:
         }
 
         commandLine->AppendSwitch("disable-smooth-scrolling");
-        commandLine->AppendSwitchWithValue("use-gl", "desktop");
+        commandLine->AppendSwitchWithValue("use-gl", "angle");
+        commandLine->AppendSwitchWithValue("use-angle", "swiftshader");
 
         for(const pair<string, optional<string>>& arg : globals->config->chromiumArgs) {
             if(arg.second) {
