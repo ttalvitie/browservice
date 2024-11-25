@@ -130,6 +130,7 @@ public:
     virtual bool OnBeforePopup(
         CefRefPtr<CefBrowser> browser,
         CefRefPtr<CefFrame> frame,
+        int,
         const CefString&,
         const CefString&,
         CefLifeSpanHandler::WindowOpenDisposition,
