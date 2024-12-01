@@ -8,6 +8,8 @@ As some of the users may have noticed, I ([@ttalvitie](https://github.com/ttalvi
 
 ## News
 
+2024-12-01: [Browservice 0.9.11.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.11.0) has been released.
+
 2024-09-09: [Browservice 0.9.10.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.10.0) has been released.
 
 2024-06-27: [Browservice 0.9.9.2](https://github.com/ttalvitie/browservice/releases/tag/v0.9.9.2) has been released. Starting from this release, the binaries for the patched CEF distribution used for building Browservice are also distributed with the release; this makes it possible to build modified versions of Browservice without having to build CEF/Chromium from scratch.
