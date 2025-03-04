@@ -35,6 +35,7 @@ then
     QEMU_DISK_DEV="virtio-blk-pci"
     QEMU_9P_DEV="virtio-9p-pci"
     QEMU_NET_DEV="virtio-net-pci"
+    QEMU_MEM="4096"
 elif [ "${ARCH}" == "armhf" ]
 then
     UBUNTU_ARCH="armhf"
@@ -46,6 +47,7 @@ then
     QEMU_DISK_DEV="virtio-blk-device"
     QEMU_9P_DEV="virtio-9p-device"
     QEMU_NET_DEV="virtio-net-device"
+    QEMU_MEM="3072"
 elif [ "${ARCH}" == "aarch64" ]
 then
     UBUNTU_ARCH="arm64"
@@ -57,6 +59,7 @@ then
     QEMU_DISK_DEV="virtio-blk-device"
     QEMU_9P_DEV="virtio-9p-device"
     QEMU_NET_DEV="virtio-net-device"
+    QEMU_MEM="4096"
 else
     msg "ERROR: unsupported architecture '${ARCH}'"
     exit 1
@@ -154,7 +157,7 @@ qemu-img resize "${TMPDIR}/vm/disk.img" +20G &> /dev/null
 msg "Starting Ubuntu in QEMU"
 echo "--- Starting up the machine" >> "${TMPDIR}/shared/log"
 "${QEMU}" \
-    -m 4096 \
+    -m "${QEMU_MEM}" \
     -smp 2 \
     ${QEMU_ARCH_OPTS} \
     -drive "file=${TMPDIR}/vm/disk.img,format=qcow2,if=none,id=hd0" \
