@@ -235,7 +235,7 @@ private:
     }
     std::vector<std::u16string> GetStandardFormats(ClipboardBuffer buffer, const DataTransferEndpoint* data_dst) const override {
         std::vector<std::u16string> types;
-        types.push_back(base::UTF8ToUTF16(kMimeTypeText));
+        types.push_back(kMimeTypePlainText16);
         return types;
     }
     bool IsFormatAvailable(const ClipboardFormatType& format, ClipboardBuffer buffer, const DataTransferEndpoint* data_dst) const override {
@@ -294,7 +294,7 @@ private:
     void ReadData(const ClipboardFormatType& format, const DataTransferEndpoint* data_dst, std::string* result) const override {
         if(result) result->clear();
     }
-    void WritePortableAndPlatformRepresentations(ClipboardBuffer buffer, const ObjectMap& objects, std::vector<Clipboard::PlatformRepresentation> platform_representations, std::unique_ptr<DataTransferEndpoint> data_src, uint32_t privacy_types) override {
+    void WritePortableAndPlatformRepresentations(ClipboardBuffer buffer, const ObjectMap& objects, const std::vector<RawData>& raw_objects, std::vector<Clipboard::PlatformRepresentation> platform_representations, std::unique_ptr<DataTransferEndpoint> data_src, uint32_t privacy_types) override {
         {
             std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
             browserviceClipboardText.clear();
