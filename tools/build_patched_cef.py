@@ -97,7 +97,8 @@ def run():
         "--checkout=" + commit,
         "--force-clean",
         "--build-target=cefsimple",
-        "--no-debug-build"
+        "--no-debug-build",
+        "--no-chromium-history"
     ]
     env = {
         "CEF_ARCHIVE_FORMAT": "tar.bz2"
