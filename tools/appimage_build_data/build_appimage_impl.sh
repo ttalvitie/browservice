@@ -238,7 +238,9 @@ fontconfreplace "<cachedir>/var/cache/fontconfig</cachedir>" "<cachedir>/home/us
 fontconfreplace "<cachedir prefix=\"xdg\">fontconfig</cachedir>" ""
 fontconfreplace "<cachedir>~/.fontconfig</cachedir>" ""
 U mkdir fontconfig_cache
+msg "  - Running CEF unit tests to initialize fontconfig cache"
 U FONTCONFIG_PATH="/home/user/fontconfig_config" xvfb-run browservice/cef/releasebuild/tests/ceftests/Release/ceftests --gtest_filter=VersionTest.VersionInfo
+msg "  - Running fc-cache to rebuild fontconfig cache"
 U FONTCONFIG_PATH="/home/user/fontconfig_config" fc-cache
 
 msg "Preparing AppDir"
