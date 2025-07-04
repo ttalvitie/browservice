@@ -13,7 +13,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#pragma comment(lib, "cef_sandbox.lib")
+#include <shellapi.h>
 #include "include/cef_sandbox_win.h"
 #else
 #include <X11/Xlib.h>
@@ -168,11 +168,20 @@ void pollTermSignal() {
 }
 
 #ifdef _WIN32
-int wmain(int argc, wchar_t* argv[], wchar_t* envp[]) {
+extern "C" CEF_BOOTSTRAP_EXPORT int RunConsoleMain(int, char*[], void* sandboxInfo, cef_version_info_t* versionInfo) {
     using namespace browservice;
 
-    CefScopedSandboxInfo scoped_sandbox;
-    void* sandboxInfo = scoped_sandbox.sandbox_info();
+    LPWSTR commandLineString = GetCommandLineW();
+    if(commandLineString == nullptr) {
+        cerr << "ERROR: Reading command line failed\n";
+        return 1;
+    }
+    int argc = 0;
+    wchar_t** argv = CommandLineToArgvW(commandLineString, &argc);
+    if(argv == nullptr) {
+        cerr << "ERROR: Reading command line failed\n";
+        return 1;
+    }
 
     CefMainArgs mainArgs(GetModuleHandle(nullptr));
 #else
