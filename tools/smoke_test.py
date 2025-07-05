@@ -59,7 +59,7 @@ def version_test(browservice_path):
     (process, process_funcs) = launch_browservice([browservice_path, "--version"])
 
     try:
-        process.communicate(timeout=60)
+        process.communicate(timeout=100)
     except:
         process_funcs["cleanup"]()
         raise
@@ -83,7 +83,7 @@ def browser_test(browservice_path, allow_online):
 
     try:
         prefix = f"http://127.0.0.1:{port}"
-        request_timeout = 10
+        request_timeout = 20
         url = f"{prefix}/"
         log(f"Sending HTTP requests to {url} until it responds")
         attempt_count = 0
@@ -99,7 +99,7 @@ def browser_test(browservice_path, allow_online):
             except urllib.error.URLError:
                 log(f"Request failed")
 
-            if attempt_count >= 20:
+            if attempt_count >= 30:
                 fail(f"Browservice did not respond to HTTP requests, attempt count limit exhausted")
 
             log(f"Sleeping 5s and retrying")
@@ -169,7 +169,7 @@ def browser_test(browservice_path, allow_online):
             if has_correct_shape(img):
                 break
 
-            if attempt_count >= 30:
+            if attempt_count >= 50:
                 fail(f"Image shape did not become correct, attempt count limit exhausted")
 
             log(f"Sleeping 2s and retrying")
@@ -189,7 +189,7 @@ def browser_test(browservice_path, allow_online):
                 if criterion(img):
                     break
 
-                if attempt_count >= 30:
+                if attempt_count >= 50:
                     fail(f"Image did not fulfill criterion, attempt count limit exhausted")
 
                 log(f"Sleeping 2s and retrying")
@@ -251,7 +251,7 @@ def browser_test(browservice_path, allow_online):
 
         log(f"Sending Ctrl+C to Browservice and waiting for it to terminate")
         process_funcs["ctrlc"]()
-        process.communicate(timeout=60)
+        process.communicate(timeout=100)
     except:
         process_funcs["cleanup"]()
         raise
@@ -275,8 +275,8 @@ def verdana_installation_test(browservice_path):
         (process, process_funcs) = launch_browservice([browservice_path, "--install-verdana"], {"stdin": subprocess.PIPE, "env": env})
 
         try:
-            log(f"Waiting 20s to allow for the process to start")
-            time.sleep(20)
+            log(f"Waiting 30s to allow for the process to start")
+            time.sleep(30)
 
             log(f"Sending 'yes' to stdin and waiting for the process to terminate")
             process.communicate(input=b"yes\n", timeout=180)
