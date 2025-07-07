@@ -46,10 +46,11 @@ public:
         initialized_ = false;
     }
 
-    void initialize(shared_ptr<ViceContext> viceCtx) {
+    void initialize(shared_ptr<ViceContext> viceCtx, CefRequestContextSettings requestContextSettings) {
         REQUIRE(!initialized_);
 
         initialized_ = true;
+        requestContextSettings_ = requestContextSettings;
         serverEventHandler_ = AppServerEventHandler::create();
         shutdown_ = false;
         viceCtx_ = viceCtx;
@@ -109,16 +110,27 @@ public:
         CefRefPtr<BrowserviceSchemeHandlerFactory> schemeHandlerFactory = new BrowserviceSchemeHandlerFactory();
         CefRegisterSchemeHandlerFactory("browservice", "", schemeHandlerFactory);
 
-        server_ = Server::create(serverEventHandler_, viceCtx_);
+        CefRefPtr<CefRequestContext> requestContext = CefRequestContext::CreateContext(requestContextSettings_, nullptr);
+        REQUIRE(requestContext);
+
+        server_ = Server::create(serverEventHandler_, viceCtx_, requestContext);
         viceCtx_.reset();
         if(shutdown_) {
             server_->shutdown();
         }
     }
+    virtual bool OnAlreadyRunningAppRelaunch(
+        CefRefPtr<CefCommandLine> commandLine,
+        const CefString& currentDirectory
+    ) override {
+        // Prevent default action.
+        return true;
+    }
 
 private:
     bool initialized_;
     shared_ptr<Server> server_;
+    CefRequestContextSettings requestContextSettings_;
     shared_ptr<AppServerEventHandler> serverEventHandler_;
     bool shutdown_;
     shared_ptr<ViceContext> viceCtx_;
@@ -242,17 +254,48 @@ int main(int argc, char* argv[]) {
         XSetIOErrorHandler([](Display*) { return 0; });
 #endif
 
-        app->initialize(viceCtx);
-        viceCtx.reset();
-
         CefSettings settings;
         settings.windowless_rendering_enabled = true;
         settings.command_line_args_disabled = true;
-        CefString(&settings.cache_path).FromString(globals->config->dataDir);
         CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
+        CefRequestContextSettings requestContextSettings;
+        requestContextSettings.persist_session_cookies = settings.persist_session_cookies;
+        requestContextSettings.accept_language_list = settings.accept_language_list;
+        requestContextSettings.cookieable_schemes_list = settings.cookieable_schemes_list;
+        requestContextSettings.cookieable_schemes_exclude_defaults = settings.cookieable_schemes_exclude_defaults;
+
+        if(globals->config->dataDir.empty()) {
+            // Incognito mode.
+            PathStr rootCachePath = globals->dotDirPath + PathSep + PATHSTR("cef");
+#ifdef _WIN32
+            CefString(&settings.root_cache_path).FromWString(rootCachePath);
+            CefString(&settings.cache_path).FromWString(rootCachePath);
+#else
+            CefString(&settings.root_cache_path).FromString(rootCachePath);
+            CefString(&settings.cache_path).FromString(rootCachePath);
+#endif
+            CefString(&requestContextSettings.cache_path).clear();
+        } else {
+            // Data dir specified by user.
+            CefString(&settings.root_cache_path).FromString(globals->config->dataDir);
+            CefString(&settings.cache_path).FromString(globals->config->dataDir);
+            CefString(&requestContextSettings.cache_path).FromString(globals->config->dataDir);
+        }
+
+        app->initialize(viceCtx, requestContextSettings);
+        viceCtx.reset();
+
         if(!CefInitialize(mainArgs, settings, app, sandboxInfo)) {
-            PANIC("Initializing CEF failed");
+            if(CefGetExitCode() == CEF_RESULT_CODE_NORMAL_EXIT_PROCESS_NOTIFIED) {
+                PANIC(
+                    "Another Browservice instance is running. Close that instance or specify "
+                    "different data directory using --data-dir for each instance to support "
+                    "concurrent instances."
+                );
+            } else {
+                PANIC("Initializing CEF failed");
+            }
         }
 
         enablePanicUsingCEFFatalError();

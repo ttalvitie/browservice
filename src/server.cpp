@@ -3,11 +3,14 @@
 #include "clipboard.hpp"
 #include "globals.hpp"
 
+#include "include/cef_request_context.h"
+
 namespace browservice {
 
 Server::Server(CKey,
     weak_ptr<ServerEventHandler> eventHandler,
-    shared_ptr<ViceContext> viceCtx
+    shared_ptr<ViceContext> viceCtx,
+    CefRefPtr<CefRequestContext> requestContext
 ) {
     REQUIRE_UI_THREAD();
     eventHandler_ = eventHandler;
@@ -15,6 +18,7 @@ Server::Server(CKey,
     nextWindowHandle_ = 1;
     viceCtx_ = viceCtx;
     clipboardContentRequested_ = false;
+    requestContext_ = requestContext;
 
     // Setup is finished in afterConstruct_
 }
@@ -69,7 +73,7 @@ uint64_t Server::onViceContextCreateWindowRequest(string& reason, optional<strin
         showNavigationButtons = !viceHasNavigationControls.has_value() || viceHasNavigationControls.value() == false;
     }
 
-    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), handle, uri, showNavigationButtons);
+    shared_ptr<Window> window = Window::tryCreate(shared_from_this(), requestContext_, handle, uri, showNavigationButtons);
     if(window) {
         REQUIRE(openWindows_.emplace(handle, window).second);
         return handle;

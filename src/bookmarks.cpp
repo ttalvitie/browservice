@@ -28,34 +28,6 @@ void populateBookmarkCache(const Bookmarks& bookmarks) {
     bookmarkCacheInitialized = true;
 }
 
-bool tryCreateDotDir() {
-#ifdef _WIN32
-    if(CreateDirectory(globals->dotDirPath.c_str(), nullptr)) {
-        return true;
-    } else {
-        if(GetLastError() == ERROR_ALREADY_EXISTS) {
-            DWORD attrib = GetFileAttributesW(globals->dotDirPath.c_str());
-            if(attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY)) {
-                return true;
-            }
-        }
-        return false;
-    }
-#else
-    if(mkdir(globals->dotDirPath.c_str(), 0700) == 0) {
-        return true;
-    } else {
-        if(errno == EEXIST) {
-            struct stat st;
-            if(stat(globals->dotDirPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
-                return true;
-            }
-        }
-        return false;
-    }
-#endif
-}
-
 void writeLE(ofstream& fp, uint64_t val) {
     uint8_t bytes[8];
     for(int i = 0; i < 8; ++i) {
@@ -117,14 +89,6 @@ Bookmarks::Bookmarks(CKey) {
 }
 
 shared_ptr<Bookmarks> Bookmarks::load() {
-    if(!tryCreateDotDir()) {
-        ERROR_LOG(
-            "Loading bookmarks failed: "
-            "Directory '", globals->dotDirPath, "' does not exist and creating it failed"
-        );
-        return {};
-    }
-
     shared_ptr<Bookmarks> ret = Bookmarks::create();
 
     PathStr bookmarkPath = globals->dotDirPath + PathSep + PATHSTR("bookmarks");
@@ -194,14 +158,6 @@ shared_ptr<Bookmarks> Bookmarks::load() {
 }
 
 bool Bookmarks::save() {
-    if(!tryCreateDotDir()) {
-        ERROR_LOG(
-            "Saving bookmarks failed: "
-            "Directory '", globals->dotDirPath, "' does not exist and creating it failed"
-        );
-        return false;
-    }
-
     PathStr bookmarkPath = globals->dotDirPath + PathSep + PATHSTR("bookmarks");
     PathStr bookmarkTmpPath = globals->dotDirPath + PathSep + PATHSTR(".tmp.bookmarks.");
     PathStr charPalette = PATHSTR("abcdefghijklmnopqrstuvABCDEFGHIJKLMNOPQRSTUV0123456789");

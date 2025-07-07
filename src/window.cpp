@@ -174,7 +174,7 @@ public:
                 );
 
                 shared_ptr<Window> newWindow = Window::create(Window::CKey());
-                newWindow->init_(window_->eventHandler_, newHandle, window_->showSoftNavigationButtons_);
+                newWindow->init_(window_->eventHandler_, window_->requestContext_, newHandle, window_->showSoftNavigationButtons_);
 
                 windowInfo.SetAsWindowless(kNullWindowHandle);
                 browserSettings.background_color = (cef_color_t)-1;
@@ -589,18 +589,20 @@ private:
 
 shared_ptr<Window> Window::tryCreate(
     shared_ptr<WindowEventHandler> eventHandler,
+    CefRefPtr<CefRequestContext> requestContext,
     uint64_t handle,
     optional<string> uri,
     bool showSoftNavigationButtons
 ) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
+    REQUIRE(requestContext);
     REQUIRE(handle);
 
     INFO_LOG("Creating window ", handle);
 
     shared_ptr<Window> window = Window::create(CKey());
-    window->init_(eventHandler, handle, showSoftNavigationButtons);
+    window->init_(eventHandler, requestContext, handle, showSoftNavigationButtons);
 
     CefRefPtr<CefClient> client = new Client(window);
 
@@ -616,7 +618,7 @@ shared_ptr<Window> Window::tryCreate(
         (uri.has_value() && !uri.value().empty()) ? uri.value() : globals->config->startPage,
         browserSettings,
         nullptr,
-        nullptr
+        requestContext
     )) {
         WARNING_LOG(
             "Opening CEF browser for window ", handle, " failed, ",
@@ -1007,7 +1009,7 @@ void Window::onOpenBookmarksButtonPressed() {
                 INFO_LOG("Creating bookmark popup window ", newHandle);
 
                 shared_ptr<Window> newWindow =
-                    Window::tryCreate(eventHandler_, newHandle, "browservice://bookmarks/", showSoftNavigationButtons_);
+                    Window::tryCreate(eventHandler_, requestContext_, newHandle, "browservice://bookmarks/", showSoftNavigationButtons_);
 
                 popupDenied = false;
                 return newWindow;
@@ -1071,14 +1073,16 @@ void Window::onDownloadCompleted(shared_ptr<CompletedDownload> file) {
     }
 }
 
-void Window::init_(shared_ptr<WindowEventHandler> eventHandler, uint64_t handle, bool showSoftNavigationButtons) {
+void Window::init_(shared_ptr<WindowEventHandler> eventHandler, CefRefPtr<CefRequestContext> requestContext, uint64_t handle, bool showSoftNavigationButtons) {
     REQUIRE_UI_THREAD();
     REQUIRE(eventHandler);
+    REQUIRE(requestContext);
     REQUIRE(handle);
 
     handle_ = handle;
     state_ = Open;
     eventHandler_ = eventHandler;
+    requestContext_ = requestContext;
 
     showSoftNavigationButtons_ = showSoftNavigationButtons;
 

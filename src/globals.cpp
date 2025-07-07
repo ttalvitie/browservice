@@ -3,10 +3,12 @@
 #include "text.hpp"
 
 #ifdef _WIN32
+#include <fileapi.h>
 #include <shlobj.h>
 #else
 #include <unistd.h>
 #include <pwd.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #endif
 
@@ -25,6 +27,26 @@ wstring getAppDataPath() {
 
 wstring getDotDirPath() {
     return getAppDataPath() + L"\\Browservice";
+}
+
+bool ensureDirExists(wstring path) {
+    if(CreateDirectory(path.c_str(), nullptr)) {
+        return true;
+    } else {
+        if(GetLastError() == ERROR_ALREADY_EXISTS) {
+            DWORD attrib = GetFileAttributesW(path.c_str());
+            if(attrib != INVALID_FILE_ATTRIBUTES && (attrib & FILE_ATTRIBUTE_DIRECTORY)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+
+bool ensureDirExists(string path) {
+    CefString cefPath = path;
+    wstring widePath = cefPath;
+    return ensureDirExists(widePath);
 }
 #else
 string getHomeDirPath() {
@@ -59,6 +81,20 @@ string getHomeDirPath() {
 string getDotDirPath() {
     return getHomeDirPath() + "/.browservice";
 }
+
+bool ensureDirExists(string path) {
+    if(mkdir(path.c_str(), 0700) == 0) {
+        return true;
+    } else {
+        if(errno == EEXIST) {
+            struct stat st;
+            if(stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
 #endif
 
 }
@@ -69,6 +105,13 @@ Globals::Globals(CKey, shared_ptr<Config> config)
       textRenderContext(TextRenderContext::create())
 {
     REQUIRE(config);
+
+    if(!ensureDirExists(dotDirPath)) {
+        PANIC("Directory '", dotDirPath, "' does not exist and creating it failed");
+    }
+    if(!config->dataDir.empty() && !ensureDirExists(config->dataDir)) {
+        PANIC("Data directory '", config->dataDir, "' does not exist and creating it failed");
+    }
 }
 
 shared_ptr<Globals> globals;

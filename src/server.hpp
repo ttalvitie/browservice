@@ -22,7 +22,8 @@ SHARED_ONLY_CLASS(Server);
 public:
     Server(CKey,
         weak_ptr<ServerEventHandler> eventHandler,
-        shared_ptr<ViceContext> viceCtx
+        shared_ptr<ViceContext> viceCtx,
+        CefRefPtr<CefRequestContext> requestContext
     );
 
     // Shutdown the server if it is not already shut down
@@ -106,6 +107,8 @@ private:
     map<uint64_t, shared_ptr<Window>> cleanupWindows_;
 
     bool clipboardContentRequested_;
+
+    CefRefPtr<CefRequestContext> requestContext_;
 };
 
 }
