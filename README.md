@@ -219,6 +219,8 @@ There are many other useful command line options in Browservice. To get a list o
 browservice.exe --help
 ```
 
+On Linux, you might get better graphics performance using the command line option `--chromium-args=use-gl=desktop`; see the [troubleshooting](#troubleshooting) section for more information.
+
 ## Browser usage
 
 To open a new browser window, you should navigate the client browser to the address where the Browservice proxy server is listening (for example, `http://192.168.56.1:8080/`). To make it easier to open new browser windows, this should be set as the home page for the client browser.
@@ -246,6 +248,10 @@ Some notes that might be useful:
 - By default, Browservice can't play videos that use proprietary audio/video codecs such as H264 and AAC, as the prebuilt CEF distribution [provided by Spotify](https://cef-builds.spotifycdn.com/index.html) does not include them. To add the codecs, build the CEF distribution by following the [instructions](https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md) with the options `proprietary_codecs=true ffmpeg_branding=Chrome` appended to the environment variable `GN_DEFINES` (on Windows, you need to build the patched CEF version as shown in the [Windows build instructions](winbuild/README.md)). After this, you should proceed with the Browservice build process, using your self-built CEF instead of the prebuilt CEF distribution (in a [Linux build](BUILD.md), prior to running `setup_cef.sh`, copy the CEF distribution produced by the build to `cef.tar.bz2` instead of using `download_cef.sh` to download it). Note that building CEF takes a lot of time, memory and disk space. Also note that you may have to pay license fees to use the proprietary codecs legally, as they are encumbered by patents.
 
 ## Troubleshooting
+
+### Video is slow on Linux
+
+While typically the client machine/browser is the bottleneck on video performance, in some cases the bottleneck can be on the Browservice proxy server side if the proxy server machine is slow and the websites contain computationally intensive graphics/video. On the Linux AppImage, the embedded Chromium browser is configured to use ANGLE/SwiftShader software rendering by default to avoid graphics driver compatibility issues. Better graphics performance might be achieved by switching back to using the default GL implementation using the command line option `--chromium-args=use-gl=desktop`. However, this might not work in all environments and thus is not the default behavior.
 
 ### FUSE missing
 
