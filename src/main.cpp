@@ -80,8 +80,13 @@ public:
         }
 
         commandLine->AppendSwitch("disable-smooth-scrolling");
+
+        // On Linux, use ANGLE/SwiftShader by maximize compatibility. On Windows, the Chromium
+        // default should be reliable.
+#ifndef _WIN32
         commandLine->AppendSwitchWithValue("use-gl", "angle");
         commandLine->AppendSwitchWithValue("use-angle", "swiftshader");
+#endif
 
         for(const pair<string, optional<string>>& arg : globals->config->chromiumArgs) {
             if(arg.second) {
