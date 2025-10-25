@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-chromium_version=138.0.7204.97
+chromium_version=141.0.7390.123
 
 # Avoid getting stuck in e.g. keyboard layout setting dialog.
 export DEBIAN_FRONTEND=noninteractive
