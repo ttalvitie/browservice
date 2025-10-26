@@ -176,7 +176,7 @@ CLIPBOARD_IMPLEMENTATION_CC_CODE = b"""\
 
 namespace {
     std::mutex browserviceClipboardMutex;
-    std::string browserviceClipboardText;
+    std::string* browserviceClipboardText;
     uint64_t browserviceClipboardSeqNum;
 }
 
@@ -188,8 +188,11 @@ namespace {
 
 BROWSERVICE_EXPORT extern "C" char* cef_chromiumBrowserviceClipboardPaste() {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-    const char* src = browserviceClipboardText.c_str();
-    size_t count = browserviceClipboardText.size() + 1;
+    if(browserviceClipboardText == nullptr) {
+        browserviceClipboardText = new std::string;
+    }
+    const char* src = browserviceClipboardText->c_str();
+    size_t count = browserviceClipboardText->size() + 1;
     char* str = new char[count];
     std::copy(src, src + count, str);
     return str;
@@ -199,7 +202,10 @@ BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceClipboardFreePasteResu
 }
 BROWSERVICE_EXPORT extern "C" void cef_chromiumBrowserviceClipboardCopy(const char* str) {
     std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-    browserviceClipboardText = str;
+    if(browserviceClipboardText == nullptr) {
+        browserviceClipboardText = new std::string;
+    }
+    *browserviceClipboardText = str;
     ++browserviceClipboardSeqNum;
 }
 
@@ -244,7 +250,10 @@ private:
     }
     void Clear(ClipboardBuffer buffer) override {
         std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-        browserviceClipboardText.clear();
+        if(browserviceClipboardText == nullptr) {
+            browserviceClipboardText = new std::string;
+        }
+        browserviceClipboardText->clear();
         ++browserviceClipboardSeqNum;
     }
     void ReadAvailableTypes(ClipboardBuffer buffer, const DataTransferEndpoint* data_dst, std::vector<std::u16string>* types) const override {
@@ -257,14 +266,20 @@ private:
         std::string text;
         {
             std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-            text = browserviceClipboardText;
+            if(browserviceClipboardText == nullptr) {
+                browserviceClipboardText = new std::string;
+            }
+            text = *browserviceClipboardText;
         }
         *result = base::UTF8ToUTF16(text);
     }
     void ReadAsciiText(ClipboardBuffer buffer, const DataTransferEndpoint* data_dst, std::string* result) const override {
         if(!result) return;
         std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-        *result = browserviceClipboardText;
+        if(browserviceClipboardText == nullptr) {
+            browserviceClipboardText = new std::string;
+        }
+        *result = *browserviceClipboardText;
     }
     void ReadHTML(ClipboardBuffer buffer, const DataTransferEndpoint* data_dst, std::u16string* markup, std::string* src_url, uint32_t* fragment_start, uint32_t* fragment_end) const override {
         if(markup) markup->clear();
@@ -298,7 +313,10 @@ private:
     void WritePortableAndPlatformRepresentations(ClipboardBuffer buffer, const ObjectMap& objects, const std::vector<RawData>& raw_objects, std::vector<Clipboard::PlatformRepresentation> platform_representations, std::unique_ptr<DataTransferEndpoint> data_src, uint32_t privacy_types) override {
         {
             std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-            browserviceClipboardText.clear();
+            if(browserviceClipboardText == nullptr) {
+                browserviceClipboardText = new std::string;
+            }
+            browserviceClipboardText->clear();
             ++browserviceClipboardSeqNum;
         }
 
@@ -309,7 +327,10 @@ private:
     }
     void WriteText(std::string_view text) override {
         std::lock_guard<std::mutex> lock(browserviceClipboardMutex);
-        browserviceClipboardText.assign(text.begin(), text.end());
+        if(browserviceClipboardText == nullptr) {
+            browserviceClipboardText = new std::string;
+        }
+        browserviceClipboardText->assign(text.begin(), text.end());
         ++browserviceClipboardSeqNum;
     }
     void WriteHTML(std::string_view markup, std::optional<std::string_view> source_url) override {}
@@ -321,9 +342,9 @@ private:
     void WriteBitmap(const SkBitmap& bitmap) override {}
     void WriteData(const ClipboardFormatType& format, base::span<const uint8_t> data) override {}
 
-    void WriteClipboardHistory() override {}
-    void WriteUploadCloudClipboard() override {}
-    void WriteConfidentialDataForPassword() override {}
+    void WriteClipboardHistory() {}
+    void WriteUploadCloudClipboard() {}
+    void WriteConfidentialDataForPassword() {}
 
 #ifdef USE_OZONE
     bool IsSelectionBufferAvailable() const override {
