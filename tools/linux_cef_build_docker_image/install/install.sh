@@ -9,6 +9,7 @@ export DEBIAN_FRONTEND=noninteractive
 # https://magpcss.org/ceforum/viewtopic.php?f=7&t=17776&p=46448#p54107
 # linked from official automated build setup documentation in
 # https://bitbucket.org/chromiumembedded/cef/wiki/AutomatedBuildSetup.md
+# Adapted by always installing the sudo package instead of a placeholder shell script hack.
 
 # Packages required to download and run the Chromium bootstrap.
 apt-get update
@@ -16,18 +17,11 @@ apt-get install -y \
     curl \
     file \
     lsb-release \
-    python3
+    python3 \
+    sudo
 
 # Download the Chromium bootstrap at the requested version.
 curl "https://chromium.googlesource.com/chromium/src/+/refs/tags/${chromium_version}/build/install-build-deps.py?format=TEXT" | base64 -d > install-build-deps.py
-
-# The install script expects sudo, so make a placeholder that transparently forwards commands.
-if type sudo 2>/dev/null; then
- echo "The sudo command already exists... Skipping.";
-else
- echo -e "#!/bin/bash\n\${@}" > /usr/sbin/sudo;
- chmod +x /usr/sbin/sudo;
-fi
 
 # Install with 32-bit and ARM dependencies included.
 # NOTE: Installing locales fails, but we ignore the error.
