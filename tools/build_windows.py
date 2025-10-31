@@ -85,6 +85,13 @@ def run():
     log(f"Bootstrapping vcpkg")
     subprocess.check_call([os.path.join(vcpkg_dir, "bootstrap-vcpkg.bat")], cwd=vcpkg_dir)
 
+    log(f"Predownloading pango to circumvent vcpkg bug")
+    try:
+        os.mkdir(os.path.join(vcpkg_dir, "downloads"))
+    except FileExistsError:
+        pass
+    subprocess.check_call(["curl", "-o", os.path.join(vcpkg_dir, "downloads", "GNOME-pango-1.56.1.tar.gz"), "https://gitlab.gnome.org//GNOME/pango/-/archive/1.56.1/pango-1.56.1.tar.gz"])
+
     vcpkg_arch = {"windows32": "x86-windows", "windows64": "x64-windows"}[arch]
     for packages in [["openssl"], ["pango", "poco[netssl]", "libjpeg-turbo"]]:
         packages = [package + ":" + vcpkg_arch for package in packages]
