@@ -8,6 +8,8 @@ As some of the users may have noticed, I ([@ttalvitie](https://github.com/ttalvi
 
 ## News
 
+2025-11-04: [Browservice 0.9.12.1](https://github.com/ttalvitie/browservice/releases/tag/v0.9.12.1) has been released.
+
 2025-07-13: [Browservice 0.9.12.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.12.0) has been released.
 
 2024-12-01: [Browservice 0.9.11.0](https://github.com/ttalvitie/browservice/releases/tag/v0.9.11.0) has been released.
