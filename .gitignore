@@ -38,3 +38,8 @@ debug
 release
 gen
 GPUCache
+
+# Nix
+result
+result-*
+.direnv
