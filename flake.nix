@@ -7,6 +7,13 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
+    let
+      # NixOS module (system-independent)
+      nixosModule = { config, lib, pkgs, ... }: {
+        imports = [ ./nixos-module.nix ];
+        services.browservice.package = lib.mkDefault self.packages.${pkgs.system}.browservice;
+      };
+    in
     flake-utils.lib.eachSystem [ "x86_64-linux" "aarch64-linux" ] (system:
       let
         pkgs = import nixpkgs { inherit system; };
@@ -240,5 +247,11 @@
             echo "Run 'nix build' to build the package"
           '';
         };
-      });
+      }) // {
+        # System-independent outputs
+        nixosModules = {
+          default = nixosModule;
+          browservice = nixosModule;
+        };
+      };
 }

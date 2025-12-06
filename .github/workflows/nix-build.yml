@@ -77,6 +77,11 @@ jobs:
       - name: Check flake
         run: nix flake check
 
+      - name: Test NixOS module evaluation
+        run: |
+          nix eval .#nixosModules.default --apply 'm: builtins.typeOf m'
+          echo "NixOS module exports correctly"
+
   build-aarch64:
     runs-on: ubuntu-latest
 
