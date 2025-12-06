@@ -9,10 +9,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h
 
       - name: Install Nix
         uses: cachix/install-nix-action@v30
@@ -21,24 +27,30 @@ jobs:
 
       - name: Build browservice
         run: nix build .#browservice --print-build-logs
+        timeout-minutes: 45
 
       - name: Test browservice starts and serves HTTP
         run: |
           set -e
 
-          # Start browservice in background
-          ./result/bin/browservice --use-dedicated-xvfb=yes &
+          # Start browservice in background, capture output
+          # Note: --no-sandbox is required in CI because chrome-sandbox needs setuid root
+          echo "Starting browservice..."
+          ./result/bin/browservice --use-dedicated-xvfb=yes --chromium-args=--no-sandbox 2>&1 | tee /tmp/browservice.log &
           PID=$!
 
-          # Wait for HTTP server to start
+          # Wait for HTTP server to start (increased timeout for CI)
           echo "Waiting for HTTP server to start..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null | grep -q "200"; then
-              echo "HTTP server is up!"
+              echo "HTTP server is up after ${i}s!"
               break
             fi
-            if [ $i -eq 30 ]; then
-              echo "Timeout waiting for HTTP server"
+            if [ $i -eq 60 ]; then
+              echo "Timeout waiting for HTTP server after 60s"
+              echo "=== Browservice logs ==="
+              cat /tmp/browservice.log || true
+              echo "=== End logs ==="
               kill $PID 2>/dev/null || true
               exit 1
             fi
@@ -52,6 +64,9 @@ jobs:
 
           if [ "$HTTP_CODE" != "200" ]; then
             echo "Expected HTTP 200, got $HTTP_CODE"
+            echo "=== Browservice logs ==="
+            cat /tmp/browservice.log || true
+            echo "=== End logs ==="
             kill $PID 2>/dev/null || true
             exit 1
           fi
@@ -63,6 +78,7 @@ jobs:
             echo "HTML content verified!"
           else
             echo "Expected 'Browservice' in HTML content"
+            echo "Got: $CONTENT"
             kill $PID 2>/dev/null || true
             exit 1
           fi
