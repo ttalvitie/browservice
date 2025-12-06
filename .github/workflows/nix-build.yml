@@ -1,0 +1,109 @@
+name: Nix Build and Test
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build browservice
+        run: nix build .#browservice --print-build-logs
+
+      - name: Test browservice starts and serves HTTP
+        run: |
+          set -e
+
+          # Start browservice in background
+          ./result/bin/browservice --use-dedicated-xvfb=yes &
+          PID=$!
+
+          # Wait for HTTP server to start
+          echo "Waiting for HTTP server to start..."
+          for i in {1..30}; do
+            if curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null | grep -q "200"; then
+              echo "HTTP server is up!"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timeout waiting for HTTP server"
+              kill $PID 2>/dev/null || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Test the HTTP endpoint
+          echo "Testing HTTP endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/)
+          echo "HTTP response code: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "Expected HTTP 200, got $HTTP_CODE"
+            kill $PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # Verify HTML content
+          echo "Verifying HTML content..."
+          CONTENT=$(curl -s http://127.0.0.1:8080/)
+          if echo "$CONTENT" | grep -q "Browservice"; then
+            echo "HTML content verified!"
+          else
+            echo "Expected 'Browservice' in HTML content"
+            kill $PID 2>/dev/null || true
+            exit 1
+          fi
+
+          # Cleanup
+          echo "Cleaning up..."
+          kill $PID 2>/dev/null || true
+          wait $PID 2>/dev/null || true
+
+          echo "All tests passed!"
+
+      - name: Check flake
+        run: nix flake check
+
+      - name: Test NixOS module evaluation
+        run: |
+          nix eval .#nixosModules.default --apply 'm: builtins.typeOf m'
+          echo "NixOS module exports correctly"
+
+  build-aarch64:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+          extra_nix_config: |
+            extra-platforms = aarch64-linux
+
+      - name: Setup QEMU for aarch64
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Build browservice for aarch64 (evaluation only)
+        run: |
+          # Just evaluate the derivation to check it's valid
+          # Full build would take too long on emulation
+          nix eval .#packages.aarch64-linux.browservice.drvPath
+          echo "aarch64-linux derivation evaluates successfully"
