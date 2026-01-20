@@ -48,8 +48,15 @@ CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
     auto it = keyCodes.find(key);
     if(it != keyCodes.end()) {
         event.windows_key_code = it->second.first;
+#ifdef __APPLE__
+        event.native_key_code = it->second.second;
+#ifndef _WIN32
+#else
+#endif
+#else
 #ifndef _WIN32
         event.native_key_code = it->second.second;
+#endif
 #endif
     }
 
@@ -59,6 +66,13 @@ CefKeyEvent createKeyEvent(int key, uint32_t eventModifiers) {
         }
         if(key == keys::Space) {
             event.unmodified_character = ' ';
+        }
+        if(key == keys::Backspace) {
+#ifdef __APPLE__
+            event.unmodified_character = '\b';
+#else
+            event.unmodified_character = '\b';
+#endif
         }
     } else {
         event.unmodified_character = key;
@@ -416,8 +430,15 @@ void BrowserArea::widgetKeyDownEvent_(int key) {
             if(vKey) frame->Paste();
         } else {
             CefKeyEvent event = createKeyEvent(key, eventModifiers_);
+
+            // Debug logging
+            printf("DEBUG: BrowserArea::widgetKeyDownEvent_ key=%d, char=0x%x, win=0x%x, nat=0x%x\n",
+                key, event.character, event.windows_key_code, event.native_key_code);
+            fflush(stdout);
+
             event.type = KEYEVENT_RAWKEYDOWN;
             browser_->GetHost()->SendKeyEvent(event);
+
 #ifdef _WIN32
             if(event.character) {
                 CefKeyEvent charEvent = event;

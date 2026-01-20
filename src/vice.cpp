@@ -192,7 +192,11 @@ shared_ptr<VicePlugin> VicePlugin::load(string filename) {
 #ifdef _WIN32
     void* lib = LoadLibraryA(filename.c_str());
 #else
+#ifdef __APPLE__
+    void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL);
+#else
     void* lib = dlopen(filename.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
+#endif
 #endif
     if(lib == nullptr) {
 #ifdef _WIN32

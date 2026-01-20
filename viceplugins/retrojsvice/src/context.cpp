@@ -9,7 +9,7 @@ namespace retrojsvice {
 
 namespace {
 
-const string defaultHTTPListenAddr = "127.0.0.1:8080";
+const string defaultHTTPListenAddr = "0.0.0.0:8080";
 const int defaultHTTPMaxThreads = 100;
 
 set<string> trueValues = {"1", "yes", "true", "enable", "enabled"};

@@ -136,4 +136,16 @@ void postTask(function<void()> func) {
 
 atomic<bool> requireUIThreadEnabled_(false);
 
+
+}
+
+// Compatibility fix for missing symbol in builds where DCHECK_IS_ON() doesn't match libcef_dll_wrapper
+#include "include/base/cef_ref_counted.h"
+
+namespace base {
+namespace cef_subtle {
+#if DCHECK_IS_ON()
+RefCountedThreadSafeBase::~RefCountedThreadSafeBase() {}
+#endif
+}
 }

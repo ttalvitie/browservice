@@ -7,6 +7,8 @@
 #include <csignal>
 #include <cstdlib>
 
+#include <iostream>
+
 #include "include/wrapper/cef_closure_task.h"
 #include "include/base/cef_callback.h"
 #include "include/cef_app.h"
@@ -15,6 +17,8 @@
 #include <windows.h>
 #include <shellapi.h>
 #include "include/cef_sandbox_win.h"
+#elif defined(__APPLE__)
+// No X11 references for macOS
 #else
 #include <X11/Xlib.h>
 #endif
@@ -83,7 +87,7 @@ public:
 
         // On Linux, use ANGLE/SwiftShader by maximize compatibility. On Windows, the Chromium
         // default should be reliable.
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
         commandLine->AppendSwitchWithValue("use-gl", "angle");
         commandLine->AppendSwitchWithValue("use-angle", "swiftshader");
 #endif
@@ -210,6 +214,7 @@ int main(int argc, char* argv[]) {
     CefMainArgs mainArgs(argc, argv);
 #endif
 
+    std::cout << "Browservice starting..." << std::endl;
     app = new App();
 
     int exitCode = CefExecuteProcess(mainArgs, app, sandboxInfo);
@@ -242,7 +247,7 @@ int main(int argc, char* argv[]) {
 
     vicePlugin.reset();
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
     shared_ptr<Xvfb> xvfb;
     if(config->useDedicatedXvfb) {
         xvfb = Xvfb::create();
@@ -253,15 +258,22 @@ int main(int argc, char* argv[]) {
     globals = Globals::create(config);
 
     if(!termSignalReceived.load()) {
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
         // Ignore non-fatal X errors
         XSetErrorHandler([](Display*, XErrorEvent*) { return 0; });
         XSetIOErrorHandler([](Display*) { return 0; });
 #endif
 
         CefSettings settings;
+        settings.no_sandbox = true;
         settings.windowless_rendering_enabled = true;
         settings.command_line_args_disabled = true;
+
+#ifdef __APPLE__
+        // Helper app usage is handled by the bundle structure.
+        // We do not need to explicitly set browser_subprocess_path if the helper is correctly placed.
+#endif
+
         CefString(&settings.user_agent).FromString(globals->config->userAgent);
 
         CefRequestContextSettings requestContextSettings;
@@ -324,7 +336,7 @@ int main(int argc, char* argv[]) {
 
     globals.reset();
 
-#ifndef _WIN32
+#if !defined(_WIN32) && !defined(__APPLE__)
     xvfb.reset();
 #endif
 

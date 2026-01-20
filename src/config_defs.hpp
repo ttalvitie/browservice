@@ -28,6 +28,8 @@ CONF_DEF_OPT_INFO(vicePlugin) {
     string defaultVal() {
 #ifdef _WIN32
         return "retrojsvice.dll";
+#elif defined(__APPLE__)
+        return "@executable_path/../PlugIns/retrojsvice.so";
 #else
         return "retrojsvice.so";
 #endif

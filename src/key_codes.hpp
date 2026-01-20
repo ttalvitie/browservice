@@ -53,7 +53,11 @@ const map<int, pair<int, int>> keyCodes = {
     DUAL_KEY_CODE('.', '>', 190, 60)
     DUAL_KEY_CODE('/', '?', 191, 61)
 
+#ifdef __APPLE__
+    {keys::Backspace, {8, 51}},
+#else
     {keys::Backspace, {8, 22}},
+#endif
     {keys::Tab, {9, 23}},
     {keys::Enter, {13, 36}},
     {keys::Shift, {16, 50}},

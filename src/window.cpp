@@ -503,10 +503,11 @@ public:
             event.windows_key_code == -keys::Backspace &&
             !event.focus_on_editable_field
         ) {
-            window_->navigate(
-                (event.modifiers & EVENTFLAG_SHIFT_DOWN) ? 1 : -1
-            );
-            return true;
+            // Backspace navigation is disabled to fix issue where valid backspace presses were misinterpreted
+            // window_->navigate(
+            //     (event.modifiers & EVENTFLAG_SHIFT_DOWN) ? 1 : -1
+            // );
+            // return true;
         }
         return false;
     }
@@ -804,6 +805,8 @@ void Window::sendKeyDownEvent(int key) {
     REQUIRE(state_ == Open);
 
     if(isValidKey(key)) {
+        printf("DEBUG: Window::sendKeyDownEvent key=%d\n", key);
+        fflush(stdout);
         rootWidget_->sendKeyDownEvent(key);
     }
 }

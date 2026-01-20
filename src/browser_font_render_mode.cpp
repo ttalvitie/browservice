@@ -29,6 +29,9 @@ void initBrowserFontRenderMode(BrowserFontRenderMode mode) {
         return;
     }
 
+#ifdef USE_STD_CEF
+    WARNING_LOG("Custom browser font render modes are not supported with standard CEF");
+#else
     cef_chromiumBrowserviceFontRenderParamsSetSubpixelPositioningEnabled(0);
     cef_chromiumBrowserviceFontRenderParamsSetAutohinterEnabled(0);
     cef_chromiumBrowserviceFontRenderParamsSetUseBitmapsEnabled(0);
@@ -55,6 +58,7 @@ void initBrowserFontRenderMode(BrowserFontRenderMode mode) {
             PANIC("Invalid browser font render mode");
         }
     }
+#endif
 }
 
 vector<pair<BrowserFontRenderMode, string>> listBrowserFontRenderModes() {

@@ -1,9 +1,0 @@
-[Desktop Entry]
-Name=browservice
-Type=Application
-Terminal=true
-NoDisplay=true
-Exec=run_browservice
-Icon=browservice
-Categories=Development;
-X-AppImage-Integrate=false
