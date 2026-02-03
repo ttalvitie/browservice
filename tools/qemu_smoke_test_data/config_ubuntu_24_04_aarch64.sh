@@ -1,0 +1,6 @@
+ARCH="aarch64"
+RUNNER="ubuntu24"
+IMAGE_URL="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-arm64.img"
+KERNEL_URL="https://cloud-images.ubuntu.com/noble/current/unpacked/noble-server-cloudimg-arm64-vmlinuz-generic"
+INITRD_URL="https://cloud-images.ubuntu.com/noble/current/unpacked/noble-server-cloudimg-arm64-initrd-generic"
+USE_CMDLINE_GROWPART="yes"

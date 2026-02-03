@@ -1,0 +1,6 @@
+ARCH="armhf"
+RUNNER="ubuntu24"
+IMAGE_URL="https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-armhf.img"
+KERNEL_URL="https://cloud-images.ubuntu.com/noble/current/unpacked/noble-server-cloudimg-armhf-vmlinuz-generic"
+INITRD_URL="https://cloud-images.ubuntu.com/noble/current/unpacked/noble-server-cloudimg-armhf-initrd-generic"
+USE_CMDLINE_GROWPART="yes"

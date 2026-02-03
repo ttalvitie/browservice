@@ -17,9 +17,18 @@ U cp /shared/smoke_test.py smoke_test.py
 U cp -r /shared/smoke_test_data smoke_test_data
 U chmod 700 browservice.AppImage
 
+msg "Disabling man-db update to save time"
+rm /var/lib/man-db/auto-update
+
+msg "Disabling initramfs update to save time and avoid issues"
+echo "update_initramfs=no" >> /etc/initramfs-tools/update-initramfs.conf
+
 msg "Installing dependencies"
-dnf install -y python3-pip python3-numpy fuse fuse-libs
-U pip install imageio
+export DEBIAN_FRONTEND=noninteractive
+echo 'Acquire::Retries "5";' > /etc/apt/apt.conf.d/80-retries
+apt-get update
+apt-get install -y python3-pip python3-numpy libjpeg-dev zlib1g-dev fuse libfuse2t64 libopenjp2-7
+U pip install --break-system-packages imageio
 
 msg "Running smoke test"
 U python3 smoke_test.py ./browservice.AppImage all
