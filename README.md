@@ -289,7 +289,13 @@ browservice-RELEASE-ARCH.AppDir/AppRun
 
 On kernels with user namespaces disabled (or old kernels without user namespace support), Chromium uses a sandbox helper executable that needs the SUID bit to function correctly. The AppImage cannot add this SUID bit automatically, as it requires root privileges.
 
-One possible fix is to enable user namespaces. On Debian-based distributions, this can be done by running the following command as root:
+The preferred fix is to enable user namespaces. On Ubuntu starting from 24.04, unprivileged user namespaces are restricted by AppArmor by default (see the [bug report](https://bugs.launchpad.net/apparmor/+bug/2046844)). You can disable this restriction globally by running the following command as root:
+
+```
+sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+```
+
+On some other Debian-based distributions, unprivileged user namespaces might be disabled completely. In that case, they can be enabled by running the following command as root:
 
 ```
 sysctl -w kernel.unprivileged_userns_clone=1
