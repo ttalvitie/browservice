@@ -268,7 +268,15 @@ open dir error: No such file or directory
 
 This error occurs when starting the AppImage if FUSE (Filesystem in Userspace) is not installed. To fix this, install FUSE using the package manager of your Linux distribution.
 
-An alternative fix that does not require root privileges is to extract the contents of the AppImage into a directory, and run Browservice from there:
+An alternative fix that does not require root privileges is to extract the contents of the AppImage into a directory, and run Browservice from there; see the fix for the [exec format error](#exec-format-error) below for the commands to run.
+
+### Exec format error
+
+```
+execv error: Exec format error
+```
+
+ARM AppImages seem to have problems running on some Linux distributions (see [appimagetool bug report](https://github.com/AppImage/appimagetool/issues/51)). This appears to be the case at least with armhf on Ubuntu 24.04 and Debian 13. To circumvent this issue, extract the contents of the AppImage into a directory, and run Browservice from there:
 
 ```
 # Extract the AppImage into directory 'squashfs-root'
