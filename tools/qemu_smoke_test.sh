@@ -244,9 +244,16 @@ else
     msg "Creating kernel command line with script injections"
     cat << EOF > "${TMPDIR}/vm/startup.sh"
 #!/bin/bash
-rm /etc/systemd/system/multi-user.target.wants/{userconfig.service,regenerate_ssh_host_keys.service,rpi-eeprom-update.service}
-rm /etc/systemd/system/timers.target.wants/apt-*
-rm /etc/rc3.d/S01resize2fs_once
+echo WatchdogDevice=/dev/watchdogNONE >> /etc/systemd/system.conf
+for s in userconfig rpi-eeprom-update regenerate_ssh_host_keys sshd-keygen rpi-resize rpi-resize-swap-file ssh
+do
+    ln -s /dev/null "/etc/systemd/system/\${s}.service"
+done
+for t in apt-daily apt-daily-upgrade apt-listchanges dpkg-db-backup
+do
+    ln -s /dev/null "/etc/systemd/system/\${t}.service"
+    ln -s /dev/null "/etc/systemd/system/\${t}.timer"
+done
 exit 0
 EOF
 
@@ -257,8 +264,10 @@ EOF
 for i in {1..30}; do ping -q -c 1 -W 1 10.0.2.2 && break ; sleep 1 ; done
 parted -s -a opt /dev/mmcblk0 "resizepart 2 8G"
 resize2fs /dev/mmcblk0p2
-echo "CONF_SWAPSIZE=2048" >> /etc/dphys-swapfile
-systemctl restart dphys-swapfile.service
+fallocate --posix --length 2048M /swapfile.bin
+chmod 600 /swapfile.bin
+mkswap /swapfile.bin
+swapon /swapfile.bin
 cd /
 dd if=/dev/mmcblk0 iflag=skip_bytes,count_bytes,fullblock bs=1M skip=17179869184 count=${SHARED_TARBALL_SIZE} | tar x
 if sha1sum -c shared/runner.sh.sha1
@@ -274,7 +283,7 @@ echo "--- Shutting down the machine" > /dev/ttyUSB0
 poweroff
 EOF
 
-    KERNELCMDLINE="rw root=/dev/mmcblk0p2 rootfstype=ext4 rootwait init=/bin/bash -- -c \"echo $(cat ${TMPDIR}/vm/startup.sh | base64 -w0) | base64 -d | bash ; echo $(cat ${TMPDIR}/vm/rc.local | base64 -w0) | base64 -d > /etc/rc.local ; exec /sbin/init\""
+    KERNELCMDLINE="rw root=/dev/mmcblk0p2 rootfstype=ext4 rootwait init=/bin/bash -- -c \"echo $(cat ${TMPDIR}/vm/startup.sh | base64 -w0) | base64 -d | bash ; echo $(cat ${TMPDIR}/vm/rc.local | base64 -w0) | base64 -d > /etc/rc.local ; chmod 755 /etc/rc.local ; exec /sbin/init\""
 
     msg "Starting image in QEMU"
     qemu-system-aarch64 \
