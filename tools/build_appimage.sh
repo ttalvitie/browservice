@@ -27,7 +27,7 @@ fi
 if [ "${ARCH}" == "x86_64" ]
 then
     UBUNTU_ARCH="amd64"
-    UBUNTU_RELEASE="focal"
+    UBUNTU_RELEASE="jammy"
     UBUNTU_KERNEL="vmlinuz-generic"
     UBUNTU_INITRD="initrd-generic"
     QEMU="qemu-system-x86_64"
@@ -39,7 +39,7 @@ then
 elif [ "${ARCH}" == "armhf" ]
 then
     UBUNTU_ARCH="armhf"
-    UBUNTU_RELEASE="focal"
+    UBUNTU_RELEASE="jammy"
     UBUNTU_KERNEL="vmlinuz-lpae"
     UBUNTU_INITRD="initrd-generic-lpae"
     QEMU="qemu-system-arm"
@@ -51,7 +51,7 @@ then
 elif [ "${ARCH}" == "aarch64" ]
 then
     UBUNTU_ARCH="arm64"
-    UBUNTU_RELEASE="focal"
+    UBUNTU_RELEASE="jammy"
     UBUNTU_KERNEL="vmlinuz-generic"
     UBUNTU_INITRD="initrd-generic"
     QEMU="qemu-system-aarch64"
