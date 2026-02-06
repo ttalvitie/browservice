@@ -111,7 +111,7 @@ fi
 if [ "${ARCH}" == "x86_64" ]
 then
     QEMU="qemu-system-x86_64"
-    QEMU_ARCH_OPTS=()
+    QEMU_ARCH_OPTS=(-cpu Haswell)
     QEMU_DISK_DEV="virtio-blk-pci"
     QEMU_9P_DEV="virtio-9p-pci"
     QEMU_NET_DEV="virtio-net-pci"
