@@ -1,0 +1,19 @@
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y \
+  fuse libfuse2 \
+  libnss3 libatk-bridge2.0-0 libgtk-3-0 \
+  libgbm1 libasound2 libxss1 libxrandr2 \
+  libxcomposite1 libxcursor1 libxkbcommon0 \
+  libpango-1.0-0 libcups2 xvfb \
+  --no-install-recommends && \
+  rm -rf /var/lib/apt/lists/*
+
+COPY browservice-v0.9.12.2-aarch64.AppImage /browservice.AppImage
+RUN chmod +x /browservice.AppImage && \
+  /browservice.AppImage --appimage-extract && \
+  mv squashfs-root /browservice
+
+EXPOSE 5555
+
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x24 & DISPLAY=:99 /browservice/AppRun --vice-opt-http-listen-addr=0.0.0.0:5555"]
