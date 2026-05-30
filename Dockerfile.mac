@@ -1,6 +1,7 @@
 FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y \
+  wget ca-certificates \
   fuse libfuse2 \
   libnss3 libatk-bridge2.0-0 libgtk-3-0 \
   libgbm1 libasound2 libxss1 libxrandr2 \
@@ -9,11 +10,14 @@ RUN apt-get update && apt-get install -y \
   --no-install-recommends && \
   rm -rf /var/lib/apt/lists/*
 
-COPY browservice-v0.9.12.2-aarch64.AppImage /browservice.AppImage
-RUN chmod +x /browservice.AppImage && \
+RUN wget --no-check-certificate \
+  https://github.com/ttalvitie/browservice/releases/download/v0.9.12.2/browservice-v0.9.12.2-aarch64.AppImage \
+  -O /browservice.AppImage && \
+  chmod +x /browservice.AppImage && \
   /browservice.AppImage --appimage-extract && \
-  mv squashfs-root /browservice
+  mv squashfs-root /browservice && \
+  rm /browservice.AppImage
 
 EXPOSE 5555
 
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x24 & DISPLAY=:99 /browservice/AppRun --vice-opt-http-listen-addr=0.0.0.0:5555"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x24 & DISPLAY=:99 /browservice/AppRun --vice-opt-http-listen-addr=0.0.0.0:5555 --chromium-args=no-sandbox"]
