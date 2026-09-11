@@ -1,7 +1,5 @@
 # Browservice: Browser as a Service
 
-A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
-
 ## ⚠️ UNMAINTAINED (2026-09-11)
 
 **Browservice is no longer maintained.** I, [@ttalvitie](https://github.com/ttalvitie/), will not be making new releases, providing updated binaries, fixing bugs, answering issues or reviewing pull requests.
@@ -13,6 +11,14 @@ A web "proxy" server that enables browsing the modern web on historical browsers
 The issue tracker is left open so existing reports stay readable and users can help each other, but I will not respond to anything in it.
 
 Thank you to everyone who used, tested and gave feedback on Browservice over the years.
+
+---
+
+*Everything below this line is the README as it was at the end of maintenance (2026-02-09, v0.9.12.2) and is kept unchanged. It describes the project in the present tense and mentions possible future work; read it with the notice above in mind.*
+
+---
+
+A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
 ## News
 
