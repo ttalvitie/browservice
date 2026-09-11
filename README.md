@@ -2,9 +2,17 @@
 
 A web "proxy" server that enables browsing the modern web on historical browsers. It works by rendering the browser viewport into images, which are then shown by a JavaScript application running on the client browser.
 
-## NOTICE (2024-06-27)
+## ⚠️ UNMAINTAINED (2026-09-11)
 
-As some of the users may have noticed, I ([@ttalvitie](https://github.com/ttalvitie/)) have already greatly fallen behind in responding to the suggestions and problems in the [issues section](https://github.com/ttalvitie/browservice/issues). The situation now (and for the foreseaable future) is the following: the time I have available for developing Browservice further is very limited (due to work, other projects and other hobbies). Thus my main focus will be regularly providing up-to-date builds with latest Chromium versions (because it is critical for security) and fixing the most critical bugs. Developing new features and improvements will unfortunately have to be put on the back burner: I might add new features occasionally, but very irregularly and mostly based on my own needs as a user. I remind that Browservice is open source and anyone can build and distribute improved or modified versions of it. Thank you in advance for your understanding.
+**Browservice is no longer maintained.** I, [@ttalvitie](https://github.com/ttalvitie/), will not be making new releases, providing updated binaries, fixing bugs, answering issues or reviewing pull requests.
+
+**Security warning:** the final release (v0.9.12.2, 2026-02-09) bundles a Chromium version from early 2026, and I will not be updating it. The security model of Browservice rests on the premise that the embedded Chromium browser is kept up to date; that premise no longer holds for these binaries, and will hold less and less as time passes. To keep using Browservice safely, build it against a current CEF release yourself. I apologize for the delay in this decision; in the 2024 notice I said I would focus on providing up-to-date builds, and at the time of writing there has already been a gap of several months.
+
+**Forking is encouraged.** Browservice is MIT licensed, so anyone may fork, modify, build and distribute it without asking me.
+
+The issue tracker is left open so existing reports stay readable and users can help each other, but I will not respond to anything in it.
+
+Thank you to everyone who used, tested and gave feedback on Browservice over the years.
 
 ## News
 
