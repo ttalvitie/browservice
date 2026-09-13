@@ -1,0 +1,25 @@
+FROM --platform=linux/amd64 ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+  wget ca-certificates fuse libfuse2 squashfs-tools python3 \
+  libnss3 libatk-bridge2.0-0 libgtk-3-0 libgbm1 libasound2 \
+  libxss1 libxrandr2 libxcomposite1 libxcursor1 libxkbcommon0 \
+  libpango-1.0-0 libcups2 xvfb \
+  --no-install-recommends && \
+  rm -rf /var/lib/apt/lists/*
+
+RUN wget --no-check-certificate \
+  https://github.com/ttalvitie/browservice/releases/download/v0.9.12.2/browservice-v0.9.12.2-x86_64.AppImage \
+  -O /browservice.AppImage && \
+  OFFSET=$(python3 -c "f=open('/browservice.AppImage','rb');d=f.read();print(d.index(b'hsqs',50000))") && \
+  echo "Squashfs offset: $OFFSET" && \
+  tail -c +$((OFFSET+1)) /browservice.AppImage > /browservice.squashfs && \
+  unsquashfs /browservice.squashfs && \
+  mv squashfs-root /browservice && \
+  rm /browservice.AppImage /browservice.squashfs
+
+EXPOSE 5555
+
+CMD ["/browservice/AppRun", "--vice-opt-http-listen-addr=0.0.0.0:5555", "--vice-opt-default-quality=75", "--vice-opt-quality-selector=YES", "--chromium-args=no-sandbox"]

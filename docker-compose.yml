@@ -1,0 +1,21 @@
+services:
+  browservice:
+    build:
+      context: .
+      dockerfile: Dockerfile.mac
+    image: browservice-mac
+    container_name: browservice
+    ports:
+      - "${PORT:-5555}:5555"
+    shm_size: 256m
+    privileged: true
+    restart: unless-stopped
+    environment:
+      - QUALITY=${QUALITY:-75}
+      - EXTRA_ARGS=${EXTRA_ARGS:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5555"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
