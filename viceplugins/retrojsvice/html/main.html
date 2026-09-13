@@ -59,7 +59,7 @@ function detectBrowserQuirks() {
     if(ua.indexOf("firefox") != -1) {
         useOnDOMMouseScroll = true;
     }
-    if(ua.indexOf("classilla") != -1) {
+    if(ua.indexOf("classilla") != -1 || ua.indexOf("Odyssey Web Browser") != -1) {
         bodyOverflowHiddenNotSupported = true;
     }
     var msie = ua.indexOf("msie ");
